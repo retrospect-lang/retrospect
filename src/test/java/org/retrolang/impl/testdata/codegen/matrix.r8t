@@ -18,11 +18,11 @@ ReshapedArray([0, 2], [])]
 ---
 test_0(i1, i2):
    1: AtomicInteger.incrementAndGet(0);
-   2: test I1 < 0; T:→ 149
-   3: test I2 < 0; T:→ 149
-   4: test I1 == 0; T:→ 149
-   5: test I2 == 0; F:→ 49
-   6: test I1 == 2; F:→ 149
+   2: test I1 < 0; T:→ 140
+   3: test I2 < 0; T:→ 140
+   4: test I1 == 0; T:→ 140
+   5: test I2 == 0; F:→ 52
+   6: test I1 == 2; F:→ 140
    7: I7 ← 0;
    8: I4 ← 1;
    9: X3 ← [];
@@ -31,142 +31,133 @@ test_0(i1, i2):
   12: I8 ← 1;
   13: I5 ← 0;
   14: I6 ← 0;
-= 15: I11 ← Math.multiplyExact(I2, I1); ArithmeticException:→ 143
+= 15: I11 ← Math.multiplyExact(I2, I1); ArithmeticException:→ 134
   16: test I2 == I1; F:→ 18
-  17: test I1 == I2; T:→ 143
-- 18: I12 ← Math.multiplyExact(I1, I2); ArithmeticException:→ 143
-  19: test I12 == I11; F:→ 143
-  20: test I2 == 0; F:→ 82
-  21: test I1 == 2; F:→ 143
+  17: test I1 == I2; T:→ 134
+- 18: I12 ← Math.multiplyExact(I1, I2); ArithmeticException:→ 134
+  19: test I12 == I11; F:→ 134
+  20: test I2 == 0; F:→ 85
+  21: test I1 == 2; F:→ 134
   22: X4 ← [];
 = 23: I5 ← 0;
   24: I6 ← Frame1i2x.i0(X3);
-= 25: test I5 < Frame1i2x.i0(X3); F:→ 97
+= 25: test I5 < Frame1i2x.i0(X3); F:→ 88
   26: I7 ← iAdd(I5, 1);
-  27: test 0 < I7; F:→ 134
-  28: test I6 < I7; T:→ 134
+  27: test 0 < I7; F:→ 125
+  28: test I6 < I7; T:→ 125
   29: I8 ← uint8[](Frame1i2x.x0(X3), I5);
   30: I9 ← uint8[](Frame1i2x.x1(X3), I5);
-  31: I11 ← iSub(I7, 1); ArithmeticException:→ 134
+  31: I11 ← iSub(I7, 1); ArithmeticException:→ 125
   32: I10 ← iAdd(iDiv(I11, I2), 1);
-  33: test 0 < I10; F:→ 134
-  34: test I1 < I10; T:→ 134
+  33: test 0 < I10; F:→ 125
+  34: test I1 < I10; T:→ 125
   35: I11 ← iAdd(iMod(I11, I2), 1);
-  36: test 0 < I11; F:→ 134
-  37: test I2 < I11; T:→ 134
-  38: I10 ← Math.addExact(Math.multiplyExact(iSub(I10, 1), I2), iSub(I11, 1)); ArithmeticException:→ 134
+  36: test 0 < I11; F:→ 125
+  37: test I2 < I11; T:→ 125
+  38: I10 ← Math.addExact(Math.multiplyExact(iSub(I10, 1), I2), iSub(I11, 1)); ArithmeticException:→ 125
   39: I5 ← iAdd(iDiv(I10, I1), 1);
   40: I10 ← iAdd(iMod(I10, I1), 1);
-  41: I11 ← 0;
-  42: I12 ← 0;
-= 43: I13 ← iAdd(I11, 1);
-  44: test I11 == 0; F:→ 85
-  45: I14 ← I8;
-= 46: test I13 == 1; F:→ 86
-  47: I11 ← 1;
-  48: I12 ← I14; → 43
-- 49: I3 ← Math.multiplyExact(I1, I2); ArithmeticException:→ 149
-  50: test TState.reserveForChange(X0, *[][b0, b1]@xxxx, null, I3) == 0; T:→ 149
-  51: X3 ← alloc*[][b0, b1]@xxxx(X0, I3);
-  52: I4 ← 0;
-  53: I5 ← 1;
-  54: I6 ← 0;
-  55: I7 ← I1;
-= 56: I6 ← iAdd(I6, 1);
-  57: I8 ← 0;
-  58: I9 ← I5;
-  59: I10 ← I6;
-= 60: test I1 < I9; T:→ 143
-  61: test I2 < I10; T:→ 143
-  62: I11 ← Math.addExact(Math.multiplyExact(iSub(I9, 1), I2), iSub(I10, 1)); ArithmeticException:→ 143
-  63: test I11 < 0; T:→ 143
-  64: test I11 < Frame1i2x.i0(X3); F:→ 143
-  65: test I9 isUint8; F:→ 143
-  66: setUint8[](Frame1i2x.x0(X3), I11, I9);
-  67: test I10 isUint8; F:→ 143
-  68: setUint8[](Frame1i2x.x1(X3), I11, I10);
-  69: I4 ← 0;
-  70: I5 ← I9;
-  71: I6 ← I10;
-  72: test I6 < I2; T:→ 56
-  73: test I5 < I1; F:→ 79
-  74: I5 ← iAdd(I5, 1);
-  75: I8 ← 0;
-  76: I9 ← I5;
-  77: I10 ← 1;
-  78: I6 ← 1; → 60
-- 79: I9 ← 0;
-  80: I10 ← 0;
-  81: I8 ← 1; → 15
-- 82: I11 ← Math.multiplyExact(I2, I1); ArithmeticException:→ 143
-  83: test TState.reserveForChange(X0, *[][i0, b1]@xxxx, null, I11) == 0; T:→ 143
-  84: X4 ← alloc*[][i0, b1]@xxxx(X0, I11); → 23
-- 85: I14 ← I9; → 46
-- 86: test 0 < I5; F:→ 128
-  87: test I2 < I5; T:→ 128
-  88: test 0 < I10; F:→ 128
-  89: test I1 < I10; T:→ 128
-  90: I8 ← Math.addExact(Math.multiplyExact(iSub(I5, 1), I1), iSub(I10, 1)); ArithmeticException:→ 128
-  91: test I8 < 0; T:→ 128
-  92: test I8 < Frame1i2x.i0(X4); F:→ 128
-  93: X4 ← FrameLayout.ensureUnshared(*[][i0, b1]@xxxx, X0, X4);
-  94: setInt[](Frame1i2x.x0(X4), iShl(I8, 2), I12);
-  95: setUint8[](Frame1i2x.x1(X4), I8, I14);
-  96: I5 ← I7; → 25
-- 97: dropRef{X3};
-  98: test I1 < I2; F:→ 121
-  99: I3 ← I1;
- 100: I5 ← 1;
-=101: I6 ← Math.addExact(I5, 1); ArithmeticException:→ 123
- 102: test 0 < I5; F:→ 123
- 103: test I2 < I5; T:→ 123
- 104: test I1 < I5; T:→ 123
- 105: I7 ← Math.addExact(Math.multiplyExact(iSub(I5, 1), I1), iSub(I5, 1)); ArithmeticException:→ 123
- 106: test I7 < 0; T:→ 123
- 107: test I7 < Frame1i2x.i0(X4); F:→ 123
- 108: I5 ← uint8[](Frame1i2x.x1(X4), I7);
- 109: X4 ← FrameLayout.ensureUnshared(*[][i0, b1]@xxxx, X0, X4);
- 110: setInt[](Frame1i2x.x0(X4), iShl(I7, 2), -1);
- 111: setUint8[](Frame1i2x.x1(X4), I7, I5);
- 112: I5 ← I6;
-=113: test I3 < I5; F:→ 101
- 114: TState.setResultTemplates(X0, [ReshapedArray([i0, i4], x0:*[]@xxxx)]);
- 115: X3 ← TState.fnResults(X0, 1);
- 116: X5 ← TState.fnResultBytes(X0, 8);
- 117: setInt[](X5, 0, I2);
- 118: setInt[](X5, 4, I1);
- 119: setObject[](X3, 0, X4);
- 120: return
--121: I3 ← I2;
- 122: I5 ← 1; → 113
--123: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I5, I3, None), loop=loop@9, state=loop@9_state⸨x=ReshapedArray([I2, I1], X4)⸩⟧);
- 124: X3 ← TState.fillStackEntry(X0, null, X6, ⟨loop@9_state⸨x=ReshapedArray([b0, b0], x0:*[]@xxxx)⸩⟩, mMemo_8@xxxx, null);
- 125: X1 ← TState.fillStackEntry(X0, X3, ⟦matrix.r8t+0:9_9 _t0 = iterate(_t0, EnumerateValues, loop@9, loop@9_state⸨x=x⸩)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null);
-=126: TState.setStackRest(X0, X1);
- 127: return
--128: X8 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=[[I5, I10], [I12, I14]], it=TransformedIterator(ReshapedIterator(ReshapedIterator(ArrayIterator(X3, EnumerateAllKeys, I7), [I6], [I1, I2]), [I1, I2], [I2, I1]), EnumerateAllKeys, lambda@8:26), loop=SaverLoop(SaveElements), state=ReshapedArray([I2, I1], X4)⟧);
- 129: X3 ← TState.fillStackEntry(X0, null, X8, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_29@xxxx, null);
-=130: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_30@xxxx, null);
- 131: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_h38@xxxx, null);
- 132: X4 ← newStackEntry(⟦matrix.r8t+0:8_6 x = pipe(_t0, _t1) ∥ n=I1, m=I2⟧);
- 133: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 126
--134: X7 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I5, it=ArrayIterator(X3, EnumerateAllKeys, I5)⟧);
- 135: X3 ← TState.fillStackEntry(X0, null, X7, ⟨⸨[[b0], [b0, b0]]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), ReshapedIterator((empty), [b0], [b0, b0])⟩, mMemo_1@xxxx, null);
- 136: X5 ← newStackEntry(⟦MatrixCore.NextReshapedIterator.next ∥ it=ReshapedIterator((empty), [I6], [I1, I2])⟧);
- 137: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), ReshapedIterator((empty), [b0, b0], [b0, b0])⟩, mMemo_2@xxxx, null);
- 138: X5 ← newStackEntry(⟦MatrixCore.NextReshapedIterator.next ∥ it=ReshapedIterator((empty), [I1, I2], [I2, I1])⟧);
- 139: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, ReshapedIterator(ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateAllKeys, lambda@8:26)⟩, mMemo_3@xxxx, null);
- 140: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, lambda@8:26)⟧, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, TransformedIterator(ReshapedIterator(ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), [b0, b0], [b0, b0]), EnumerateAllKeys, lambda@8:26), SaverLoop(SaveElements), ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_19@xxxx, null);
- 141: X5 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=ReshapedArray([I2, I1], X4)⟧);
- 142: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_29@xxxx, null); → 130
--143: X11 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=I8⸨0:[[I9, I10], [I9, I10]]; 1:Absent⸩, it=I4⸨0:BaseIterator(EnumerateAllKeys, [I5, I6], [I7, I2]); 1:ReshapedIterator(ArrayIterator([], EnumerateAllKeys, 0), [0], [2, 0])⸩, loop=SaverLoop(SaveElements), state=ReshapedArray([I1, I2], X3)⟧);
- 144: X3 ← TState.fillStackEntry(X0, null, X11, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_11@xxxx, null);
- 145: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_12@xxxx, null);
- 146: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_20@xxxx, null);
- 147: X4 ← newStackEntry(⟦matrix.r8t+0:7_2 x = pipe(_t0, _t1) ∥ n=I1, m=I2⟧);
- 148: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 126
--149: X3 ← newStackEntry(⟦matrix.r8t+0:7_0 _t0 = matrix([n, m]) ∥ n=I1, m=I2⟧);
- 150: X1 ← TState.fillStackEntry(X0, null, X3, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 126
+  41: test 0 < I5; F:→ 119
+  42: test I2 < I5; T:→ 119
+  43: test 0 < I10; F:→ 119
+  44: test I1 < I10; T:→ 119
+  45: I11 ← Math.addExact(Math.multiplyExact(iSub(I5, 1), I1), iSub(I10, 1)); ArithmeticException:→ 119
+  46: test I11 < 0; T:→ 119
+  47: test I11 < Frame1i2x.i0(X4); F:→ 119
+  48: X4 ← FrameLayout.ensureUnshared(*[][i0, b1]@xxxx, X0, X4);
+  49: setInt[](Frame1i2x.x0(X4), iShl(I11, 2), I8);
+  50: setUint8[](Frame1i2x.x1(X4), I11, I9);
+  51: I5 ← I7; → 25
+- 52: I3 ← Math.multiplyExact(I1, I2); ArithmeticException:→ 140
+  53: test TState.reserveForChange(X0, *[][b0, b1]@xxxx, null, I3) == 0; T:→ 140
+  54: X3 ← alloc*[][b0, b1]@xxxx(X0, I3);
+  55: I4 ← 0;
+  56: I5 ← 1;
+  57: I6 ← 0;
+  58: I7 ← I1;
+= 59: I6 ← iAdd(I6, 1);
+  60: I8 ← 0;
+  61: I9 ← I5;
+  62: I10 ← I6;
+= 63: test I1 < I9; T:→ 134
+  64: test I2 < I10; T:→ 134
+  65: I11 ← Math.addExact(Math.multiplyExact(iSub(I9, 1), I2), iSub(I10, 1)); ArithmeticException:→ 134
+  66: test I11 < 0; T:→ 134
+  67: test I11 < Frame1i2x.i0(X3); F:→ 134
+  68: test I9 isUint8; F:→ 134
+  69: setUint8[](Frame1i2x.x0(X3), I11, I9);
+  70: test I10 isUint8; F:→ 134
+  71: setUint8[](Frame1i2x.x1(X3), I11, I10);
+  72: I4 ← 0;
+  73: I5 ← I9;
+  74: I6 ← I10;
+  75: test I6 < I2; T:→ 59
+  76: test I5 < I1; F:→ 82
+  77: I5 ← iAdd(I5, 1);
+  78: I8 ← 0;
+  79: I9 ← I5;
+  80: I10 ← 1;
+  81: I6 ← 1; → 63
+- 82: I9 ← 0;
+  83: I10 ← 0;
+  84: I8 ← 1; → 15
+- 85: I11 ← Math.multiplyExact(I2, I1); ArithmeticException:→ 134
+  86: test TState.reserveForChange(X0, *[][i0, b1]@xxxx, null, I11) == 0; T:→ 134
+  87: X4 ← alloc*[][i0, b1]@xxxx(X0, I11); → 23
+- 88: dropRef{X3};
+  89: test I1 < I2; F:→ 112
+  90: I3 ← I1;
+  91: I5 ← 1;
+= 92: I6 ← Math.addExact(I5, 1); ArithmeticException:→ 114
+  93: test 0 < I5; F:→ 114
+  94: test I2 < I5; T:→ 114
+  95: test I1 < I5; T:→ 114
+  96: I7 ← Math.addExact(Math.multiplyExact(iSub(I5, 1), I1), iSub(I5, 1)); ArithmeticException:→ 114
+  97: test I7 < 0; T:→ 114
+  98: test I7 < Frame1i2x.i0(X4); F:→ 114
+  99: I5 ← uint8[](Frame1i2x.x1(X4), I7);
+ 100: X4 ← FrameLayout.ensureUnshared(*[][i0, b1]@xxxx, X0, X4);
+ 101: setInt[](Frame1i2x.x0(X4), iShl(I7, 2), -1);
+ 102: setUint8[](Frame1i2x.x1(X4), I7, I5);
+ 103: I5 ← I6;
+=104: test I3 < I5; F:→ 92
+ 105: TState.setResultTemplates(X0, [ReshapedArray([i0, i4], x0:*[]@xxxx)]);
+ 106: X3 ← TState.fnResults(X0, 1);
+ 107: X5 ← TState.fnResultBytes(X0, 8);
+ 108: setInt[](X5, 0, I2);
+ 109: setInt[](X5, 4, I1);
+ 110: setObject[](X3, 0, X4);
+ 111: return
+-112: I3 ← I2;
+ 113: I5 ← 1; → 104
+-114: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I5, I3, None), loop=loop@9, state=loop@9_state⸨x=ReshapedArray([I2, I1], X4)⸩⟧);
+ 115: X3 ← TState.fillStackEntry(X0, null, X6, ⟨loop@9_state⸨x=ReshapedArray([b0, b0], x0:*[]@xxxx)⸩⟩, mMemo_8@xxxx, null);
+ 116: X1 ← TState.fillStackEntry(X0, X3, ⟦matrix.r8t+0:9_9 _t0 = iterate(_t0, EnumerateValues, loop@9, loop@9_state⸨x=x⸩)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null);
+=117: TState.setStackRest(X0, X1);
+ 118: return
+-119: X11 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=[[I5, I10], [I8, I9]], it=TransformedIterator(ReshapedIterator(ReshapedIterator(ArrayIterator(X3, EnumerateAllKeys, I7), [I6], [I1, I2]), [I1, I2], [I2, I1]), EnumerateAllKeys, lambda@8:26), loop=SaverLoop(SaveElements), state=ReshapedArray([I2, I1], X4)⟧);
+ 120: X3 ← TState.fillStackEntry(X0, null, X11, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_29@xxxx, null);
+=121: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_30@xxxx, null);
+ 122: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_h38@xxxx, null);
+ 123: X4 ← newStackEntry(⟦matrix.r8t+0:8_6 x = pipe(_t0, _t1) ∥ n=I1, m=I2⟧);
+ 124: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 117
+-125: X7 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I5, it=ArrayIterator(X3, EnumerateAllKeys, I5)⟧);
+ 126: X3 ← TState.fillStackEntry(X0, null, X7, ⟨⸨[[b0], [b0, b0]]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), ReshapedIterator((empty), [b0], [b0, b0])⟩, mMemo_1@xxxx, null);
+ 127: X5 ← newStackEntry(⟦MatrixCore.NextReshapedIterator.next ∥ it=ReshapedIterator((empty), [I6], [I1, I2])⟧);
+ 128: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), ReshapedIterator((empty), [b0, b0], [b0, b0])⟩, mMemo_2@xxxx, null);
+ 129: X5 ← newStackEntry(⟦MatrixCore.NextReshapedIterator.next ∥ it=ReshapedIterator((empty), [I1, I2], [I2, I1])⟧);
+ 130: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, ReshapedIterator(ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateAllKeys, lambda@8:26)⟩, mMemo_3@xxxx, null);
+ 131: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, lambda@8:26)⟧, ⟨⸨[[b0, b0], [b0, b0]]; Absent⸩, TransformedIterator(ReshapedIterator(ReshapedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), [b0], [b0, b0]), [b0, b0], [b0, b0]), EnumerateAllKeys, lambda@8:26), SaverLoop(SaveElements), ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_19@xxxx, null);
+ 132: X5 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=ReshapedArray([I2, I1], X4)⟧);
+ 133: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_29@xxxx, null); → 121
+-134: X11 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=I8⸨0:[[I9, I10], [I9, I10]]; 1:Absent⸩, it=I4⸨0:BaseIterator(EnumerateAllKeys, [I5, I6], [I7, I2]); 1:ReshapedIterator(ArrayIterator([], EnumerateAllKeys, 0), [0], [2, 0])⸩, loop=SaverLoop(SaveElements), state=ReshapedArray([I1, I2], X3)⟧);
+ 135: X3 ← TState.fillStackEntry(X0, null, X11, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_11@xxxx, null);
+ 136: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx), SaverLoop(SaveElements)⟩, mMemo_12@xxxx, null);
+ 137: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_20@xxxx, null);
+ 138: X4 ← newStackEntry(⟦matrix.r8t+0:7_2 x = pipe(_t0, _t1) ∥ n=I1, m=I2⟧);
+ 139: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 117
+-140: X3 ← newStackEntry(⟦matrix.r8t+0:7_0 _t0 = matrix([n, m]) ∥ n=I1, m=I2⟧);
+ 141: X1 ← TState.fillStackEntry(X0, null, X3, ⟨ReshapedArray([b0, b0], x0:*[]@xxxx)⟩, mMemo_x@xxxx, null); → 117
 ---
 allocated=568/20, peak=368
 */

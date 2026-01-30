@@ -337,7 +337,7 @@ public sealed interface Template {
 
   /** A Constant template represents a single value. */
   static final class Constant extends TemplateBuilder implements Template {
-    final Value value;
+    public final Value value;
 
     private Constant(Value value) {
       super((short) 0, (short) 0);

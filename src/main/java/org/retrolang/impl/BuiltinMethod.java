@@ -101,7 +101,7 @@ public abstract class BuiltinMethod {
    * should return the function result as the result of the builtin. Should never be called.
    */
   static final ContinuationMethod TAIL_CALL =
-      new ContinuationMethod("(tail call)", -1, false, null, new String[0]);
+      new ContinuationMethod(null, "(tail call)", -1, false, null, new String[0]);
 
   /**
    * Subclasses of BuiltinStatic (such as Caller and ExtraValueMemo) are intended for use as static
@@ -217,6 +217,7 @@ public abstract class BuiltinMethod {
       callSite.setValueMemoSize(continuation.numArgs());
       this.continuation = continuation;
       this.duringCall = (fn == null) ? null : new DuringCall(where, this);
+      callSite.duringCallEntryType = duringCall;
     }
   }
 

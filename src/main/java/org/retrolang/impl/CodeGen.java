@@ -1009,7 +1009,7 @@ public class CodeGen {
       Op.forMethodHandle("new AssertionError", Handle.forConstructor(AssertionError.class)).build();
 
   /**
-   * Emits a block that throws an AssertionError.  Intended for when the next block should be
+   * Emits a block that throws an AssertionError. Intended for when the next block should be
    * unreachable but the JVM may not realize that.
    */
   public void emitAssertionFailed() {

@@ -75,6 +75,27 @@ public class RValue implements Value {
     return (v instanceof RValue r) ? r.template : Template.Constant.of(v);
   }
 
+  /**
+   * Wraps an RValue so that it can be examined without any chance of generating code.  If {@code v}
+   * is not an RValue, returns it unchanged; otherwise returns a Value that only implements the
+   * {@link Value#baseType}, {@link Value#numElements}, and {@link Value#peekElement} methods, where
+   * <ul>
+   *   <li>{@code baseType()} will return null if the value's baseType may vary at runtime; and
+   *   <li>{@code numElements()} will return -1 if the value's size may vary at runtime.
+   * </ul>
+   */
+  public static Value exploreSafely(Value v) {
+    return (v instanceof RValue rv) ? SafeExplorer.exploreTemplate(rv.template) : v;
+  }
+
+  /**
+   * Returns true if the given Value resulted from a call to {@link #exploreSafely} and does not
+   * provide complete information about the value.
+   */
+  public static boolean isExplorer(Value v) {
+    return v instanceof SafeExplorer;
+  }
+
   @Override
   public Condition isa(VmType type) {
     return typeTest(type::contains);
@@ -304,5 +325,50 @@ public class RValue implements Value {
         rv.frameLayout()
             .emitReplaceElement(codeGen, codeGen.register(rv), CodeValue.of(index), newElement);
     return RValue.fromTemplate(rv.withIndex(result.index));
+  }
+
+  /** Instances of SafeExplorer are created by calls ot {@link #exploreSafely}. */
+  private record SafeExplorer(Template template) implements Value {
+
+    /** A SafeExplorer that has no information about its Value. */
+    static final SafeExplorer UNKNOWN = new SafeExplorer(null);
+
+    /** Returns a SafeExplorer for an RValue with the given Template. */
+    static SafeExplorer exploreTemplate(Template t) {
+      // If t is RefVar with a RecordLayout, we want the template of that RecordLayout instead
+      if (t instanceof Template.RefVar rv
+          && rv.baseType().isCompositional()
+          && rv.frameLayout() instanceof RecordLayout layout) {
+        t = layout.template;
+      }
+      assert !Template.isConstant(t);
+      return (t instanceof Union) ? UNKNOWN : new SafeExplorer(t);
+    }
+
+    @Override
+    public BaseType baseType() {
+      return (template == null) ? null : template.baseType();
+    }
+
+    @Override
+    public int numElements() {
+      BaseType baseType = template.baseType();
+      assert baseType.isArray();
+      return baseType.isCompositional() ? baseType.size() : -1;
+    }
+
+    @Override
+    public Value peekElement(int index) {
+      if (this == UNKNOWN) {
+        return UNKNOWN;
+      } else if (template instanceof RefVar rv) {
+        VArrayLayout layout = (VArrayLayout) rv.frameLayout();
+        return exploreTemplate(layout.template);
+      }
+      Template element = template.element(index);
+      return Template.isConstant(element)
+          ? Template.toValue(element)
+          : exploreTemplate(element);
+    }
   }
 }

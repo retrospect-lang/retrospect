@@ -28,9 +28,10 @@ import org.retrolang.code.Op;
 public class StructType extends BaseType {
 
   public static final Op INDEX_OP =
-      RcOp.forRcMethod(StructType.class, "index", Value.class).build();
+      RcOp.forRcMethod(StructType.class, "index", Value.class).withConstSimplifier().build();
 
-  public static final Op KEY_OP = RcOp.forRcMethod(StructType.class, "key", int.class).build();
+  public static final Op KEY_OP =
+      RcOp.forRcMethod(StructType.class, "key", int.class).withConstSimplifier().build();
 
   @Core.Private
   static final VmType STRUCT_KEYS =

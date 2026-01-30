@@ -366,6 +366,20 @@ public final class MethodMemo {
     return sum;
   }
 
+  /** Returns true if this MethodMemo's weight exceeds the given limit. */
+  boolean weightExceeds(Scope scope, int limit) {
+    // Once our weight reaches LOW_EXLINE_THRESHOLD we may stop tracking it accurately, so we can't
+    // reliably answer this question for high limits.
+    assert limit < LOW_EXLINE_THRESHOLD;
+    MethodMemo memo = this;
+    synchronized (scope.memoMerger) {
+      while (memo.state == FORWARDED) {
+        memo = memo.parent;
+      }
+      return (memo.state != LIGHT) || (memo.currentWeight > limit);
+    }
+  }
+
   /**
    * Recomputes this MethodMemo's maximum child weight. Should match maxChildWeight, unless
    * maxChildWeight > MAX_WEIGHT (the flag value indicating that it needs to be recomputed by this

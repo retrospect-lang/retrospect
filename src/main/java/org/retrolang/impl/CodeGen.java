@@ -286,7 +286,18 @@ public class CodeGen {
         () -> {
           // Call the MethodImpl's emit() method, which does the actual work
           Value[] argValues = target.args.stream().map(RValue::fromTemplate).toArray(Value[]::new);
-          impl.emit(this, done, initialMethod, argValues);
+          switch (target.link.kind) {
+            case EXLINED -> impl.emit(this, done, initialMethod, argValues);
+            case LOOP -> {
+              // Since we're starting in the middle of method execution, tstate.stackRest() might
+              // already be non-null.  Use beforeCall() to load it into our stackRest register
+              // (it does what we want, although the name is a little misleading in this use).
+              new SetBlock(currentCall.stackRest, TState.BEFORE_CALL_OP.result(tstateRegister()))
+                  .addTo(cb);
+              ((BuiltinSupport.BuiltinImpl) impl)
+                  .emitFromLoopContinuation(this, done, initialMethod, argValues);
+            }
+          }
           // When that completes we should be back to the original CurrentCall
           assert currentCall.done == done;
           // Now emit the code to write the method's results into the TState

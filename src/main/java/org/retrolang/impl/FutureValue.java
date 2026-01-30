@@ -76,7 +76,8 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
       // from this method.
       FutureValue fv = new FutureValue(tstate, true);
       ResourceTracker tracker = tstate.tracker();
-      ForkJoinPool.commonPool().execute(() -> fv.run(tracker, mm, lambda, at));
+      ForkJoinPool.commonPool()
+          .execute(() -> fv.lambdaThread.run(tracker, t -> fv.run(t, mm, lambda, at)));
       return fv;
     }
   }
@@ -130,17 +131,31 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
    * the {@code future()} call, and {@code caller} is a Caller for {@code at()}.
    */
   private void run(
-      ResourceTracker tracker, MethodMemo mMemo, @RC.In Value lambda, BuiltinMethod.Caller caller) {
-    lambdaThread.run(
-        tracker,
-        tstate -> {
-          tstate.setStackRest(TStack.BASE);
-          tstate.startCall(caller, lambda, Core.EMPTY_ARRAY);
-          // We're no longer running in the context of a builtin method, so we need to explicitly
-          // make the call that is usually provided by BuiltinSupport.
-          tstate.finishBuiltin(FutureMethod.atResultsMemo.valueMemo(tstate, mMemo), mMemo, null);
-        });
+      TState tstate, MethodMemo mMemo, @RC.In Value lambda, BuiltinMethod.Caller caller) {
+    boolean done = false;
+    try {
+      tstate.setStackRest(TStack.BASE);
+      tstate.startCall(caller, lambda, Core.EMPTY_ARRAY);
+      // We're no longer running in the context of a builtin method, so we need to explicitly
+      // make the call that is usually provided by BuiltinSupport.
+      tstate.finishBuiltin(FutureMethod.atResultsMemo.valueMemo(tstate, mMemo), mMemo, null);
+      done = true;
+    } finally {
+      // Try to ensure that even if something completely unexpected goes wrong we won't leave the
+      // rest of the computation waiting for us.
+      if (!done) {
+        try {
+          setResult(tstate, MYSTERY_FAILURE, false);
+        } catch (BuiltinException e) {
+          // Can't happen, and if it did there's no one left to tell about it
+          e.printStackTrace();
+        }
+      }
+    }
   }
+
+  private static final Value MYSTERY_FAILURE =
+      Err.INTERNAL_ERROR.uncountedOf(StringValue.uncounted("Unexpected error in FutureValue"));
 
   /**
    * Called when the RThread completes (for FutureValues with a lambda) or from {@code
@@ -151,6 +166,10 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     boolean tooLate;
     List<RThread> pending;
     synchronized (this) {
+      if (result == MYSTERY_FAILURE && this.result != Core.TO_BE_SET) {
+        // Never mind; something went wrong, but the future had already been resolved properly
+        return;
+      }
       pending = this.pending;
       this.pending = null;
       tooLate = (this.result == null);

@@ -191,6 +191,8 @@ public final class TState extends MemoryHelper {
     codeGenDebugging = null;
     builtinCall = null;
     builtinContinuation = null;
+    methodMemoUpdated = false;
+    cgParent = CodeGenParent.INVALID;
     ResourceTracker result = super.bindTo(tracker);
     if (tracker != null) {
       codeGenDebugging = tracker.scope.codeGenDebugging();
@@ -222,6 +224,18 @@ public final class TState extends MemoryHelper {
    * possible.
    */
   RThread rThread;
+
+  /**
+   * A cached link to the nearest enclosing loop or exlined MethodMemo; this (and its parents) will
+   * have their stability counter reset if we make changes to the current MethodMemo.
+   */
+  CodeGenParent cgParent;
+
+  /**
+   * Set to true when the currently-executing MethodMemo has been modified, to indicate that we need
+   * to call {@link #resetStabilityCounter} when convenient.
+   */
+  boolean methodMemoUpdated;
 
   /**
    * Caches the value of {@code tracker().scope.codeGenDebugging()}, to minimize the cost of our
@@ -624,6 +638,9 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
+  static final Op BEFORE_CALL_OP =
+      RcOp.forRcMethod(TState.class, "beforeCall").hasSideEffect().build();
+
   /**
    * Should be called before starting a function call.
    *
@@ -937,14 +954,22 @@ public final class TState extends MemoryHelper {
   boolean checkExlinedResult(ImmutableList<Template> expectedTemplates) {
     // The generated code should have saved its identity only if it unwound
     assert unwindStarted() == (unwoundFrom != null);
+    boolean escaped = false;
     while (unwindStarted()) {
       BaseType baseType = stackHead.first().baseType();
       if (baseType instanceof Err || baseType instanceof BaseType.BlockingEntryType) {
         // That was a non-escape exit.
         unwoundFrom = null;
+        if (escaped && codeGenDebugging != null) {
+          codeGenDebugging.append("]");
+        }
         return false;
       }
       // We were interrupted by an escape from generated code; resume execution from that point
+      if (!escaped && codeGenDebugging != null) {
+        codeGenDebugging.append(unwoundFrom, "[");
+      }
+      escaped = true;
       tracker().incrementEscaped();
       TStack head = stackHead;
       TStack rest = stackRest;
@@ -963,6 +988,9 @@ public final class TState extends MemoryHelper {
       }
     }
     // We've successfully completed the call
+    if (escaped && codeGenDebugging != null) {
+      codeGenDebugging.append("]");
+    }
     unwoundFrom = null;
     if (expectedTemplates == null || fnResultTemplates == expectedTemplates) {
       return true;
@@ -1097,6 +1125,20 @@ public final class TState extends MemoryHelper {
     }
   }
 
+  /** Resume execution of a builtin method. */
+  void resumeBuiltin(
+      BuiltinSupport.ContinuationMethod continuation,
+      @RC.In Object[] values,
+      ResultsInfo results,
+      MethodMemo mMemo) {
+    assert !unwindStarted() && !hasCodeGen();
+    assert builtinCall == null && builtinCallArgs == null && builtinContinuationArgs == null;
+    // Sort of a hack, but just fake a jump() to this continuation
+    builtinContinuation = continuation.name;
+    builtinContinuationArgs = values;
+    finishBuiltin(results, mMemo, continuation.impl);
+  }
+
   /**
    * Called after a builtin method returns, to handle any call to {@link #startCall} or {@link
    * #jump}.
@@ -1128,6 +1170,14 @@ public final class TState extends MemoryHelper {
    * and each of the others corresponds to a different state in this list.)
    */
   void finishBuiltin(ResultsInfo results, MethodMemo mMemo, BuiltinImpl impl) {
+    if (mMemo instanceof MethodMemo.LoopMethodMemo lmm) {
+      CodeGenLink cgLink = lmm.loopCodeGen();
+      if (cgLink != null) {
+        // Since we're executing a loop with a CodeGenLink, that should be the stability
+        // counter we reset on MethodMemo changes.
+        this.cgParent = cgLink.selfLink();
+      }
+    }
     int previousOrder = 0;
     for (; ; ) {
       // If we get here we didn't throw an exception.
@@ -1212,6 +1262,11 @@ public final class TState extends MemoryHelper {
         assert continuation.checkCallFrom(previousOrder);
       }
       assert continuation.impl == impl;
+      // Run the continuation, and then loop back to see what state it left us in.
+      ValueMemo.Outcome outcome =
+          continuation.valueMemo(this, mMemo).harmonizeAll(this, continuationArgs, false);
+      // Extra locking is only required for some args memos, so we shouldn't ever need it here.
+      assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
       // This is a good place to check for out-of-memory.
       if (isOverMemoryLimit()) {
         StackEntryType entryType = continuation.builtinEntry.stackEntryType;
@@ -1226,20 +1281,65 @@ public final class TState extends MemoryHelper {
         pushUnwind(Err.OUT_OF_MEMORY.asValue());
         return;
       }
-      // Run the continuation, and then loop back to see what state it left us in.
-      runContinuation(continuation, continuationArgs, results, mMemo);
+      // If we're entering or re-entering a loop there is some additional bookkeeping to do.
+      if (continuation.isLoop) {
+        boolean methodMemoWasUpdated = methodMemoUpdated;
+        if (methodMemoWasUpdated) {
+          resetStabilityCounter(mMemo);
+        }
+        boolean incrementStability = (continuation.order <= previousOrder) && !methodMemoWasUpdated;
+        CodeGenTarget target = enteringLoop(mMemo, incrementStability, impl, continuationArgs);
+        if (target != null) {
+          // We have generated code for this loop, so let's use it
+          Object[] preparedArgs = target.prepareArgs(this, continuationArgs);
+          if (preparedArgs != null) {
+            dropReference(continuationArgs);
+            target.call(this, preparedArgs);
+            return;
+          } else {
+            // Treat this as an escape from the generated code, so that we can increment its
+            // stability counter and eventually regenerate it
+            unwoundFrom = target;
+          }
+        }
+      }
+      continuation.builtinEntry.execute(this, results, mMemo, continuationArgs);
       previousOrder = continuation.order;
     }
   }
 
-  /** Execute the given continuation. */
-  void runContinuation(
-      ContinuationMethod continuation,
-      Object[] continuationArgs,
-      ResultsInfo results,
-      MethodMemo mMemo) {
-    continuation.valueMemo(this, mMemo).harmonizeAll(this, continuationArgs, false);
-    continuation.builtinEntry.execute(this, results, mMemo, continuationArgs);
+  /**
+   * We are about to start running a LoopContinuation; see if we should increment its stability
+   * counter, and whether we have generated code for the loop.
+   */
+  CodeGenTarget enteringLoop(
+      MethodMemo mMemo, boolean incrementStability, BuiltinImpl impl, Object[] continuationArgs) {
+    MethodMemo.LoopMethodMemo loop = (MethodMemo.LoopMethodMemo) mMemo;
+    CodeGenLink cgLink = loop.loopCodeGen();
+    if (cgLink != null) {
+      // If we've resumed after an unwind the previousOrder may be 0, so we need the extra check
+      if (incrementStability || (unwoundFrom != null && unwoundFrom.link == cgLink)) {
+        if (cgLink.incrementStabilityCounter(unwoundFrom, codeGenDebugging)) {
+          // If we escaped from previously-generated code for the loop but now have successfully
+          // completed the loop we'll count that as one step toward re-triggering code generation.
+          unwoundFrom = null;
+        }
+      }
+      // Check to see if we have generated code (or are ready to generate code) for this loop.
+      return cgLink.checkReady(this);
+    } else if (incrementStability) {
+      // This is an appropriate time to increment the loop's stability counter, but it doesn't
+      // yet have a CodeGenLink.
+      int loopBound = impl.loopBound(continuationArgs);
+      // Don't bother creating a CodeGenLink for this loop if we know it will only have a few
+      // iterations -- in those cases we'll just wait and generate code for its parent.
+      if (loopBound < 0 || loopBound > 4) {
+        loop.requireLoopCodeGen(this);
+      } else if (codeGenDebugging != null) {
+        codeGenDebugging.append(".");
+      }
+    }
+    return null;
   }
 
   /**
@@ -1247,6 +1347,7 @@ public final class TState extends MemoryHelper {
    * unwinding.
    */
   void resumeStack(@RC.In TStack stack, TStack base) {
+    cgParent = CodeGenParent.INVALID;
     for (; ; ) {
       // Pop the top entry off the stack, saving its rest as the TState's stackRest and the
       // other fields in local variables.
@@ -1261,8 +1362,33 @@ public final class TState extends MemoryHelper {
       StackEntryType entryType = (StackEntryType) first.baseType();
       assert resultsStateMatches(entryType.called());
       entryType.resume(this, first, results, methodMemo);
-      // The stack tail should be unchanged
+
+      // When it completes the stack tail should be unchanged
       assert stackRest == rest;
+      // If that execution modified the current MethodMemo, record the change before we lose the
+      // context.
+      if (methodMemoUpdated) {
+        resetStabilityCounter(methodMemo);
+      }
+      cgParent = CodeGenParent.INVALID;
+      // First check for errors or cancellation: those shouldn't increment the stability counter
+      if (unwindStarted() && stackHead.first().baseType() instanceof Err) {
+        return;
+      } else if (rThread != null && rThread.isCancelled()) {
+        return;
+      }
+      // Returning or blocking might increment the stability counter
+      if (unwoundFrom != null && stackRest == base) {
+        CodeGenLink cgLink = unwoundFrom.link;
+        if (methodMemo == cgLink.mm
+            && cgLink.incrementStabilityCounter(unwoundFrom, codeGenDebugging)) {
+          unwoundFrom = null;
+          // If generated code X calls generated code Y and Y escapes, this is the only chance we
+          // have to trigger regeneration of Y (if we just return without it, the generated code for
+          // X will just keep calling the same Y).
+          cgLink.checkReady(this);
+        }
+      }
       // Exit if we're done
       if (unwindStarted() || stackRest == base || (rThread != null && rThread.isCancelled())) {
         return;
@@ -1271,6 +1397,66 @@ public final class TState extends MemoryHelper {
       stack = stackRest;
       stackRest = null;
     }
+  }
+
+  /**
+   * Reset the stability counter for the enclosing CodeGenLink(s). If the {@link #cgParent} caches
+   * are up-to-date they will point directly to the CodeGenLinks that need to updated; otherwise we
+   * may need to search from {@code mMemo}.
+   */
+  void resetStabilityCounter(MethodMemo mMemo) {
+    // Null if we're looking for the first enclosing CodeGenLink; otherwise the CodeGenLink we
+    // should search upwards from.
+    CodeGenLink source = null;
+    boolean skipLoopLink = false;
+    for (CodeGenParent p = cgParent; ; ) {
+      assert checkParent(p, (source == null) ? mMemo : source.mm, skipLoopLink);
+      CodeGenLink link = p.link();
+      if (link == null) {
+        // This cache has been invalidated, so we need to search for the right CodeGenLink
+        synchronized (scope().memoMerger) {
+          link = ((source == null) ? mMemo : source.mm).codeGenParent(skipLoopLink);
+          CodeGenParent selfLink = link.selfLink();
+          if (source == null) {
+            this.cgParent = selfLink;
+          } else {
+            source.setCgParent(selfLink);
+          }
+        }
+        if (codeGenDebugging != null) {
+          codeGenDebugging.append("?");
+        }
+      }
+      link.resetStabilityCounter(codeGenDebugging);
+      p = link.cgParent();
+      if (p == null) {
+        break;
+      }
+      source = link;
+      skipLoopLink = true;
+    }
+    methodMemoUpdated = false;
+    unwoundFrom = null;
+  }
+
+  /** Verify that {@code p} is a valid cache of the CodeGenLink containing {@code mm}. */
+  private boolean checkParent(CodeGenParent p, MethodMemo mm, boolean skipLoopLink) {
+    // If other threads are active it's possible to get a transient mismatch here, but retrying
+    // once or twice should be enough to succeed.
+    for (int i = 0; i < 5; i++) {
+      CodeGenLink link = p.link();
+      if (link == null) {
+        // The cache has been cleared, so can't be wrong.
+        return true;
+      }
+      synchronized (scope().memoMerger) {
+        if (mm.codeGenParent(skipLoopLink) == link) {
+          return true;
+        }
+        System.out.print("");
+      }
+    }
+    return false;
   }
 
   /**

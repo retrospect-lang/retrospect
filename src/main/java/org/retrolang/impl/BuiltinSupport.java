@@ -47,6 +47,7 @@ import org.retrolang.impl.BuiltinMethod.LoopContinuation;
 import org.retrolang.impl.BuiltinMethod.Saved;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.Bits;
+import org.retrolang.util.StringUtil;
 
 /**
  * Statics-only class to enable scanning designated classes for definitions of Retrospect built-in
@@ -151,7 +152,7 @@ class BuiltinSupport {
         }
         tstate.dropForThrow();
         e.push(tstate, stackEntryType, args);
-      } catch (RuntimeException e) {
+      } catch (RuntimeException | AssertionError e) {
         // Shouldn't happen, but if it does try to log something useful, then construct an
         // INTERNAL_ERROR stack entry and start unwinding.
         if (tstate.hasCodeGen()) {
@@ -160,15 +161,7 @@ class BuiltinSupport {
         e.printStackTrace();
         // The args may have been mutated or released, but they might be better than nothing
         System.err.printf(
-            "calling "
-                + stackEntryType.toString(
-                    i -> {
-                      try {
-                        return String.valueOf(args[i]);
-                      } catch (RuntimeException nested) {
-                        return "(can't print)";
-                      }
-                    }));
+            "calling " + stackEntryType.toString(i -> StringUtil.safeToString(args[i])));
         // We may have been part way through returning results
         tstate.clearResults();
         Err.INTERNAL_ERROR.pushUnwind(tstate, e.toString());

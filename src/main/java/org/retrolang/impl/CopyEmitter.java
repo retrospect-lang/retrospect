@@ -190,7 +190,13 @@ class CopyEmitter {
               }
               setDstVar(codeGen, dstVar, tmpRegister);
             }
-            // TODO: FRAME_TO_COMPOUND
+            case FRAME_TO_COMPOUND -> {
+              // Currently I believe the only way to get here is if we're generating code for a
+              // path that is unreachable *or* hasn't been reached since switching to a refVar
+              // (probably VArrayLayout).  Either way, escaping seems like a safe bet.
+              // TODO: could we get here with emitEqualRegisters?
+              codeGen.escape();
+            }
             default -> throw new UnsupportedOperationException();
           }
         } else {

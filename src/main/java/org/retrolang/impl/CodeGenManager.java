@@ -1,5 +1,6 @@
 package org.retrolang.impl;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import java.util.function.Supplier;
 import org.retrolang.code.DebugInfo;
@@ -15,8 +16,13 @@ public class CodeGenManager {
 
   private Monitor monitor = DEFAULT_MONITOR;
 
+  private int exlinedThreshold;
+  private int loopThreshold;
+
   CodeGenManager(Scope scope) {
     this.scope = scope;
+    exlinedThreshold = Defaults.exlinedThreshold;
+    loopThreshold = Defaults.loopThreshold;
   }
 
   /** Should be called before this scope is shared with other threads. */
@@ -27,6 +33,15 @@ public class CodeGenManager {
 
   CodeGenDebugging debugging() {
     return debugging;
+  }
+
+  int threshold(CodeGenLink.Kind kind) {
+    return (kind == CodeGenLink.Kind.EXLINED) ? exlinedThreshold : loopThreshold;
+  }
+
+  void setThresholds(int exlined, int loop) {
+    exlinedThreshold = exlined;
+    loopThreshold = loop;
   }
 
   int nextIndex() {
@@ -40,19 +55,6 @@ public class CodeGenManager {
   Monitor monitor() {
     return monitor;
   }
-
-  private static final Monitor DEFAULT_MONITOR =
-      new Monitor() {
-        @Override
-        public void loaded(
-            String name,
-            ImmutableList<Template> args,
-            Supplier<String> counter,
-            DebugInfo debugInfo) {
-          String argsAsString = StringUtil.joinElements("(", ")", args.size(), args::get);
-          System.out.format("Loaded code for %s%s", name, argsAsString);
-        }
-      };
 
   /**
    * A Monitor is an object that will be updated as code is generated, to enable logging or other
@@ -92,6 +94,29 @@ public class CodeGenManager {
       return DebugInfo.printConstants(debugInfo.constants, Handle.lookup)
           + "\n"
           + DebugInfo.printClassBytes(debugInfo.classBytes);
+    }
+  }
+
+  private static final Monitor DEFAULT_MONITOR =
+      (name, args, counter, debugInfo) -> {
+        String argsAsString = StringUtil.joinElements("(", ")", args.size(), args::get);
+        System.out.format("Loaded code for %s%s", name, argsAsString);
+      };
+
+  /**
+   * See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom for why this is in a
+   * nested class.
+   */
+  private static class Defaults {
+    // These are initialized once from system properties and then used by each new CodeGenManager
+    static final int exlinedThreshold;
+    static final int loopThreshold;
+
+    static {
+      boolean cgEnabled = Boolean.getBoolean("cgEnabled");
+      exlinedThreshold = Integer.getInteger("exlinedCgThreshold", cgEnabled ? 20 : -1);
+      loopThreshold = Integer.getInteger("loopCgThreshold", cgEnabled ? 10 : -1);
+      Preconditions.checkState(exlinedThreshold != 0 && loopThreshold != 0);
     }
   }
 }

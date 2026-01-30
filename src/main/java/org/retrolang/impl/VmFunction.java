@@ -146,11 +146,20 @@ public abstract class VmFunction implements Vm.Function {
       return;
     }
     MethodMemo calledMemo = callerMemo.memoForCall(tstate, callSite, method, args);
+    CodeGenParent prevCGParent;
+    CodeGenLink savedCGLink = null;
+    CodeGenTarget target = null;
+    CodeGenTarget prevUnwoundFrom = null;
     if (calledMemo.extra() instanceof CodeGenLink cgLink) {
+      // Before we switch to an exlined MethodMemo, make sure that any change to the current
+      // MethodMemo is appropriately recorded.
+      if (tstate.methodMemoUpdated) {
+        tstate.resetStabilityCounter(callerMemo);
+      }
       // Check to see if we have generated code for this method, and if so whether the
       // generated code accepts these args.  If it does, call the generated code instead of
       // executing the method directly.
-      CodeGenTarget target = cgLink.checkReady(tstate);
+      target = cgLink.checkReady(tstate);
       if (target != null) {
         Object[] preparedArgs = target.prepareArgs(tstate, args);
         if (preparedArgs != null) {
@@ -159,9 +168,28 @@ public abstract class VmFunction implements Vm.Function {
           return;
         }
       }
+      prevCGParent = tstate.cgParent;
+      tstate.cgParent = cgLink.selfLink();
+      // Changes to an exlined method memo shouldn't affect whether the caller's execution is deemed
+      // successful.
+      prevUnwoundFrom = tstate.unwoundFrom;
+      tstate.unwoundFrom = null;
+      cgLink.incrementStabilityCounter(target, tstate.codeGenDebugging);
+      savedCGLink = cgLink;
+    } else {
+      prevCGParent = tstate.cgParent;
     }
     results = callSite.adjustResultsInfo(results);
     method.impl.execute(tstate, results, calledMemo, args);
+    if (savedCGLink != null) {
+      if (tstate.methodMemoUpdated) {
+        tstate.resetStabilityCounter(calledMemo);
+      } else if (!tstate.unwindStarted()) {
+        savedCGLink.incrementStabilityCounter(target, tstate.codeGenDebugging);
+      }
+      tstate.unwoundFrom = prevUnwoundFrom;
+    }
+    tstate.cgParent = prevCGParent;
   }
 
   /**

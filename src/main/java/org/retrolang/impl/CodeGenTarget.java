@@ -373,8 +373,8 @@ class CodeGenTarget {
     } catch (Throwable e) {
       throw new AssertionError(e);
     }
-    if (debug != null) {
-      debug.append(this, tstate.unwindStarted() ? "u" : "r");
+    if (debug != null && !tstate.unwindStarted()) {
+      debug.append(this, "r");
     }
     // We don't care about the representation of results, but this also handles escapes.
     var unused = tstate.checkExlinedResult(results);

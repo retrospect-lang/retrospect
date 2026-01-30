@@ -1,0 +1,49 @@
+// A copy of spectral_norm.r8t modified to introduce parallelism via futures
+// (in lieu of the auto-parallelization of loops that isn't implemented yet).
+// This gives a roughly 3x speedup (in wall time) on my macbook.
+
+u = newMatrix([n], 1)
+v = None
+
+// Each loop iteration computes two more values in the sequence; u is the most
+// recent value, and v is the one before that.
+for _ in 1..10 sequential u, v {
+  v = multiply_A_At(u)
+  u = multiply_A_At(v)
+}
+
+vBv = u * v | sum
+vv = v * v | sum
+return sqrt(vBv / vv)
+
+// Returns the reciprocal of element (i,j) of (infinite) matrix A
+function aRecip(i, j) = (i+j-2) * (i+j-1) / 2 + i
+
+// Evaluates the given lambda with each int from 1 to size (in parallel)
+// and returns an array of the results.
+function parallelEval(size, lambda) {
+  futures = 1..size | i -> future(-> lambda @ i) | save
+  return waitFor(^futures) | save
+}
+
+// Returns v times A (a vector the same length as v, where each element is the
+// dot product of v with a row of A)
+function multiply_A(v) =
+    parallelEval(size(v), i -> (v / aRecip(i, ^1..size(v)) | sum))
+
+// Returns v times A transposed
+function multiply_At(v) =
+    parallelEval(size(v), i -> (v / aRecip(^1..size(v), i) | sum))
+
+// Returns v times A times A transposed
+function multiply_A_At(v) = multiply_At(multiply_A(v))
+
+/* RUN (n=100) RETURNS
+  1.2742199912349306
+---
+allocated=536000000‥648000000/20800000‥25200000, peak=14720‥20840
+$0 = *[]d0
+$1 = *[]x0:Future
+$2 = *[]d0
+$3 = *[]x0:Future
+*/

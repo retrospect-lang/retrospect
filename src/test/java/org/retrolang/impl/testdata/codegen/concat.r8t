@@ -87,10 +87,10 @@ test_x0(i1, i2):
  70: setInt[](TState.fnResultBytes(X0, 4), 0, I9);
  71: return
 -72: X10 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.loop ∥ innerIt=I3⸨0:ConcatIterator(I4⸨0:None; 1:RangeIterator(I2, I1, 0)⸩, ReversedRangeIterator(I5, 1, I7), I8); 1:ReversedRangeIterator(I4, 1, I2)⸩, it=JoinedIterator((empty), TransformedMatrix(Range(1, I6), lambda@10:19), EnumerateValues)⟧);
- 73: X1 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[b0, b0]; Absent⸩, JoinedIterator(⸨ConcatIterator(⸨None; RangeIterator(b0, b0, 0)⸩, ReversedRangeIterator(b0, 1, b0), b0); ReversedRangeIterator(b0, 1, b0)⸩, TransformedMatrix(Range(1, b0), lambda@10:19), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, mMemo_10@xxxx, null);
- 74: X1 ← TState.fillStackEntry(X0, X1, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨b0; Absent⸩, TransformedIterator(JoinedIterator(⸨ConcatIterator(⸨None; RangeIterator(b0, b0, 0)⸩, ReversedRangeIterator(b0, 1, b0), b0); ReversedRangeIterator(b0, 1, b0)⸩, TransformedMatrix(Range(1, b0), lambda@10:19), EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), b0⟩, mMemo_13@xxxx, null);
+ 73: X1 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[b0, b0]; Absent⸩, JoinedIterator(⸨ConcatIterator(⸨None; RangeIterator(b0, b0, 0)⸩, ReversedRangeIterator(b0, 1, b0), b0); ReversedRangeIterator(b0, 1, b0)⸩, TransformedMatrix(Range(1, b0), lambda@10:19), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, lmMemo_10@xxxx, null);
+ 74: X1 ← TState.fillStackEntry(X0, X1, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨b0; Absent⸩, TransformedIterator(JoinedIterator(⸨ConcatIterator(⸨None; RangeIterator(b0, b0, 0)⸩, ReversedRangeIterator(b0, 1, b0), b0); ReversedRangeIterator(b0, 1, b0)⸩, TransformedMatrix(Range(1, b0), lambda@10:19), EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), b0⟩, lmMemo_13@xxxx, null);
  75: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=I9⟧);
- 76: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨b0, Sum(0)⟩, mMemo_25@xxxx, null);
+ 76: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨b0, Sum(0)⟩, LmMemo_25@xxxx, null);
  77: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨b0, Sum(0)⟩, mMemo_26@xxxx, null);
  78: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨b0⟩, mMemo_30@xxxx, null);
  79: X1 ← TState.fillStackEntry(X0, X1, ⟦concat.r8t+0:11_9 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, null);

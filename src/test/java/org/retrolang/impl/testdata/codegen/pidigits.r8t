@@ -546,7 +546,7 @@ run_x0(i1):
   64: X11 ← X21;
   65: X13 ← X22;
 = 66: test X19 == null; T:→ 68
-  67: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, mMemo_h38@xxxx, X6);
+  67: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, X6);
 - 68: I9 ← I17;
   69: I12 ← I18;
   70: test I15 0 (< 2); F:→ 20
@@ -583,7 +583,7 @@ run_x0(i1):
  101: setUint8[](Frame1i2x.x0(X7), iSub(I8, 1), I9);
  102: test X4 == null; T:→ 105
  103: X5 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, it=RangeIterator(I14, I1, 0)⟧);
- 104: X3 ← TState.fillStackEntry(X0, X4, X5, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, mMemo_h40@xxxx, X3);
+ 104: X3 ← TState.fillStackEntry(X0, X4, X5, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3);
 -105: I8 ← I14;
  106: I9 ← I12;
  107: X10 ← X15;
@@ -609,7 +609,7 @@ run_x0(i1):
 =127: X2 ← newStackEntry(⟦pidigits.r8t+3:10_7 _t0, spigot = nextDigit(spigot) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), digits_rw=LoopRW(Absent, X7), _key=[I8]⟧);
  128: X4 ← TState.fillStackEntry(X0, X5, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩, loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, RangeIterator(b0, b0, 0)⟩, mMemo_h46@xxxx, X4);
  129: X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, it=RangeIterator(I14, I1, 0)⟧);
- 130: X3 ← TState.fillStackEntry(X0, X4, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, mMemo_h40@xxxx, X3);
+ 130: X3 ← TState.fillStackEntry(X0, X4, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3);
 =131: X2 ← TState.fillStackEntry(X0, X3, ⟦pidigits.r8t+3:9_4 _t0 = iterate(_t0, _t2, loop@9⸨digits_ro=digits_ro, _eKind=_t2⸩, loop@9_state⸨digits_rw=_t1, spigot=spigot⸩) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
 =132: TState.setStackRest(X0, X2);
  133: TState.setUnwoundFrom(X0, target:run_x0);
@@ -618,7 +618,7 @@ run_x0(i1):
  136: X5 ← TState.fillStackEntry(X0, X6, X2, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, X5); → 127
 -137: X2 ← newStackEntry(⟦pidigits.r8t+3:32_14 spigot = replaceElement(spigot, "z", _t0) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, _t0={q: BigInt({mag: X20, signum: 1}), r: BigInt({mag: X21, signum: I18}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X22, signum: 1})}⟧);
  138: X19 ← TState.fillStackEntry(X0, null, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19);
-=139: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, mMemo_h38@xxxx, X6);
+=139: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, X6);
 =140: X5 ← TState.fillStackEntry(X0, X6, ⟦pidigits.r8t+3:24_0 _t0 = iterateUnbounded(loop@24, loop@24_state⸨spigot=spigot⸩)⟧, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, X5); → 127
 -141: X2 ← newStackEntry(⟦pidigits.r8t+3:32_13 _t0 = compose(_t0, _t1) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
  142: X19 ← TState.fillStackEntry(X0, X15, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19); → 139
@@ -629,9 +629,9 @@ run_x0(i1):
 -147: X2 ← newStackEntry(⟦pidigits.r8t+3:25_2 digit = extract(_t0, 3) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
  148: X19 ← TState.fillStackEntry(X0, X15, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, null); → 139
 -149: X2 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=LoopExit(loop@24_break@28⸨digit=I9, spigot={k: I12, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⸩), lambda=loop@24⟧);
- 150: X6 ← TState.fillStackEntry(X0, null, X2, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, mMemo_h38@xxxx, null); → 140
+ 150: X6 ← TState.fillStackEntry(X0, null, X2, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, null); → 140
 -151: X2 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I8, I1, 0), loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, state=loop@9_state⸨digits_rw=LoopRW(Absent, X7), spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⸩⟧);
- 152: X3 ← TState.fillStackEntry(X0, null, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, mMemo_h40@xxxx, X3); → 131
+ 152: X3 ← TState.fillStackEntry(X0, null, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3); → 131
 -153: X2 ← newStackEntry(⟦pidigits.r8t+3:8_0 spigot = initialSpigot() ∥ n=I1⟧);
  154: X2 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 132
 
@@ -859,7 +859,7 @@ extract_x1({q: BigInt({mag: x1:*[]@xxxx, signum: 1}), r: BigInt({mag: x2:*[]@xxx
  221: TState.setUnwoundFrom(X0, target:extract_x1);
  222: return
 -223: addRef(X10); X7 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I1, 1, None), loop=loop@xxx⸨mag=X10⸩, state=Absent⟧);
- 224: X1 ← TState.fillStackEntry(X0, null, X7, ⟨LoopExit(loop@xxx_break@xxx⸨i=1⸩)⟩, mMemo_9@xxxx, null);
+ 224: X1 ← TState.fillStackEntry(X0, null, X7, ⟨LoopExit(loop@xxx_break@xxx⸨i=1⸩)⟩, lmMemo_9@xxxx, null);
  225: X7 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X10, end=I5⟧);
  226: X1 ← TState.fillStackEntry(X0, X1, X7, ⟨x0:*[]@xxxx⟩, mMemo_24@xxxx, null);
  227: X5 ← newStackEntry(⟦pidigits.r8t+3:395_62 q = dropLeadingZeros(q) ∥ u=X2, withRemainder=False, vSize=I3, normalizeShift=I8⟧);
@@ -870,38 +870,38 @@ extract_x1({q: BigInt({mag: x1:*[]@xxxx, signum: 1}), r: BigInt({mag: x2:*[]@xxx
 -232: X1 ← newStackEntry(⟦pidigits.r8t+3:393_47 _t0 = subtract(uSize, j) ∥ q=X10, u=X2, j=I15, uSize=I5⟧);
  233: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null);
 =234: X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X11⸩, it=RangeIterator(I16, I14, None)⟧);
- 235: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, mMemo_h40@xxxx, null);
+ 235: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h40@xxxx, null);
 =236: X2 ← newStackEntry(⟦pidigits.r8t+3:350_60 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨uSize=uSize, vTop=vTop, vTop2=vTop2, qSize=qSize, v=v⸩, loop@xxx_state⸨q=q, u=u, uTop=uTop⸩) ∥ withRemainder=False, vSize=I3, normalizeShift=I8⟧);
  237: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 229
 -238: X20 ← newStackEntry(⟦pidigits.r8t+3:373_15 _t0 = at(p, "high") ∥ u=X2, p={high: U32(I1), low: U32(I21)}, p2={high: 0x0, low: U32(I17)}, t={high: U32(I19), low: U32(I23)}⟧);
  239: X1 ← TState.fillStackEntry(X0, null, X20, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩, loop@xxx⸨qHat=U32(b0), uStart=0⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0)⟩, mMemo_23@xxxx, null);
  240: addRef(X11); X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨qHat=U32(I22), uStart=0⸩, it=ArrayIterator(X11, EnumerateWithKeys, I18)⟧);
- 241: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, mMemo_26@xxxx, null);
+ 241: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_26@xxxx, null);
 =242: addRef(X11); X2 ← newStackEntry(⟦pidigits.r8t+3:368_22 _t0 = iterate(v, EnumerateWithKeys, loop@xxx⸨qHat=qHat, uStart=uStart⸩, loop@xxx_state⸨borrow=borrow, u=u⸩) ∥ q=X10, uTop=U32(I9), j=I15, qHat=U32(I22), uStart=0, uSize=I5, qSize=I7, v=X11⟧);
  243: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null); → 234
 -244: addRef(X11); X18 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I1, it=ArrayIterator(X11, EnumerateWithKeys, I1)⟧);
- 245: X1 ← TState.fillStackEntry(X0, null, X18, ⟨⸨[[b0], U32(i0)]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0), loop@xxx⸨qHat=U32(b0), uStart=0⸩, loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, mMemo_1@xxxx, null);
+ 245: X1 ← TState.fillStackEntry(X0, null, X18, ⟨⸨[[b0], U32(i0)]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0), loop@xxx⸨qHat=U32(b0), uStart=0⸩, loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, lmMemo_1@xxxx, null);
  246: X18 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx⸨qHat=U32(I22), uStart=0⸩, state=loop@xxx_state⸨borrow=U32(I17), u=X2⸩⟧);
- 247: X1 ← TState.fillStackEntry(X0, X1, X18, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, mMemo_26@xxxx, null); → 242
+ 247: X1 ← TState.fillStackEntry(X0, X1, X18, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_26@xxxx, null); → 242
 -248: I17 ← 1;
 -249: X19 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=I17⸨0:LoopExit(loop@xxx_break⸨qHat=U32(I22)⸩); 1:loop@xxx_state⸨qHat=U32(I22), qHigh=0x0, rHat=U32(I1)⸩⸩, lambda=loop@xxx⸨vTop2=U32(I13), uTop3=U32(I18), vTop=U32(I12)⸩⟧);
- 250: X1 ← TState.fillStackEntry(X0, null, X19, ⟨LoopExit(loop@xxx_break⸨qHat=U32(b0)⸩)⟩, mMemo_9@xxxx, null);
+ 250: X1 ← TState.fillStackEntry(X0, null, X19, ⟨LoopExit(loop@xxx_break⸨qHat=U32(b0)⸩)⟩, LmMemo_9@xxxx, null);
  251: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:413_3 _t0 = iterateUnbounded(loop@xxx⸨vTop2=vTop2, uTop3=uTop3, vTop=vTop⸩, loop@xxx_state⸨qHat=qHat, qHigh=qHigh, rHat=rHat⸩)⟧, ⟨U32(b0)⟩, mMemo_15@xxxx, null);
  252: addRef(X11); X17 ← newStackEntry(⟦pidigits.r8t+3:357_8 qHat = qHat(uTop, _t0, _t1, vTop, vTop2) ∥ q=X10, u=X2, uTop=U32(I9), j=I15, uSize=I5, qSize=I7, v=X11⟧);
  253: X1 ← TState.fillStackEntry(X0, X1, X17, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null); → 234
 -254: X1 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I15, I14, None), loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X11⸩, state=loop@xxx_state⸨q=X10, u=X2, uTop=U32(I9)⸩⟧);
- 255: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, mMemo_h40@xxxx, null); → 236
+ 255: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h40@xxxx, null); → 236
 -256: dropRef{X10};
 -257: X1 ← newStackEntry(⟦pidigits.r8t+3:347_53 _t0 = u32(0) ∥ u=X2, v=X11, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8, uTop=U32(I9)⟧);
  258: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 229
 -259: X12 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I1, I9, None), loop=loop@xxx⸨n=I8⸩, state=loop@xxx_state⸨prev=U32(I10), mag=X2⸩⟧);
- 260: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, mMemo_10@xxxx, null);
+ 260: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
  261: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
  262: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
  263: X2 ← newStackEntry(⟦pidigits.r8t+3:345_52 uTop, u = shiftMagLeft(u, normalizeShift) ∥ v=X11, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
  264: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 229
 -265: X12 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I1, I9, None), loop=loop@xxx⸨n=I8⸩, state=loop@xxx_state⸨prev=U32(I10), mag=X11⸩⟧);
- 266: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, mMemo_10@xxxx, null);
+ 266: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
  267: X9 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
  268: X1 ← TState.fillStackEntry(X0, X1, X9, ⟨U32(0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
  269: X9 ← newStackEntry(⟦pidigits.r8t+3:343_47 carry, v = shiftMagLeft(v, normalizeShift) ∥ u=X2, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
@@ -909,7 +909,7 @@ extract_x1({q: BigInt({mag: x1:*[]@xxxx, signum: 1}), r: BigInt({mag: x2:*[]@xxx
 -271: addRef(X4); X1 ← newStackEntry(⟦pidigits.r8t+3:321_1 _t0 = lessThan(cmp, 0) ∥ u=X2, v=X4, withRemainder=False, cmp=1⟧);
  272: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 229
 -273: addRef(X2); addRef(X4); X3 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I1, 1, None), loop=loop@xxx⸨m1=X2, m2=X4⸩, state=Absent⟧);
- 274: X1 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⟩, mMemo_11@xxxx, null);
+ 274: X1 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⟩, lmMemo_11@xxxx, null);
  275: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_21@xxxx, null);
  276: addRef(X4); X3 ← newStackEntry(⟦pidigits.r8t+3:320_0 cmp = compareMags(u, v) ∥ u=X2, v=X4, withRemainder=False⟧);
  277: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 229
@@ -1200,13 +1200,13 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
 -106: X2 ← newStackEntry(⟦pidigits.r8t+3:112_43 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=1⟧);
  107: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 103
 -108: addRef(X1); addRef(X3); X4 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I2, 1, None), loop=loop@xxx⸨m1=X1, m2=X3⸩, state=Absent⟧);
- 109: X4 ← TState.fillStackEntry(X0, null, X4, ⟨⸨Absent; LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⸩⟩, mMemo_11@xxxx, null);
+ 109: X4 ← TState.fillStackEntry(X0, null, X4, ⟨⸨Absent; LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⸩⟩, LmMemo_11@xxxx, null);
  110: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_21@xxxx, null);
  111: X2 ← newStackEntry(⟦pidigits.r8t+3:108_31 cmp = compareMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), y=BigInt({mag: X3, signum: -1})⟧);
  112: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 103
--113: X3 ← TState.fillStackEntry(X0, null, ⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([0x1], EnumerateAllKeys, 0)⟧, ⟨⸨[[1], U32(1)]; Absent⸩, ArrayIterator([U32(1)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+-113: X3 ← TState.fillStackEntry(X0, null, ⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([0x1], EnumerateAllKeys, 0)⟧, ⟨⸨[[1], U32(1)]; Absent⸩, ArrayIterator([U32(1)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  114: X5 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveWithOffset(I6)), state=X4⟧);
- 115: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨x0:*[]@xxxx⟩, mMemo_5@xxxx, null);
+ 115: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨x0:*[]@xxxx⟩, lmMemo_5@xxxx, null);
  116: X4 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_6@xxxx, null);
  117: X4 ← TState.fillStackEntry(X0, X4, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_8@xxxx, null);
  118: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:224_19 x = concatUpdate(x, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_h43@xxxx, null);
@@ -1217,10 +1217,10 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
 -123: X5 ← newStackEntry(⟦pidigits.r8t+3:221_23 _t0 = at(y_i_plus_carry, "high") ∥ x=X4, y_i_plus_carry={high: 0x0, low: U32(I10)}, high=U32(I11)⟧);
  124: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩, loop@xxx⸨y=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_20@xxxx, null);
  125: X5 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨y=X3⸩, it=RangeIterator(I9, I7, None)⟧);
- 126: X4 ← TState.fillStackEntry(X0, X4, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, mMemo_23@xxxx, null);
+ 126: X4 ← TState.fillStackEntry(X0, X4, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null);
 =127: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:210_9 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨carry=carry, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_h43@xxxx, null); → 119
 -128: X5 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I6, I7, None), loop=loop@xxx⸨y=X3⸩, state=loop@xxx_state⸨carry=U32(I8), x=X4⸩⟧);
- 129: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, mMemo_23@xxxx, null); → 127
+ 129: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null); → 127
 -130: X5 ← newStackEntry(⟦pidigits.r8t+3:101_0 _t0 = _(x) ∥ x=BigInt({mag: X1, signum: I2}), y=BigInt({mag: X3, signum: I4})⟧);
  131: X5 ← TState.fillStackEntry(X0, null, X5, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 103
 
@@ -1279,9 +1279,9 @@ multiplyMagByU32_x5(x1:*[]@xxxx, U32(i2)):
  52: setObject[](TState.fnResults(X0, 1), 0, X1);
  53: return
 -54: X2 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([U32(I5)], EnumerateAllKeys, 0)⟧);
- 55: X2 ← TState.fillStackEntry(X0, null, X2, ⟨⸨[[1], U32(i0)]; Absent⸩, ArrayIterator([U32(i0)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 55: X2 ← TState.fillStackEntry(X0, null, X2, ⟨⸨[[1], U32(i0)]; Absent⸩, ArrayIterator([U32(i0)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  56: X4 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveWithOffset(I3)), state=X1⟧);
- 57: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, mMemo_5@xxxx, null);
+ 57: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, lmMemo_5@xxxx, null);
  58: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_6@xxxx, null);
  59: X1 ← TState.fillStackEntry(X0, X1, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_8@xxxx, null);
  60: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:279_15 mag = concatUpdate(mag, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
@@ -1293,12 +1293,12 @@ multiplyMagByU32_x5(x1:*[]@xxxx, U32(i2)):
 -66: X3 ← newStackEntry(⟦pidigits.r8t+3:275_9 _t0 = at(t1, "high") ∥ mag=X1, t1={high: U32(I5), low: U32(I9)}, t2={high: 0x0, low: U32(I7)}⟧);
  67: X1 ← TState.fillStackEntry(X0, null, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩, loop@xxx⸨k=U32(i0)⸩, RangeIterator(b0, b0, None)⟩, mMemo_14@xxxx, null);
  68: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨k=U32(I2)⸩, it=RangeIterator(I6, I4, None)⟧);
- 69: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, mMemo_17@xxxx, null);
+ 69: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_17@xxxx, null);
 =70: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:271_10 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨k=k⸩, loop@xxx_state⸨carry=carry, mag=mag⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 61
 -71: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I3, I4, None), loop=loop@xxx⸨k=U32(I2)⸩, state=loop@xxx_state⸨carry=U32(I5), mag=X1⸩⟧);
- 72: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, mMemo_17@xxxx, null); → 70
+ 72: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_17@xxxx, null); → 70
 -73: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I2, I4, None), loop=loop@xxx⸨n=I3⸩, state=loop@xxx_state⸨prev=U32(I5), mag=X1⸩⟧);
- 74: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, mMemo_10@xxxx, null);
+ 74: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
  75: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I3⟧);
  76: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
  77: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:268_4 carry, mag = shiftMagLeft(mag, _t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 61
@@ -1343,7 +1343,7 @@ subtractMags_x6(x1:*[]@xxxx, x2:*[]@xxxx):
  35: I2 ← I4; → 31
 -36: test I5 == 0; T:→ 28
 -37: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I3, I4, None), loop=loop@xxx⸨y=X2⸩, state=loop@xxx_state⸨borrow=U32(I5), x=X1⸩⟧);
- 38: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨LoopExit(loop@xxx_break⸨borrow=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨borrow=U32(0), x=x0:*[]@xxxx⸩⸩⟩, mMemo_23@xxxx, null);
+ 38: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨LoopExit(loop@xxx_break⸨borrow=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨borrow=U32(0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null);
  39: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:234_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨borrow=borrow, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
 =40: TState.setStackRest(X0, X1);
  41: TState.setUnwoundFrom(X0, target:subtractMags_x6);
@@ -1361,7 +1361,7 @@ subtractMags_x6(x1:*[]@xxxx, x2:*[]@xxxx):
  53: setObject[](TState.fnResults(X0, 1), 0, X1);
  54: return
 -55: addRef(X1); X4 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I2, 1, None), loop=loop@xxx⸨mag=X1⸩, state=Absent⟧);
- 56: X2 ← TState.fillStackEntry(X0, null, X4, ⟨LoopExit(loop@xxx_break@xxx⸨i=b0⸩)⟩, mMemo_9@xxxx, null);
+ 56: X2 ← TState.fillStackEntry(X0, null, X4, ⟨LoopExit(loop@xxx_break@xxx⸨i=b0⸩)⟩, LmMemo_9@xxxx, null);
  57: X4 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X1, end=I3⟧);
  58: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, mMemo_24@xxxx, null);
  59: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:248_15 _t0 = dropLeadingZeros(x)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 40

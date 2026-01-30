@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 import org.retrolang.Vm;
 import org.retrolang.impl.Instruction.BranchTarget;
 import org.retrolang.util.Bits;
+import org.retrolang.util.StringUtil;
 
 /**
  * A sequence of Instructions that can be executed. Constructed by a VmInstructionBlock.
@@ -261,11 +262,11 @@ class InstructionBlock implements MethodImpl {
         try {
           tstate.syncWithCoordinator();
           pc = inst.execute(tstate, localValues, memo);
-        } catch (RuntimeException e) {
+        } catch (RuntimeException | AssertionError e) {
           // Shouldn't happen, but if it does try to construct a meaningful stack entry to go along
           // with the "internal error" message.
           e.printStackTrace();
-          System.err.format("%s while at %s in %s", Arrays.toString(localValues), pc, this);
+          System.err.format("%s while at %s in %s", StringUtil.safeToString(localValues), pc, this);
           // We may have been part way through returning results
           tstate.clearResults();
           if (!tstate.unwindStarted()) {

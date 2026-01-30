@@ -128,7 +128,7 @@ public abstract class BuiltinMethod {
     private CallSite callSite;
 
     /** The continuation to be called after the function returns successfully. */
-    private BuiltinSupport.ContinuationMethod continuation;
+    private ContinuationMethod continuation;
 
     /**
      * A SimpleStackEntryType that will be used if the stack is unwound during the initial function
@@ -278,10 +278,7 @@ public abstract class BuiltinMethod {
         values[numResults + i] = entry.element(i);
       }
       tstate.dropValue(entry);
-      tstate.runContinuation(caller.continuation, values, results, mMemo);
-      // Normally continuations are called from the loop in {@link TState#finishBuiltin}, but in
-      // this case we need to run it explicitly.
-      tstate.finishBuiltin(results, mMemo, caller.continuation.builtinEntry.impl);
+      tstate.resumeBuiltin(caller.continuation, values, results, mMemo);
     }
   }
 

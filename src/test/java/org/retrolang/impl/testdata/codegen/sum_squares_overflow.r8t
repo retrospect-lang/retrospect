@@ -23,9 +23,9 @@ sumSquares_x0(Range(i1, i2)):
  10: setInt[](TState.fnResultBytes(X0, 4), 0, I3);
  11: return
 -12: X4 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I1, I2, None), it=TransformedIterator(ToBeSet, EnumerateValues, iLambda@3:29)⟧);
- 13: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨i0; Absent⸩, TransformedIterator(RangeIterator(i0, i0, None), EnumerateValues, iLambda@3:29), Sum(0), i0⟩, mMemo_4@xxxx, null);
+ 13: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨i0; Absent⸩, TransformedIterator(RangeIterator(i0, i0, None), EnumerateValues, iLambda@3:29), Sum(0), i0⟩, lmMemo_4@xxxx, null);
  14: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=I3⟧);
- 15: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨i0, Sum(0)⟩, mMemo_11@xxxx, null);
+ 15: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨i0, Sum(0)⟩, LmMemo_11@xxxx, null);
  16: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨i0, Sum(0)⟩, mMemo_12@xxxx, null);
  17: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨i0⟩, mMemo_16@xxxx, null);
  18: X1 ← TState.fillStackEntry(X0, X1, ⟦sum_squares_overflow.r8t+4:3_2 _t0 = pipe(_t0, _t1)⟧, ⟨i0⟩, mMemo_x@xxxx, null);

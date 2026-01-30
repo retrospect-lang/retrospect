@@ -168,10 +168,7 @@ class MemoMerger {
     void checkForSimilarExlined(MethodMemo light, MemoMerger merger) {
       for (MethodMemo mm : exlined) {
         if (mm.isSimilarEnough(light)) {
-          // The mergeInto() call below will leave a forwarding pointer, but if mm has a
-          // parent we might as well go ahead and replace it now.
-          merger.replaceInParent(light, mm);
-          light.mergeInto(mm, merger);
+          merger.mergeMemos(light, mm, false);
           break;
         }
       }
@@ -368,12 +365,7 @@ class MemoMerger {
     }
     for (MethodMemo other : method.exlined) {
       if (other != mm && mm.isSimilarEnough(other)) {
-        if (!mm.isExlined()) {
-          // The mergeInto() call below will leave a forwarding pointer, but if mm has a
-          // parent we might as well go ahead and replace it now.
-          replaceInParent(mm, other);
-        }
-        mm.mergeInto(other, this);
+        mergeMemos(mm, other, true);
         return;
       }
     }
@@ -441,19 +433,37 @@ class MemoMerger {
       if (parent != null) {
         parent.updateChildWeight(prevWeight, m1.weight());
         parent.propagateWeightChange(this);
+        // Anyone that had cached a link to m1's previous codeGenParent will need to recheck it,
+        // it might now be their codeGenParent.
+        invalidateCodeGenParentSelfLink(parent);
       }
     }
-    replaceInParent(m2, m1);
-    m2.mergeInto(m1, this);
+    mergeMemos(m2, m1, true);
   }
 
-  /** If {@code mm} has a parent, update its parent to point to {@code replacement} instead. */
-  private void replaceInParent(MethodMemo mm, MethodMemo replacement) {
-    MethodMemo parent = mm.parent();
+  /**
+   * Merge {@code forward} into {@code keep}. If {@code topLevel} is false, this is part of a larger
+   * merge operation.
+   */
+  private void mergeMemos(MethodMemo forward, MethodMemo keep, boolean topLevel) {
+    if (topLevel) {
+      // This potentially changes the codeGenParent of MethodMemos on either side,
+      // so clear their caches.
+      invalidateCodeGenParentSelfLink(forward);
+      invalidateCodeGenParentSelfLink(keep);
+    }
+    // The mergeInto() call below will leave a forwarding pointer, but if `forward` has a
+    // parent we might as well go ahead and fix it now.
+    MethodMemo parent = forward.parent();
     if (parent != null) {
-      parent.replaceChild(mm, replacement);
+      parent.replaceChild(forward, keep);
       parent.propagateWeightChange(this);
     }
+    forward.mergeInto(keep, this);
+  }
+
+  private void invalidateCodeGenParentSelfLink(MethodMemo mm) {
+    mm.codeGenParent(false).invalidateSelfLink(scope.codeGenDebugging());
   }
 
   /**

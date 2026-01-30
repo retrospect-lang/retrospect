@@ -19,9 +19,21 @@ for sequential next, primes {
 primes[1..0] = [2]
 return primes
 
-/* RUN (n=16) RETURNS
-  [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53]
+/* RUN (n=64) CODEGEN(5) RETURNS
+ [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53,
+  59, 61, 67, 71, 73, 79, 83, 89, 97, 101, 103, 107, 109, 113, 127, 131,
+  137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199, 211, 223,
+  227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293, 307, 311]
 ---
-allocated=95592/3541, peak=64
-$0 = *[]b0
+?0---------------------.-?1-0-....1+.....++......+∘2+++++3bsr.1+sr+sr.+sr+sr+4bs[?⊝0-?⊝-⊝-?⊝-⊝-s[?3⊝4⊝-3⊝4⊝-3s[⊕s[⊕]]4s[⊕s[2*3s[⊕s[⊕s[⊕5bsr]]]?4⊚0-.s[2*5sr4⊕s[⊕s[*5sr.4⊕s[*5sr.4⊕s[⊕6bs[?⊝0-⊝-⊝-]]]]]]]]]]?-----
+  0: x (top level)
+  1: r LoopCore.IterateUnbounded // primes.r8t+2:5_6 _t0 = iterateUnbounded(loop@5⸨n=n⸩, loop@5_state⸨next=next, primes=primes⸩)
+  2: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // primes.r8t+2:7_4 _t0 = pipe(_t0, _t1) // LoopCore.IterateUnbounded.at // primes.r8t+2:5_6 _t0 = iterateUnbounded(loop@5⸨n=n⸩, loop@5_state⸨next=next, primes=primes⸩)
+  3: iterate_r0 (2)
+  4: iterateUnbounded_r1 (1)
+  5: iterate_r2 (2)
+  6: iterateUnbounded_r3 (1)
+---
+allocated=51624/1879, peak=304
+$0 = *[]i0
 */

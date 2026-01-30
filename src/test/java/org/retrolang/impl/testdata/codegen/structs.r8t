@@ -38,12 +38,12 @@ test_x0({x: i1, y: i2}, {x: i3, y: i4⸨0:i5; 1:x6:String⸩, z: i7⸨0:i8; 1:x9
  22: dropRef{X6, X9};
  23: I1 ← 0; → 10
 -24: X12 ← newStackEntry(⟦StructCore.NextStructIterator.startLoop ∥ index=1, it=StructIterator({x: I1, y: I2}, EnumerateAllKeys, 1)⟧);
- 25: X1 ← TState.fillStackEntry(X0, null, X12, ⟨⸨[x0:String, b0]; Absent⸩, StructIterator({x: b0, y: b0}, EnumerateAllKeys, b0)⟩, mMemo_1@xxxx, null);
+ 25: X1 ← TState.fillStackEntry(X0, null, X12, ⟨⸨[x0:String, b0]; Absent⸩, StructIterator({x: b0, y: b0}, EnumerateAllKeys, b0)⟩, lmMemo_1@xxxx, null);
  26: X1 ← TState.fillStackEntry(X0, X1, ⟦CollectionCore.NextWithKeysIterator.next⟧, ⟨⸨[x0:String, [x0:String, b0]]; Absent⸩, WithKeysIterator(StructIterator({x: b0, y: b0}, EnumerateAllKeys, b0)), TransformedIterator((empty), EnumerateAllKeys, lambda@8:46⸨s2={x: b0, y: ⸨b0; x0:String⸩, z: ⸨b0; x0:String⸩}⸩)⟩, mMemo_2@xxxx, null);
  27: X2 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator((empty), EnumerateAllKeys, lambda@8:46⸨s2={x: I3, y: I4⸨0:I5; 1:X6⸩, z: I7⸨0:I8; 1:X9⸩}⸩)⟧);
- 28: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨⸨[x0:String, ⸨b0; Absent; "wat"⸩]; Absent⸩, TransformedIterator(WithKeysIterator(StructIterator({x: b0, y: b0}, EnumerateAllKeys, b0)), EnumerateAllKeys, lambda@8:46⸨s2={x: b0, y: ⸨b0; x0:String⸩, z: ⸨b0; x0:String⸩}⸩), SaverLoop(SaveElements), {x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, mMemo_8@xxxx, null);
+ 28: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨⸨[x0:String, ⸨b0; Absent; "wat"⸩]; Absent⸩, TransformedIterator(WithKeysIterator(StructIterator({x: b0, y: b0}, EnumerateAllKeys, b0)), EnumerateAllKeys, lambda@8:46⸨s2={x: b0, y: ⸨b0; x0:String⸩, z: ⸨b0; x0:String⸩}⸩), SaverLoop(SaveElements), {x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, lmMemo_8@xxxx, null);
  29: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state={x: I10⸨0:I11; 1:Absent⸩, y: 1}⟧);
- 30: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}, SaverLoop(SaveElements)⟩, mMemo_15@xxxx, null);
+ 30: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}, SaverLoop(SaveElements)⟩, lmMemo_15@xxxx, null);
  31: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}, SaverLoop(SaveElements)⟩, mMemo_16@xxxx, null);
  32: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, mMemo_23@xxxx, null);
  33: X1 ← TState.fillStackEntry(X0, X1, ⟦structs.r8t+2:8_3 _t0 = pipe(_t0, _t1)⟧, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, mMemo_x@xxxx, null);

@@ -694,6 +694,7 @@ abstract class Instruction {
         callSite.setIgnoredResults(i -> outputs[i] == null);
       }
       duringCallStackEntryType = new DuringCallStackEntryType(this, helper.live.build());
+      callSite.duringCallEntryType = duringCallStackEntryType;
       helper.addLocalRefs(inputs);
       toClear = helper.getNewLive();
     }

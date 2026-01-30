@@ -543,7 +543,7 @@ public class MethodMemo {
         // Update argsMemo
         ValueMemo.Outcome outcome = result.harmonizeArgs(tstate, args, true);
         assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
-        if (outcome == ValueMemo.Outcome.CHANGED && result.state != LIGHT) {
+        if (outcome == ValueMemo.Outcome.CHANGED && !result.isLight()) {
           // That harmonize() call changed the argsMemo, so re-check for overlaps.
           merger.needsCheck(result);
           merger.finishChecks();
@@ -586,6 +586,7 @@ public class MethodMemo {
       propagateWeightChange(merger);
       merger.finishChecks();
     }
+    tstate.methodMemoUpdated = true;
     return result;
   }
 
@@ -612,6 +613,26 @@ public class MethodMemo {
       // Postpone the recomputation until we actually need to know.
       maxChildWeight = MAX_WEIGHT + 1;
     }
+  }
+
+  /**
+   * Returns the chain of memos from this one to its exlined ancestor. Intended only for debugging.
+   */
+  String stack() {
+    StringBuilder sb = new StringBuilder();
+    for (MethodMemo mm = this; ; mm = mm.parent) {
+      sb.append(mm);
+      if (mm.isForwarded()) {
+        sb.append(" -> ");
+        continue;
+      }
+      sb.append(" (").append(mm.perMethod == null ? "" : mm.perMethod.method).append(")");
+      if (mm.parent == null) {
+        break;
+      }
+      sb.append("; ");
+    }
+    return sb.toString();
   }
 
   /**
@@ -697,9 +718,14 @@ public class MethodMemo {
   /** Harmonizes the given arguments for this method. */
   @CanIgnoreReturnValue
   ValueMemo.Outcome harmonizeArgs(TState tstate, Object[] values, boolean isLocked) {
-    return argsMemo == null
-        ? ValueMemo.Outcome.NO_CHANGE_REQUIRED
-        : argsMemo.harmonizeAll(tstate, values, isLocked);
+    if (argsMemo == null) {
+      return ValueMemo.Outcome.NO_CHANGE_REQUIRED;
+    }
+    ValueMemo.Outcome result = argsMemo.harmonizeAll(tstate, values, isLocked);
+    if (result == ValueMemo.Outcome.CHANGED && extra instanceof CodeGenLink cgLink) {
+      cgLink.resetStabilityCounter(tstate.codeGenDebugging);
+    }
+    return result;
   }
 
   /** Harmonizes the results that this method is returning. */
@@ -708,6 +734,35 @@ public class MethodMemo {
       ValueMemo.Outcome outcome = resultsMemo.harmonizeAll(tstate, results, false);
       // Extra locking is only required for some args memos, so we shouldn't ever need it here.
       assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
+      if (outcome == ValueMemo.Outcome.CHANGED && extra instanceof CodeGenLink cgLink) {
+        cgLink.resetStabilityCounter(tstate.codeGenDebugging);
+      }
+    }
+  }
+
+  /**
+   * Returns the nearest enclosing CodeGenLink for this MethodMemo. If this is a LoopMethodMemo the
+   * result will be its {@link LoopMethodMemo#loopCodeGen} if it is non-null and {@code
+   * skipLoopLink} is false.
+   */
+  CodeGenLink codeGenParent(boolean skipLoopLink) {
+    assert MemoMerger.isLocked();
+    assert !skipLoopLink || this instanceof LoopMethodMemo;
+    for (MethodMemo mm = this; ; mm = mm.parent) {
+      if (mm.isForwarded()) {
+        // Follow the parent link and try again
+        continue;
+      }
+      if (!skipLoopLink && mm instanceof LoopMethodMemo lmm) {
+        CodeGenLink result = lmm.loopCodeGen;
+        if (result != null) {
+          return result;
+        }
+      }
+      if (mm.extra instanceof CodeGenLink result) {
+        return result;
+      }
+      skipLoopLink = false;
     }
   }
 
@@ -730,9 +785,10 @@ public class MethodMemo {
   void mergeInto(MethodMemo other, MemoMerger merger) {
     assert other != this
         && other.perMethod == this.perMethod
-        && (other.extra instanceof CodeGenLink || other.extra == this.extra);
+        && (other.isExlined() || other.extra == this.extra);
     if (isExlined()) {
       perMethod.removeExlined(this);
+      ((CodeGenLink) extra).setForwardedTo((CodeGenLink) other.extra);
     } else if (isHeavy()) {
       perMethod.removeHeavy(this);
     }
@@ -775,6 +831,13 @@ public class MethodMemo {
     valueMemos = null;
     callMemos = null;
     extra = null;
+    if (this instanceof LoopMethodMemo lmm) {
+      CodeGenLink link = lmm.loopCodeGen;
+      if (link != null) {
+        link.setForwardedTo(
+            LoopMethodMemo.lockedRequireCodeGenLink(other, merger.scope.codeGenDebugging()));
+      }
+    }
   }
 
   /**
@@ -827,6 +890,8 @@ public class MethodMemo {
 
   @Override
   public String toString() {
+    String prefix =
+        (this instanceof LoopMethodMemo lmm) ? (lmm.loopCodeGen == null ? "l" : "L") : "";
     String suffix;
     if (state == FORWARDED) {
       suffix = "_f";
@@ -835,7 +900,7 @@ public class MethodMemo {
     } else {
       suffix = ((state == HEAVY) ? "_h" : "_") + currentWeight;
     }
-    return String.format("mMemo%s@%s", suffix, StringUtil.id(this));
+    return String.format("%smMemo%s@%s", prefix, suffix, StringUtil.id(this));
   }
 
   /** A subclass of MethodMemo used for built-in methods with a LoopContinuation. */
@@ -863,19 +928,31 @@ public class MethodMemo {
       return (CodeGenLink) LOOP_CODE_GEN.getAcquire(this);
     }
 
-    /** Returns the CodeGenLink for this loop, creating it if needed. */
-    CodeGenLink requireLoopCodeGen(TState tstate) {
-      CodeGenLink result = loopCodeGen();
-      if (result != null) {
-        return result;
+    void requireLoopCodeGen(TState tstate) {
+      if (loopCodeGen == null) {
+        synchronized (tstate.scope().memoMerger) {
+          var unused = lockedRequireCodeGenLink(this, tstate.codeGenDebugging);
+        }
       }
-      result = new CodeGenLink(this, CodeGenLink.Kind.LOOP);
-      CodeGenLink previous = (CodeGenLink) LOOP_CODE_GEN.compareAndExchange(this, null, result);
-      if (previous != null) {
-        // We raced against another thread and it won, so use the CodeGenLink it created and drop
-        // ours.
-        return previous;
+    }
+
+    /**
+     * Returns the CodeGenLink for a LoopMethodMemo, creating it if needed. Should only be called
+     * with the MemoMerger locked.
+     */
+    private static CodeGenLink lockedRequireCodeGenLink(MethodMemo mm, CodeGenDebugging debugging) {
+      LoopMethodMemo loop = (LoopMethodMemo) mm.resolve();
+      if (loop.loopCodeGen != null) {
+        return loop.loopCodeGen;
       }
+      // Anyone that had cached a link to our parent CodeGenLink will need to recheck it,
+      // since we might now be their CGParent.
+      CodeGenLink parent = loop.codeGenParent(true);
+      // Install this before we recreate our parent's selfLink.
+      CodeGenLink result = new CodeGenLink(loop, CodeGenLink.Kind.LOOP);
+      LOOP_CODE_GEN.setRelease(loop, result);
+      CodeGenParent newParentLink = parent.invalidateSelfLink(debugging);
+      result.setCgParent(newParentLink);
       return result;
     }
   }

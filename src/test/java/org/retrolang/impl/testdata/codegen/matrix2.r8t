@@ -55,14 +55,14 @@ test_x0([i1, i2, i3]):
  39: I6 ← 1;
  40: I7 ← 1; → 15
 -41: X4 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([I5, I6, I7], EnumerateAllKeys, 2)⟧);
- 42: X10 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, mMemo_1@xxxx, null);
- 43: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, mMemo_4@xxxx, null);
+ 42: X10 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, lmMemo_1@xxxx, null);
+ 43: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, lmMemo_4@xxxx, null);
  44: X4 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=BinaryUpdateWithCollection(⟦`add:2`⟧), state=[I11, I12, I9]⟧);
- 45: X4 ← TState.fillStackEntry(X0, X10, X4, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, mMemo_13@xxxx, null);
+ 45: X4 ← TState.fillStackEntry(X0, X10, X4, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, lmMemo_13@xxxx, null);
 =46: X4 ← TState.fillStackEntry(X0, X4, ⟦MatrixCore.BinaryUpdateMatrix.afterSizesRhs⟧, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, mMemo_17@xxxx, null);
  47: X4 ← TState.fillStackEntry(X0, X4, ⟦ReducerCore.nextStateSum⟧, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, mMemo_18@xxxx, null);
  48: X8 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=Sum([0, 0, 0]), it=TransformedIterator(BaseIterator(EnumerateValues, [I5, I6, I7], [I1, I2, I3]), EnumerateValues, lambda@9:24)⟧);
- 49: X1 ← TState.fillStackEntry(X0, X4, X8, ⟨[b0, b0, i0], Sum([0, 0, 0])⟩, mMemo_28@xxxx, null);
+ 49: X1 ← TState.fillStackEntry(X0, X4, X8, ⟨[b0, b0, i0], Sum([0, 0, 0])⟩, LmMemo_28@xxxx, null);
  50: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨[b0, b0, i0], Sum([0, 0, 0])⟩, mMemo_29@xxxx, null);
  51: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum([0, 0, 0])⟧, ⟨[b0, b0, i0]⟩, mMemo_33@xxxx, null);
  52: X1 ← TState.fillStackEntry(X0, X1, ⟦matrix2.r8t+0:10_5 _t0 = pipe(keys, _t0)⟧, ⟨[b0, b0, i0]⟩, mMemo_x@xxxx, null);
@@ -70,15 +70,15 @@ test_x0([i1, i2, i3]):
  54: TState.setUnwoundFrom(X0, target:test_x0);
  55: return
 -56: X4 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=1, it=ArrayIterator([I5, I6, I7], EnumerateAllKeys, 1)⟧);
- 57: X10 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, mMemo_1@xxxx, null);
- 58: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, mMemo_4@xxxx, null);
+ 57: X10 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, lmMemo_1@xxxx, null);
+ 58: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, lmMemo_4@xxxx, null);
  59: X4 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=BinaryUpdateWithCollection(⟦`add:2`⟧), state=[I11, I8, I9]⟧);
- 60: X4 ← TState.fillStackEntry(X0, X10, X4, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, mMemo_13@xxxx, null); → 46
+ 60: X4 ← TState.fillStackEntry(X0, X10, X4, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, lmMemo_13@xxxx, null); → 46
 -61: X10 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([I5, I6, I7], EnumerateAllKeys, 0)⟧);
- 62: X10 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, mMemo_1@xxxx, null);
- 63: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, mMemo_4@xxxx, null);
+ 62: X10 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), TransformedIterator((empty), EnumerateAllKeys, `subtract:2:#.`(1))⟩, lmMemo_1@xxxx, null);
+ 63: X10 ← TState.fillStackEntry(X0, X10, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateAllKeys, `subtract:2:#.`(1))⟧, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(ArrayIterator([b0, b0, b0], EnumerateAllKeys, b0), EnumerateAllKeys, `subtract:2:#.`(1)), BinaryUpdateWithCollection(⟦`add:2`⟧), [b0, b0, i0]⟩, lmMemo_4@xxxx, null);
  64: X11 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=BinaryUpdateWithCollection(⟦`add:2`⟧), state=[I4, I8, I9]⟧);
- 65: X4 ← TState.fillStackEntry(X0, X10, X11, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, mMemo_13@xxxx, null); → 46
+ 65: X4 ← TState.fillStackEntry(X0, X10, X11, ⟨[b0, b0, i0], Sum([0, 0, 0]), TransformedIterator(BaseIterator(EnumerateValues, [b0, b0, b0], [b0, b0, b0]), EnumerateValues, lambda@9:24)⟩, lmMemo_13@xxxx, null); → 46
 -66: X4 ← newStackEntry(⟦matrix2.r8t+0:8_0 _t0 = sizes(dims) ∥ dims=[I1, I2, I3]⟧);
  67: X1 ← TState.fillStackEntry(X0, null, X4, ⟨[b0, b0, i0]⟩, mMemo_x@xxxx, null); → 53
 ---

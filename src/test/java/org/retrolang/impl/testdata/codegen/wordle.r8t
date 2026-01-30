@@ -483,12 +483,12 @@ solve_x0(x1:*[]@xxxx, x2:String):
   83: X19 ← Absent;
 - 84: test X13 == null; T:→ 87
   85: addRef(X10); addRef(X14); addRef(X8); X6 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=ArrayIterator(X10, EnumerateValues, I18), it=TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=X14, response=X8⸩))⟧);
-  86: X7 ← TState.fillStackEntry(X0, X13, X6, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, mMemo_9@xxxx, X7);
+  86: X7 ← TState.fillStackEntry(X0, X13, X6, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, LmMemo_9@xxxx, X7);
 - 87: test X19 == Absent; F:→ 225
   88: I6 ← I18; → 63
 = 89: test 6 < I8; F:→ 8
 = 90: X3 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I8, 6, None), loop=loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=X1, answer=X2⸩, state=loop@xxx_state⸨toPrint_rw=LoopRW(Absent, X9), potentialAnswers=X10⸩⟧);
-  91: X4 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, mMemo_h40@xxxx, X4);
+  91: X4 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, lmMemo_h40@xxxx, X4);
 = 92: X3 ← TState.fillStackEntry(X0, X4, ⟦wordle.r8t+1:268_4 _t0 = iterate(_t0, _t2, loop@xxx⸨toPrint_ro=toPrint_ro, _eKind=_t2, words=words, answer=answer⸩, loop@xxx_state⸨toPrint_rw=_t1, potentialAnswers=potentialAnswers⸩) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
   93: TState.setStackRest(X0, X3);
   94: TState.setUnwoundFrom(X0, target:solve_x0);
@@ -556,7 +556,7 @@ solve_x0(x1:*[]@xxxx, x2:String):
  156: I21 ← 1;
 -157: test X17 == null; T:→ 114
  158: addRef(X10); addRef(X13); X18 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=X13⸩, it=ArrayIterator(X10, EnumerateValues, I20)⟧);
- 159: X16 ← TState.fillStackEntry(X0, X17, X18, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h40@xxxx, X16); → 114
+ 159: X16 ← TState.fillStackEntry(X0, X17, X18, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, LmMemo_h40@xxxx, X16); → 114
 -160: test I18 == 1; F:→ 162
  161: I26 ← 3; → 134
 -162: test I18 == 2; F:→ 164
@@ -590,7 +590,7 @@ solve_x0(x1:*[]@xxxx, x2:String):
  190: setInt[](Frame1i2x.x0(X14), iShl(iSub(I15, 1), 2), I18);
  191: test X7 == null; T:→ 194
  192: addRef(X1); addRef(X10); X13 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=X10⸩, it=ArrayIterator(X1, EnumerateAllKeys, I15)⟧);
- 193: X12 ← TState.fillStackEntry(X0, X7, X13, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_h40@xxxx, X12);
+ 193: X12 ← TState.fillStackEntry(X0, X7, X13, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, LmMemo_h40@xxxx, X12);
 -194: I7 ← I15; → 104
 -195: test X12 == null; T:→ 200
  196: X7 ← TState.fillStackEntry(X0, X12, ⟦LoopCore.enumerateDefault⟧, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_h38@xxxx, null);
@@ -624,7 +624,7 @@ solve_x0(x1:*[]@xxxx, x2:String):
 -224: X19 ← Absent;
 -225: test X7 == null; T:→ 228
  226: addRef(X15); X6 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X15⟧);
- 227: X12 ← TState.fillStackEntry(X0, X7, X6, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_13@xxxx, X12);
+ 227: X12 ← TState.fillStackEntry(X0, X7, X6, ⟨x0:*[]@xxxx, SaveUnordered⟩, lmMemo_13@xxxx, X12);
 -228: test X19 == Absent; T:→ 239
  229: addRef{X19};
  230: I6 ← Frame1i2x.i0(X15);
@@ -670,7 +670,7 @@ solve_x0(x1:*[]@xxxx, x2:String):
  270: I6 ← 0;
 =271: test X5 == null; T:→ 274
  272: addRef(X1); addRef(X2); X7 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=X1, answer=X2⸩, it=RangeIterator(I11, 6, None)⟧);
- 273: X4 ← TState.fillStackEntry(X0, X5, X7, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, mMemo_h40@xxxx, X4);
+ 273: X4 ← TState.fillStackEntry(X0, X5, X7, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, lmMemo_h40@xxxx, X4);
 -274: test I6 0 (< 2); T:→ 279
  275: I8 ← I11; → 89
 -276: I6 ← 1;
@@ -685,17 +685,17 @@ solve_x0(x1:*[]@xxxx, x2:String):
  285: return
 -286: dropRef{X12};
 -287: addRef(X15); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I6, it=ArrayIterator(X15, EnumerateValues, I6)⟧);
- 288: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 288: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  289: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X9⟧);
- 290: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null);
+ 290: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null);
  291: X6 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.EmitAll.iterate⟧, ⟨LoopRW(Absent, x0:*[]@xxxx)⟩, mMemo_5@xxxx, null);
  292: X3 ← newStackEntry(⟦wordle.r8t+1:278_23 toPrint_rw = emitAll(toPrint_ro, toPrint_rw, potentialAnswers) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), potentialAnswers=X15, _key=Absent⟧);
  293: X5 ← TState.fillStackEntry(X0, X6, X3, ⟨⸨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@xxx_state⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx), potentialAnswers=x0:*[]@xxxx⸩⸩, loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=x0:*[]@xxxx, answer=x0:String⸩, RangeIterator(b0, 6, None)⟩, mMemo_h85@xxxx, X5);
 =294: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=X1, answer=X2⸩, it=RangeIterator(I11, 6, None)⟧);
- 295: X4 ← TState.fillStackEntry(X0, X5, X3, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, mMemo_h40@xxxx, X4); → 92
+ 295: X4 ← TState.fillStackEntry(X0, X5, X3, ⟨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, lmMemo_h40@xxxx, X4); → 92
 -296: addRef{X14};
 =297: X3 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=⸨Absent; X19⸩, it=TransformedIterator(ArrayIterator(X10, EnumerateValues, I18), EnumerateValues, Filter(lambda@xxx:48⸨guess=X14, response=X8⸩)), loop=SaveUnordered, state=X15⟧);
- 298: X12 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_13@xxxx, X12);
+ 298: X12 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx, SaveUnordered⟩, lmMemo_13@xxxx, X12);
 =299: X7 ← TState.fillStackEntry(X0, X12, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_14@xxxx, null);
  300: X6 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaveUnordered⟧, ⟨x0:*[]@xxxx⟩, mMemo_18@xxxx, null);
  301: X3 ← newStackEntry(⟦wordle.r8t+1:276_21 potentialAnswers = pipe(_t0, _t1) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), toPrint_rw=LoopRW(Absent, X9), _key=Absent⟧);
@@ -707,36 +707,36 @@ solve_x0(x1:*[]@xxxx, x2:String):
  307: X3 ← newStackEntry(⟦CollectionCore.AtFilter.at ∥ x=⸨Absent; X19⸩⟧);
  308: X13 ← TState.fillStackEntry(X0, X16, X3, ⟨⸨Absent; x0:String⸩, Undef, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩))⟩, mMemo_7@xxxx, null);
  309: X3 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=ArrayIterator(X10, EnumerateValues, I18), it=TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=X14, response=X8⸩))⟧);
- 310: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, mMemo_9@xxxx, X7);
+ 310: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, LmMemo_9@xxxx, X7);
 =311: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X15⟧);
- 312: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_13@xxxx, X12); → 299
+ 312: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨x0:*[]@xxxx, SaveUnordered⟩, lmMemo_13@xxxx, X12); → 299
 -313: addRef{X14};
  314: X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I6, it=ArrayIterator(X10, EnumerateValues, I6)⟧);
- 315: X13 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩))⟩, mMemo_1@xxxx, null);
+ 315: X13 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩))⟩, lmMemo_1@xxxx, null);
  316: X3 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator((empty), EnumerateValues, Filter(lambda@xxx:48⸨guess=X14, response=X8⸩))⟧);
- 317: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, mMemo_9@xxxx, X7); → 311
+ 317: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨⸨Absent; x0:String⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, Filter(lambda@xxx:48⸨guess=x0:String, response=x0:String⸩)), SaveUnordered, x0:*[]@xxxx⟩, LmMemo_9@xxxx, X7); → 311
 -318: addRef{X14} dropRef{X7};
 =319: addRef(X8); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=1, it=ArrayIterator(["Response:", X8], EnumerateValues, 1)⟧);
- 320: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(["Response:", x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 320: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(["Response:", x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  321: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X9⟧);
- 322: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null);
+ 322: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null);
 =323: X6 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.EmitAll.iterate⟧, ⟨LoopRW(Absent, x0:*[]@xxxx)⟩, mMemo_5@xxxx, null);
  324: addRef(X2); X3 ← newStackEntry(⟦wordle.r8t+1:272_11 toPrint_rw = emitAll(toPrint_ro, toPrint_rw, ["Response:", response]) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), potentialAnswers=X10, guess=X14, response=X8, answer=X2, _key=Absent⟧);
  325: X5 ← TState.fillStackEntry(X0, X6, X3, ⟨⸨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@xxx_state⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx), potentialAnswers=x0:*[]@xxxx⸩⸩, loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=x0:*[]@xxxx, answer=x0:String⸩, RangeIterator(b0, 6, None)⟩, mMemo_h85@xxxx, X5); → 294
 -326: addRef{X14}; → 319
 -327: addRef{X14};
  328: addRef(X8); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator(["Response:", X8], EnumerateValues, 0)⟧);
- 329: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(["Response:", x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 329: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(["Response:", x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  330: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X7⟧);
- 331: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null); → 323
+ 331: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null); → 323
 -332: addRef{X14};
  333: addRef(X2); X3 ← newStackEntry(⟦wordle.r8t+1:271_10 response = score(guess, answer) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), toPrint_rw=LoopRW(Absent, X7), potentialAnswers=X10, guess=X14, answer=X2, _key=Absent⟧);
  334: X5 ← TState.fillStackEntry(X0, X6, X3, ⟨⸨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@xxx_state⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx), potentialAnswers=x0:*[]@xxxx⸩⸩, loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=x0:*[]@xxxx, answer=x0:String⸩, RangeIterator(b0, 6, None)⟩, mMemo_h85@xxxx, X5); → 294
 -335: addRef{X14};
  336: addRef(X14); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator(["Guess", I8, X14], EnumerateValues, 2)⟧);
- 337: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 337: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  338: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X7⟧);
- 339: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null);
+ 339: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null);
 =340: X6 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.EmitAll.iterate⟧, ⟨LoopRW(Absent, x0:*[]@xxxx)⟩, mMemo_5@xxxx, null);
  341: addRef(X2); X3 ← newStackEntry(⟦wordle.r8t+1:270_9 toPrint_rw = emitAll(toPrint_ro, toPrint_rw, ["Guess", idx, guess]) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), potentialAnswers=X10, guess=X14, answer=X2, _key=Absent⟧);
  342: X5 ← TState.fillStackEntry(X0, X6, X3, ⟨⸨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@xxx_state⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx), potentialAnswers=x0:*[]@xxxx⸩⸩, loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=x0:*[]@xxxx, answer=x0:String⸩, RangeIterator(b0, 6, None)⟩, mMemo_h85@xxxx, X5); → 294
@@ -744,21 +744,21 @@ solve_x0(x1:*[]@xxxx, x2:String):
  344: X3 ← newStackEntry(⟦ReducerCore.NextStateSaveUnordered.replace ∥ state=X7, index=I6, value=I8⟧);
  345: X12 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx, SaveUnordered, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0)⟩, mMemo_1@xxxx, null);
  346: addRef(X14); X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=SaveUnordered, it=ArrayIterator(["Guess", I8, X14], EnumerateValues, 2)⟧);
- 347: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null); → 340
+ 347: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null); → 340
 -348: addRef{X14};
  349: addRef(X14); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=1, it=ArrayIterator(["Guess", I8, X14], EnumerateValues, 1)⟧);
- 350: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 350: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  351: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X7⟧);
- 352: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null); → 340
+ 352: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null); → 340
 -353: addRef{X14};
  354: addRef(X14); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator(["Guess", I8, X14], EnumerateValues, 0)⟧);
- 355: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, mMemo_1@xxxx, null);
+ 355: X12 ← TState.fillStackEntry(X0, null, X3, ⟨⸨b0; Absent; x0:String⸩, ArrayIterator(["Guess", b0, x0:String], EnumerateValues, b0), SaveUnordered, x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
  356: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X9⟧);
- 357: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, mMemo_4@xxxx, null); → 340
+ 357: X7 ← TState.fillStackEntry(X0, X12, X3, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null); → 340
 -358: X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I7, it=ArrayIterator(X14, EnumerateWithKeys, I7)⟧);
- 359: X13 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], i0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0), Top(ElementLessThan([2]), False), ⸨[[b0], i0]; Absent⸩⟩, mMemo_1@xxxx, null);
+ 359: X13 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], i0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0), Top(ElementLessThan([2]), False), ⸨[[b0], i0]; Absent⸩⟩, lmMemo_1@xxxx, null);
  360: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Top(ElementLessThan([2]), False), state=I12⸨0:[[I15], I16]; 1:Absent⸩⟧);
- 361: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨[[b0], i0], Top(ElementLessThan([2]), False)⟩, mMemo_11@xxxx, null);
+ 361: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨[[b0], i0], Top(ElementLessThan([2]), False)⟩, LmMemo_11@xxxx, null);
  362: X12 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.enumerateDefault⟧, ⟨[[b0], i0], Top(ElementLessThan([2]), False)⟩, mMemo_12@xxxx, null);
  363: X7 ← TState.fillStackEntry(X0, X12, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Top(ElementLessThan([2]), False)⟧, ⟨[[b0], i0]⟩, mMemo_16@xxxx, null);
  364: addRef(X1); X3 ← newStackEntry(⟦wordle.r8t+1:358_13 _t0 = pipe(_t0, _t1) ∥ words=X1⟧);
@@ -766,15 +766,15 @@ solve_x0(x1:*[]@xxxx, x2:String):
 =366: addRef(X2); X3 ← newStackEntry(⟦wordle.r8t+1:269_8 guess = bestGuess(words, potentialAnswers) ∥ toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), toPrint_rw=LoopRW(Absent, X9), potentialAnswers=X10, idx=I8, answer=X2, _key=Absent⟧);
  367: X5 ← TState.fillStackEntry(X0, X6, X3, ⟨⸨LoopExit(loop@xxx_break⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@xxx_state⸨toPrint_rw=LoopRW(Absent, x0:*[]@xxxx), potentialAnswers=x0:*[]@xxxx⸩⸩, loop@xxx⸨toPrint_ro=LoopRO(EnumerateValues, SaveUnordered, False), _eKind=EnumerateValues, words=x0:*[]@xxxx, answer=x0:String⸩, RangeIterator(b0, 6, None)⟩, mMemo_h85@xxxx, null); → 294
 -368: X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I13, it=ArrayIterator(X19, EnumerateValues, I13)⟧);
- 369: X18 ← TState.fillStackEntry(X0, null, X3, ⟨⸨i0; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), Top(⟦`lessThan:2`⟧, True), ⸨i0; Absent⸩⟩, mMemo_1@xxxx, null);
+ 369: X18 ← TState.fillStackEntry(X0, null, X3, ⟨⸨i0; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), Top(⟦`lessThan:2`⟧, True), ⸨i0; Absent⸩⟩, lmMemo_1@xxxx, null);
  370: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Top(⟦`lessThan:2`⟧, True), state=I16⸨0:I17; 1:Absent⸩⟧);
- 371: X17 ← TState.fillStackEntry(X0, X18, X3, ⟨i0, Top(⟦`lessThan:2`⟧, True)⟩, mMemo_6@xxxx, null);
+ 371: X17 ← TState.fillStackEntry(X0, X18, X3, ⟨i0, Top(⟦`lessThan:2`⟧, True)⟩, LmMemo_6@xxxx, null);
  372: X16 ← TState.fillStackEntry(X0, X17, ⟦LoopCore.enumerateDefault⟧, ⟨i0, Top(⟦`lessThan:2`⟧, True)⟩, mMemo_7@xxxx, null);
  373: X13 ← TState.fillStackEntry(X0, X16, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Top(⟦`lessThan:2`⟧, True)⟧, ⟨i0⟩, mMemo_11@xxxx, null);
  374: X3 ← newStackEntry(⟦wordle.r8t+1:354_17 _t0 = pipe(groups, _t0) ∥ worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), worst_rw=LoopRW(Absent, X14), possible=I21, _key=[I15]⟧);
  375: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩, loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=x0:*[]@xxxx⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0)⟩, mMemo_h75@xxxx, X7);
 =376: addRef(X1); addRef(X10); X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=X10⸩, it=ArrayIterator(X1, EnumerateAllKeys, I15)⟧);
- 377: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_h40@xxxx, X12);
+ 377: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, LmMemo_h40@xxxx, X12);
 =378: X7 ← TState.fillStackEntry(X0, X12, ⟦LoopCore.enumerateDefault⟧, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_h38@xxxx, null);
  379: addRef(X1); X3 ← newStackEntry(⟦wordle.r8t+1:343_8 _t0 = enumerate(words, _t1, loop@xxx⸨worst_ro=worst_ro, _eKind=_t1, potentialAnswers=potentialAnswers⸩, loop@xxx_state⸨worst_rw=_t0⸩) ∥ words=X1, worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True)⟧);
  380: X6 ← TState.fillStackEntry(X0, X7, X3, ⟨x0:String⟩, mMemo_h73@xxxx, null); → 366
@@ -785,18 +785,18 @@ solve_x0(x1:*[]@xxxx, x2:String):
  385: addRef(X13); X3 ← newStackEntry(⟦wordle.r8t+1:345_10 groups_rw = emitValue(groups_ro, groups_rw, _t0) ∥ groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), possible_rw=LoopRW(Absent, I21), answer=X22, guess=X13, _key=Absent⟧);
  386: X17 ← TState.fillStackEntry(X0, X18, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩, loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0)⟩, mMemo_h58@xxxx, X17);
 =387: addRef(X10); X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=X13⸩, it=ArrayIterator(X10, EnumerateValues, I20)⟧);
- 388: X16 ← TState.fillStackEntry(X0, X17, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h40@xxxx, X16);
+ 388: X16 ← TState.fillStackEntry(X0, X17, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, LmMemo_h40@xxxx, X16);
 =389: X13 ← TState.fillStackEntry(X0, X16, ⟦LoopCore.enumerateDefault⟧, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h38@xxxx, null);
  390: X3 ← newStackEntry(⟦wordle.r8t+1:344_12 _t0 = enumerate(potentialAnswers, _t1, loop@xxx⸨groups_ro=groups_ro, possible_ro=possible_ro, _eKind=_t1, guess=guess⸩, loop@xxx_state⸨groups_rw=_t0, possible_rw=_t2⸩) ∥ worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), worst_rw=LoopRW(Absent, X14), _key=[I15], groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True)⟧);
  391: X7 ← TState.fillStackEntry(X0, X13, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩, loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=x0:*[]@xxxx⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0)⟩, mMemo_h75@xxxx, null); → 376
 -392: addRef{X13, X22};
  393: X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I18, it=ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, I18)⟧);
- 394: X3 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), JoinedIterator((empty), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues)⟩, mMemo_1@xxxx, null);
+ 394: X3 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], b0]; Absent⸩, ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), JoinedIterator((empty), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues)⟩, lmMemo_1@xxxx, null);
  395: X5 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.next ∥ it=JoinedIterator((empty), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(X23), ⟦`adjustScoreChar:1`⟧)), EnumerateValues)⟧);
- 396: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[b0, b0]; Absent⸩, JoinedIterator(ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, mMemo_11@xxxx, null);
- 397: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨b0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), b0⟩, mMemo_14@xxxx, null);
+ 396: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨⸨[b0, b0]; Absent⸩, JoinedIterator(ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, lmMemo_11@xxxx, null);
+ 397: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨b0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator([1, 3, 9, 27, 81], EnumerateAllKeys, b0), TransformedMatrix(Range(1, 5), TransformedLambda(ToCodePoint(x0:String), ⟦`adjustScoreChar:1`⟧)), EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), b0⟩, lmMemo_14@xxxx, null);
  398: X5 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=I24⟧);
- 399: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨b0, Sum(0)⟩, mMemo_22@xxxx, null);
+ 399: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨b0, Sum(0)⟩, lmMemo_22@xxxx, null);
  400: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨b0, Sum(0)⟩, mMemo_23@xxxx, null);
  401: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨b0⟩, mMemo_27@xxxx, null);
  402: X18 ← TState.fillStackEntry(X0, X3, ⟦wordle.r8t+1:390_4 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_h38@xxxx, null);
@@ -810,13 +810,13 @@ solve_x0(x1:*[]@xxxx, x2:String):
  410: X17 ← TState.fillStackEntry(X0, X18, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩, loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0)⟩, mMemo_h58@xxxx, null); → 387
 -411: addRef{X13};
  412: addRef(X10); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I20, it=ArrayIterator(X10, EnumerateValues, I20)⟧);
- 413: X17 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=x0:String⸩, loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, mMemo_1@xxxx, null);
+ 413: X17 ← TState.fillStackEntry(X0, null, X3, ⟨⸨Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=x0:String⸩, loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, lmMemo_1@xxxx, null);
  414: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx⸨groups_ro=LoopRO(EnumerateValues, IntHistogram(243), True), possible_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=X13⸩, state=loop@xxx_state⸨groups_rw=LoopRW(Absent, X19), possible_rw=LoopRW(Absent, I21)⸩⟧);
- 415: X16 ← TState.fillStackEntry(X0, X17, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h40@xxxx, X16); → 389
+ 415: X16 ← TState.fillStackEntry(X0, X17, X3, ⟨loop@xxx_state⸨groups_rw=LoopRW(Absent, x0:*[]@xxxx), possible_rw=LoopRW(Absent, b0)⸩⟩, LmMemo_h40@xxxx, X16); → 389
 -416: addRef(X1); X3 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I7, it=ArrayIterator(X1, EnumerateAllKeys, I7)⟧);
- 417: X7 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], x0:String]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=x0:*[]@xxxx⸩, loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_1@xxxx, null);
+ 417: X7 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], x0:String]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=x0:*[]@xxxx⸩, loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, lmMemo_1@xxxx, null);
  418: addRef(X10); X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx⸨worst_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, potentialAnswers=X10⸩, state=loop@xxx_state⸨worst_rw=LoopRW(Absent, X14)⸩⟧);
- 419: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, mMemo_h40@xxxx, X12); → 378
+ 419: X12 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@xxx_state⸨worst_rw=LoopRW(Absent, x0:*[]@xxxx)⸩⟩, LmMemo_h40@xxxx, X12); → 378
 
 score_x1(x1:String, x2:String):
    1: CodeGenTarget.incrementCallCount(target:score_x1);
@@ -922,38 +922,38 @@ score_x1(x1:String, x2:String):
 -101: dropRef{X5, X6, X8, X3}; → 81
 -102: dropRef{X5, X6, X7, X3}; → 81
 -103: X2 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=3, it=ArrayIterator([X5, X6, X7, X8, X3], EnumerateValues, 3)⟧);
- 104: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, mMemo_1@xxxx, null);
+ 104: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_1@xxxx, null);
  105: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx, state=loop@xxx_state⸨result=X1⸩⟧);
- 106: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, mMemo_6@xxxx, null);
+ 106: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_6@xxxx, null);
 =107: X1 ← TState.fillStackEntry(X0, X1, ⟦wordle.r8t+1:330_1 _t0 = iterate(strings, EnumerateValues, loop@xxx, loop@xxx_state⸨result=result⸩)⟧, ⟨x0:String⟩, mMemo_8@xxxx, null);
  108: X1 ← TState.fillStackEntry(X0, X1, ⟦wordle.r8t+1:324_8 _t0 = join(result)⟧, ⟨x0:String⟩, mMemo_x@xxxx, null);
 =109: TState.setStackRest(X0, X1);
  110: TState.setUnwoundFrom(X0, target:score_x1);
  111: return
 -112: X2 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([X5, X6, X7, X8, X3], EnumerateValues, 2)⟧);
- 113: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, mMemo_1@xxxx, null);
+ 113: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_1@xxxx, null);
  114: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx, state=loop@xxx_state⸨result=X1⸩⟧);
- 115: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, mMemo_6@xxxx, null); → 107
+ 115: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_6@xxxx, null); → 107
 -116: X2 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=1, it=ArrayIterator([X5, X6, X7, X8, X3], EnumerateValues, 1)⟧);
- 117: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, mMemo_1@xxxx, null);
+ 117: X3 ← TState.fillStackEntry(X0, null, X2, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_1@xxxx, null);
  118: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx, state=loop@xxx_state⸨result=X1⸩⟧);
- 119: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, mMemo_6@xxxx, null); → 107
+ 119: X1 ← TState.fillStackEntry(X0, X3, X2, ⟨loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_6@xxxx, null); → 107
 -120: X1 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([X5, X6, X7, X8, X3], EnumerateValues, 0)⟧);
- 121: X3 ← TState.fillStackEntry(X0, null, X1, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, mMemo_1@xxxx, null);
- 122: X1 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.Iterate.next ∥ loop=loop@xxx, state=loop@xxx_state⸨result=""⸩⟧, ⟨loop@xxx_state⸨result=x0:String⸩⟩, mMemo_6@xxxx, null); → 107
+ 121: X3 ← TState.fillStackEntry(X0, null, X1, ⟨⸨Absent; x0:String⸩, ArrayIterator([x0:String, x0:String, x0:String, x0:String, x0:String], EnumerateValues, b0), loop@xxx, loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_1@xxxx, null);
+ 122: X1 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.Iterate.next ∥ loop=loop@xxx, state=loop@xxx_state⸨result=""⸩⟧, ⟨loop@xxx_state⸨result=x0:String⸩⟩, lmMemo_6@xxxx, null); → 107
 -123: X3 ← newStackEntry(⟦wordle.r8t+1:319_32 result_rw = emitKey(result_ro, result_rw, _key) ∥ result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), result_rw=LoopRW(X10, [X5, X6, X7, X8, (empty)]), _key=[I4]⟧);
  124: X3 ← TState.fillStackEntry(X0, null, X3, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩, loop@xxx⸨result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, guess=TransformedMatrix(Range(1, 5), ToCodePoint(x0:String)), answer=TransformedMatrix(Range(1, 5), ToCodePoint(x0:String))⸩, RangeIterator(b0, 5, 0)⟩, mMemo_h72@xxxx, null);
 =125: X4 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, guess=TransformedMatrix(Range(1, 5), ToCodePoint(X1)), answer=TransformedMatrix(Range(1, 5), ToCodePoint(X2))⸩, it=RangeIterator(I9, 5, 0)⟧);
- 126: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩⟩, mMemo_h40@xxxx, null);
+ 126: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩⟩, lmMemo_h40@xxxx, null);
 =127: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩⟩, mMemo_h38@xxxx, null);
  128: X1 ← TState.fillStackEntry(X0, X1, ⟦wordle.r8t+1:291_5 _t0 = enumerate(_t0, _t2, loop@xxx⸨result_ro=result_ro, _eKind=_t2, guess=guess, answer=answer⸩, loop@xxx_state⸨result_rw=_t1⸩) ∥ result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True)⟧, ⟨x0:String⟩, mMemo_x@xxxx, null); → 109
 -129: addRef(X1); addRef(X2); X12 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I3, 5, None), loop=loop@xxx⸨guessed_ro=LoopRO(EnumerateValues, Sum(0), True), actual_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues, guess=TransformedMatrix(Range(1, 5), ToCodePoint(X1)), answer=TransformedMatrix(Range(1, 5), ToCodePoint(X2)), char=I4⸩, state=loop@xxx_state⸨guessed_rw=LoopRW(Absent, I10), actual_rw=LoopRW(Absent, I11)⸩⟧);
- 130: X3 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨guessed_rw=LoopRW(Absent, b0), actual_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h40@xxxx, null);
+ 130: X3 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨guessed_rw=LoopRW(Absent, b0), actual_rw=LoopRW(Absent, b0)⸩⟩, lmMemo_h40@xxxx, null);
  131: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨loop@xxx_state⸨guessed_rw=LoopRW(Absent, b0), actual_rw=LoopRW(Absent, b0)⸩⟩, mMemo_h38@xxxx, null);
  132: X10 ← newStackEntry(⟦wordle.r8t+1:298_20 _t0 = enumerate(_t0, _t2, loop@xxx⸨guessed_ro=guessed_ro, actual_ro=actual_ro, _eKind=_t2, guess=guess, answer=answer, char=char⸩, loop@xxx_state⸨guessed_rw=_t1, actual_rw=_t3⸩) ∥ result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), result_rw=LoopRW(Absent, [X5, X6, X7, X8, (empty)]), _key=[I4], guessed_ro=LoopRO(EnumerateValues, Sum(0), True), actual_ro=LoopRO(EnumerateValues, Sum(0), True)⟧);
  133: X3 ← TState.fillStackEntry(X0, X3, X10, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩, loop@xxx⸨result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, guess=TransformedMatrix(Range(1, 5), ToCodePoint(x0:String)), answer=TransformedMatrix(Range(1, 5), ToCodePoint(x0:String))⸩, RangeIterator(b0, 5, 0)⟩, mMemo_h72@xxxx, null); → 125
 -134: X9 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I4, 5, 0), loop=loop@xxx⸨result_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys, guess=TransformedMatrix(Range(1, 5), ToCodePoint(X1)), answer=TransformedMatrix(Range(1, 5), ToCodePoint(X2))⸩, state=loop@xxx_state⸨result_rw=LoopRW(Absent, [X5, X6, X7, X8, X3])⸩⟧);
- 135: X1 ← TState.fillStackEntry(X0, null, X9, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩⟩, mMemo_h40@xxxx, null); → 127
+ 135: X1 ← TState.fillStackEntry(X0, null, X9, ⟨loop@xxx_state⸨result_rw=LoopRW(Absent, [x0:String, x0:String, x0:String, x0:String, x0:String])⸩⟩, lmMemo_h40@xxxx, null); → 127
 -136: X3 ← newStackEntry(⟦wordle.r8t+1:289_0 guess = codePoints(guess) ∥ guess=X1, answer=X2⟧);
  137: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:String⟩, mMemo_x@xxxx, null); → 109
 ---

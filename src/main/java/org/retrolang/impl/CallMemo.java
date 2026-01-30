@@ -81,7 +81,7 @@ class CallMemo {
 
   /** Returns the total weight of all MethodMemos at this call site. */
   int totalWeight() {
-    assert Thread.holdsLock(TState.get().scope().memoMerger);
+    assert MemoMerger.isLocked();
     int sum = 0;
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       sum += cm.memo.weight();
@@ -91,7 +91,7 @@ class CallMemo {
 
   /** Returns the maximum weight of all MethodMemos at this call site. */
   int maxWeight() {
-    assert Thread.holdsLock(TState.get().scope().memoMerger);
+    assert MemoMerger.isLocked();
     int max = 0;
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       max = Math.max(max, cm.memo.weight());
@@ -108,7 +108,7 @@ class CallMemo {
    * will cause the caller to acquire the appropriate lock and try again).
    */
   MethodMemo memoForMethod(VmMethod method, boolean isLocked) {
-    assert !isLocked || Thread.holdsLock(TState.get().scope().memoMerger);
+    assert !isLocked || MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       // We're paranoid about stepping on a null here because we might be reading objects created by
       // another thread without intervening synchronization.  We're OK with just skipping objects
@@ -139,7 +139,7 @@ class CallMemo {
    * {@code prev}.
    */
   void replaceMemo(MethodMemo prev, MethodMemo replacement) {
-    assert Thread.holdsLock(TState.get().scope().memoMerger);
+    assert MemoMerger.isLocked();
     for (CallMemo cm = this; ; cm = cm.next) {
       if (cm.memo == prev) {
         cm.memo = replacement;
@@ -153,7 +153,7 @@ class CallMemo {
    * calls {@link MethodMemo#updateParent} on each MethodMemo.
    */
   void updateParents(MethodMemo newParent) {
-    assert Thread.holdsLock(TState.get().scope().memoMerger);
+    assert MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       cm.memo.updateParent(newParent);
     }
@@ -170,7 +170,7 @@ class CallMemo {
    * modify this CallMemo.
    */
   void forEachChild(ObjIntConsumer<MethodMemo> action) {
-    assert Thread.holdsLock(TState.get().scope().memoMerger);
+    assert MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       action.accept(cm.memo, cm.count);
     }

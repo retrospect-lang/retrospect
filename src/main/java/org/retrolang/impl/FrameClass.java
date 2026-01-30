@@ -585,7 +585,7 @@ class FrameClass {
         if (replacement.isComplete()) {
           // This frame's replacement is visible to everyone, so we can update
           // the source to point to the replacement.
-          TState tstate = TState.getIfPresent();
+          TState tstate = TState.get();
           if (tstate == null || tstate.tracker() == null) {
             // This thread isn't bound to a ResourceTracker (probably it's just trying to toString()
             // a Value it encountered somewhere), so it's not allowed to modify anything.

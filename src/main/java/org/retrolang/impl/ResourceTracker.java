@@ -397,7 +397,7 @@ class ResourceTracker implements Allocator, Vm.ResourceTracker {
     // but a new call to bar() (at 0.3 seconds).
     List<TStack.ForTrace> traces = new ArrayList<>();
     // We need a TState to use for releasing objects
-    TState tstate = TState.get();
+    TState tstate = TState.getOrCreate();
     ResourceTracker prev = tstate.bindTo(this);
     try {
       savedTraces.forEach((k, saved) -> takeTraces(tstate, saved, traces));

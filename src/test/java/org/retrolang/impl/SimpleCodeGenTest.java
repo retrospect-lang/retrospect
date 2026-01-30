@@ -22,6 +22,7 @@ import static com.google.common.truth.Truth.assertWithMessage;
 import com.google.common.collect.ImmutableList;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -81,10 +82,25 @@ public final class SimpleCodeGenTest {
 
   private void startCodeGen(
       ImmutableList<Template> argTemplates, ImmutableList<Template> resultTemplates) {
-    CodeGenTarget target = CodeGenTarget.fromTemplates("test", argTemplates, resultTemplates);
+    CodeGenTarget target =
+        new CodeGenTarget(
+            "test",
+            null,
+            null,
+            null,
+            alloc -> build(argTemplates, alloc),
+            alloc -> build(resultTemplates, alloc));
     codeGen = target.codeGen;
     codeGen.cb.verbose = true;
     args = target.args.stream().map(RValue::fromTemplate).collect(ImmutableList.toImmutableList());
+  }
+
+  /** Build a Template for each of the List's elements. */
+  private static ImmutableList<Template> build(
+      List<Template> templates, TemplateBuilder.VarAllocator alloc) {
+    return templates.stream()
+        .map(t -> t.toBuilder().build(alloc))
+        .collect(ImmutableList.toImmutableList());
   }
 
   private void emitReturn(Value... results) {

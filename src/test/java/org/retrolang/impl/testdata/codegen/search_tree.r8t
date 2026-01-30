@@ -47,18 +47,18 @@ method replaceElement(BST bst, [key], value) {
 /* CODEGEN at RETURNS
   [24, 12, 1, Absent]
 ---
-at_0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
-  1: AtomicInteger.incrementAndGet(0);
+at_x0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
+  1: CodeGenTarget.incrementCallCount(target:at_x0);
   2: X5 ← null;
   3: test I1 1 (< 2); T:→ 23
-  4: test X2 is *{key: d4, left: b0⸨0:NonEmpty(x0:*@xxxx); 1:Empty⸩, right: b1⸨0:NonEmpty(x1:*@xxxx); 1:Empty⸩, value: b2}@xxxx; F:→ 44
+  4: test X2 is *{key: d4, left: b0⸨0:NonEmpty(x0:*@xxxx); 1:Empty⸩, right: b1⸨0:NonEmpty(x1:*@xxxx); 1:Empty⸩, value: b2}@xxxx; F:→ 45
   5: D6 ← Frame3i2x.d0(X2);
   6: test D3 < D6; F:→ 26
-  7: test Frame3i2x.b0(X2) == 0; F:→ 44
-  8: [i0⸨0:i4; 1:Absent⸩] ← at_0(X0, 0, addRef(Frame3i2x.x0.getValue(X2)), D3); X1 ← stackRest; unwind:→ 42
+  7: test Frame3i2x.b0(X2) == 0; F:→ 45
+  8: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, 0, addRef(Frame3i2x.x0.getValue(X2)), D3); X1 ← stackRest; unwind:→ 43
   9: dropRef{X2};
  10: X2 ← TState.fnResultBytes(X0, 0);
- 11: test int[](X2, 0) == 0; F:→ 43
+ 11: test int[](X2, 0) == 0; F:→ 44
  12: I3 ← int[](X2, 4);
  13: TState.clearResultTemplates(X0);
  14: test X1 == null; T:→ 16
@@ -74,7 +74,7 @@ at_0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
  24: I3 ← 0;
  25: I4 ← 1; → 17
 -26: test D6 < D3; F:→ 35
- 27: [i0⸨0:i4; 1:Absent⸩] ← at_0(X0, Frame3i2x.b1(X2), addRef(Frame3i2x.x1.getValue(X2)), D3); X1 ← stackRest; unwind:→ 38
+ 27: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, Frame3i2x.b1(X2), addRef(Frame3i2x.x1.getValue(X2)), D3); X1 ← stackRest; unwind:→ 38
  28: dropRef{X2};
  29: X2 ← TState.fnResultBytes(X0, 0);
  30: I3 ← int[](X2, 4);
@@ -88,11 +88,12 @@ at_0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
 -38: dropRef{X2};
  39: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:26_17 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null);
 =40: TState.setStackRest(X0, X5);
- 41: return
--42: dropRef{X2};
--43: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:24_10 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
--44: X1 ← newStackEntry(⟦search_tree.r8t+0:18_0 key = unarray1(_a0) ∥ bst=NonEmpty(X2), _a0=[D3]⟧);
- 45: X5 ← TState.fillStackEntry(X0, null, X1, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
+ 41: TState.setUnwoundFrom(X0, target:at_x0);
+ 42: return
+-43: dropRef{X2};
+-44: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:24_10 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
+-45: X1 ← newStackEntry(⟦search_tree.r8t+0:18_0 key = unarray1(_a0) ∥ bst=NonEmpty(X2), _a0=[D3]⟧);
+ 46: X5 ← TState.fillStackEntry(X0, null, X1, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
 ---
 allocated=197704/7545, peak=56
 */

@@ -13,8 +13,8 @@ function test(s1, s2) = withKeys(s1) | [k, v] -> (v == 0 ? Absent : s2 @ k) | sa
 /* CODEGEN test RETURNS
 {x: 9, y: "wat"}
 ---
-test_0({x: i1, y: i2}, {x: i3, y: i4⸨0:i5; 1:x6:String⸩, z: i7⸨0:i8; 1:x9:String⸩}):
-  1: AtomicInteger.incrementAndGet(0);
+test_x0({x: i1, y: i2}, {x: i3, y: i4⸨0:i5; 1:x6:String⸩, z: i7⸨0:i8; 1:x9:String⸩}):
+  1: CodeGenTarget.incrementCallCount(target:test_x0);
   2: test I1 == 0; F:→ 16
   3: I10 ← 1;
   4: I11 ← 0;
@@ -48,7 +48,8 @@ test_0({x: i1, y: i2}, {x: i3, y: i4⸨0:i5; 1:x6:String⸩, z: i7⸨0:i8; 1:x9:
  32: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, mMemo_23@xxxx, null);
  33: X1 ← TState.fillStackEntry(X0, X1, ⟦structs.r8t+2:8_3 _t0 = pipe(_t0, _t1)⟧, ⟨{x: ⸨b0; Absent⸩, y: ⸨1; Absent; "wat"⸩}⟩, mMemo_x@xxxx, null);
  34: TState.setStackRest(X0, X1);
- 35: return
+ 35: TState.setUnwoundFrom(X0, target:test_x0);
+ 36: return
 ---
 allocated=120/5, peak=48
 */

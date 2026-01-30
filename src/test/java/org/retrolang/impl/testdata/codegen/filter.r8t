@@ -8,8 +8,8 @@ function filtered(nums) {
 /* CODEGEN filtered RETURNS
 [[0.1, Absent, 0.3], [Absent, 0.2, Absent]]
 ---
-filtered_0([d1, d2, d3]):
-  1: AtomicInteger.incrementAndGet(0);
+filtered_x0([d1, d2, d3]):
+  1: CodeGenTarget.incrementCallCount(target:filtered_x0);
   2: D7 ← Math.sqrt(D1);
   3: test Double.isNaN(D7) == 0; F:→ 29
   4: test D7 < 1; F:→ 23
@@ -40,7 +40,8 @@ filtered_0([d1, d2, d3]):
 -29: X7 ← newStackEntry(⟦filter.r8t+0:4_0 _t0 = pipe(nums, ⟦`sqrt:1`⟧) ∥ nums=[D1, D3, D5]⟧);
  30: X1 ← TState.fillStackEntry(X0, null, X7, ⟨[⸨d0; Absent⸩, ⸨d0; Absent⸩, ⸨d0; Absent⸩]⟩, mMemo_x@xxxx, null);
  31: TState.setStackRest(X0, X1);
- 32: return
+ 32: TState.setUnwoundFrom(X0, target:filtered_x0);
+ 33: return
 ---
 allocated=336/13, peak=232
 */

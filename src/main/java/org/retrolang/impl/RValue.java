@@ -76,9 +76,10 @@ public class RValue implements Value {
   }
 
   /**
-   * Wraps an RValue so that it can be examined without any chance of generating code.  If {@code v}
+   * Wraps an RValue so that it can be examined without any chance of generating code. If {@code v}
    * is not an RValue, returns it unchanged; otherwise returns a Value that only implements the
    * {@link Value#baseType}, {@link Value#numElements}, and {@link Value#peekElement} methods, where
+   *
    * <ul>
    *   <li>{@code baseType()} will return null if the value's baseType may vary at runtime; and
    *   <li>{@code numElements()} will return -1 if the value's size may vary at runtime.
@@ -366,9 +367,7 @@ public class RValue implements Value {
         return exploreTemplate(layout.template);
       }
       Template element = template.element(index);
-      return Template.isConstant(element)
-          ? Template.toValue(element)
-          : exploreTemplate(element);
+      return Template.isConstant(element) ? Template.toValue(element) : exploreTemplate(element);
     }
   }
 }

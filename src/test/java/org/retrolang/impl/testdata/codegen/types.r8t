@@ -25,8 +25,8 @@ function test(array) {
 /* CODEGEN test RETURNS
 {arrays: 2, bools: 2, strings: 1}
 ---
-test_0(x1:*[]@xxxx):
-  1: AtomicInteger.incrementAndGet(0);
+test_x0(x1:*[]@xxxx):
+  1: CodeGenTarget.incrementCallCount(target:test_x0);
   2: I2 ← 0;
   3: I3 ← 0;
   4: I4 ← 0;
@@ -67,7 +67,8 @@ test_0(x1:*[]@xxxx):
  39: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, mMemo_25@xxxx, null);
  40: X1 ← TState.fillStackEntry(X0, X1, ⟦types.r8t+0:7_6 _t0 = enumerate(array, _t1, loop@7⸨bools_ro=bools_ro, strings_ro=strings_ro, arrays_ro=arrays_ro, _eKind=_t1⸩, loop@7_state⸨bools_rw=_t0, strings_rw=_t2, arrays_rw=_t3⸩) ∥ bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True)⟧, ⟨{arrays: b0, bools: b0, strings: b0}⟩, mMemo_x@xxxx, null);
  41: TState.setStackRest(X0, X1);
- 42: return
+ 42: TState.setUnwoundFrom(X0, target:test_x0);
+ 43: return
 ---
 allocated=256/9, peak=56
 */

@@ -20,24 +20,20 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
-import com.google.common.collect.ImmutableList;
 import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.retrolang.Vm;
-import org.retrolang.code.DebugInfo;
 import org.retrolang.compiler.Compiler;
+import org.retrolang.testing.TestMonitor;
 import org.retrolang.testing.TestdataScanner;
 import org.retrolang.testing.TestdataScanner.TestProgram;
 
@@ -155,7 +151,7 @@ public class CodeGenTest {
                     CharStreams.fromString(testProgram.code()), name, vm, module, argNames))
             .ib;
     module.build();
-    MethodMemo mMemo = ib.memoFactory().newMemo(null);
+    MethodMemo mMemo = ib.memoForApply();
 
     // Execute with prep = true to initialize the MethodMemo
     try {
@@ -177,8 +173,9 @@ public class CodeGenTest {
 
     // Now force code generation for the designated method(s).
     // Our Monitor will log the code generator's DebugInfo, but also save it for later checking.
-    MyMonitor monitor = new MyMonitor();
-    vm.scope.generateCodeForForcedMethods(monitor);
+    TestMonitor monitor = new TestMonitor(false);
+    vm.scope.codeGenManager.setMonitor(monitor);
+    vm.scope.generateCodeForForcedMethods();
 
     // Execute with prep = false, this time (hopefully) using the generated code
     tstate.bindTo(newTracker());
@@ -207,7 +204,7 @@ public class CodeGenTest {
           .isEqualTo(cleanLines(expectedResult));
       e.close();
     }
-    System.out.println(monitor.counters);
+    System.out.println("Counters: " + monitor.counters());
     assertThat(tracker.escapeCount()).isEqualTo(escapeCount);
     assertWithMessage("Trace doesn't match")
         .that(cleanIds(cleanLines(traces)))
@@ -260,46 +257,6 @@ public class CodeGenTest {
   /** Removes whitespace at the beginning and end of lines, and replaces newlines with spaces. */
   private static String cleanValue(String output) {
     return output.replaceAll(" *\n *", " ").trim();
-  }
-
-  private static final boolean LOG_BYTECODES = false;
-
-  /**
-   * An implementation of {@link CodeGenGroup.Monitor} that enables call counting and saves the
-   * values passed to {@link #loaded} so that they can be checked later.
-   */
-  private static class MyMonitor implements CodeGenGroup.Monitor {
-    final List<Object> counters = new ArrayList<>();
-    final StringBuilder blocks = new StringBuilder();
-
-    @Override
-    public synchronized void loaded(
-        String name, ImmutableList<Template> args, Object counter, DebugInfo debugInfo) {
-      System.out.println(debugInfo.blocks);
-      String argsToString =
-          args.stream().map(Template::toString).collect(Collectors.joining(", ", "(", ")"));
-      blocks.append("\n").append(name).append(argsToString).append(":\n").append(debugInfo.blocks);
-      if (LOG_BYTECODES) {
-        System.out.format(
-            "\n%s:\n%s\n%s\n",
-            name,
-            DebugInfo.printConstants(debugInfo.constants, Handle.lookup),
-            DebugInfo.printClassBytes(debugInfo.classBytes));
-      }
-      assertThat(counter).isNotNull();
-      counters.add(counter);
-    }
-
-    @Override
-    public boolean countCalls() {
-      return true;
-    }
-
-    @Override
-    public boolean verbose() {
-      // Set to true for more debug info
-      return false;
-    }
   }
 
   /** Executes the given instruction block, passing {@code arg} as the argument. */

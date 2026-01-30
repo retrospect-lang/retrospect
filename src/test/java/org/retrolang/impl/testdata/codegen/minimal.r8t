@@ -15,8 +15,8 @@ function exactlyTwo(a, b, c) {
 /* CODEGEN exactlyTwo RETURNS
 True
 ---
-exactlyTwo_0(i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩):
-  1: AtomicInteger.incrementAndGet(0);
+exactlyTwo_x0(i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩):
+  1: CodeGenTarget.incrementCallCount(target:exactlyTwo_x0);
   2: test I1 0 (< 2); T:→ 11
   3: test I2 0 (< 2); F:→ 9
   4: test I3 0 (< 2); T:→ 10

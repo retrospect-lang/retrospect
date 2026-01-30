@@ -120,24 +120,24 @@ public final class TState extends MemoryHelper {
   private static final ThreadLocal<TState> savedTState = new ThreadLocal<>();
 
   /**
-   * Returns the current thread's TState. Threads should only call TState methods on their own
-   * TState.
+   * Returns the current thread's TState, or null if it has none. Threads should only call TState
+   * methods on their own TState.
    */
-  public static TState get() {
+  static TState get() {
+    return savedTState.get();
+  }
+
+  /** Returns the current thread's TState, creating one if it didn't already exist. */
+  public static TState getOrCreate() {
     TState result = savedTState.get();
-    // We don't currently use ThreadLocal.withInitial(TState::new) because we want to be able to
-    // check if this thread has a TState, but that may turn out to not be useful, in which case
-    // this could be simpler.
+    // We don't use ThreadLocal.withInitial(TState::new) just because there are only a few places
+    // where we expect to encounter a thread that might not have an associated TState; usually that
+    // should be considered an error.
     if (result == null) {
       result = new TState();
       savedTState.set(result);
     }
     return result;
-  }
-
-  /** Returns the current thread's TState, or null if it has none. */
-  static TState getIfPresent() {
-    return savedTState.get();
   }
 
   /**
@@ -162,7 +162,7 @@ public final class TState extends MemoryHelper {
    */
   static void dropReferenceWithTracker(ResourceTracker tracker, @RC.In RefCounted obj) {
     assert tracker != null;
-    TState tstate = get();
+    TState tstate = getOrCreate();
     ResourceTracker prev = tstate.bindTo(tracker);
     try {
       tstate.dropReference(obj);
@@ -185,16 +185,29 @@ public final class TState extends MemoryHelper {
       dropReference(builtinCallArgs);
       builtinCallArgs = null;
       dropReference(builtinContinuationArgs);
-      builtinCallArgs = null;
-      builtinCall = null;
-      builtinContinuation = null;
+      builtinContinuationArgs = null;
       tracker().coordinator.removeActiveThread(this);
     }
+    codeGenDebugging = null;
+    builtinCall = null;
+    builtinContinuation = null;
     ResourceTracker result = super.bindTo(tracker);
     if (tracker != null) {
+      codeGenDebugging = tracker.scope.codeGenDebugging();
       tracker.coordinator.addActiveThread(this);
     }
     return result;
+  }
+
+  /**
+   * Updates the {@link #codeGenDebugging} cache; should be called whenever codeGen debugging might
+   * have been enabled for the current Scope.
+   */
+  static void updateCodeGenDebugging() {
+    TState tstate = TState.get();
+    if (tstate != null && tstate.tracker() != null) {
+      tstate.codeGenDebugging = tstate.tracker().scope.codeGenDebugging();
+    }
   }
 
   /**
@@ -210,8 +223,17 @@ public final class TState extends MemoryHelper {
    */
   RThread rThread;
 
+  /**
+   * Caches the value of {@code tracker().scope.codeGenDebugging()}, to minimize the cost of our
+   * frequent non-null checks on it.
+   */
+  CodeGenDebugging codeGenDebugging = null;
+
+  /** Set when unwinding from generated code. */
+  CodeGenTarget unwoundFrom;
+
   /** Returns the Scope for the current computation. */
-  public Scope scope() {
+  Scope scope() {
     return tracker().scope;
   }
 
@@ -563,6 +585,8 @@ public final class TState extends MemoryHelper {
     stackRest = rest;
   }
 
+  static final Op UNWIND_STARTED_OP = RcOp.forRcMethod(TState.class, "unwindStarted").build();
+
   /** True if the current computation is unwinding its stack. */
   boolean unwindStarted() {
     return stackHead != null;
@@ -715,6 +739,14 @@ public final class TState extends MemoryHelper {
     return rest;
   }
 
+  static final Op SET_UNWOUND_FROM_OP =
+      RcOp.forRcMethod(TState.class, "setUnwoundFrom", CodeGenTarget.class).hasSideEffect().build();
+
+  void setUnwoundFrom(CodeGenTarget target) {
+    assert this.unwoundFrom == null;
+    this.unwoundFrom = target;
+  }
+
   static final Op TRACE_OP =
       RcOp.forRcMethod(TState.class, "trace", Instruction.Trace.class, Value.class, TStack.class)
           .hasSideEffect()
@@ -787,28 +819,25 @@ public final class TState extends MemoryHelper {
 
   /** Sets the result for the current function call. */
   public void setResult(@RC.In Value result) {
-    assert allNull(fnResults)
-        && fnResultTemplates == null
-        && result != null
-        && RefCounted.isValidForStore(result);
+    assert result != null && RefCounted.isValidForStore(result);
     if (hasCodeGen()) {
       codeGen.setResults(result);
     } else {
+      assert allNull(fnResults) && fnResultTemplates == null;
       fnResults[0] = result;
     }
   }
 
   /** Sets the results for the current function call. */
   public void setResults(@RC.In Value result1, @RC.In Value result2) {
-    assert allNull(fnResults)
-        && fnResultTemplates == null
-        && result1 != null
+    assert result1 != null
         && result2 != null
         && RefCounted.isValidForStore(result1)
         && RefCounted.isValidForStore(result2);
     if (hasCodeGen()) {
       codeGen.setResults(result1, result2);
     } else {
+      assert allNull(fnResults) && fnResultTemplates == null;
       fnResults[0] = result1;
       fnResults[1] = result2;
     }
@@ -816,11 +845,11 @@ public final class TState extends MemoryHelper {
 
   /** Sets the results for the current function call. */
   public void setResults(@RC.In Value... results) {
-    assert fnResultTemplates == null
-        && Arrays.stream(results).allMatch(x -> x != null && RefCounted.isValidForStore(x));
+    assert Arrays.stream(results).allMatch(x -> x != null && RefCounted.isValidForStore(x));
     if (hasCodeGen()) {
       codeGen.setResults(results);
     } else {
+      assert allNull(fnResults) && fnResultTemplates == null;
       System.arraycopy(results, 0, fnResults(results.length), 0, results.length);
     }
   }
@@ -844,7 +873,7 @@ public final class TState extends MemoryHelper {
    * value.
    */
   public void setResultsFromElements(int size, Value v) {
-    assert fnResultTemplates == null;
+    assert hasCodeGen() || fnResultTemplates == null;
     Value[] results = hasCodeGen() ? new Value[size] : fnResults(size);
     for (int i = 0; i < size; i++) {
       results[i] = v.element(i);
@@ -857,9 +886,9 @@ public final class TState extends MemoryHelper {
 
   /** Called after setting results, to harmonize them with {@link MethodMemo#resultsMemo}. */
   void harmonizeResults(MethodMemo memo) {
-    assert fnResultTemplates == null;
+    assert fnResultTemplates == null && !hasCodeGen();
     assert memo.perMethod == null
-        || Value.containsValues(fnResults, memo.perMethod.method.function.numResults);
+        || Value.containsValues(fnResults, memo.method().function.numResults);
     memo.harmonizeResults(this, fnResults);
   }
 
@@ -906,14 +935,13 @@ public final class TState extends MemoryHelper {
    */
   @SuppressWarnings("ReferenceEquality")
   boolean checkExlinedResult(ImmutableList<Template> expectedTemplates) {
-    if (fnResultTemplates == expectedTemplates) {
-      // Fast path
-      assert !unwindStarted();
-      return true;
-    }
+    // The generated code should have saved its identity only if it unwound
+    assert unwindStarted() == (unwoundFrom != null);
     while (unwindStarted()) {
       BaseType baseType = stackHead.first().baseType();
       if (baseType instanceof Err || baseType instanceof BaseType.BlockingEntryType) {
+        // That was a non-escape exit.
+        unwoundFrom = null;
         return false;
       }
       // We were interrupted by an escape from generated code; resume execution from that point
@@ -933,18 +961,16 @@ public final class TState extends MemoryHelper {
         assert stackRest == null || stackRest == rest;
         dropReference(rest);
       }
-      // Maybe in the end we got the results we were hoping for?
-      if (fnResultTemplates == expectedTemplates) {
-        assert !unwindStarted();
-        return true;
-      }
     }
-    // We've got results, but in a different representation.
-    assert (fnResultTemplates != null)
-        ? fnResultTemplates.size() == expectedTemplates.size()
-            && !fnResultTemplates.equals(expectedTemplates)
-        : Value.containsValues(fnResults, expectedTemplates.size());
-    return false;
+    // We've successfully completed the call
+    unwoundFrom = null;
+    if (expectedTemplates == null || fnResultTemplates == expectedTemplates) {
+      return true;
+    }
+    // We've got results, but not in the expected representation.
+    // If we can coerce them to the expected representation, we can avoid causing our caller to
+    // escape.
+    return new ResultsFixer().tryFix(expectedTemplates);
   }
 
   /**
@@ -1109,7 +1135,7 @@ public final class TState extends MemoryHelper {
       if (builtinCall == null && builtinContinuation == null) {
         assert builtinCallArgs == null && builtinContinuationArgs == null;
         // done or unwinding
-        if (!unwindStarted()) {
+        if (!unwindStarted() && fnResultTemplates == null) {
           harmonizeResults(mMemo);
         }
         return;
@@ -1149,11 +1175,7 @@ public final class TState extends MemoryHelper {
           // unshared, and we need to update it at least for any replacement that we've synced to,
           // since those could be completed at any moment.  (We'll actually update it even for
           // replacements since our last sync, but that's OK.)
-          Value v = (Value) continuationArgs[i];
-          Value latest = Value.latest(v);
-          if (latest != v) {
-            continuationArgs[i] = latest;
-          }
+          continuationArgs[i] = Value.latest((Value) continuationArgs[i]);
         }
         if (callEntryNeeded()) {
           // Construct a stack entry with the saved values
@@ -1189,6 +1211,7 @@ public final class TState extends MemoryHelper {
             continuation != null, "No continuation named \"%s\"", continuationName);
         assert continuation.checkCallFrom(previousOrder);
       }
+      assert continuation.impl == impl;
       // This is a good place to check for out-of-memory.
       if (isOverMemoryLimit()) {
         StackEntryType entryType = continuation.builtinEntry.stackEntryType;
@@ -1247,6 +1270,110 @@ public final class TState extends MemoryHelper {
       // Otherwise take the stack tail back and do it again.
       stack = stackRest;
       stackRest = null;
+    }
+  }
+
+  /**
+   * A transient object created when we want to coerce function results into a given set of result
+   * templates.
+   */
+  private class ResultsFixer implements Template.VarVisitor, Template.VarSink {
+    // Scratch space used within tryFix(); always reset before it exits
+    private int sizeBytes;
+    private int sizeObjs;
+    private byte[] bytesOut;
+    private Value[] objsOut;
+
+    /**
+     * Either coerces the function results into the given templates and returns true, or leaves them
+     * unchanged and returns false. Can be called more than once, but not thread-safe.
+     */
+    boolean tryFix(ImmutableList<Template> newTemplates) {
+      int n = newTemplates.size();
+      assert (fnResultTemplates != null)
+          ? fnResultTemplates.size() == n && !fnResultTemplates.equals(newTemplates)
+          : Value.containsValues(fnResults, n);
+      // First we need to find out how big the byte[] and Object[] arrays need to be.  The
+      // CodeGenTarget already computed this, but plumbing it through to here would be a bit
+      // of a hassle.
+      newTemplates.forEach(t -> Template.visitVars(t, this));
+      // Create scratch arrays to hold the new values; we can't overwrite the ones in tstate
+      // until we're done reading them.
+      if (sizeBytes != 0) {
+        bytesOut = new byte[sizeBytes];
+        sizeBytes = 0;
+      }
+      if (sizeObjs != 0) {
+        objsOut = new Value[sizeObjs];
+        sizeObjs = 0;
+      }
+      for (int i = 0; i < newTemplates.size(); i++) {
+        // Like takeResult(), but just peeks at the value
+        Value v =
+            (fnResultTemplates != null)
+                ? fnResultTemplates.get(i).peekValue(fnResultSource)
+                : fnResults[i];
+        if (!newTemplates.get(i).setValue(TState.this, v, this)) {
+          // The returned value can't be fit into the requested template; clean up and return
+          // false.
+          bytesOut = null;
+          if (objsOut != null) {
+            // We already added refCounts to these
+            clearElements(objsOut, 0, objsOut.length);
+            objsOut = null;
+          }
+          return false;
+        }
+      }
+      // This is going to work.
+      clearResults();
+      fnResultTemplates = newTemplates;
+      if (bytesOut != null) {
+        System.arraycopy(bytesOut, 0, fnResultBytes(bytesOut.length), 0, bytesOut.length);
+        bytesOut = null;
+      }
+      if (objsOut != null) {
+        System.arraycopy(objsOut, 0, fnResults(objsOut.length), 0, objsOut.length);
+        objsOut = null;
+      }
+      return true;
+    }
+
+    // VarVisitor methods
+
+    @Override
+    public void visitNumVar(Template.NumVar v) {
+      sizeBytes = Math.max(sizeBytes, v.index + v.encoding.nBytes);
+    }
+
+    @Override
+    public void visitRefVar(Template.RefVar v) {
+      sizeObjs = Math.max(sizeObjs, v.index + 1);
+    }
+
+    // VarSink methods
+
+    @Override
+    public void setB(int index, int value) {
+      // Result templates don't store bytes, so we shouldn't ever get here.
+      assert false;
+      ArrayUtil.bytesSetB(bytesOut, index, value);
+    }
+
+    @Override
+    public void setI(int index, int value) {
+      ArrayUtil.bytesSetIAtOffset(bytesOut, index, value);
+    }
+
+    @Override
+    public void setD(int index, double value) {
+      ArrayUtil.bytesSetDAtOffset(bytesOut, index, value);
+    }
+
+    @Override
+    public void setValue(int index, Value value) {
+      assert objsOut[index] == null;
+      objsOut[index] = value;
     }
   }
 

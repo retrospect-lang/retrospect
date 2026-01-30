@@ -146,20 +146,17 @@ public abstract class VmFunction implements Vm.Function {
       return;
     }
     MethodMemo calledMemo = callerMemo.memoForCall(tstate, callSite, method, args);
-    if (calledMemo.isExlined()) {
-      // Check to see if we have previously generated code for this method, and if so whether the
+    if (calledMemo.extra() instanceof CodeGenLink cgLink) {
+      // Check to see if we have generated code for this method, and if so whether the
       // generated code accepts these args.  If it does, call the generated code instead of
       // executing the method directly.
-      CodeGenLink cgLink = (CodeGenLink) calledMemo.extra();
-      if (cgLink != null) {
-        CodeGenTarget target = cgLink.ready();
-        if (target != null) {
-          Object[] preparedArgs = target.prepareArgs(tstate, args);
-          if (preparedArgs != null) {
-            tstate.dropReference(args);
-            target.call(tstate, preparedArgs);
-            return;
-          }
+      CodeGenTarget target = cgLink.checkReady(tstate);
+      if (target != null) {
+        Object[] preparedArgs = target.prepareArgs(tstate, args);
+        if (preparedArgs != null) {
+          tstate.dropReference(args);
+          target.call(tstate, preparedArgs);
+          return;
         }
       }
     }
@@ -200,7 +197,7 @@ public abstract class VmFunction implements Vm.Function {
               /* isDefault= */ false,
               this,
               /* baseWeight= */ 1,
-              /* memoFactory= */ null);
+              MethodMemo.Factory.TRIVIAL);
       this.stackEntry = new SimpleStackEntryType(name, argNames);
     }
 
@@ -232,7 +229,7 @@ public abstract class VmFunction implements Vm.Function {
 
     @Override
     void emitCall(CodeGen codeGen, MethodMemo callerMemo, CallSite callSite, Object[] args) {
-      codeGen.emitMethodCall(this, null, args);
+      codeGen.emitMethodCall(this, method.fixedMemo, args);
     }
   }
 
@@ -509,7 +506,7 @@ public abstract class VmFunction implements Vm.Function {
 
     /** Creates and inserts a new MatchingMethod. We'll fill in the Condition later. */
     void addFromCallMemo(MethodMemo memo, int count) {
-      VmMethod method = memo.perMethod.method;
+      VmMethod method = memo.method();
       MatchingMethod mm = new MatchingMethod(method, memo, count);
       // Entries in [start, pos) have the same isDefault status as this method
       int pos;

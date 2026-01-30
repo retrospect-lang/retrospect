@@ -370,8 +370,12 @@ class BuiltinSupport {
       int numResults = signature.function.numResults;
       int numCallMemos = numCallers;
       int numValueMemos = cMethodsInOrder.size() + numExtraValueMemos;
-      MethodMemo.Factory memoFactory =
-          MethodMemo.Factory.create(numArgs, numResults, numCallMemos, numValueMemos);
+      MethodMemo.Factory memoFactory;
+      if (hasLoop()) {
+        memoFactory = new MethodMemo.LoopFactory(numArgs, numResults, numCallMemos, numValueMemos);
+      } else {
+        memoFactory = MethodMemo.Factory.create(numArgs, numResults, numCallMemos, numValueMemos);
+      }
       signature.function.addMethod(
           new VmMethod(
               signature.function,

@@ -13,8 +13,8 @@ function sumSqDistance([x, y], pts) = pts | [px, py] -> (x - px) ** 2 + (y - py)
 /* CODEGEN sumSqDistance RETURNS
 [8, 15.5]
 ---
-sumSqDistance_0([d1, d2], x3:*[]@xxxx):
-  1: AtomicInteger.incrementAndGet(0);
+sumSqDistance_x0([d1, d2], x3:*[]@xxxx):
+  1: CodeGenTarget.incrementCallCount(target:sumSqDistance_x0);
   2: I6 ← 0;
   3: D7 ← 0;
 = 4: I9 ← I6;
@@ -41,7 +41,8 @@ sumSqDistance_0([d1, d2], x3:*[]@xxxx):
  25: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_22@xxxx, null);
  26: X1 ← TState.fillStackEntry(X0, X1, ⟦varray.r8t+0:11_3 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_x@xxxx, null);
  27: TState.setStackRest(X0, X1);
- 28: return
+ 28: TState.setUnwoundFrom(X0, target:sumSqDistance_x0);
+ 29: return
 ---
 allocated=20592/784, peak=96
 */

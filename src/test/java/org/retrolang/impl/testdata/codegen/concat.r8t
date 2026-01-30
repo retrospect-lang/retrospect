@@ -14,19 +14,19 @@ function test(m, n) {
 /* CODEGEN test RETURNS
 [26, 17]
 ---
-test_0(i1, i2):
-  1: AtomicInteger.incrementAndGet(0);
-  2: test I1 < 0; T:→ 82
-  3: test I2 < 0; T:→ 82
+test_x0(i1, i2):
+  1: CodeGenTarget.incrementCallCount(target:test_x0);
+  2: test I1 < 0; T:→ 83
+  3: test I2 < 0; T:→ 83
   4: test I1 == 0; T:→ 51
-  5: test I2 == 0; T:→ 82
+  5: test I2 == 0; T:→ 83
   6: I3 ← 0;
   7: I4 ← iAdd(I1, I2);
   8: I5 ← I2;
-= 9: I6 ← Math.addExact(I1, I2); ArithmeticException:→ 82
- 10: test I6 < 0; T:→ 82
- 11: test I4 < 0; T:→ 82
- 12: test I4 == I6; F:→ 82
+= 9: I6 ← Math.addExact(I1, I2); ArithmeticException:→ 83
+ 10: test I6 < 0; T:→ 83
+ 11: test I4 < 0; T:→ 83
+ 12: test I4 == I6; F:→ 83
  13: test I3 1 (< 2); F:→ 54
  14: I5 ← iAdd(1, I4);
  15: I1 ← I4;
@@ -95,9 +95,10 @@ test_0(i1, i2):
  78: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨b0⟩, mMemo_30@xxxx, null);
  79: X1 ← TState.fillStackEntry(X0, X1, ⟦concat.r8t+0:11_9 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, null);
 =80: TState.setStackRest(X0, X1);
- 81: return
--82: X3 ← newStackEntry(⟦concat.r8t+0:9_0 _t0 = range(1, m) ∥ m=I1, n=I2⟧);
- 83: X1 ← TState.fillStackEntry(X0, null, X3, ⟨b0⟩, mMemo_x@xxxx, null); → 80
+ 81: TState.setUnwoundFrom(X0, target:test_x0);
+ 82: return
+-83: X3 ← newStackEntry(⟦concat.r8t+0:9_0 _t0 = range(1, m) ∥ m=I1, n=I2⟧);
+ 84: X1 ← TState.fillStackEntry(X0, null, X3, ⟨b0⟩, mMemo_x@xxxx, null); → 80
 ---
 allocated=152/6, peak=48
 */

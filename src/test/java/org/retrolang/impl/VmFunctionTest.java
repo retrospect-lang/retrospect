@@ -54,7 +54,7 @@ public class VmFunctionTest {
 
   private static VmMethod newMethod(
       VmFunction fn, MethodPredicate mp, boolean isDefault, Value result) {
-    return new VmMethod(fn, mp, isDefault, new MockImpl(result), 1, null);
+    return new VmMethod(fn, mp, isDefault, new MockImpl(result), 1, MethodMemo.Factory.TRIVIAL);
   }
 
   /** Returns the "at(x, y)" function defined by Retrospect's core module (aka "x @ y"). */

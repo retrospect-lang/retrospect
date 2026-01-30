@@ -17,8 +17,8 @@ function squared(x) = x * x
 /* CODEGEN tenthPower RETURNS
 [9765625, 6.1917364224E10]
 ---
-tenthPower_0(i1):
-  1: AtomicInteger.incrementAndGet(0);
+tenthPower_x0(i1):
+  1: CodeGenTarget.incrementCallCount(target:tenthPower_x0);
   2: I2 ← Math.multiplyExact(I1, I1); ArithmeticException:→ 9
   3: I2 ← Math.multiplyExact(I2, I2); ArithmeticException:→ 9
   4: I2 ← Math.multiplyExact(I1, I2); ArithmeticException:→ 9
@@ -29,7 +29,8 @@ tenthPower_0(i1):
 - 9: X2 ← newStackEntry(⟦int_overflow_2.r8t+2:7_0 _t0 = fifthPower(x) ∥ x=I1⟧);
  10: X1 ← TState.fillStackEntry(X0, null, X2, ⟨d0⟩, mMemo_x@xxxx, null);
  11: TState.setStackRest(X0, X1);
- 12: return
+ 12: TState.setUnwoundFrom(X0, target:tenthPower_x0);
+ 13: return
 ---
 allocated=200/8, peak=96
 */

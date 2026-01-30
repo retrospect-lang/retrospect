@@ -26,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 /**
@@ -34,6 +35,12 @@ import java.util.function.Predicate;
  * heavy or exlined MethodMemo).
  */
 class MemoMerger {
+
+  /** True if the current thread has locked the MemoMerger; only intended for assertions. */
+  static boolean isLocked() {
+    return Thread.holdsLock(TState.get().scope().memoMerger);
+  }
+
   /**
    * Each MemoMerger has a PerMethod instance for each distinct VmMethod that it has created
    * MethodMemos for. The MethodMemos all link to the PerMethod instances, which keeps global
@@ -74,7 +81,7 @@ class MemoMerger {
       this.forceExlined = forceExlined;
       if (forceExlined) {
         MethodMemo mm = method.memoFactory.newMemo(this);
-        mm.setExlined();
+        mm.setExlined(null);
         addExlined(mm);
       }
     }
@@ -93,7 +100,7 @@ class MemoMerger {
           return ImmutableList.of(item);
         }
         List<MethodMemo> newList = new ArrayList<>();
-        list.forEach(newList::add);
+        newList.addAll(list);
         list = newList;
       }
       list.add(item);
@@ -187,6 +194,8 @@ class MemoMerger {
     }
   }
 
+  final Scope scope;
+
   /** All PerMethod objects that have been allocated for this Scope. */
   private final Map<VmMethod, PerMethod> perMethods = new HashMap<>();
 
@@ -223,22 +232,26 @@ class MemoMerger {
    */
   private Predicate<VmMethod> forceExlined;
 
+  MemoMerger(Scope scope) {
+    this.scope = scope;
+  }
+
   synchronized void setForceExlined(Predicate<VmMethod> forceExlined) {
     this.forceExlined = forceExlined;
   }
 
   /**
-   * Adds each method that was identified by a previous call to {@link #setForceExlined} to the
-   * given CodeGenGroup.
+   * Calls the given consumer with each method that was identified by a previous call to {@link
+   * #setForceExlined}. (The MemoMerger is locked throughout these calls, so they should do a
+   * minimal amount of work.)
    */
-  void generateCodeForForcedMethods(CodeGenGroup group) {
+  void forEachForcedMethod(Consumer<MethodMemo> consumer) {
     synchronized (this) {
       assert forceExlined != null;
       for (PerMethod perMethod : perMethods.values()) {
         if (perMethod.forceExlined) {
           assert perMethod.exlined.size() == 1;
-          CodeGenLink link = (CodeGenLink) perMethod.exlined.get(0).extra();
-          link.startCodeGen(group);
+          consumer.accept(perMethod.exlined.get(0));
         }
       }
     }
@@ -410,7 +423,7 @@ class MemoMerger {
   }
 
   /**
-   * We've decided to merge {@code m1} and {@code m2}; {@code m2} is heavy, and {@code m1} can
+   * We've decided to merge {@code m1} and {@code m2}; {@code m2} is heavy, and {@code m1} may be
    * light, heavy, or exlined.
    */
   private void mergeWithHeavy(PerMethod method, MethodMemo m1, MethodMemo m2) {
@@ -423,7 +436,7 @@ class MemoMerger {
       if (m1.isHeavy()) {
         method.removeHeavy(m1);
       }
-      m1.setExlined();
+      m1.setExlined(this);
       method.addExlined(m1);
       if (parent != null) {
         parent.updateChildWeight(prevWeight, m1.weight());

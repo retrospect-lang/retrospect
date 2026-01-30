@@ -92,7 +92,7 @@ public abstract class BuiltinMethod {
    * The result of {@link TState#startCall} is a {@code Saver}, enabling the caller to specify
    * additional values that should be passed to the call's continuation.
    */
-  protected interface Saver {
+  public interface Saver {
     void saving(Value... args);
   }
 

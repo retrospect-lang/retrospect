@@ -134,15 +134,16 @@ class InstructionBlock implements MethodImpl {
     return allocator.allocObjectArray(locals.size());
   }
 
+  /**
+   * Returns an appropriate MethodMemo Factory for creating a VmMethod from this InstructionBlock.
+   */
   MethodMemo.Factory memoFactory() {
     return MethodMemo.Factory.create(numArgs, numResults, numCalls, numValueMemos);
   }
 
   /** Returns a new MethodMemo suitable for passing to {@link #applyToArgs}. */
   MethodMemo memoForApply() {
-    MethodMemo result = memoFactory().newMemo(null);
-    result.setExlined();
-    return result;
+    return new MethodMemo.AnonymousFactory(numArgs, numResults, numCalls, numValueMemos).newMemo();
   }
 
   /**
@@ -156,6 +157,7 @@ class InstructionBlock implements MethodImpl {
       throws Vm.RuntimeError {
     Preconditions.checkArgument(args.length == numArgs);
     Preconditions.checkArgument(numResults == 1);
+    Preconditions.checkArgument(memo.perMethod == null);
     Waiter waiter = new Waiter();
     // It's simplest to just make the RThread uncounted, since we know it can't outlive the
     // applyToArgs() call and the only counted reference it holds (the suspended stack) is

@@ -462,7 +462,16 @@ public final class Loop {
           target = otherLink.targetBlock();
         }
       }
-      fixZone(origin, target, -1);
+      if (origin instanceof BackRef br && br.loop() == this) {
+        // If one of our BackRefs is an exit it's no longer a BackRef
+        origin.cb().removeNoOp(origin);
+        if (backRefs.isEmpty()) {
+          // That was the last BackRef, so this is no longer a loop
+          return;
+        }
+      } else {
+        fixZone(origin, target, -1);
+      }
       assert !exits.contains(exit);
       // We have changed or reordered the entries list, so restart from the beginning of it.
       i = -1;

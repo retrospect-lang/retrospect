@@ -112,8 +112,7 @@ public class DebugInfo {
         continue;
       }
       result.append("const ").append(String.format(fmt, i)).append(": ");
-      if (obj instanceof MethodHandle) {
-        MethodHandle mh = (MethodHandle) obj;
+      if (obj instanceof MethodHandle mh) {
         if (mh.getClass().getSimpleName().equals("DirectMethodHandle")) {
           obj = lookup.revealDirect(mh);
         }

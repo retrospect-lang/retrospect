@@ -35,6 +35,7 @@ import org.retrolang.code.Register;
 import org.retrolang.code.ReturnBlock;
 import org.retrolang.code.SetBlock;
 import org.retrolang.code.TestBlock;
+import org.retrolang.code.ThrowBlock;
 import org.retrolang.code.ValueInfo;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.Template.NumVar;
@@ -1002,6 +1003,17 @@ public class CodeGen {
       assert v.type() == int.class;
       return v;
     }
+  }
+
+  private static final Op NEW_ASSERTION_ERROR =
+      Op.forMethodHandle("new AssertionError", Handle.forConstructor(AssertionError.class)).build();
+
+  /**
+   * Emits a block that throws an AssertionError.  Intended for when the next block should be
+   * unreachable but the JVM may not realize that.
+   */
+  public void emitAssertionFailed() {
+    new ThrowBlock(NEW_ASSERTION_ERROR.result()).addTo(cb);
   }
 
   /** Emits a test to escape unless {@code frame} has the specified layout. */

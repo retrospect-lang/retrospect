@@ -1075,7 +1075,6 @@ class BuiltinSupport {
         Preconditions.checkArgument(
             annotation == null && annotation2 == null, "Should not be annotated (%s)", where);
         m.setAccessible(true);
-        MethodHandle mh = Handle.forMethod(m);
         @SuppressWarnings("unchecked")
         ToIntFunction<Object[]> bounder =
             MethodHandleProxies.asInterfaceInstance(ToIntFunction.class, Handle.forMethod(m));

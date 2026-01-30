@@ -473,7 +473,7 @@ public final class Loop {
         fixZone(origin, target, -1);
       }
       assert !exits.contains(exit);
-      // We have changed or reordered the entries list, so restart from the beginning of it.
+      // We have changed or reordered the exits list, so restart from the beginning of it.
       i = -1;
     }
     while (nestedIn != null

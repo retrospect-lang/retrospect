@@ -192,6 +192,7 @@ public final class TState extends MemoryHelper {
     builtinCall = null;
     builtinContinuation = null;
     methodMemoUpdated = false;
+    unwoundFrom = null;
     cgParent = CodeGenParent.INVALID;
     ResourceTracker result = super.bindTo(tracker);
     if (tracker != null) {
@@ -1453,7 +1454,6 @@ public final class TState extends MemoryHelper {
         if (mm.codeGenParent(skipLoopLink) == link) {
           return true;
         }
-        System.out.print("");
       }
     }
     return false;

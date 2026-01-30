@@ -38,7 +38,8 @@ class MemoMerger {
 
   /** True if the current thread has locked the MemoMerger; only intended for assertions. */
   static boolean isLocked() {
-    return Thread.holdsLock(TState.get().scope().memoMerger);
+    TState tstate = TState.get();
+    return (tstate != null) && Thread.holdsLock(tstate.scope().memoMerger);
   }
 
   /**

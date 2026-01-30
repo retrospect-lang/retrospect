@@ -353,6 +353,9 @@ public class RValue implements Value {
 
     @Override
     public int numElements() {
+      if (template == null) {
+        return -1;
+      }
       BaseType baseType = template.baseType();
       assert baseType.isArray();
       return baseType.isCompositional() ? baseType.size() : -1;
@@ -360,7 +363,7 @@ public class RValue implements Value {
 
     @Override
     public Value peekElement(int index) {
-      if (this == UNKNOWN) {
+      if (template == null) {
         return UNKNOWN;
       } else if (template instanceof RefVar rv) {
         VArrayLayout layout = (VArrayLayout) rv.frameLayout();

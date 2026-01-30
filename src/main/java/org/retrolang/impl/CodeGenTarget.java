@@ -482,7 +482,7 @@ class CodeGenTarget {
     } else {
       argsForLatest[0] = codeGen.tstateRegister();
       // Allocate new registers to hold the arguments for the wrapped version
-      MethodType latestType = mhCaller.type();
+      MethodType latestType = latest.mhCaller.type();
       for (int i = 1; i < latest.numJavaArgs; i++) {
         argsForLatest[i] = codeGen.cb.newRegister(latestType.parameterType(i));
       }
@@ -538,7 +538,7 @@ class CodeGenTarget {
     CopyPlan[] resultPlans = new CopyPlan[results.size()];
     // Create a plan for copying each of the new results to the corresponding old template, but
     // don't emit them yet.
-    for (int i = 0; i < args.size(); i++) {
+    for (int i = 0; i < resultPlans.length; i++) {
       Template src = latest.results.get(i);
       Template dst = this.results.get(i);
       CopyPlan plan = CopyPlan.create(src, dst);

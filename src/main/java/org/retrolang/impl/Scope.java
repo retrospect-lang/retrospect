@@ -75,8 +75,10 @@ class Scope {
    * {@link #setForceExlined}.
    */
   void generateCodeForForcedMethods() {
-    CodeGenGroup group = new CodeGenGroup(codeGenManager);
-    memoMerger.forEachForcedMethod(mm -> group.setup((CodeGenLink) mm.extra()));
-    group.generateCode();
+    synchronized (codeGenManager) {
+      CodeGenGroup group = new CodeGenGroup(codeGenManager);
+      memoMerger.forEachForcedMethod(mm -> group.setup((CodeGenLink) mm.extra()));
+      group.generateCode();
+    }
   }
 }

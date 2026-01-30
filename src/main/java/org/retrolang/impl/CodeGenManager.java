@@ -44,7 +44,12 @@ public class CodeGenManager {
     loopThreshold = loop;
   }
 
+  /**
+   * Returns a distinct index.  Not thread-safe, but that's OK because only one thread at a time
+   * generates code for a Scope.
+   */
   int nextIndex() {
+    assert Thread.holdsLock(this);
     return nextIndex++;
   }
 

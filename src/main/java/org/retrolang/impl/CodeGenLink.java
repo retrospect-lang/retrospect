@@ -249,14 +249,18 @@ class CodeGenLink {
     if (current.link() != this) {
       // Either this link has been forwarded, or we raced against someone else calling
       // invalidateSelfLink; either way this result is OK
-      debug.append(this, "I");
+      if (debug != null) {
+        debug.append(this, "I");
+      }
       return current;
     }
     CodeGenParent result = new CodeGenParent(this);
     CodeGenParent prev = (CodeGenParent) SELF_LINK.compareAndExchangeRelease(this, current, result);
     if (prev != current) {
       // We raced against someone else calling invalidateSelfLink; keep their result
-      debug.append(this, "I!");
+      if (debug != null) {
+        debug.append(this, "I!");
+      }
       return prev;
     }
     current.clear();

@@ -278,8 +278,8 @@ public abstract class ValueMemo implements ResultsInfo {
               return Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
             }
             outcome = Outcome.CHANGED;
-            tstate.methodMemoUpdated = true;
             harmonized = vMemo.updateBuilder(tstate, i, builder, v);
+            tstate.methodMemoUpdated = true;
           }
           values[i] = harmonized;
           tstate.dropValue(v);

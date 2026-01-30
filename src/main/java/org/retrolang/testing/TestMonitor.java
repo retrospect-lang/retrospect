@@ -26,7 +26,7 @@ public class TestMonitor implements CodeGenManager.Monitor {
   }
 
   /** Summarizes the call counters for each target loaded with this Monitor. */
-  public String counters() {
+  public synchronized String counters() {
     return counters.stream().map(Supplier::get).collect(Collectors.joining(", "));
   }
 

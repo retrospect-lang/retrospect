@@ -27,7 +27,7 @@ class CodeGenParent {
   }
 
   void clear() {
-    LINK.setOpaque(this, null);
+    LINK.setRelease(this, null);
   }
 
   @Override

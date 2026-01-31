@@ -403,9 +403,11 @@ class CodeGenTarget {
    * link.
    */
   void setToFallback() {
+    // TODO: use this (and test it!)
     synchronized (this) {
       assert state == State.READY || state == State.NEW;
-      mhCaller.setTarget(FALLBACK.bindTo(this).asType(mhCaller.type()));
+      mhCaller.setTarget(
+          FALLBACK.bindTo(this).asCollector(Object[].class, numJavaArgs).asType(mhCaller.type()));
       state = State.FALLBACK;
     }
   }

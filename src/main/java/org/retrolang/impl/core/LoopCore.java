@@ -560,7 +560,7 @@ public final class LoopCore {
         int size = ArrayUtil.productAsInt(sizes::elementAsIntOrMinusOne, n);
         if (size < 0) {
           // Overflowed
-          return size;
+          return -1;
         }
         Value prev = it.peekElement(1);
         if (RValue.isExplorer(prev)) {

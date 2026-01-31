@@ -16,6 +16,7 @@
 
 package org.retrolang.impl;
 
+import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.IdentityHashMap;
 import java.util.Map;
@@ -52,7 +53,7 @@ class CodeGenGroup {
    */
   void setup(CodeGenLink link) {
     CodeGenTarget previous = linkMap.put(link, newTarget(link));
-    assert previous == null;
+    Preconditions.checkState(previous == null);
   }
 
   /**

@@ -71,7 +71,9 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
   public final ImmutableList<TestProgram> provideValues(Context context) {
     Pattern runOnly = Pattern.compile(System.getProperty("runOnly", ".*"));
     String roc = System.getProperty("runOnlyComment");
-    Pattern runOnlyComment = (roc == null) ? null : Pattern.compile(".*" + roc);
+    // Prefix the runOnlyComment with `.*` and call lookingAt() rather than just calling
+    // find() because we only want to search the first line of the comment.
+    Pattern runOnlyComment = (roc == null) ? null : Pattern.compile(".*(" + roc + ")");
     Predicate<TestProgram> selected =
         program ->
             runOnly.matcher(program.name()).matches()

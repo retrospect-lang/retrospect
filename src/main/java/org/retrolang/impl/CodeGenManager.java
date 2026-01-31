@@ -40,12 +40,13 @@ public class CodeGenManager {
   }
 
   void setThresholds(int exlined, int loop) {
+    Preconditions.checkArgument(exlined != 0 && loop != 0);
     exlinedThreshold = exlined;
     loopThreshold = loop;
   }
 
   /**
-   * Returns a distinct index.  Not thread-safe, but that's OK because only one thread at a time
+   * Returns a distinct index. Not thread-safe, but that's OK because only one thread at a time
    * generates code for a Scope.
    */
   int nextIndex() {

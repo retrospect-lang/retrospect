@@ -207,6 +207,7 @@ public abstract class ValueMemo implements ResultsInfo {
         Value harmonized = builder.cast(tstate, v);
         if (harmonized == null) {
           harmonized = vMemo.updateBuilder(tstate, index, builder, v);
+          tstate.methodMemoUpdated = true;
         }
         tstate.dropValue(v);
         return harmonized;
@@ -278,6 +279,7 @@ public abstract class ValueMemo implements ResultsInfo {
             }
             outcome = Outcome.CHANGED;
             harmonized = vMemo.updateBuilder(tstate, i, builder, v);
+            tstate.methodMemoUpdated = true;
           }
           values[i] = harmonized;
           tstate.dropValue(v);

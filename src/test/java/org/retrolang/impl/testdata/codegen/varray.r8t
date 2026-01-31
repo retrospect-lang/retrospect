@@ -13,8 +13,8 @@ function sumSqDistance([x, y], pts) = pts | [px, py] -> (x - px) ** 2 + (y - py)
 /* CODEGEN sumSqDistance RETURNS
 [8, 15.5]
 ---
-sumSqDistance_0([d1, d2], x3:*[]@xxxx):
-  1: AtomicInteger.incrementAndGet(0);
+sumSqDistance_x0([d1, d2], x3:*[]@xxxx):
+  1: CodeGenTarget.incrementCallCount(target:sumSqDistance_x0);
   2: I6 ← 0;
   3: D7 ← 0;
 = 4: I9 ← I6;
@@ -32,16 +32,17 @@ sumSqDistance_0([d1, d2], x3:*[]@xxxx):
  16: setDouble[](TState.fnResultBytes(X0, 8), 0, D7);
  17: return
 -18: X10 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I9, it=ArrayIterator(X5, EnumerateValues, I6)⟧);
- 19: X5 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[i0, d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩)⟩, mMemo_1@xxxx, null);
+ 19: X5 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[i0, d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩)⟩, LmMemo_1@xxxx, null);
  20: X6 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator((empty), EnumerateValues, lambda@11:53⸨x=D1, y=D3⸩)⟧);
- 21: X1 ← TState.fillStackEntry(X0, X5, X6, ⟨⸨d0; Absent⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩), Sum(0), d0⟩, mMemo_10@xxxx, null);
+ 21: X1 ← TState.fillStackEntry(X0, X5, X6, ⟨⸨d0; Absent⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩), Sum(0), d0⟩, lmMemo_10@xxxx, null);
  22: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D7⟧);
- 23: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0, Sum(0)⟩, mMemo_17@xxxx, null);
+ 23: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0, Sum(0)⟩, LmMemo_17@xxxx, null);
  24: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_18@xxxx, null);
  25: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_22@xxxx, null);
  26: X1 ← TState.fillStackEntry(X0, X1, ⟦varray.r8t+0:11_3 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_x@xxxx, null);
  27: TState.setStackRest(X0, X1);
- 28: return
+ 28: TState.setUnwoundFrom(X0, target:sumSqDistance_x0);
+ 29: return
 ---
 allocated=20592/784, peak=96
 */

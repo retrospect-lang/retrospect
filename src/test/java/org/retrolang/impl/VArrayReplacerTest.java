@@ -29,7 +29,7 @@ import org.retrolang.util.Bits;
 public class VArrayReplacerTest {
 
   /** A Constant template for the string {@code "x"}. */
-  private static final Template stringX = Constant.of(new StringValue(Allocator.UNCOUNTED, "x"));
+  private static final Template stringX = Constant.of(StringValue.uncounted("x"));
 
   /** Returns a template for an array containing the given elements. */
   private static Template arrayOf(Template... elements) {

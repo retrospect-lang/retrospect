@@ -10,11 +10,11 @@ function test(n) = 1..n | -> #+3 | save
 /* CODEGEN test RETURNS
 [4, 5, 6, 7, 8]
 ---
-test_0(i1):
-  1: AtomicInteger.incrementAndGet(0);
-  2: test I1 < 0; T:→ 28
+test_x0(i1):
+  1: CodeGenTarget.incrementCallCount(target:test_x0);
+  2: test I1 < 0; T:→ 29
   3: test I1 == 0; T:→ 18
-  4: test TState.reserveForChange(X0, *[]b0@xxxx, null, I1) == 0; T:→ 28
+  4: test TState.reserveForChange(X0, *[]b0@xxxx, null, I1) == 0; T:→ 29
   5: X2 ← alloc*[]b0@xxxx(X0, I1);
   6: I3 ← 1;
 = 7: I4 ← Math.addExact(I3, 1); ArithmeticException:→ 19
@@ -30,16 +30,17 @@ test_0(i1):
  17: return
 -18: X2 ← []; → 15
 -19: X4 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I3, I1, 0), it=TransformedIterator(ToBeSet, EnumerateAllKeys, lambda@8:26)⟧);
- 20: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@8:26), SaverLoop(SaveElements), x0:*[]@xxxx⟩, mMemo_4@xxxx, null);
+ 20: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], b0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@8:26), SaverLoop(SaveElements), x0:*[]@xxxx⟩, lmMemo_4@xxxx, null);
  21: X3 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=X2⟧);
- 22: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, mMemo_10@xxxx, null);
+ 22: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, lmMemo_10@xxxx, null);
  23: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, mMemo_11@xxxx, null);
  24: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨x0:*[]@xxxx⟩, mMemo_19@xxxx, null);
  25: X1 ← TState.fillStackEntry(X0, X1, ⟦simple_save.r8t+0:8_3 _t0 = pipe(_t0, _t1)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
 =26: TState.setStackRest(X0, X1);
- 27: return
--28: X2 ← newStackEntry(⟦simple_save.r8t+0:8_0 _t0 = range(1, n) ∥ n=I1⟧);
- 29: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 26
+ 27: TState.setUnwoundFrom(X0, target:test_x0);
+ 28: return
+-29: X2 ← newStackEntry(⟦simple_save.r8t+0:8_0 _t0 = range(1, n) ∥ n=I1⟧);
+ 30: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 26
 ---
 allocated=128/5, peak=56
 */

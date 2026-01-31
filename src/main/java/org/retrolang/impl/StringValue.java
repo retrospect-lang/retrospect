@@ -53,6 +53,11 @@ public class StringValue extends RefCounted implements Value {
     allocator.recordAlloc(this, OBJ_SIZE + SizeOf.string(value));
   }
 
+  /** Creates an uncounted StringValue. */
+  public static StringValue uncounted(String value) {
+    return new StringValue(Allocator.UNCOUNTED, value);
+  }
+
   @Override
   public BaseType baseType() {
     return Core.STRING;

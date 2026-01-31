@@ -11,8 +11,8 @@ function firstTwo(array) {
 /* CODEGEN firstTwo RETURNS
 [{first: [[1], 1.1], second: [[2], 1.2]}, {first: [[1], 2.1], second: [[2], 2.2]}]
 ---
-firstTwo_0(WithKeysMatrix([d1, d2, d3])):
- 1: AtomicInteger.incrementAndGet(0);
+firstTwo_x0(WithKeysMatrix([d1, d2, d3])):
+ 1: CodeGenTarget.incrementCallCount(target:firstTwo_x0);
  2: TState.setResultTemplates(X0, [{first: [[1], d0], second: [[2], d8]}]);
  3: X5 ← TState.fnResultBytes(X0, 16);
  4: setDouble[](X5, 0, D1);

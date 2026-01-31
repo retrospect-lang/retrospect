@@ -86,7 +86,7 @@ function classify(f, centroids, keep) {
 
 function dist(pt, centroid) = (centroid - pt) ** 2 | sum
 
-/* RUN (size=200, keep=800) RETURNS
+/* RUN (size=200, keep=800) CODEGEN(10) RETURNS
 {count: 50,
  last:
     {b0: 0.19868774362729588, b1: 0.2576687013636895, b2: 0.1890531704608046,
@@ -99,7 +99,23 @@ function dist(pt, centroid) = (centroid - pt) ** 2 | sum
      distance9: 0.04305405985016195,
      filter: 0}}
 ---
-allocated=2904671128/109894175, peak=8248
+?0--------------1-?0-1+..+?0-----?-----------.?-----------.--2-?0-----------.-2-?0-------------2-?0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-------3+?∘0-3-0-3++++?0---1+..++..++..+..0-2+...++...++...+4bsrsrsrsrsrsrsrsr3++++++5bsr0-1+..++..++..+..0-4srsrsrsrsrsrsrsrsrsrsr5sr-1+..++..++..+..4srsrsrsrsrsrsrsrsrsrsr5sr0-6bsrsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr?-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr7+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr0-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr7+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr8+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr7+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr8+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr7+9bs(4:33,6:9)r8+s(4:44,6:12)r+s(4:44,6:12)r+s(4:44,6:12)r+s(4:44,6:12)r+s(4:44,6:12)r+s(4:44,6:12)r+s(4:44,6:12)r+10bs(4:572,6:156)[5⊝?9⊝?10⊝0-?9⊝10⊝-?9⊝10⊝-?9⊝10⊝-?9⊝10⊝-9⊝10⊝-⊝-s(4:11,6:3)[7*9s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕]]]10⊕s(4:11,6:3)[*9s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕]]]10⊕s(4:11,6:3)[*9s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕]]]10⊕s(4:11,6:3)[*9s(4:11,6:3)[⊕11bs(4:22,6:6)r]10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕s(4:11,6:3)[*11s(4:33,6:9)r10⊕12bs(4:649,6:177)[11⊝12⊝0-6srsrsr..11⊝12⊝-4srsrsrsrsrsrsrsrsrsrsr5sr11⊝12⊝-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr11⊕13bs(4:437679,6:119367)[⊝12⊝-]⊝-]]]]]]]]]]]]-
+  0: x (top level)
+  1: x sample_bench_2.r8t+2:37
+  2: x sample_bench_2.r8t+2:85
+  3: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // sample_bench_2.r8t+2:74_29 min = pipe(distances, _t0) // sample_bench_2.r8t+2:19_1 _t0 = classify(f, centroids, keep) // CollectionCore.AtTransformed.afterAt // CollectionCore.AtTransformed.at // CollectionCore.NextTransformedIterator.at // LoopCore.Iterate.next // LoopCore.PipeCollectionCollector.iterate // sample_bench_2.r8t+2:18_20 filtered = pipe(_t0, _t1)
+  4: dist_x0 (2)
+  5: iterate_r1 (3)
+  6: at_x2 (1)
+  7: r CollectionCore.NextTransformedIterator // LoopCore.Iterate.next // LoopCore.PipeCollectionCollector.iterate // sample_bench_2.r8t+2:18_20 filtered = pipe(_t0, _t1)
+  8: r LoopCore.Iterate // LoopCore.PipeCollectionCollector.iterate // sample_bench_2.r8t+2:18_20 filtered = pipe(_t0, _t1)
+  9: next_r3 (7)
+ 10: iterate_r4 (8)
+ 11: next_r5 (7)
+ 12: iterate_r6 (8)
+ 13: next_r7 (7)
+---
+allocated=7115552/94431, peak=9568
 $0 = *[]x0:$1
 $1 = *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}
 */

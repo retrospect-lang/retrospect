@@ -5,8 +5,8 @@ function isNegative(x) = sqrt(x) is None ? "yes" : "no"
 /* CODEGEN isNegative RETURNS
 ["no", "yes"]
 ---
-isNegative_0(i1):
- 1: AtomicInteger.incrementAndGet(0);
+isNegative_x0(i1):
+ 1: CodeGenTarget.incrementCallCount(target:isNegative_x0);
  2: test Double.isNaN(Math.sqrt(I1)) == 0; T:→ 7
  3: X1 ← "yes";
 =4: TState.setResultTemplates(X0, [x0:String]);

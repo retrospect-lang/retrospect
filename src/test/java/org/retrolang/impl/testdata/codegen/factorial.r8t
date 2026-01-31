@@ -5,12 +5,12 @@ function factorial(n) = n < 2 ? 1 : n * factorial(n - 1)
 /* CODEGEN factorial RETURNS
 3628800
 ---
-factorial_0(i1):
-  1: AtomicInteger.incrementAndGet(0);
+factorial_x0(i1):
+  1: CodeGenTarget.incrementCallCount(target:factorial_x0);
   2: X2 ← null;
   3: test I1 < 2; T:→ 16
-  4: I3 ← Math.subtractExact(I1, 1); ArithmeticException:→ 23
-  5: [i0] ← factorial_0(X0, I3); X3 ← stackRest; unwind:→ 21
+  4: I3 ← Math.subtractExact(I1, 1); ArithmeticException:→ 24
+  5: [i0] ← factorial_x0(X0, I3); X3 ← stackRest; unwind:→ 22
   6: I4 ← int[](TState.fnResultBytes(X0, 0), 0);
   7: TState.clearResultTemplates(X0);
   8: test X3 == null; T:→ 11
@@ -25,11 +25,12 @@ factorial_0(i1):
 -17: X3 ← newStackEntry(⟦factorial.r8t+0:3_7 _t0 = multiply(n, _t1) ∥ n=I1, _t1=I4⟧);
  18: X2 ← TState.fillStackEntry(X0, null, X3, ⟨i0⟩, mMemo_x@xxxx, X2);
 =19: TState.setStackRest(X0, X2);
- 20: return
--21: X2 ← newStackEntry(⟦factorial.r8t+0:3_6 _t1 = factorial(_t1) ∥ n=I1⟧);
- 22: X2 ← TState.fillStackEntry(X0, X3, X2, ⟨i0⟩, mMemo_x@xxxx, null); → 19
--23: X2 ← newStackEntry(⟦factorial.r8t+0:3_0 _t1 = lessThan(n, 2) ∥ n=I1⟧);
- 24: X2 ← TState.fillStackEntry(X0, null, X2, ⟨i0⟩, mMemo_x@xxxx, null); → 19
+ 20: TState.setUnwoundFrom(X0, target:factorial_x0);
+ 21: return
+-22: X2 ← newStackEntry(⟦factorial.r8t+0:3_6 _t1 = factorial(_t1) ∥ n=I1⟧);
+ 23: X2 ← TState.fillStackEntry(X0, X3, X2, ⟨i0⟩, mMemo_x@xxxx, null); → 19
+-24: X2 ← newStackEntry(⟦factorial.r8t+0:3_0 _t1 = lessThan(n, 2) ∥ n=I1⟧);
+ 25: X2 ← TState.fillStackEntry(X0, null, X2, ⟨i0⟩, mMemo_x@xxxx, null); → 19
 ---
 allocated=96/4, peak=24
 */

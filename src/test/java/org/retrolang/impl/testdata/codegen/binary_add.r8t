@@ -30,8 +30,8 @@ function add2([x4, x2, x1], [y4, y2, y1]) {
 /* CODEGEN add2 RETURNS
 [[True, False, True], [True, True, False], [True, True, False], [True, True, True]]
 ---
-add2_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩], [i4⸨0:False; 1:True⸩, i5⸨0:False; 1:True⸩, i6⸨0:False; 1:True⸩]):
-  1: AtomicInteger.incrementAndGet(0);
+add2_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩], [i4⸨0:False; 1:True⸩, i5⸨0:False; 1:True⸩, i6⸨0:False; 1:True⸩]):
+  1: CodeGenTarget.incrementCallCount(target:add2_x0);
   2: X7 ← null;
   3: test I3 0 (< 2); F:→ 33
   4: test I6 0 (< 2); F:→ 34
@@ -52,8 +52,8 @@ add2_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
  19: test I4 0 (< 2); F:→ 41
 =20: X4 ← newStackEntry(⟦binary_add.r8t+0:10_2 trace ∥ x=I1⸨0:False; 1:True⸩, z=I2⸨0:False; 1:True⸩⟧);
  21: X6 ← TState.trace(X0, trace, X4, null);
- 22: test I1 == 0; F:→ 46
- 23: test I2 == 1; F:→ 46
+ 22: test I1 == 0; F:→ 47
+ 23: test I2 == 1; F:→ 47
  24: test X6 == null; T:→ 27
  25: X1 ← newStackEntry(⟦binary_add.r8t+0:25_6 _t0 = add3(x4, y4, c4) ∥ z1=I8⸨0:False; 1:True⸩, z2=I3⸨0:False; 1:True⸩⟧);
  26: X7 ← TState.fillStackEntry(X0, X6, X1, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7);
@@ -67,7 +67,7 @@ add2_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
 -34: I3 ← 0;
  35: I8 ← 1; → 11
 -36: test I5 0 (< 2); F:→ 13
--37: test I3 0 (< 2); F:→ 50
+-37: test I3 0 (< 2); F:→ 51
  38: I2 ← 0;
  39: I3 ← 1; → 18
 -40: test I4 0 (< 2); F:→ 20
@@ -75,13 +75,14 @@ add2_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
  42: X2 ← newStackEntry(⟦binary_add.r8t+0:24_5 c4, z2 = unarray2(_t0) ∥ x4=I1⸨0:False; 1:True⸩, y4=I4⸨0:False; 1:True⸩, z1=I8⸨0:False; 1:True⸩, _t0=[True, I3⸨0:False; 1:True⸩]⟧);
  43: X7 ← TState.fillStackEntry(X0, null, X2, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7);
 =44: TState.setStackRest(X0, X7);
- 45: return
--46: X4 ← newStackEntry(⟦binary_add.r8t+0:11_3 return [x, z] ∥ x=I1⸨0:False; 1:True⸩, z=I2⸨0:False; 1:True⸩⟧);
- 47: X6 ← TState.fillStackEntry(X0, null, X4, ⟨[False, True]⟩, mMemo_4@xxxx, X6);
- 48: X1 ← newStackEntry(⟦binary_add.r8t+0:25_6 _t0 = add3(x4, y4, c4) ∥ z1=I8⸨0:False; 1:True⸩, z2=I3⸨0:False; 1:True⸩⟧);
- 49: X7 ← TState.fillStackEntry(X0, X6, X1, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7); → 44
--50: X3 ← newStackEntry(⟦binary_add.r8t+0:23_3 c2, z1 = unarray2(_t0) ∥ x4=I1⸨0:False; 1:True⸩, x2=I2⸨0:False; 1:True⸩, y4=I4⸨0:False; 1:True⸩, y2=I5⸨0:False; 1:True⸩, _t0=[True, I8⸨0:False; 1:True⸩]⟧);
- 51: X7 ← TState.fillStackEntry(X0, null, X3, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7); → 44
+ 45: TState.setUnwoundFrom(X0, target:add2_x0);
+ 46: return
+-47: X4 ← newStackEntry(⟦binary_add.r8t+0:11_3 return [x, z] ∥ x=I1⸨0:False; 1:True⸩, z=I2⸨0:False; 1:True⸩⟧);
+ 48: X6 ← TState.fillStackEntry(X0, null, X4, ⟨[False, True]⟩, mMemo_4@xxxx, X6);
+ 49: X1 ← newStackEntry(⟦binary_add.r8t+0:25_6 _t0 = add3(x4, y4, c4) ∥ z1=I8⸨0:False; 1:True⸩, z2=I3⸨0:False; 1:True⸩⟧);
+ 50: X7 ← TState.fillStackEntry(X0, X6, X1, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7); → 44
+-51: X3 ← newStackEntry(⟦binary_add.r8t+0:23_3 c2, z1 = unarray2(_t0) ∥ x4=I1⸨0:False; 1:True⸩, x2=I2⸨0:False; 1:True⸩, y4=I4⸨0:False; 1:True⸩, y2=I5⸨0:False; 1:True⸩, _t0=[True, I8⸨0:False; 1:True⸩]⟧);
+ 52: X7 ← TState.fillStackEntry(X0, null, X3, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7); → 44
 ---
         (2) ⟦StackBase⟧
         (1) ⟦binary_add.r8t+0:1_0 sum1 = add2([False, True, True], [False, True, False])⟧

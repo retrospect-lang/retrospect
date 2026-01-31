@@ -53,8 +53,8 @@ function add2([x4, x2, x1], [y4, y2, y1]) {
 /* CODEGEN fib RETURNS
 [True, False, True]
 ---
-fib_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩]):
-  1: AtomicInteger.incrementAndGet(0);
+fib_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩]):
+  1: CodeGenTarget.incrementCallCount(target:fib_x0);
   2: X4 ← null;
   3: test I2 0 (< 2); F:→ 17
   4: test I1 0 (< 2); F:→ 17
@@ -70,56 +70,57 @@ fib_0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩
  14: setInt[](X5, 8, I8);
  15: TState.setStackRest(X0, X4);
  16: return
--17: test I3 0 (< 2); T:→ 50
- 18: test I1 == 0; F:→ 55
- 19: test I2 0 (< 2); T:→ 55
+-17: test I3 0 (< 2); T:→ 51
+ 18: test I1 == 0; F:→ 56
+ 19: test I2 0 (< 2); T:→ 56
  20: I2 ← 1;
  21: I5 ← 0;
-=22: [[i0⸨0:False; 1:True⸩, i4⸨0:False; 1:True⸩, i8⸨0:False; 1:True⸩]] ← fib_0(X0, 0, I2, I5); X2 ← stackRest; unwind:→ 65
+=22: [[i0⸨0:False; 1:True⸩, i4⸨0:False; 1:True⸩, i8⸨0:False; 1:True⸩]] ← fib_x0(X0, 0, I2, I5); X2 ← stackRest; unwind:→ 66
  23: X5 ← TState.fnResultBytes(X0, 0);
- 24: test int[](X5, 0) == 0; F:→ 65
+ 24: test int[](X5, 0) == 0; F:→ 66
  25: I6 ← int[](X5, 4);
  26: I7 ← int[](X5, 8);
  27: TState.clearResultTemplates(X0);
  28: test X2 == null; T:→ 31
  29: X4 ← newStackEntry(⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, I1⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
  30: X4 ← TState.fillStackEntry(X0, X2, X4, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, null);
--31: [[i0⸨0:False; 1:True⸩, i4⸨0:False; 1:True⸩, i8⸨0:False; 1:True⸩]] ← fib_0(X0, 0, I1, I3); X2 ← stackRest; unwind:→ 63
+-31: [[i0⸨0:False; 1:True⸩, i4⸨0:False; 1:True⸩, i8⸨0:False; 1:True⸩]] ← fib_x0(X0, 0, I1, I3); X2 ← stackRest; unwind:→ 64
  32: X5 ← TState.fnResultBytes(X0, 0);
- 33: test int[](X5, 0) == 0; F:→ 63
+ 33: test int[](X5, 0) == 0; F:→ 64
  34: I1 ← int[](X5, 4);
  35: I3 ← int[](X5, 8);
  36: TState.clearResultTemplates(X0);
  37: test X2 == null; T:→ 40
  38: X5 ← newStackEntry(⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, I6⸨0:False; 1:True⸩, I7⸨0:False; 1:True⸩]⟧);
  39: X4 ← TState.fillStackEntry(X0, X2, X5, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X4);
--40: test I7 0 (< 2); F:→ 57
+-40: test I7 0 (< 2); F:→ 58
  41: test I3 0 (< 2); T:→ 46
 =42: I2 ← 0;
  43: I8 ← 1;
-=44: test I6 0 (< 2); F:→ 60
+=44: test I6 0 (< 2); F:→ 61
  45: test I1 0 (< 2); T:→ 10
 =46: X2 ← newStackEntry(⟦binary_fib.r8t+5:14_10 _t0 = add2(_t0, _t1) ∥ _t0=[False, I6⸨0:False; 1:True⸩, I7⸨0:False; 1:True⸩], _t1=[False, I1⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
  47: X4 ← TState.fillStackEntry(X0, null, X2, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X4);
 =48: TState.setStackRest(X0, X4);
- 49: return
--50: test I2 0 (< 2); F:→ 54
- 51: test I1 0 (< 2); T:→ 55
-=52: I2 ← I1;
- 53: I5 ← 1; → 22
--54: test I1 0 (< 2); T:→ 52
--55: X4 ← newStackEntry(⟦binary_fib.r8t+5:3_0 n4, n2, n1 = unarray3(_a0) ∥ _a0=[I1⸨0:False; 1:True⸩, I2⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
- 56: X4 ← TState.fillStackEntry(X0, null, X4, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, null); → 48
--57: test I3 0 (< 2); T:→ 42
- 58: I2 ← 1;
- 59: I8 ← 0; → 44
--60: test I1 0 (< 2); F:→ 10
- 61: test I2 0 (< 2); F:→ 46
- 62: I2 ← 1; → 10
--63: X1 ← newStackEntry(⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, I6⸨0:False; 1:True⸩, I7⸨0:False; 1:True⸩]⟧);
- 64: X4 ← TState.fillStackEntry(X0, X2, X1, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X4); → 48
--65: X4 ← newStackEntry(⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, I1⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
- 66: X4 ← TState.fillStackEntry(X0, X2, X4, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, null); → 48
+ 49: TState.setUnwoundFrom(X0, target:fib_x0);
+ 50: return
+-51: test I2 0 (< 2); F:→ 55
+ 52: test I1 0 (< 2); T:→ 56
+=53: I2 ← I1;
+ 54: I5 ← 1; → 22
+-55: test I1 0 (< 2); T:→ 53
+-56: X4 ← newStackEntry(⟦binary_fib.r8t+5:3_0 n4, n2, n1 = unarray3(_a0) ∥ _a0=[I1⸨0:False; 1:True⸩, I2⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
+ 57: X4 ← TState.fillStackEntry(X0, null, X4, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, null); → 48
+-58: test I3 0 (< 2); T:→ 42
+ 59: I2 ← 1;
+ 60: I8 ← 0; → 44
+-61: test I1 0 (< 2); F:→ 10
+ 62: test I2 0 (< 2); F:→ 46
+ 63: I2 ← 1; → 10
+-64: X1 ← newStackEntry(⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, I6⸨0:False; 1:True⸩, I7⸨0:False; 1:True⸩]⟧);
+ 65: X4 ← TState.fillStackEntry(X0, X2, X1, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X4); → 48
+-66: X4 ← newStackEntry(⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, I1⸨0:False; 1:True⸩, I3⸨0:False; 1:True⸩]⟧);
+ 67: X4 ← TState.fillStackEntry(X0, X2, X4, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, null); → 48
 ---
             ⟦StackBase⟧
         (3) ⟦binary_fib.r8t+5:1_0 _t0 = fib([True, False, False])⟧

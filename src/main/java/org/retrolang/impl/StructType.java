@@ -28,9 +28,10 @@ import org.retrolang.code.Op;
 public class StructType extends BaseType {
 
   public static final Op INDEX_OP =
-      RcOp.forRcMethod(StructType.class, "index", Value.class).build();
+      RcOp.forRcMethod(StructType.class, "index", Value.class).withConstSimplifier().build();
 
-  public static final Op KEY_OP = RcOp.forRcMethod(StructType.class, "key", int.class).build();
+  public static final Op KEY_OP =
+      RcOp.forRcMethod(StructType.class, "key", int.class).withConstSimplifier().build();
 
   @Core.Private
   static final VmType STRUCT_KEYS =
@@ -74,7 +75,7 @@ public class StructType extends BaseType {
       String key = keys.get(i);
       Preconditions.checkArgument(i == 0 || keys.get(i - 1).compareTo(key) < 0);
       keyMap.put(key, i);
-      keysAsStringValues.add(new StringValue(Allocator.UNCOUNTED, key));
+      keysAsStringValues.add(StringValue.uncounted(key));
     }
     this.keyMap = keyMap.build();
     this.keysAsStringValues = keysAsStringValues.build();

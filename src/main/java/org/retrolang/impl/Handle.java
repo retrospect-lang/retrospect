@@ -41,6 +41,12 @@ class Handle {
 
   /** Returns a MethodHandle for the specified method. */
   static MethodHandle forMethod(Class<?> klass, String name, Class<?>... argTypes) {
+    return forMethod(lookup, klass, name, argTypes);
+  }
+
+  /** Returns a MethodHandle for the specified method. */
+  static MethodHandle forMethod(
+      MethodHandles.Lookup lookup, Class<?> klass, String name, Class<?>... argTypes) {
     try {
       return lookup.unreflect(klass.getDeclaredMethod(name, argTypes));
     } catch (ReflectiveOperationException e) {

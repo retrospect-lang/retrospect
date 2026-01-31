@@ -150,7 +150,7 @@ class RThread extends RefCounted {
    * made.
    */
   void run(ResourceTracker tracker, Consumer<TState> runner) {
-    TState tstate = TState.get();
+    TState tstate = TState.getOrCreate();
     assert tstate.rThread == null;
     ResourceTracker prev = tstate.bindTo(tracker);
     tstate.rThread = this;

@@ -35,9 +35,10 @@ public class TStackTest {
   @Test
   public void simple() {
     // Set up a ResourceTracker and TState
+    Scope scope = new Scope();
     int memoryLimit = 3000;
-    ResourceTracker tracker = new ResourceTracker(null, memoryLimit, false);
-    TState tstate = TState.get();
+    ResourceTracker tracker = new ResourceTracker(scope, memoryLimit, false);
+    TState tstate = TState.resetAndGet();
     tstate.bindTo(tracker);
     tstate.setStackRest(TStack.BASE);
     // Emulate

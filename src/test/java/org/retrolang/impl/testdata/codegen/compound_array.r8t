@@ -14,8 +14,8 @@ function sumSqDistance([x, y], pts) = pts | [px, py] -> (x - px) ** 2 + (y - py)
 /* CODEGEN sumSqDistance RETURNS
 [8, 5.25]
 ---
-sumSqDistance_0([d1, d2], [i3⸨0:[-1, -1]; 1:Absent⸩, i4⸨0:[-1, 0]; 1:Absent⸩, [-1, 1], i5⸨0:[1, -1]; 1:Absent⸩, i6⸨0:[1, 0]; 1:Absent⸩, [1, 1]]):
-  1: AtomicInteger.incrementAndGet(0);
+sumSqDistance_x0([d1, d2], [i3⸨0:[-1, -1]; 1:Absent⸩, i4⸨0:[-1, 0]; 1:Absent⸩, [-1, 1], i5⸨0:[1, -1]; 1:Absent⸩, i6⸨0:[1, 0]; 1:Absent⸩, [1, 1]]):
+  1: CodeGenTarget.incrementCallCount(target:sumSqDistance_x0);
   2: D10 ← 0;
   3: I9 ← 0;
 = 4: I12 ← iAdd(I9, 1);

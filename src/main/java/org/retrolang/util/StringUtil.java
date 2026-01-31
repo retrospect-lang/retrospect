@@ -121,6 +121,24 @@ public class StringUtil {
     return "\"" + escaped + "\"";
   }
 
+  /**
+   * Call {@link String#valueOf} but swallow any errors; intended for debugging or formatting errors
+   * when the system is already known to be in a bad state.
+   *
+   * <p>If {@code x} is an array of objects, formats as {@link java.util.Arrays#toString} (but uses
+   * {@link #safeToString} for each element).
+   */
+  public static String safeToString(Object x) {
+    if (x instanceof Object[] array) {
+      return joinElements("[", "]", array.length, i -> safeToString(array[i]));
+    }
+    try {
+      return String.valueOf(x);
+    } catch (RuntimeException | AssertionError nested) {
+      return "(can't print)";
+    }
+  }
+
   private static final int ID_LENGTH = 4;
 
   /** Returns a short, arbitrary string useful for identifying this object. */

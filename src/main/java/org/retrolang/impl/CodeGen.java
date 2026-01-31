@@ -35,6 +35,7 @@ import org.retrolang.code.Register;
 import org.retrolang.code.ReturnBlock;
 import org.retrolang.code.SetBlock;
 import org.retrolang.code.TestBlock;
+import org.retrolang.code.ThrowBlock;
 import org.retrolang.code.ValueInfo;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.Template.NumVar;
@@ -265,7 +266,7 @@ public class CodeGen {
   }
 
   /** Top-level call to emit the body of a method. */
-  void emit(MethodMemo initialMethod, MethodImpl impl) {
+  void emit(MethodMemo initialMethod, MethodImpl impl, CodeGenTarget target) {
     assert currentCall == null;
     // This Destination will be passed the method's results, and emit the code to return them
     Destination done = Destination.fromTemplates(target.results);
@@ -277,6 +278,7 @@ public class CodeGen {
             initialMethod.resultsMemo,
             stackRest -> {
               TState.SET_STACK_REST_OP.block(tstateRegister(), stackRest).addTo(cb);
+              TState.SET_UNWOUND_FROM_OP.block(tstateRegister(), CodeValue.of(target)).addTo(cb);
               new ReturnBlock(null).addTo(cb);
             });
     currentCall.methodMemo = initialMethod;
@@ -284,7 +286,18 @@ public class CodeGen {
         () -> {
           // Call the MethodImpl's emit() method, which does the actual work
           Value[] argValues = target.args.stream().map(RValue::fromTemplate).toArray(Value[]::new);
-          impl.emit(this, done, initialMethod, argValues);
+          switch (target.link.kind) {
+            case EXLINED -> impl.emit(this, done, initialMethod, argValues);
+            case LOOP -> {
+              // Since we're starting in the middle of method execution, tstate.stackRest() might
+              // already be non-null.  Use beforeCall() to load it into our stackRest register
+              // (it does what we want, although the name is a little misleading in this use).
+              new SetBlock(currentCall.stackRest, TState.BEFORE_CALL_OP.result(tstateRegister()))
+                  .addTo(cb);
+              ((BuiltinSupport.BuiltinImpl) impl)
+                  .emitFromLoopContinuation(this, done, initialMethod, argValues);
+            }
+          }
           // When that completes we should be back to the original CurrentCall
           assert currentCall.done == done;
           // Now emit the code to write the method's results into the TState
@@ -299,38 +312,55 @@ public class CodeGen {
   }
 
   /**
+   * A CopyEmitter that writes numeric values to a byte[] and Value objects to an Object[], for
+   * saving an exlined method's results in the TState.
+   */
+  static class ToFnResults extends CopyEmitter {
+    final Register fnResults;
+    final Register fnResultBytes;
+
+    /**
+     * Prepares to write results using the result templates of the given target, and creates a
+     * suitable CopyEmitter.
+     */
+    ToFnResults(CodeGen codeGen, CodeGenTarget target) {
+      TState.SET_RESULT_TEMPLATES_OP
+          .block(codeGen.tstateRegister(), CodeValue.of(target.results))
+          .addTo(codeGen.cb);
+      // Get the numeric and/or pointer results arrays from the TState
+      this.fnResults = (target.resultObjSize == 0) ? null : codeGen.fnResults(target.resultObjSize);
+      this.fnResultBytes =
+          (target.resultByteSize == 0) ? null : codeGen.fnResultBytes(target.resultByteSize);
+    }
+
+    @Override
+    void setDstVar(CodeGen codeGen, Template t, CodeValue v) {
+      Op setter;
+      CodeValue resultsArray;
+      int position;
+      if (t instanceof NumVar nv) {
+        setter =
+            switch (nv.encoding) {
+              case UINT8 -> Op.SET_UINT8_ARRAY_ELEMENT;
+              case INT32 -> SET_BYTES_FROM_INT_OP;
+              case FLOAT64 -> SET_BYTES_FROM_DOUBLE_OP;
+            };
+        resultsArray = fnResultBytes;
+        position = nv.index;
+      } else {
+        setter = RcOp.SET_OBJ_ARRAY_ELEMENT;
+        resultsArray = fnResults;
+        position = ((RefVar) t).index;
+      }
+      setter.block(resultsArray, CodeValue.of(position), v).addTo(codeGen.cb);
+    }
+  }
+
+  /**
    * Emit blocks to write this method's results into the TState, using the chosen result templates.
    */
   void emitSaveResults(Value[] results) {
-    TState.SET_RESULT_TEMPLATES_OP.block(tstateRegister(), CodeValue.of(target.results)).addTo(cb);
-    // Get the numeric and/or pointer results arrays from the TState
-    Register fnResults = (target.resultObjSize == 0) ? null : fnResults(target.resultObjSize);
-    Register fnResultBytes =
-        (target.resultByteSize == 0) ? null : fnResultBytes(target.resultByteSize);
-    CopyEmitter saveResult =
-        new CopyEmitter() {
-          @Override
-          void setDstVar(CodeGen codeGen, Template t, CodeValue v) {
-            Op setter;
-            CodeValue resultsArray;
-            int position;
-            if (t instanceof NumVar nv) {
-              setter =
-                  switch (nv.encoding) {
-                    case UINT8 -> Op.SET_UINT8_ARRAY_ELEMENT;
-                    case INT32 -> SET_BYTES_FROM_INT_OP;
-                    case FLOAT64 -> SET_BYTES_FROM_DOUBLE_OP;
-                  };
-              resultsArray = fnResultBytes;
-              position = nv.index;
-            } else {
-              setter = RcOp.SET_OBJ_ARRAY_ELEMENT;
-              resultsArray = fnResults;
-              position = ((RefVar) t).index;
-            }
-            setter.block(resultsArray, CodeValue.of(position), v).addTo(codeGen.cb);
-          }
-        };
+    CopyEmitter saveResult = new ToFnResults(this, target);
     for (int i = 0; i < target.results.size(); i++) {
       CopyPlan plan = CopyPlan.create(RValue.toTemplate(results[i]), target.results.get(i));
       plan = CopyOptimizer.toFnResult(plan, target.resultObjSize, target.resultByteSize);
@@ -342,7 +372,8 @@ public class CodeGen {
    * Returns an Object[]-valued Register initialized from a call to {@link TState#fnResults(int)}.
    */
   Register fnResults(int minSize) {
-    // This is only used by emitSaveResults(), so there's no opportunity for reusing it.
+    // We only use this for writing the method's results, not for reading the results of methods
+    // we call, so there's no opportunity for reusing it.
     Register fnResults = cb.newRegister(Object[].class);
     new SetBlock(fnResults, TState.FN_RESULTS_OP.result(tstateRegister(), CodeValue.of(minSize)))
         .addTo(cb);
@@ -649,9 +680,9 @@ public class CodeGen {
 
   /** Called from {@link VmFunction#emitCall} to emit the body of the specified method. */
   void emitMethodCall(MethodImpl impl, MethodMemo mMemo, Object[] args) {
-    if (mMemo != null && mMemo.isExlined() && !mMemo.isFixed()) {
+    if (mMemo.isExlined()) {
       CodeGenLink link = (CodeGenLink) mMemo.extra();
-      ExlinedCall.emitCall(this, link.next(group, args), args);
+      ExlinedCall.emitCall(this, group.getTarget(link), args);
     } else {
       currentCall.methodMemo = mMemo;
       // Save and restore the currentInstruction, since emitting a method may overwrite it.
@@ -1002,6 +1033,17 @@ public class CodeGen {
       assert v.type() == int.class;
       return v;
     }
+  }
+
+  private static final Op NEW_ASSERTION_ERROR =
+      Op.forMethodHandle("new AssertionError", Handle.forConstructor(AssertionError.class)).build();
+
+  /**
+   * Emits a block that throws an AssertionError. Intended for when the next block should be
+   * unreachable but the JVM may not realize that.
+   */
+  public void emitAssertionFailed() {
+    new ThrowBlock(NEW_ASSERTION_ERROR.result()).addTo(cb);
   }
 
   /** Emits a test to escape unless {@code frame} has the specified layout. */

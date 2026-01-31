@@ -112,7 +112,7 @@ public abstract class Frame extends RefCounted implements Value {
         // must have evolved.
         assert ((FrameLayout) layoutOrReplacement).hasEvolved();
         if (f.isRefCounted()) {
-          TState tstate = TState.getIfPresent();
+          TState tstate = TState.get();
           if (tstate == null || tstate.tracker() == null) {
             // This thread isn't bound to a ResourceTracker (probably it's just trying to toString()
             // a Value it encountered somewhere), so it's not allowed to modify anything.

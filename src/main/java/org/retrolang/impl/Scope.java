@@ -35,7 +35,7 @@ import java.util.function.Predicate;
 class Scope {
   final Evolver evolver = new Evolver();
 
-  final MemoMerger memoMerger = new MemoMerger();
+  final MemoMerger memoMerger = new MemoMerger(this);
 
   /**
    * StructTypes that aren't shared with the Core are saved per-Scope.
@@ -46,7 +46,7 @@ class Scope {
    */
   private final HashMap<ImmutableList<String>, StructType> structs = new HashMap<>();
 
-  private int nextCodeGenIndex;
+  final CodeGenManager codeGenManager = new CodeGenManager(this);
 
   StructType compoundWithKeys(ImmutableList<String> keys) {
     StructType result = Core.structType(keys);
@@ -58,9 +58,13 @@ class Scope {
     }
   }
 
+  CodeGenDebugging codeGenDebugging() {
+    return codeGenManager.debugging();
+  }
+
   /**
    * Any method created after this call for which the given predicate returns true will use a single
-   * exlined for all calls. For testing only.
+   * exlined memo for all calls. For testing only.
    */
   void setForceExlined(Predicate<VmMethod> methods) {
     memoMerger.setForceExlined(methods);
@@ -70,9 +74,11 @@ class Scope {
    * Forces code generation for each method that was matched by the predicate in a previous call to
    * {@link #setForceExlined}.
    */
-  void generateCodeForForcedMethods(CodeGenGroup.Monitor monitor) {
-    CodeGenGroup group = new CodeGenGroup(monitor, nextCodeGenIndex);
-    memoMerger.generateCodeForForcedMethods(group);
-    nextCodeGenIndex += group.generateCode();
+  void generateCodeForForcedMethods() {
+    synchronized (codeGenManager) {
+      CodeGenGroup group = new CodeGenGroup(codeGenManager);
+      memoMerger.forEachForcedMethod(mm -> group.setup((CodeGenLink) mm.extra()));
+      group.generateCode();
+    }
   }
 }

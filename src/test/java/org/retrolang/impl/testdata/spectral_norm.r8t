@@ -30,60 +30,37 @@ function multiply_At(v) =
 // Returns v times A times A transposed
 function multiply_A_At(v) = multiply_At(multiply_A(v))
 
-/* RUN (n=100) RETURNS
-  1.2742199912349306
+/* RUN (n=1000) CODEGEN(10) RETURNS
+  1.2742241481294843
 ---
-allocated=536281096/20709383, peak=24
+?0--------------1++++++++++2bs[?⊝0-?⊝-?⊝-⊝-]?--⊝-⊝-⊝-⊝-⊕⊕⊕⊕⊕⊕⊕⊕⊕⊕3bsr-sr-sr4+sr+sr+sr+sr+sr+sr+sr+sr+sr+5bs[?⊝0-⊝-]?------------6++++++++++7bs[?⊝0-?⊝-?⊝-⊝-]?--⊝-⊝-⊝-⊝-⊕⊕⊕⊕⊕⊕⊕⊕⊕⊕8bsr-sr-sr9+sr+sr+sr+sr+sr+sr+sr+sr+sr+10bs[?⊝0-⊝-]?----11--3⊝?12-11-s[?⊝12-11-?⊝12-11-?⊝12-11-1*s[⊕s[⊕s[⊕s[⊕s[⊕s[⊕s[⊕s[⊕s[⊕s[⊕13bsr]]]]]]]]]]]12+sr+sr+sr+sr+sr+sr+sr+sr+sr+14bsr?0----15--8⊝?16-15-sr16+sr+sr+sr+sr+sr+sr+sr+sr+sr+17bsr?0--11+14sr+15+17sr+11+14sr+15+17sr+0-11+14sr+15+17sr+11+14sr+15+17sr+0-11+14sr+15+17sr+11+14sr+15+17sr+18+11+14sr+15+17sr+11+14sr+15+17sr+18+11+14sr+15+17sr+11+14sr+15+17sr+18+19bsr20bsr19sr20sr+19sr20sr19sr20sr+19sr20sr19sr20sr+19sr20sr19sr20sr+?0----------21++++++++++22bs[?⊝0-?⊝-?⊝-⊝-]?----------23++++++++++24bs[?⊝0-?⊝-?⊝-⊝-]-
+  0: x (top level)
+  1: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:21_6 _t0 = pipe(_t0, _t1) // CollectionCore.NextTransformedIterator.at // LoopCore.Iterate.next // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:21_4 _t0 = pipe(_t0, _t1) // spectral_norm.r8t+3:28_0 _t0 = multiply_A(v) // spectral_norm.r8t+3:7_1 v = multiply_A_At(u) // LoopCore.Iterate.nextState // spectral_norm.r8t+3:6_3 _t0 = iterate(_t0, EnumerateValues, loop@6, loop@6_state⸨u=u, v=v⸩)
+  2: iterate_r0 (1)
+  3: iterate_r1 (1)
+  4: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:21_4 _t0 = pipe(_t0, _t1) // spectral_norm.r8t+3:28_0 _t0 = multiply_A(v) // spectral_norm.r8t+3:7_1 v = multiply_A_At(u) // LoopCore.Iterate.nextState // spectral_norm.r8t+3:6_3 _t0 = iterate(_t0, EnumerateValues, loop@6, loop@6_state⸨u=u, v=v⸩)
+  5: iterate_r2 (4)
+  6: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:25_6 _t0 = pipe(_t0, _t1) // CollectionCore.NextTransformedIterator.at // LoopCore.Iterate.next // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:25_4 _t0 = pipe(_t0, _t1) // spectral_norm.r8t+3:28_1 _t0 = multiply_At(_t0) // spectral_norm.r8t+3:7_1 v = multiply_A_At(u) // LoopCore.Iterate.nextState // spectral_norm.r8t+3:6_3 _t0 = iterate(_t0, EnumerateValues, loop@6, loop@6_state⸨u=u, v=v⸩)
+  7: iterate_r3 (6)
+  8: iterate_r4 (6)
+  9: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:25_4 _t0 = pipe(_t0, _t1) // spectral_norm.r8t+3:28_1 _t0 = multiply_At(_t0) // spectral_norm.r8t+3:7_1 v = multiply_A_At(u) // LoopCore.Iterate.nextState // spectral_norm.r8t+3:6_3 _t0 = iterate(_t0, EnumerateValues, loop@6, loop@6_state⸨u=u, v=v⸩)
+ 10: iterate_r5 (9)
+ 11: x spectral_norm.r8t+3:21
+ 12: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:21_4 _t0 = pipe(_t0, _t1)
+ 13: iterate_r6 (1)
+ 14: iterate_r7 (12)
+ 15: x spectral_norm.r8t+3:25
+ 16: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:25_4 _t0 = pipe(_t0, _t1)
+ 17: iterate_r8 (16)
+ 18: r LoopCore.Iterate // spectral_norm.r8t+3:6_3 _t0 = iterate(_t0, EnumerateValues, loop@6, loop@6_state⸨u=u, v=v⸩)
+ 19: multiply_A_x9 (11)
+ 20: multiply_At_x10 (15)
+ 21: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:11_7 vBv = pipe(_t0, _t1)
+ 22: iterate_r11 (21)
+ 23: r LoopCore.Iterate // LoopCore.enumerateDefault // LoopCore.PipeCollectionCollector.enumerate // spectral_norm.r8t+3:12_10 vv = pipe(_t0, _t1)
+ 24: iterate_r12 (23)
+---
+allocated=560600/8872, peak=25360
 $0 = *[]d0
 $1 = *[]d0
-*/
-
-// A copy of the program above modified to introduce parallelism via futures
-// (in lieu of the auto-parallelization of loops that isn't implemented yet).
-// This gives a roughly 3x speedup (in wall time) on my macbook.
-
-u = newMatrix([n], 1)
-v = None
-
-// Each loop iteration computes two more values in the sequence; u is the most
-// recent value, and v is the one before that.
-for _ in 1..10 sequential u, v {
-  v = multiply_A_At(u)
-  u = multiply_A_At(v)
-}
-
-vBv = u * v | sum
-vv = v * v | sum
-return sqrt(vBv / vv)
-
-// Returns the reciprocal of element (i,j) of (infinite) matrix A
-function aRecip(i, j) = (i+j-2) * (i+j-1) / 2 + i
-
-// Evaluates the given lambda with each int from 1 to size (in parallel)
-// and returns an array of the results.
-function parallelEval(size, lambda) {
-  futures = 1..size | i -> future(-> lambda @ i) | save
-  return waitFor(^futures) | save
-}
-
-// Returns v times A (a vector the same length as v, where each element is the
-// dot product of v with a row of A)
-function multiply_A(v) =
-    parallelEval(size(v), i -> (v / aRecip(i, ^1..size(v)) | sum))
-
-// Returns v times A transposed
-function multiply_At(v) =
-    parallelEval(size(v), i -> (v / aRecip(^1..size(v), i) | sum))
-
-// Returns v times A times A transposed
-function multiply_A_At(v) = multiply_At(multiply_A(v))
-
-/* RUN (n=100) RETURNS
-  1.2742199912349306
----
-allocated=536000000‥648000000/20800000‥25200000, peak=14720‥20840
-$0 = *[]d0
-$1 = *[]x0:Future
-$2 = *[]d0
-$3 = *[]x0:Future
 */

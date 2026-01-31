@@ -23,6 +23,7 @@ import com.google.testing.junit.testparameterinjector.TestParameterValuesProvide
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -69,10 +70,19 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
   @Override
   public final ImmutableList<TestProgram> provideValues(Context context) {
     Pattern runOnly = Pattern.compile(System.getProperty("runOnly", ".*"));
+    String roc = System.getProperty("runOnlyComment");
+    // Prefix the runOnlyComment with `.*` and call lookingAt() rather than just calling
+    // find() because we only want to search the first line of the comment.
+    Pattern runOnlyComment = (roc == null) ? null : Pattern.compile(".*(" + roc + ")");
+    Predicate<TestProgram> selected =
+        program ->
+            runOnly.matcher(program.name()).matches()
+                && (program.comment() == null
+                    || runOnlyComment == null
+                    || runOnlyComment.matcher(program.comment()).lookingAt());
     try (Stream<Path> files = Files.list(dir)) {
       return files
-          .flatMap(file -> allProgramsInFile(file).stream())
-          .filter(program -> runOnly.matcher(program.name()).matches())
+          .flatMap(file -> allProgramsInFile(file).stream().filter(selected))
           .collect(toImmutableList());
     } catch (IOException e) {
       throw new RuntimeException(e);

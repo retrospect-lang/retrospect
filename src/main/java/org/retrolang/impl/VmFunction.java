@@ -146,25 +146,50 @@ public abstract class VmFunction implements Vm.Function {
       return;
     }
     MethodMemo calledMemo = callerMemo.memoForCall(tstate, callSite, method, args);
-    if (calledMemo.isExlined()) {
-      // Check to see if we have previously generated code for this method, and if so whether the
+    CodeGenParent prevCGParent;
+    CodeGenLink savedCGLink = null;
+    CodeGenTarget target = null;
+    CodeGenTarget prevUnwoundFrom = null;
+    if (calledMemo.extra() instanceof CodeGenLink cgLink) {
+      // Before we switch to an exlined MethodMemo, make sure that any change to the current
+      // MethodMemo is appropriately recorded.
+      if (tstate.methodMemoUpdated) {
+        tstate.resetStabilityCounter(callerMemo);
+      }
+      // Check to see if we have generated code for this method, and if so whether the
       // generated code accepts these args.  If it does, call the generated code instead of
       // executing the method directly.
-      CodeGenLink cgLink = (CodeGenLink) calledMemo.extra();
-      if (cgLink != null) {
-        CodeGenTarget target = cgLink.ready();
-        if (target != null) {
-          Object[] preparedArgs = target.prepareArgs(tstate, args);
-          if (preparedArgs != null) {
-            tstate.dropReference(args);
-            target.call(tstate, preparedArgs);
-            return;
-          }
+      target = cgLink.checkReady(tstate);
+      if (target != null) {
+        Object[] preparedArgs = target.prepareArgs(tstate, args);
+        if (preparedArgs != null) {
+          tstate.dropReference(args);
+          target.call(tstate, preparedArgs);
+          return;
         }
       }
+      prevCGParent = tstate.cgParent;
+      tstate.cgParent = cgLink.selfLink();
+      // Changes to an exlined method memo shouldn't affect whether the caller's execution is deemed
+      // successful.
+      prevUnwoundFrom = tstate.unwoundFrom;
+      tstate.unwoundFrom = null;
+      cgLink.incrementStabilityCounter(target, tstate.codeGenDebugging);
+      savedCGLink = cgLink;
+    } else {
+      prevCGParent = tstate.cgParent;
     }
     results = callSite.adjustResultsInfo(results);
     method.impl.execute(tstate, results, calledMemo, args);
+    if (savedCGLink != null) {
+      if (tstate.methodMemoUpdated) {
+        tstate.resetStabilityCounter(calledMemo);
+      } else if (!tstate.unwindStarted()) {
+        savedCGLink.incrementStabilityCounter(target, tstate.codeGenDebugging);
+      }
+      tstate.unwoundFrom = prevUnwoundFrom;
+    }
+    tstate.cgParent = prevCGParent;
   }
 
   /**
@@ -200,7 +225,7 @@ public abstract class VmFunction implements Vm.Function {
               /* isDefault= */ false,
               this,
               /* baseWeight= */ 1,
-              /* memoFactory= */ null);
+              MethodMemo.Factory.TRIVIAL);
       this.stackEntry = new SimpleStackEntryType(name, argNames);
     }
 
@@ -232,7 +257,7 @@ public abstract class VmFunction implements Vm.Function {
 
     @Override
     void emitCall(CodeGen codeGen, MethodMemo callerMemo, CallSite callSite, Object[] args) {
-      codeGen.emitMethodCall(this, null, args);
+      codeGen.emitMethodCall(this, method.fixedMemo, args);
     }
   }
 
@@ -509,7 +534,7 @@ public abstract class VmFunction implements Vm.Function {
 
     /** Creates and inserts a new MatchingMethod. We'll fill in the Condition later. */
     void addFromCallMemo(MethodMemo memo, int count) {
-      VmMethod method = memo.perMethod.method;
+      VmMethod method = memo.method();
       MatchingMethod mm = new MatchingMethod(method, memo, count);
       // Entries in [start, pos) have the same isDefault status as this method
       int pos;

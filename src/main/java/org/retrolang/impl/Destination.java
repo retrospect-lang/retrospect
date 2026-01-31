@@ -100,6 +100,11 @@ class Destination implements ResultsInfo {
     return state.size();
   }
 
+  /** Returns true if this destination has allocated new registers. */
+  boolean isFull() {
+    return root().state instanceof Full;
+  }
+
   /** Ensures that new registers are allocated to store the values passed to this Destination. */
   void forceFull(CodeGen codeGen) {
     var unused = getFull(this, codeGen);

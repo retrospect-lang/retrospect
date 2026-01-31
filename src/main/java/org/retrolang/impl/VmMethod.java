@@ -61,13 +61,14 @@ public final class VmMethod {
     this.isDefault = isDefault;
     this.impl = impl;
     this.baseWeight = baseWeight;
-    this.memoFactory = memoFactory;
-    if (memoFactory == null) {
+    if (memoFactory.createsFixedMemos()) {
       // The fixedMemo needs a PerMemo since that's how its VmMethod can be found, but it won't
       // be associated with any Scope.
-      fixedMemo = new MethodMemo(new MemoMerger.PerMethod(this, false), null);
+      this.fixedMemo = memoFactory.newMemo(new MemoMerger.PerMethod(this, false));
+      this.memoFactory = null;
     } else {
-      fixedMemo = null;
+      this.fixedMemo = null;
+      this.memoFactory = memoFactory;
     }
   }
 

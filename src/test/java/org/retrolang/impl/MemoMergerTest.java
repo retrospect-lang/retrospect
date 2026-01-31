@@ -203,7 +203,11 @@ public class MemoMergerTest {
     MethodMemo makeRootMemo() {
       MemoMerger merger = tracker.scope.memoMerger;
       synchronized (merger) {
-        return methods[0].newMemo(merger, ARGS_NONE);
+        MethodMemo result = methods[0].newMemo(merger, ARGS_NONE);
+        if (!result.isExlined()) {
+          result.setExlined(null);
+        }
+        return result;
       }
     }
 
@@ -287,7 +291,7 @@ public class MemoMergerTest {
      * were emulating recursive calls.
      */
     private void getWeights(MethodMemo mm, int level, Bits.Builder[] weights) {
-      assertThat(mm.perMethod.method).isSameInstanceAs(methods[level]);
+      assertThat(mm.method()).isSameInstanceAs(methods[level]);
       weights[level].set(mm.currentWeight());
       mm.forEachChild((cIndex, nested) -> getWeights(nested, level + 1, weights));
     }
@@ -359,7 +363,7 @@ public class MemoMergerTest {
     // The "0/1" on the second (level 1) entry indicates that a shared (exlined) MethodMemo was
     // created for that method.  The numbers in braces are the weights of MethodMemos for the
     // corresponding methods.
-    caller.checkSummary(root, concurrent, "0/0{7}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
+    caller.checkSummary(root, concurrent, "0/0{1}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
   /**
@@ -375,7 +379,7 @@ public class MemoMergerTest {
     MethodMemo root = caller.makeRootMemo();
     caller.simulateExecution(0, root);
     shutdownMultiThreads();
-    caller.checkSummary(root, concurrent, "0/0{31}, 0/0{10}, 0/1{3}, 0/0{22}, 0/0{7}");
+    caller.checkSummary(root, concurrent, "0/0{1}, 0/0{10}, 0/1{3}, 0/0{22}, 0/0{7}");
   }
 
   /**
@@ -394,7 +398,7 @@ public class MemoMergerTest {
     caller.checkSummary(
         root,
         concurrent,
-        "0/0{15}, 0/0{7}, 0/1{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
+        "0/0{1}, 0/0{7}, 0/1{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
   /**
@@ -416,7 +420,7 @@ public class MemoMergerTest {
     caller.checkSummary(
         root,
         concurrent,
-        "0/0{7}, 0/1{3}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{37}, 0/0{36}, 0/0{35},"
+        "0/0{1}, 0/1{3}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{38}, 1/0{37}, 0/0{36}, 0/0{35},"
             + " 0/0{34}, 0/0{33}, 0/0{32}, 0/0{31}, 0/0{30}, 0/0{29}, 0/0{28}, 0/0{27}, 0/0{26},"
             + " 0/0{25}, 0/0{24}, 0/0{23}, 0/0{22}, 0/0{21}, 0/0{20}, 0/0{19}, 0/0{18}, 0/0{17},"
             + " 0/0{16}, 0/0{15}, 0/0{14}, 0/0{13}, 0/0{12}, 0/0{11}, 0/0{10}, 0/0{9}, 0/0{8},"
@@ -441,7 +445,7 @@ public class MemoMergerTest {
     caller.checkSummary(
         root,
         concurrent,
-        "0/0{15}, 0/0{7}, 0/2{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/2{3}, 0/0{23}, 0/0{11}, 0/0{5}");
+        "0/0{1}, 0/0{7}, 0/2{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/2{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
   /** Creates an uncounted array of NumValue objects representing the given ints. */
@@ -483,8 +487,8 @@ public class MemoMergerTest {
     int thresholdArg = 14;
 
     // Create a trivial MethodMemo in which to make the top-level call
-    MethodMemo root = new MethodMemo(/* perMethod= */ null, MethodMemo.Factory.create(0, 1, 1, 1));
-    root.setExlined();
+    MethodMemo root = MethodMemo.Factory.create(0, 1, 1, 1).newMemo(/* perMethod= */ null);
+    root.setExlined(null);
     MethodMemo current = root.memoForCall(tstate, callSites[0], myMethod, intArray(topLevelArg));
     MemoMerger.PerMethod perMethod = current.perMethod;
     List<MethodMemo> memos = new ArrayList<>();

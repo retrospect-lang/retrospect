@@ -290,7 +290,7 @@ public class TemplateBuilderTest {
   }
 
   private static Value sv(String s) {
-    return new StringValue(Allocator.UNCOUNTED, s);
+    return StringValue.uncounted(s);
   }
 
   @Test

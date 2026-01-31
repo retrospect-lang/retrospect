@@ -44,6 +44,12 @@ class CallSite {
   private int[] resultsMapping;
 
   /**
+   * If non-null, this is the stack entry type the caller will push for an unwind during the call.
+   * Currently only used to improve debuggability.
+   */
+  BaseType.StackEntryType duringCallEntryType;
+
+  /**
    * Creates a new CallSite that keeps all the returned results and stores them in a ValueMemo of
    * size {@code numResults}.
    */

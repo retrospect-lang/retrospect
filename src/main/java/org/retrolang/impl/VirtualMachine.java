@@ -50,7 +50,7 @@ public class VirtualMachine implements Vm.VirtualMachine {
 
   @Override
   public Vm.Expr asExpr(String s) {
-    return VmExpr.Constant.of(new StringValue(Allocator.UNCOUNTED, s));
+    return VmExpr.Constant.of(StringValue.uncounted(s));
   }
 
   @Override

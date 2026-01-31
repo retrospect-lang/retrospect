@@ -92,7 +92,7 @@ public abstract class BuiltinMethod {
    * The result of {@link TState#startCall} is a {@code Saver}, enabling the caller to specify
    * additional values that should be passed to the call's continuation.
    */
-  protected interface Saver {
+  public interface Saver {
     void saving(Value... args);
   }
 
@@ -101,7 +101,7 @@ public abstract class BuiltinMethod {
    * should return the function result as the result of the builtin. Should never be called.
    */
   static final ContinuationMethod TAIL_CALL =
-      new ContinuationMethod("(tail call)", -1, false, null, new String[0]);
+      new ContinuationMethod(null, "(tail call)", -1, false, null, new String[0]);
 
   /**
    * Subclasses of BuiltinStatic (such as Caller and ExtraValueMemo) are intended for use as static
@@ -128,7 +128,7 @@ public abstract class BuiltinMethod {
     private CallSite callSite;
 
     /** The continuation to be called after the function returns successfully. */
-    private BuiltinSupport.ContinuationMethod continuation;
+    private ContinuationMethod continuation;
 
     /**
      * A SimpleStackEntryType that will be used if the stack is unwound during the initial function
@@ -217,6 +217,7 @@ public abstract class BuiltinMethod {
       callSite.setValueMemoSize(continuation.numArgs());
       this.continuation = continuation;
       this.duringCall = (fn == null) ? null : new DuringCall(where, this);
+      callSite.duringCallEntryType = duringCall;
     }
   }
 
@@ -277,10 +278,7 @@ public abstract class BuiltinMethod {
         values[numResults + i] = entry.element(i);
       }
       tstate.dropValue(entry);
-      tstate.runContinuation(caller.continuation, values, results, mMemo);
-      // Normally continuations are called from the loop in {@link TState#finishBuiltin}, but in
-      // this case we need to run it explicitly.
-      tstate.finishBuiltin(results, mMemo, caller.continuation.builtinEntry.impl);
+      tstate.resumeBuiltin(caller.continuation, values, results, mMemo);
     }
   }
 

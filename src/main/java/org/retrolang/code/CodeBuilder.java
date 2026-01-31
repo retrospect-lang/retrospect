@@ -78,14 +78,14 @@ public class CodeBuilder {
    * Zones may be reordered (with corresponding changes to their indices) by some graph changes.
    *
    * <p>{@link #finalZone} is always the last element of {@code zones}. New blocks added to the
-   * graph are added to the second-last element of {@code zones} if they are not ReturnBlocks, and
-   * to {@link #finalZone} if they are.
+   * graph are added to the second-last element of {@code zones} if they are not Terminals, and to
+   * {@link #finalZone} if they are.
    */
   private final List<Zone> zones = new ArrayList<>();
 
   /**
    * A zone that is always the last element of {@link #zones}, and is not contained in any Loop.
-   * ReturnBlocks are always added to this zone.
+   * Terminals are always added to this zone.
    */
   final Zone finalZone;
 
@@ -376,7 +376,7 @@ public class CodeBuilder {
     assert block.zone() == null;
     if (block instanceof Terminal) {
       block.setZone(finalZone);
-      // We leave all ReturnBlocks with order 0; since none of them have outlinks, and all their
+      // We leave all Terminals with order 0; since none of them have outlinks, and all their
       // inlinks are from other zones, their order doesn't actually matter.
     } else {
       block.setZone(currentZone());

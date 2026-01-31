@@ -104,15 +104,15 @@ function dist(pt, centroid) = (centroid - pt) ** 2 | sum
      distance9: 0.04305405985016195,
      filter: 0}}
 ---
-cgtest_0(i1):
-   1: AtomicInteger.incrementAndGet(0);
+cgtest_x0(i1):
+   1: CodeGenTarget.incrementCallCount(target:cgtest_x0);
    2: X2 ← null;
-   3: I4 ← Math.multiplyExact(4, I1); ArithmeticException:→ 325
-   4: I3 ← Math.multiplyExact(I1, I1); ArithmeticException:→ 325
+   3: I4 ← Math.multiplyExact(4, I1); ArithmeticException:→ 317
+   4: I3 ← Math.multiplyExact(I1, I1); ArithmeticException:→ 317
    5: D5 ← dDiv(I3, 100);
-   6: test Double.isNaN(D5) == 0; F:→ 325
-   7: test I1 < 0; T:→ 325
-   8: test I1 == 0; T:→ 325
+   6: test Double.isNaN(D5) == 0; F:→ 317
+   7: test I1 < 0; T:→ 317
+   8: test I1 == 0; T:→ 317
    9: D7 ← dMul(I1, 0.3);
   10: D9 ← dMul(I1, 0.3);
   11: D11 ← dMul(I1, 0.3);
@@ -131,7 +131,7 @@ cgtest_0(i1):
   24: D27 ← dSub(I23, 0.5);
   25: D29 ← dSub(I24, 0.5);
   26: X26 ← null;
-  27: [d0] ← at_1(X0, D27, D29, D7, D9, D5); X31 ← stackRest; unwind:→ 322
+  27: [d0] ← at_x1(X0, D27, D29, D7, D9, D5); X31 ← stackRest; unwind:→ 314
   28: D32 ← double[](TState.fnResultBytes(X0, 0), 0);
   29: TState.clearResultTemplates(X0);
   30: test X31 == null; T:→ 35
@@ -139,7 +139,7 @@ cgtest_0(i1):
   32: test X31 == null; T:→ 35
   33: X26 ← newStackEntry(⟦sample_bench_2.r8t+2:50_0 b0 = at(f, "b0") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⟧);
   34: X26 ← TState.fillStackEntry(X0, X31, X26, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, null);
-- 35: [d0] ← at_1(X0, D27, D29, D11, D13, D5); X31 ← stackRest; unwind:→ 319
+- 35: [d0] ← at_x1(X0, D27, D29, D11, D13, D5); X31 ← stackRest; unwind:→ 311
   36: D34 ← double[](TState.fnResultBytes(X0, 0), 0);
   37: TState.clearResultTemplates(X0);
   38: test X31 == null; T:→ 43
@@ -147,7 +147,7 @@ cgtest_0(i1):
   40: test X31 == null; T:→ 43
   41: X36 ← newStackEntry(⟦sample_bench_2.r8t+2:51_1 b1 = at(f, "b1") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32⟧);
   42: X26 ← TState.fillStackEntry(X0, X31, X36, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 43: [d0] ← at_1(X0, D27, D29, D15, D17, D5); X31 ← stackRest; unwind:→ 316
+- 43: [d0] ← at_x1(X0, D27, D29, D15, D17, D5); X31 ← stackRest; unwind:→ 308
   44: D36 ← double[](TState.fnResultBytes(X0, 0), 0);
   45: TState.clearResultTemplates(X0);
   46: test X31 == null; T:→ 51
@@ -155,338 +155,309 @@ cgtest_0(i1):
   48: test X31 == null; T:→ 51
   49: X38 ← newStackEntry(⟦sample_bench_2.r8t+2:52_2 b2 = at(f, "b2") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34⟧);
   50: X26 ← TState.fillStackEntry(X0, X31, X38, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 51: I31 ← 0;
-  52: D38 ← 0;
-= 53: I40 ← iAdd(I31, 1);
-  54: test I31 == 0; F:→ 67
-  55: D41 ← D27;
-= 56: test I40 == 1; F:→ 68
-  57: I31 ← 1;
-  58: D38 ← D41; → 53
-= 59: X19 ← null;
-  60: I23 ← 1;
-= 61: test I21 < I1; T:→ 20
-  62: test I23 < I1; F:→ 219
-  63: I23 ← iAdd(I23, 1);
-  64: I24 ← 1;
-  65: I25 ← I23;
-  66: I21 ← 1; → 23
-- 67: D41 ← D29; → 56
-- 68: I31 ← Math.toIntExact(d2l(Math.floor(D38))); ArithmeticException:→ 305
-  69: I40 ← Math.toIntExact(d2l(Math.floor(D41))); ArithmeticException:→ 305
-  70: I40 ← Math.multiplyExact(I40, I1); ArithmeticException:→ 305
-  71: I40 ← Math.addExact(I31, I40); ArithmeticException:→ 305
-  72: [d0] ← dist_2(X0, D32, D34, D36, 0, 0, 0); X31 ← stackRest; unwind:→ 303
-  73: D27 ← double[](TState.fnResultBytes(X0, 0), 0);
-  74: TState.clearResultTemplates(X0);
-  75: test X31 == null; T:→ 78
-  76: X29 ← newStackEntry(⟦sample_bench_2.r8t+2:57_6 distance0 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36]⟧);
-  77: X26 ← TState.fillStackEntry(X0, X31, X29, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 78: [d0] ← dist_2(X0, D32, D34, D36, 0.6, 0, 0); X31 ← stackRest; unwind:→ 301
-  79: D29 ← double[](TState.fnResultBytes(X0, 0), 0);
-  80: TState.clearResultTemplates(X0);
-  81: test X31 == null; T:→ 84
-  82: X38 ← newStackEntry(⟦sample_bench_2.r8t+2:58_8 distance1 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27⟧);
-  83: X26 ← TState.fillStackEntry(X0, X31, X38, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 84: [d0] ← dist_2(X0, D32, D34, D36, 0, 0.6, 0); X31 ← stackRest; unwind:→ 299
-  85: D38 ← double[](TState.fnResultBytes(X0, 0), 0);
-  86: TState.clearResultTemplates(X0);
-  87: test X31 == null; T:→ 90
-  88: X41 ← newStackEntry(⟦sample_bench_2.r8t+2:59_10 distance2 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29⟧);
-  89: X26 ← TState.fillStackEntry(X0, X31, X41, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 90: [d0] ← dist_2(X0, D32, D34, D36, 0, 0, 0.6); X31 ← stackRest; unwind:→ 297
-  91: D41 ← double[](TState.fnResultBytes(X0, 0), 0);
-  92: TState.clearResultTemplates(X0);
-  93: test X31 == null; T:→ 96
-  94: X43 ← newStackEntry(⟦sample_bench_2.r8t+2:60_12 distance3 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38⟧);
-  95: X26 ← TState.fillStackEntry(X0, X31, X43, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-- 96: [d0] ← dist_2(X0, D32, D34, D36, 0.55, 0.55, 0.55); X31 ← stackRest; unwind:→ 295
-  97: D43 ← double[](TState.fnResultBytes(X0, 0), 0);
-  98: TState.clearResultTemplates(X0);
-  99: test X31 == null; T:→ 102
- 100: X45 ← newStackEntry(⟦sample_bench_2.r8t+2:61_14 distance4 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41⟧);
- 101: X26 ← TState.fillStackEntry(X0, X31, X45, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--102: [d0] ← dist_2(X0, D32, D34, D36, 0.2, 0.2, 0); X31 ← stackRest; unwind:→ 293
- 103: D45 ← double[](TState.fnResultBytes(X0, 0), 0);
- 104: TState.clearResultTemplates(X0);
- 105: test X31 == null; T:→ 108
- 106: X47 ← newStackEntry(⟦sample_bench_2.r8t+2:62_16 distance5 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43⟧);
- 107: X26 ← TState.fillStackEntry(X0, X31, X47, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--108: [d0] ← dist_2(X0, D32, D34, D36, 0.2, 0, 0.2); X31 ← stackRest; unwind:→ 291
- 109: D47 ← double[](TState.fnResultBytes(X0, 0), 0);
- 110: TState.clearResultTemplates(X0);
- 111: test X31 == null; T:→ 114
- 112: X49 ← newStackEntry(⟦sample_bench_2.r8t+2:63_18 distance6 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45⟧);
- 113: X26 ← TState.fillStackEntry(X0, X31, X49, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--114: [d0] ← dist_2(X0, D32, D34, D36, 0, 0.2, 0.2); X31 ← stackRest; unwind:→ 289
- 115: D49 ← double[](TState.fnResultBytes(X0, 0), 0);
- 116: TState.clearResultTemplates(X0);
- 117: test X31 == null; T:→ 120
- 118: X51 ← newStackEntry(⟦sample_bench_2.r8t+2:64_20 distance7 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47⟧);
- 119: X26 ← TState.fillStackEntry(X0, X31, X51, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--120: [d0] ← dist_2(X0, D32, D34, D36, 0.1, 0.1, 0.3); X31 ← stackRest; unwind:→ 287
- 121: D51 ← double[](TState.fnResultBytes(X0, 0), 0);
- 122: TState.clearResultTemplates(X0);
- 123: test X31 == null; T:→ 126
- 124: X53 ← newStackEntry(⟦sample_bench_2.r8t+2:65_22 distance8 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49⟧);
- 125: X26 ← TState.fillStackEntry(X0, X31, X53, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--126: [d0] ← dist_2(X0, D32, D34, D36, 0.3, 0.1, 0.1); X31 ← stackRest; unwind:→ 285
- 127: D53 ← double[](TState.fnResultBytes(X0, 0), 0);
- 128: TState.clearResultTemplates(X0);
- 129: test X31 == null; T:→ 132
- 130: X55 ← newStackEntry(⟦sample_bench_2.r8t+2:66_24 distance9 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51⟧);
- 131: X26 ← TState.fillStackEntry(X0, X31, X55, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--132: [d0] ← dist_2(X0, D32, D34, D36, 0.1, 0.3, 0.1); X31 ← stackRest; unwind:→ 283
- 133: D55 ← double[](TState.fnResultBytes(X0, 0), 0);
- 134: TState.clearResultTemplates(X0);
- 135: test X31 == null; T:→ 138
- 136: X57 ← newStackEntry(⟦sample_bench_2.r8t+2:67_26 distance10 = dist(pt, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53⟧);
- 137: X26 ← TState.fillStackEntry(X0, X31, X57, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
--138: I31 ← 0;
- 139: D58 ← 0;
- 140: I60 ← 0;
- 141: I57 ← 1;
-=142: I61 ← iAdd(I31, 1);
- 143: test I31 == 0; F:→ 190
- 144: D62 ← D27;
- 145: I31 ← 0;
-=146: test I57 1 (< 2); T:→ 148
- 147: test D62 < D58; F:→ 150
--148: D58 ← D62;
- 149: I60 ← I31;
--150: I31 ← I61;
- 151: I57 ← 0;
- 152: test I31 < 11; T:→ 142
- 153: test I4 == 0; T:→ 267
- 154: I31 ← Math.floorMod(I40, I4);
- 155: X57 ← RecordLayout.alloc(*{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx, X0, 0);
- 156: Frame7i2x.d0.set(X57, D32);
- 157: Frame7i2x.d1.set(X57, D34);
- 158: Frame7i2x.d2.set(X57, D36);
- 159: Frame7i2x.i0.set(X57, I40);
- 160: test I60 isUint8; F:→ 282
- 161: setUint8[](Frame7i2x.x0(X57), 0, I60);
- 162: setDouble[](Frame7i2x.x0(X57), 8, D27);
- 163: setDouble[](Frame7i2x.x0(X57), 16, D29);
- 164: setDouble[](Frame7i2x.x0(X57), 24, D55);
- 165: setDouble[](Frame7i2x.x0(X57), 32, D38);
- 166: setDouble[](Frame7i2x.x0(X57), 40, D41);
- 167: setDouble[](Frame7i2x.x0(X57), 48, D43);
- 168: setDouble[](Frame7i2x.x0(X57), 56, D45);
- 169: setDouble[](Frame7i2x.x0(X57), 64, D47);
- 170: setDouble[](Frame7i2x.x0(X57), 72, D49);
- 171: setDouble[](Frame7i2x.x0(X57), 80, D51);
- 172: setDouble[](Frame7i2x.x0(X57), 88, D53);
- 173: setInt[](Frame7i2x.x0(X57), 4, I31);
- 174: test X26 == null; T:→ 180
- 175: X26 ← TState.fillStackEntry(X0, X26, ⟦sample_bench_2.r8t+2:28_1 _t0 = classify(f, centroids, keep)⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h39@xxxx, null);
- 176: test X26 == null; T:→ 180
- 177: X26 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h45@xxxx, null);
- 178: test X26 == null; T:→ 180
- 179: X20 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.at ∥ second=Filter(lambda@29:18)⟧, ⟨⸨Absent; x0:*@xxxx⸩, Undef, BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_h42@xxxx, null);
--180: test X57 is *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx; F:→ 265
- 181: test int[](Frame7i2x.x0(X57), 4) == 0; T:→ 184
- 182: dropRef{X57};
- 183: X57 ← Absent;
--184: test X20 == null; T:→ 187
- 185: X26 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=BaseIterator(EnumerateValues, [I23, I24], [I1, I1]), it=TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
- 186: X19 ← TState.fillStackEntry(X0, X20, X26, ⟨⸨Absent; x0:*@xxxx⸩, TransformedIterator(BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18))), SaveUnordered, x0:*[]@xxxx⟩, mMemo_h39@xxxx, X19);
--187: test X57 instanceof Frame; T:→ 221
- 188: dropRef{X57};
- 189: I21 ← I24; → 61
--190: test I31 == 1; F:→ 193
- 191: D62 ← D29;
- 192: I31 ← 1; → 146
--193: test I31 == 2; F:→ 196
- 194: D62 ← D38;
- 195: I31 ← 2; → 146
--196: test I31 == 3; F:→ 199
- 197: D62 ← D41;
- 198: I31 ← 3; → 146
--199: test I31 == 4; F:→ 202
- 200: D62 ← D43;
- 201: I31 ← 4; → 146
--202: test I31 == 5; F:→ 205
- 203: D62 ← D45;
- 204: I31 ← 5; → 146
--205: test I31 == 6; F:→ 208
- 206: D62 ← D47;
- 207: I31 ← 6; → 146
--208: test I31 == 7; F:→ 211
- 209: D62 ← D49;
- 210: I31 ← 7; → 146
--211: test I31 == 8; F:→ 214
- 212: D62 ← D51;
- 213: I31 ← 8; → 146
--214: test I31 == 9; F:→ 217
- 215: D62 ← D53;
- 216: I31 ← 9; → 146
--217: D62 ← D55;
- 218: I31 ← 10; → 146
--219: I25 ← I23;
- 220: X57 ← Absent;
--221: test X19 == null; T:→ 224
- 222: addRef(X22); X20 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X22⟧);
- 223: X3 ← TState.fillStackEntry(X0, X19, X20, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_h41@xxxx, X3);
--224: test X57 instanceof Frame; F:→ 236
- 225: I19 ← Frame1i2x.i0(X22);
- 226: test TState.reserveForChange(X0, *[]x0:*@xxxx@xxxx, X22, iAdd(I19, 1)) == 0; T:→ 263
- 227: X20 ← removeRange*[]x0:*@xxxx@xxxx(X0, addRef(X22), I19, 0, 1);
- 228: test X57 instanceof Frame; F:→ 262
- 229: test X57 is *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx; F:→ 262
- 230: dropRef{X22};
- 231: clear*[]x0:*@xxxx@xxxx(X0, X20, I19, iAdd(I19, 1));
- 232: setObject[](Frame1i2x.x0(X20), I19, addRef(X57));
- 233: test I25 == 1; F:→ 254
- 234: dropRef{X57};
- 235: X22 ← X20; → 59
--236: test X3 == null; T:→ 240
- 237: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.iterate ∥ loop=SaveUnordered⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
- 238: test X3 == null; T:→ 240
- 239: X2 ← TState.fillStackEntry(X0, X3, ⟦sample_bench_2.r8t+2:27_21 filtered = pipe(_t0, _t1)⟧, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, null);
--240: I19 ← Frame1i2x.i0(X22);
- 241: X3 ← null;
- 242: test I19 < 1; T:→ 263
- 243: test Frame1i2x.i0(X22) < I19; T:→ 263
- 244: dropRef{X57};
- 245: I1 ← Frame1i2x.i0(X22);
- 246: X3 ← Value.fromArray(Frame1i2x.x0(X22), iSub(I19, 1));
- 247: addRef{X3} dropRef{X22};
- 248: TState.setResultTemplates(X0, [{count: i0, last: x0:*@xxxx}]);
- 249: X4 ← TState.fnResults(X0, 1);
- 250: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
- 251: setObject[](X4, 0, X3);
- 252: TState.setStackRest(X0, X2);
+- 51: I31 ← Math.toIntExact(d2l(Math.floor(D27))); ArithmeticException:→ 297
+  52: I38 ← Math.toIntExact(d2l(Math.floor(D29))); ArithmeticException:→ 297
+  53: I38 ← Math.multiplyExact(I38, I1); ArithmeticException:→ 297
+  54: I38 ← Math.addExact(I31, I38); ArithmeticException:→ 297
+  55: [d0] ← dist_x2(X0, D32, D34, D36, 0, 0, 0); X31 ← stackRest; unwind:→ 295
+  56: D27 ← double[](TState.fnResultBytes(X0, 0), 0);
+  57: TState.clearResultTemplates(X0);
+  58: test X31 == null; T:→ 61
+  59: X29 ← newStackEntry(⟦sample_bench_2.r8t+2:57_6 distance0 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36]⟧);
+  60: X26 ← TState.fillStackEntry(X0, X31, X29, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 61: [d0] ← dist_x2(X0, D32, D34, D36, 0.6, 0, 0); X31 ← stackRest; unwind:→ 293
+  62: D29 ← double[](TState.fnResultBytes(X0, 0), 0);
+  63: TState.clearResultTemplates(X0);
+  64: test X31 == null; T:→ 67
+  65: X39 ← newStackEntry(⟦sample_bench_2.r8t+2:58_8 distance1 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27⟧);
+  66: X26 ← TState.fillStackEntry(X0, X31, X39, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 67: [d0] ← dist_x2(X0, D32, D34, D36, 0, 0.6, 0); X31 ← stackRest; unwind:→ 291
+  68: D39 ← double[](TState.fnResultBytes(X0, 0), 0);
+  69: TState.clearResultTemplates(X0);
+  70: test X31 == null; T:→ 73
+  71: X41 ← newStackEntry(⟦sample_bench_2.r8t+2:59_10 distance2 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29⟧);
+  72: X26 ← TState.fillStackEntry(X0, X31, X41, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 73: [d0] ← dist_x2(X0, D32, D34, D36, 0, 0, 0.6); X31 ← stackRest; unwind:→ 289
+  74: D41 ← double[](TState.fnResultBytes(X0, 0), 0);
+  75: TState.clearResultTemplates(X0);
+  76: test X31 == null; T:→ 79
+  77: X43 ← newStackEntry(⟦sample_bench_2.r8t+2:60_12 distance3 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39⟧);
+  78: X26 ← TState.fillStackEntry(X0, X31, X43, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 79: [d0] ← dist_x2(X0, D32, D34, D36, 0.55, 0.55, 0.55); X31 ← stackRest; unwind:→ 287
+  80: D43 ← double[](TState.fnResultBytes(X0, 0), 0);
+  81: TState.clearResultTemplates(X0);
+  82: test X31 == null; T:→ 85
+  83: X45 ← newStackEntry(⟦sample_bench_2.r8t+2:61_14 distance4 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41⟧);
+  84: X26 ← TState.fillStackEntry(X0, X31, X45, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 85: [d0] ← dist_x2(X0, D32, D34, D36, 0.2, 0.2, 0); X31 ← stackRest; unwind:→ 285
+  86: D45 ← double[](TState.fnResultBytes(X0, 0), 0);
+  87: TState.clearResultTemplates(X0);
+  88: test X31 == null; T:→ 91
+  89: X47 ← newStackEntry(⟦sample_bench_2.r8t+2:62_16 distance5 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43⟧);
+  90: X26 ← TState.fillStackEntry(X0, X31, X47, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 91: [d0] ← dist_x2(X0, D32, D34, D36, 0.2, 0, 0.2); X31 ← stackRest; unwind:→ 283
+  92: D47 ← double[](TState.fnResultBytes(X0, 0), 0);
+  93: TState.clearResultTemplates(X0);
+  94: test X31 == null; T:→ 97
+  95: X49 ← newStackEntry(⟦sample_bench_2.r8t+2:63_18 distance6 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45⟧);
+  96: X26 ← TState.fillStackEntry(X0, X31, X49, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+- 97: [d0] ← dist_x2(X0, D32, D34, D36, 0, 0.2, 0.2); X31 ← stackRest; unwind:→ 281
+  98: D49 ← double[](TState.fnResultBytes(X0, 0), 0);
+  99: TState.clearResultTemplates(X0);
+ 100: test X31 == null; T:→ 103
+ 101: X51 ← newStackEntry(⟦sample_bench_2.r8t+2:64_20 distance7 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47⟧);
+ 102: X26 ← TState.fillStackEntry(X0, X31, X51, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+-103: [d0] ← dist_x2(X0, D32, D34, D36, 0.1, 0.1, 0.3); X31 ← stackRest; unwind:→ 279
+ 104: D51 ← double[](TState.fnResultBytes(X0, 0), 0);
+ 105: TState.clearResultTemplates(X0);
+ 106: test X31 == null; T:→ 109
+ 107: X53 ← newStackEntry(⟦sample_bench_2.r8t+2:65_22 distance8 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49⟧);
+ 108: X26 ← TState.fillStackEntry(X0, X31, X53, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+-109: [d0] ← dist_x2(X0, D32, D34, D36, 0.3, 0.1, 0.1); X31 ← stackRest; unwind:→ 277
+ 110: D53 ← double[](TState.fnResultBytes(X0, 0), 0);
+ 111: TState.clearResultTemplates(X0);
+ 112: test X31 == null; T:→ 115
+ 113: X55 ← newStackEntry(⟦sample_bench_2.r8t+2:66_24 distance9 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51⟧);
+ 114: X26 ← TState.fillStackEntry(X0, X31, X55, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+-115: [d0] ← dist_x2(X0, D32, D34, D36, 0.1, 0.3, 0.1); X31 ← stackRest; unwind:→ 275
+ 116: D55 ← double[](TState.fnResultBytes(X0, 0), 0);
+ 117: TState.clearResultTemplates(X0);
+ 118: test X31 == null; T:→ 121
+ 119: X57 ← newStackEntry(⟦sample_bench_2.r8t+2:67_26 distance10 = dist(pt, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53⟧);
+ 120: X26 ← TState.fillStackEntry(X0, X31, X57, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+-121: I31 ← 0;
+ 122: D58 ← 0;
+ 123: I60 ← 0;
+ 124: I57 ← 1;
+=125: I61 ← iAdd(I31, 1);
+ 126: test I31 == 0; F:→ 181
+ 127: D62 ← D27;
+ 128: I31 ← 0;
+=129: test I57 1 (< 2); T:→ 131
+ 130: test D62 < D58; F:→ 133
+-131: D58 ← D62;
+ 132: I60 ← I31;
+-133: I31 ← I61;
+ 134: I57 ← 0;
+ 135: test I31 < 11; T:→ 125
+ 136: test I4 == 0; T:→ 259
+ 137: I31 ← Math.floorMod(I38, I4);
+ 138: X57 ← RecordLayout.alloc(*{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx, X0, 0);
+ 139: Frame7i2x.d0.set(X57, D32);
+ 140: Frame7i2x.d1.set(X57, D34);
+ 141: Frame7i2x.d2.set(X57, D36);
+ 142: Frame7i2x.i0.set(X57, I38);
+ 143: test I60 isUint8; F:→ 274
+ 144: setUint8[](Frame7i2x.x0(X57), 0, I60);
+ 145: setDouble[](Frame7i2x.x0(X57), 8, D27);
+ 146: setDouble[](Frame7i2x.x0(X57), 16, D29);
+ 147: setDouble[](Frame7i2x.x0(X57), 24, D55);
+ 148: setDouble[](Frame7i2x.x0(X57), 32, D39);
+ 149: setDouble[](Frame7i2x.x0(X57), 40, D41);
+ 150: setDouble[](Frame7i2x.x0(X57), 48, D43);
+ 151: setDouble[](Frame7i2x.x0(X57), 56, D45);
+ 152: setDouble[](Frame7i2x.x0(X57), 64, D47);
+ 153: setDouble[](Frame7i2x.x0(X57), 72, D49);
+ 154: setDouble[](Frame7i2x.x0(X57), 80, D51);
+ 155: setDouble[](Frame7i2x.x0(X57), 88, D53);
+ 156: setInt[](Frame7i2x.x0(X57), 4, I31);
+ 157: test X26 == null; T:→ 163
+ 158: X26 ← TState.fillStackEntry(X0, X26, ⟦sample_bench_2.r8t+2:28_1 _t0 = classify(f, centroids, keep)⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h39@xxxx, null);
+ 159: test X26 == null; T:→ 163
+ 160: X26 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h45@xxxx, null);
+ 161: test X26 == null; T:→ 163
+ 162: X20 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.at ∥ second=Filter(lambda@29:18)⟧, ⟨⸨Absent; x0:*@xxxx⸩, Undef, BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_h42@xxxx, null);
+-163: test X57 is *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx; F:→ 257
+ 164: test int[](Frame7i2x.x0(X57), 4) == 0; T:→ 167
+ 165: dropRef{X57};
+ 166: X57 ← Absent;
+-167: test X20 == null; T:→ 170
+ 168: X26 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=BaseIterator(EnumerateValues, [I23, I24], [I1, I1]), it=TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
+ 169: X19 ← TState.fillStackEntry(X0, X20, X26, ⟨⸨Absent; x0:*@xxxx⸩, TransformedIterator(BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18))), SaveUnordered, x0:*[]@xxxx⟩, LmMemo_h39@xxxx, X19);
+-170: test X57 instanceof Frame; T:→ 212
+ 171: dropRef{X57};
+ 172: I21 ← I24;
+=173: test I21 < I1; T:→ 20
+ 174: test I23 < I1; F:→ 210
+ 175: I23 ← iAdd(I23, 1);
+ 176: I24 ← 1;
+ 177: I25 ← I23;
+ 178: I21 ← 1; → 23
+=179: X19 ← null;
+ 180: I23 ← 1; → 173
+-181: test I31 == 1; F:→ 184
+ 182: D62 ← D29;
+ 183: I31 ← 1; → 129
+-184: test I31 == 2; F:→ 187
+ 185: D62 ← D39;
+ 186: I31 ← 2; → 129
+-187: test I31 == 3; F:→ 190
+ 188: D62 ← D41;
+ 189: I31 ← 3; → 129
+-190: test I31 == 4; F:→ 193
+ 191: D62 ← D43;
+ 192: I31 ← 4; → 129
+-193: test I31 == 5; F:→ 196
+ 194: D62 ← D45;
+ 195: I31 ← 5; → 129
+-196: test I31 == 6; F:→ 199
+ 197: D62 ← D47;
+ 198: I31 ← 6; → 129
+-199: test I31 == 7; F:→ 202
+ 200: D62 ← D49;
+ 201: I31 ← 7; → 129
+-202: test I31 == 8; F:→ 205
+ 203: D62 ← D51;
+ 204: I31 ← 8; → 129
+-205: test I31 == 9; F:→ 208
+ 206: D62 ← D53;
+ 207: I31 ← 9; → 129
+-208: D62 ← D55;
+ 209: I31 ← 10; → 129
+-210: I25 ← I23;
+ 211: X57 ← Absent;
+-212: test X19 == null; T:→ 215
+ 213: addRef(X22); X20 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X22⟧);
+ 214: X3 ← TState.fillStackEntry(X0, X19, X20, ⟨x0:*[]@xxxx, SaveUnordered⟩, LmMemo_h41@xxxx, X3);
+-215: test X57 instanceof Frame; F:→ 227
+ 216: I19 ← Frame1i2x.i0(X22);
+ 217: test TState.reserveForChange(X0, *[]x0:*@xxxx@xxxx, X22, iAdd(I19, 1)) == 0; T:→ 255
+ 218: X20 ← removeRange*[]x0:*@xxxx@xxxx(X0, addRef(X22), I19, 0, 1);
+ 219: test X57 instanceof Frame; F:→ 254
+ 220: test X57 is *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}@xxxx; F:→ 254
+ 221: dropRef{X22};
+ 222: clear*[]x0:*@xxxx@xxxx(X0, X20, I19, iAdd(I19, 1));
+ 223: setObject[](Frame1i2x.x0(X20), I19, addRef(X57));
+ 224: test I25 == 1; F:→ 245
+ 225: dropRef{X57};
+ 226: X22 ← X20; → 179
+-227: test X3 == null; T:→ 231
+ 228: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.iterate ∥ loop=SaveUnordered⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 229: test X3 == null; T:→ 231
+ 230: X2 ← TState.fillStackEntry(X0, X3, ⟦sample_bench_2.r8t+2:27_21 filtered = pipe(_t0, _t1)⟧, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, null);
+-231: I19 ← Frame1i2x.i0(X22);
+ 232: X3 ← null;
+ 233: test I19 < 1; T:→ 255
+ 234: test Frame1i2x.i0(X22) < I19; T:→ 255
+ 235: dropRef{X57};
+ 236: I1 ← Frame1i2x.i0(X22);
+ 237: X3 ← Value.fromArray(Frame1i2x.x0(X22), iSub(I19, 1));
+ 238: addRef{X3} dropRef{X22};
+ 239: TState.setResultTemplates(X0, [{count: i0, last: x0:*@xxxx}]);
+ 240: X4 ← TState.fnResults(X0, 1);
+ 241: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
+ 242: setObject[](X4, 0, X3);
+ 243: TState.setStackRest(X0, X2);
+ 244: return
+-245: X22 ← newStackEntry(⟦ReducerCore.NextStateSaveUnordered.replace ∥ state=X20, index=I19, value=X57⟧);
+ 246: X19 ← TState.fillStackEntry(X0, null, X22, ⟨x0:*[]@xxxx, SaveUnordered, TransformedIterator(BaseIterator(EnumerateValues, [1, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_1@xxxx, null);
+ 247: X20 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=SaveUnordered, it=TransformedIterator(BaseIterator(EnumerateValues, [I25, I21], [I1, I1]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
+ 248: X3 ← TState.fillStackEntry(X0, X19, X20, ⟨x0:*[]@xxxx, SaveUnordered⟩, LmMemo_h41@xxxx, X3);
+=249: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.iterate ∥ loop=SaveUnordered⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 250: X2 ← TState.fillStackEntry(X0, X3, ⟦sample_bench_2.r8t+2:27_21 filtered = pipe(_t0, _t1)⟧, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, X2);
+=251: TState.setStackRest(X0, X2);
+ 252: TState.setUnwoundFrom(X0, target:cgtest_x0);
  253: return
--254: X22 ← newStackEntry(⟦ReducerCore.NextStateSaveUnordered.replace ∥ state=X20, index=I19, value=X57⟧);
- 255: X19 ← TState.fillStackEntry(X0, null, X22, ⟨x0:*[]@xxxx, SaveUnordered, TransformedIterator(BaseIterator(EnumerateValues, [1, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_1@xxxx, null);
- 256: X20 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=SaveUnordered, it=TransformedIterator(BaseIterator(EnumerateValues, [I25, I21], [I1, I1]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
- 257: X3 ← TState.fillStackEntry(X0, X19, X20, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_h41@xxxx, X3);
-=258: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.iterate ∥ loop=SaveUnordered⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
- 259: X2 ← TState.fillStackEntry(X0, X3, ⟦sample_bench_2.r8t+2:27_21 filtered = pipe(_t0, _t1)⟧, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, X2);
-=260: TState.setStackRest(X0, X2);
- 261: return
--262: dropRef{X20};
--263: X19 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=⸨Absent; X57⸩, it=TransformedIterator(BaseIterator(EnumerateValues, [I25, I21], [I1, I1]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18))), loop=SaveUnordered, state=X22⟧);
- 264: X3 ← TState.fillStackEntry(X0, null, X19, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_h41@xxxx, X3); → 258
--265: dropRef{X57};
- 266: X26 ← null;
-=267: X21 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=11, it=ArrayIterator([[D27, 0], [D29, 1], [D38, 2], [D41, 3], [D43, 4], [D45, 5], [D47, 6], [D49, 7], [D51, 8], [D53, 9], [D55, 10]], EnumerateValues, 11)⟧);
- 268: X21 ← TState.fillStackEntry(X0, null, X21, ⟨⸨[d0, b0]; Absent⸩, ArrayIterator([[d0, 0], [d0, 1], [d0, 2], [d0, 3], [d0, 4], [d0, 5], [d0, 6], [d0, 7], [d0, 8], [d0, 9], [d0, 10]], EnumerateValues, b0), Top(ElementLessThan([1]), False), ⸨[d0, b0]; Absent⸩⟩, mMemo_1@xxxx, null);
- 269: X25 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Top(ElementLessThan([1]), False), state=[D58, I60]⟧);
- 270: X21 ← TState.fillStackEntry(X0, X21, X25, ⟨[d0, b0], Top(ElementLessThan([1]), False)⟩, mMemo_10@xxxx, null);
- 271: X31 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, b0], Top(ElementLessThan([1]), False)⟩, mMemo_11@xxxx, null);
- 272: X31 ← TState.fillStackEntry(X0, X31, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Top(ElementLessThan([1]), False)⟧, ⟨[d0, b0]⟩, mMemo_15@xxxx, null);
- 273: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:79_29 min = pipe(distances, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53, distance10=D55⟧);
- 274: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
-=275: X26 ← TState.fillStackEntry(X0, X26, ⟦sample_bench_2.r8t+2:28_1 _t0 = classify(f, centroids, keep)⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h39@xxxx, null);
- 276: X26 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h45@xxxx, null);
- 277: X20 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.at ∥ second=Filter(lambda@29:18)⟧, ⟨⸨Absent; x0:*@xxxx⸩, Undef, BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_h42@xxxx, X20);
- 278: X21 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=BaseIterator(EnumerateValues, [I23, I24], [I1, I1]), it=TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
- 279: X19 ← TState.fillStackEntry(X0, X20, X21, ⟨⸨Absent; x0:*@xxxx⸩, TransformedIterator(BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18))), SaveUnordered, x0:*[]@xxxx⟩, mMemo_h39@xxxx, X19);
- 280: X1 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X22⟧);
- 281: X3 ← TState.fillStackEntry(X0, X19, X1, ⟨x0:*[]@xxxx, SaveUnordered⟩, mMemo_h41@xxxx, X3); → 258
--282: dropRef{X57}; → 267
--283: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:67_26 distance10 = dist(pt, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53⟧);
- 284: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--285: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:66_24 distance9 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51⟧);
- 286: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--287: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:65_22 distance8 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49⟧);
- 288: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--289: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:64_20 distance7 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45, distance6=D47⟧);
- 290: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--291: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:63_18 distance6 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43, distance5=D45⟧);
- 292: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--293: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:62_16 distance5 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41, distance4=D43⟧);
- 294: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--295: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:61_14 distance4 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38, distance3=D41⟧);
- 296: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--297: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:60_12 distance3 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D38⟧);
- 298: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--299: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:59_10 distance2 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27, distance1=D29⟧);
- 300: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--301: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:58_8 distance1 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36], distance0=D27⟧);
- 302: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--303: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:57_6 distance0 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I40, pt=[D32, D34, D36]⟧);
- 304: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--305: X21 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([D27, D29], EnumerateAllKeys, 2)⟧);
- 306: X21 ← TState.fillStackEntry(X0, null, X21, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator([d0, d0], EnumerateAllKeys, b0), SaverLoop(SaveElements), [d0, d0]⟩, mMemo_1@xxxx, null);
- 307: X25 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[D38, D41]⟧);
- 308: X21 ← TState.fillStackEntry(X0, X21, X25, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_6@xxxx, null);
- 309: X21 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_7@xxxx, null);
- 310: X21 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨[d0, d0]⟩, mMemo_13@xxxx, null);
- 311: X25 ← newStackEntry(⟦sample_bench_2.r8t+2:47_2 _t0 = pipe(xy, _t0) ∥ b=lambda@14:14⸨size=I1⸩⟧);
- 312: X31 ← TState.fillStackEntry(X0, X21, X25, ⟨i0⟩, mMemo_23@xxxx, null);
- 313: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨i0⟩, mMemo_25@xxxx, null);
- 314: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:53_3 b3 = at(f, "b3") ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36⟧);
- 315: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--316: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
- 317: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:52_2 b2 = at(f, "b2") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34⟧);
- 318: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--319: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
- 320: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:51_1 b1 = at(f, "b1") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32⟧);
- 321: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 275
--322: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
- 323: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:50_0 b0 = at(f, "b0") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⟧);
- 324: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, null); → 275
--325: X2 ← newStackEntry(⟦sample_bench_2.r8t+2:8_0 keep = multiply(4, size) ∥ size=I1⟧);
- 326: X2 ← TState.fillStackEntry(X0, null, X2, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, null); → 260
+-254: dropRef{X20};
+-255: X19 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=⸨Absent; X57⸩, it=TransformedIterator(BaseIterator(EnumerateValues, [I25, I21], [I1, I1]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18))), loop=SaveUnordered, state=X22⟧);
+ 256: X3 ← TState.fillStackEntry(X0, null, X19, ⟨x0:*[]@xxxx, SaveUnordered⟩, LmMemo_h41@xxxx, X3); → 249
+-257: dropRef{X57};
+ 258: X26 ← null;
+=259: X21 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=11, it=ArrayIterator([[D27, 0], [D29, 1], [D39, 2], [D41, 3], [D43, 4], [D45, 5], [D47, 6], [D49, 7], [D51, 8], [D53, 9], [D55, 10]], EnumerateValues, 11)⟧);
+ 260: X21 ← TState.fillStackEntry(X0, null, X21, ⟨⸨[d0, b0]; Absent⸩, ArrayIterator([[d0, 0], [d0, 1], [d0, 2], [d0, 3], [d0, 4], [d0, 5], [d0, 6], [d0, 7], [d0, 8], [d0, 9], [d0, 10]], EnumerateValues, b0), Top(ElementLessThan([1]), False), ⸨[d0, b0]; Absent⸩⟩, lmMemo_1@xxxx, null);
+ 261: X25 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Top(ElementLessThan([1]), False), state=[D58, I60]⟧);
+ 262: X21 ← TState.fillStackEntry(X0, X21, X25, ⟨[d0, b0], Top(ElementLessThan([1]), False)⟩, LmMemo_10@xxxx, null);
+ 263: X31 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, b0], Top(ElementLessThan([1]), False)⟩, mMemo_11@xxxx, null);
+ 264: X31 ← TState.fillStackEntry(X0, X31, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Top(ElementLessThan([1]), False)⟧, ⟨[d0, b0]⟩, mMemo_15@xxxx, null);
+ 265: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:79_29 min = pipe(distances, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53, distance10=D55⟧);
+ 266: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26);
+=267: X26 ← TState.fillStackEntry(X0, X26, ⟦sample_bench_2.r8t+2:28_1 _t0 = classify(f, centroids, keep)⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h39@xxxx, null);
+ 268: X26 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨x0:*@xxxx, Filter(lambda@29:18)⟩, mMemo_h45@xxxx, null);
+ 269: X20 ← TState.fillStackEntry(X0, X26, ⟦CollectionCore.AtTransformed.at ∥ second=Filter(lambda@29:18)⟧, ⟨⸨Absent; x0:*@xxxx⸩, Undef, BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18)))⟩, mMemo_h42@xxxx, X20);
+ 270: X21 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=Undef, innerIt=BaseIterator(EnumerateValues, [I23, I24], [I1, I1]), it=TransformedIterator((empty), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⸩), Filter(lambda@29:18)))⟧);
+ 271: X19 ← TState.fillStackEntry(X0, X20, X21, ⟨⸨Absent; x0:*@xxxx⸩, TransformedIterator(BaseIterator(EnumerateValues, [b0, b0], [b0, b0]), EnumerateValues, TransformedLambda(TransformedLambda(lambda@19:24⸨img={b0: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b1: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b2: lambda@37:11⸨xc=d0, yc=d0, scale=d0⸩, b3: lambda@14:14⸨size=b0⸩}⸩, lambda@28:11⸨centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=i0⸩), Filter(lambda@29:18))), SaveUnordered, x0:*[]@xxxx⟩, LmMemo_h39@xxxx, X19);
+ 272: X1 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaveUnordered, state=X22⟧);
+ 273: X3 ← TState.fillStackEntry(X0, X19, X1, ⟨x0:*[]@xxxx, SaveUnordered⟩, LmMemo_h41@xxxx, X3); → 249
+-274: dropRef{X57}; → 259
+-275: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:67_26 distance10 = dist(pt, _t0) ∥ keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51, distance9=D53⟧);
+ 276: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-277: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:66_24 distance9 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49, distance8=D51⟧);
+ 278: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-279: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:65_22 distance8 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47, distance7=D49⟧);
+ 280: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-281: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:64_20 distance7 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45, distance6=D47⟧);
+ 282: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-283: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:63_18 distance6 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43, distance5=D45⟧);
+ 284: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-285: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:62_16 distance5 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41, distance4=D43⟧);
+ 286: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-287: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:61_14 distance4 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39, distance3=D41⟧);
+ 288: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-289: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:60_12 distance3 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29, distance2=D39⟧);
+ 290: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-291: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:59_10 distance2 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27, distance1=D29⟧);
+ 292: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-293: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:58_8 distance1 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36], distance0=D27⟧);
+ 294: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-295: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:57_6 distance0 = dist(pt, _t0) ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36, b3=I38, pt=[D32, D34, D36]⟧);
+ 296: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-297: X21 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([D27, D29], EnumerateAllKeys, 2)⟧);
+ 298: X21 ← TState.fillStackEntry(X0, null, X21, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator([d0, d0], EnumerateAllKeys, b0), SaverLoop(SaveElements), [d0, d0]⟩, lmMemo_1@xxxx, null);
+ 299: X25 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[D27, D29]⟧);
+ 300: X21 ← TState.fillStackEntry(X0, X21, X25, ⟨[d0, d0], SaverLoop(SaveElements)⟩, lmMemo_6@xxxx, null);
+ 301: X21 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_7@xxxx, null);
+ 302: X21 ← TState.fillStackEntry(X0, X21, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨[d0, d0]⟩, mMemo_13@xxxx, null);
+ 303: X25 ← newStackEntry(⟦sample_bench_2.r8t+2:47_2 _t0 = pipe(xy, _t0) ∥ b=lambda@14:14⸨size=I1⸩⟧);
+ 304: X31 ← TState.fillStackEntry(X0, X21, X25, ⟨i0⟩, mMemo_23@xxxx, null);
+ 305: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨i0⟩, mMemo_25@xxxx, null);
+ 306: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:53_3 b3 = at(f, "b3") ∥ centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34, b2=D36⟧);
+ 307: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-308: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
+ 309: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:52_2 b2 = at(f, "b2") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32, b1=D34⟧);
+ 310: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-311: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
+ 312: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:51_1 b1 = at(f, "b1") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4, b0=D32⟧);
+ 313: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, X26); → 267
+-314: X31 ← TState.fillStackEntry(X0, X31, ⟦CollectionCore.AtTransformed.afterAt⟧, ⟨d0⟩, mMemo_5@xxxx, null);
+ 315: X21 ← newStackEntry(⟦sample_bench_2.r8t+2:50_0 b0 = at(f, "b0") ∥ f=TransformedCollection({b0: lambda@37:11⸨xc=D7, yc=D9, scale=D5⸩, b1: lambda@37:11⸨xc=D11, yc=D13, scale=D5⸩, b2: lambda@37:11⸨xc=D15, yc=D17, scale=D5⸩, b3: lambda@14:14⸨size=I1⸩}, lambda@47:40⸨xy=[D27, D29]⸩), centroids=[[0, 0, 0], [0.6, 0, 0], [0, 0.6, 0], [0, 0, 0.6], [0.55, 0.55, 0.55], [0.2, 0.2, 0], [0.2, 0, 0.2], [0, 0.2, 0.2], [0.1, 0.1, 0.3], [0.3, 0.1, 0.1], [0.1, 0.3, 0.1]], keep=I4⟧);
+ 316: X26 ← TState.fillStackEntry(X0, X31, X21, ⟨x0:*@xxxx⟩, mMemo_h115@xxxx, null); → 267
+-317: X2 ← newStackEntry(⟦sample_bench_2.r8t+2:8_0 keep = multiply(4, size) ∥ size=I1⟧);
+ 318: X2 ← TState.fillStackEntry(X0, null, X2, ⟨{count: b0, last: x0:*@xxxx}⟩, mMemo_x@xxxx, null); → 251
 
-at_1(lambda@47:40⸨xy=[d1, d2]⸩, lambda@37:11⸨xc=d3, yc=d4, scale=d5⸩):
-  1: AtomicInteger.incrementAndGet(0);
-  2: I11 ← 0;
-  3: D12 ← 0;
-= 4: I14 ← iAdd(I11, 1);
-  5: test I11 == 0; F:→ 10
-  6: D15 ← D1;
-= 7: test I14 == 1; F:→ 11
-  8: I11 ← 1;
-  9: D12 ← D15; → 4
--10: D15 ← D3; → 7
--11: D17 ← dSub(D15, D7);
- 12: D19 ← dSub(D12, D5);
- 13: D17 ← dDiv(dAdd(dMul(D17, D17), dMul(D19, D19)), D9);
- 14: test Double.isNaN(D17) == 0; F:→ 22
- 15: D17 ← Math.log(dSub(dAdd(D17, 7), 6));
- 16: test Double.isNaN(D17) == 0; F:→ 22
- 17: D17 ← dDiv(1, dAdd(D17, 1));
- 18: test Double.isNaN(D17) == 0; F:→ 22
- 19: TState.setResultTemplates(X0, [d0]);
- 20: setDouble[](TState.fnResultBytes(X0, 8), 0, D17);
- 21: return
--22: X11 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([D1, D3], EnumerateAllKeys, 2)⟧);
- 23: X1 ← TState.fillStackEntry(X0, null, X11, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator([d0, d0], EnumerateAllKeys, b0), SaverLoop(SaveElements), [d0, d0]⟩, mMemo_1@xxxx, null);
- 24: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[D12, D15]⟧);
- 25: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_6@xxxx, null);
- 26: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_7@xxxx, null);
- 27: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨[d0, d0]⟩, mMemo_13@xxxx, null);
- 28: X2 ← newStackEntry(⟦sample_bench_2.r8t+2:47_2 _t0 = pipe(xy, _t0) ∥ b=lambda@37:11⸨xc=D5, yc=D7, scale=D9⸩⟧);
- 29: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0⟩, mMemo_x@xxxx, null);
- 30: TState.setStackRest(X0, X1);
- 31: return
+at_x1(lambda@47:40⸨xy=[d1, d2]⸩, lambda@37:11⸨xc=d3, yc=d4, scale=d5⸩):
+  1: CodeGenTarget.incrementCallCount(target:at_x1);
+  2: D11 ← dSub(D3, D7);
+  3: D13 ← dSub(D1, D5);
+  4: D11 ← dDiv(dAdd(dMul(D11, D11), dMul(D13, D13)), D9);
+  5: test Double.isNaN(D11) == 0; F:→ 13
+  6: D11 ← Math.log(dSub(dAdd(D11, 7), 6));
+  7: test Double.isNaN(D11) == 0; F:→ 13
+  8: D11 ← dDiv(1, dAdd(D11, 1));
+  9: test Double.isNaN(D11) == 0; F:→ 13
+ 10: TState.setResultTemplates(X0, [d0]);
+ 11: setDouble[](TState.fnResultBytes(X0, 8), 0, D11);
+ 12: return
+-13: X11 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=2, it=ArrayIterator([D1, D3], EnumerateAllKeys, 2)⟧);
+ 14: X11 ← TState.fillStackEntry(X0, null, X11, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator([d0, d0], EnumerateAllKeys, b0), SaverLoop(SaveElements), [d0, d0]⟩, lmMemo_1@xxxx, null);
+ 15: X12 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[D1, D3]⟧);
+ 16: X1 ← TState.fillStackEntry(X0, X11, X12, ⟨[d0, d0], SaverLoop(SaveElements)⟩, lmMemo_6@xxxx, null);
+ 17: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨[d0, d0], SaverLoop(SaveElements)⟩, mMemo_7@xxxx, null);
+ 18: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨[d0, d0]⟩, mMemo_13@xxxx, null);
+ 19: X2 ← newStackEntry(⟦sample_bench_2.r8t+2:47_2 _t0 = pipe(xy, _t0) ∥ b=lambda@37:11⸨xc=D5, yc=D7, scale=D9⸩⟧);
+ 20: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0⟩, mMemo_x@xxxx, null);
+ 21: TState.setStackRest(X0, X1);
+ 22: TState.setUnwoundFrom(X0, target:at_x1);
+ 23: return
 
-dist_2([d1, d2, d3], [d4, d5, d6]):
-  1: AtomicInteger.incrementAndGet(0);
-  2: I13 ← 0;
-  3: D14 ← 0;
-= 4: I16 ← iAdd(I13, 1);
-  5: test I13 == 0; F:→ 16
-  6: D17 ← D7;
-= 7: test I16 == 1; F:→ 19
-  8: D19 ← D1;
-= 9: D17 ← dSub(D17, D19);
- 10: I13 ← I16;
- 11: D14 ← dAdd(D14, dMul(D17, D17));
- 12: test I13 < 3; T:→ 4
- 13: TState.setResultTemplates(X0, [d0]);
- 14: setDouble[](TState.fnResultBytes(X0, 8), 0, D14);
- 15: return
--16: test I13 == 1; F:→ 18
- 17: D17 ← D9; → 7
--18: D17 ← D11; → 7
--19: test I16 == 2; F:→ 21
- 20: D19 ← D3; → 9
--21: D19 ← D5; → 9
+dist_x2([d1, d2, d3], [d4, d5, d6]):
+ 1: CodeGenTarget.incrementCallCount(target:dist_x2);
+ 2: D1 ← dSub(D7, D1);
+ 3: D3 ← dSub(D9, D3);
+ 4: D5 ← dSub(D11, D5);
+ 5: D1 ← dAdd(dAdd(dMul(D1, D1), dMul(D3, D3)), dMul(D5, D5));
+ 6: TState.setResultTemplates(X0, [d0]);
+ 7: setDouble[](TState.fnResultBytes(X0, 8), 0, D1);
+ 8: return
 ---
 allocated=6728024/80105, peak=8395
 */

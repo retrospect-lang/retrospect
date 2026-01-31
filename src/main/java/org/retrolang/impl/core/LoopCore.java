@@ -25,13 +25,16 @@ import org.retrolang.impl.BuiltinMethod.Fn;
 import org.retrolang.impl.Core;
 import org.retrolang.impl.Err;
 import org.retrolang.impl.Err.BuiltinException;
+import org.retrolang.impl.NumValue;
 import org.retrolang.impl.RC;
+import org.retrolang.impl.RValue;
 import org.retrolang.impl.Singleton;
 import org.retrolang.impl.StructType;
 import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.VmFunctionBuilder;
 import org.retrolang.impl.VmType;
+import org.retrolang.util.ArrayUtil;
 
 /** Core methods providing support for loops. */
 public final class LoopCore {
@@ -494,6 +497,95 @@ public final class LoopCore {
   }
 
   /**
+   * Given the iterator argument passed to {@link Iterate#afterIterator}, checks to see if we can
+   * determine an upper bound on the number of iterations. If so, returns the bound; otherwise
+   * returns -1.
+   *
+   * <p>Currently recognizes
+   *
+   * <ul>
+   *   <li>ArrayIterator if the array's length is known,
+   *   <li>RangeIterator or ReversedRangeIterator with a bound other than None,
+   *   <li>constant base matrices (as returned by {@code keys(Matrix)}),
+   *   <li>a transformed or reshaped collection if we recognize the base collection, and
+   *   <li>a join result, if we recognize either of the collections being joined.
+   * </ul>
+   */
+  private static int iteratorBound(Value it) {
+    it = RValue.exploreSafely(it);
+    for (; ; ) {
+      BaseType baseType = it.baseType();
+      if (baseType == ArrayCore.ARRAY_ITERATOR) {
+        Value array = it.peekElement(0);
+        int numElements = array.numElements();
+        if (numElements > 0) {
+          Value prevIndex = it.peekElement(2);
+          if (prevIndex instanceof NumValue) {
+            numElements -= NumValue.asInt(prevIndex);
+          }
+        }
+        return numElements;
+      } else if (baseType == RangeCore.RANGE_ITERATOR
+          || baseType == RangeCore.REVERSED_RANGE_ITERATOR) {
+        Value next = it.peekElement(0);
+        Value end = it.peekElement(1);
+        if (next instanceof NumValue && end instanceof NumValue) {
+          long result = NumValue.asInt(end) - (long) NumValue.asInt(next);
+          result = Math.abs(result + (baseType == RangeCore.RANGE_ITERATOR ? 1 : -1));
+          try {
+            return Math.toIntExact(result);
+          } catch (ArithmeticException e) {
+            return -1;
+          }
+        }
+        return -1;
+      } else if (baseType == TRIVIAL_ITERATOR) {
+        Value v = it.peekElement(0);
+        return (v == Core.ABSENT) ? 0 : 1;
+      } else if (baseType == StructCore.STRUCT_ITERATOR) {
+        Value v = it.peekElement(0);
+        BaseType vBaseType = v.baseType();
+        if (vBaseType == null) {
+          return -1;
+        }
+        int size = vBaseType.size();
+        Value prevIndex = it.peekElement(2);
+        return (prevIndex instanceof NumValue) ? size - NumValue.asInt(prevIndex) : size;
+      } else if (baseType == MatrixCore.BASE_ITERATOR) {
+        Value sizes = it.peekElement(2);
+        if (RValue.isExplorer(sizes)) {
+          return -1;
+        }
+        int n = sizes.numElements();
+        int size = ArrayUtil.productAsInt(sizes::elementAsIntOrMinusOne, n);
+        if (size < 0) {
+          // Overflowed
+          return -1;
+        }
+        Value prev = it.peekElement(1);
+        if (RValue.isExplorer(prev)) {
+          return size;
+        }
+        int skip = 0;
+        for (int i = 0; i < n; i++) {
+          skip = skip * sizes.elementAsInt(i) + prev.elementAsInt(i) - 1;
+        }
+        skip += 1;
+        assert skip >= 0 && skip <= size;
+        return size - skip;
+      } else if (baseType == CollectionCore.TRANSFORMED_ITERATOR
+          || baseType == CollectionCore.WITH_KEYS_ITERATOR
+          || baseType == MatrixCore.RESHAPED_ITERATOR
+          || baseType == CollectionCore.JOINED_ITERATOR) {
+        it = it.peekElement(0);
+        continue;
+      }
+      // TODO: CONCAT_ITERATOR?
+      return -1;
+    }
+  }
+
+  /**
    * <pre>
    * function iterate(collection, eKind, loop, state) {
    *   if state is LoopExit { return state }
@@ -529,6 +621,16 @@ public final class LoopCore {
                 tstate.setResult(state);
               },
               () -> tstate.startCall(iterator, collection, eKind).saving(loop, state));
+    }
+
+    /**
+     * May be called by BuiltinSupport (with the arguments to our LoopContinuation) to request an
+     * upper bound on the number of backward branches that will be required to complete an
+     * in-progress call; if the bound is low-ish and the loop is simple-ish then code generation may
+     * choose to unroll the loop. May return -1 to indicate that no bound is available.
+     */
+    static int loopBound(Object[] continuationArgs) {
+      return iteratorBound((Value) continuationArgs[0]);
     }
 
     @LoopContinuation

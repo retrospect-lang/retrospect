@@ -289,9 +289,12 @@ public abstract class Block extends Zone.Ordered {
    */
   protected SubstitutionOutcome trySubstitute(Register register, CodeValue value) {
     // Putting a default method here is handy for block types (such as Initial) where it will never
-    // be called anyway.  The only blocks that currently are expected to fall through to here
-    // are Loop.BackRef and SetBlock.WithCatch
-    assert this instanceof Loop.BackRef || this instanceof SetBlock.WithCatch;
+    // be called anyway.
+    // Enumerate the block types that currently are expected to fall through to here in case we
+    // forget to add this method to a new subclass.
+    assert this instanceof Loop.BackRef
+        || this instanceof SetBlock.WithCatch
+        || this instanceof ThrowBlock;
     return SubstitutionOutcome.NO;
   }
 
@@ -440,7 +443,7 @@ public abstract class Block extends Zone.Ordered {
         });
   }
 
-  /** A subclass for Blocks with no outlinks; currently the only subclass is {@link ReturnBlock}. */
+  /** A subclass for Blocks with no outlinks (i.e. {@link ReturnBlock} or {@link ThrowBlock}). */
   public abstract static class Terminal extends Block {
     @Override
     public String linksToString(CodeBuilder.PrintOptions options) {

@@ -131,7 +131,7 @@ public class RcCodeBuilder extends CodeBuilder {
 
     // Do all the work
     analyzeRefCounts(assigner);
-    System.out.format("Refcount fixups complete:\n%s", printBlocks());
+    // System.out.format("Refcount fixups complete:\n%s", printBlocks());
 
     // Remove the BackRefs that are the only remaining no-op blocks
     removeNoOps(b -> (b instanceof BackRef));

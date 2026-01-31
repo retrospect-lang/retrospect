@@ -9,8 +9,8 @@ function sumSquares(range) = range ^** 2 | sum
 /* CODEGEN sumSquares RETURNS
 [770, 3.33383335E11]
 ---
-sumSquares_0(Range(i1, i2)):
-  1: AtomicInteger.incrementAndGet(0);
+sumSquares_x0(Range(i1, i2)):
+  1: CodeGenTarget.incrementCallCount(target:sumSquares_x0);
   2: D3 ← 0;
 = 3: test I2 < I1; T:→ 8
   4: I5 ← Math.addExact(I1, 1); ArithmeticException:→ 11
@@ -21,14 +21,15 @@ sumSquares_0(Range(i1, i2)):
   9: setDouble[](TState.fnResultBytes(X0, 8), 0, D3);
  10: return
 -11: X5 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I1, I2, None), it=TransformedIterator(ToBeSet, EnumerateValues, iLambda@3:29)⟧);
- 12: X1 ← TState.fillStackEntry(X0, null, X5, ⟨⸨i0; Absent⸩, TransformedIterator(RangeIterator(i0, i0, None), EnumerateValues, iLambda@3:29), Sum(0), d0⟩, mMemo_4@xxxx, null);
+ 12: X1 ← TState.fillStackEntry(X0, null, X5, ⟨⸨i0; Absent⸩, TransformedIterator(RangeIterator(i0, i0, None), EnumerateValues, iLambda@3:29), Sum(0), d0⟩, lmMemo_4@xxxx, null);
  13: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D3⟧);
- 14: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0, Sum(0)⟩, mMemo_11@xxxx, null);
+ 14: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0, Sum(0)⟩, LmMemo_11@xxxx, null);
  15: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_12@xxxx, null);
  16: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_16@xxxx, null);
  17: X1 ← TState.fillStackEntry(X0, X1, ⟦sum_squares.r8t+3:3_2 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_x@xxxx, null);
  18: TState.setStackRest(X0, X1);
- 19: return
+ 19: TState.setUnwoundFrom(X0, target:sumSquares_x0);
+ 20: return
 ---
 allocated=344/14, peak=96
 */

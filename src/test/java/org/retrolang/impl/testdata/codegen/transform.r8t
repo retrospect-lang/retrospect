@@ -10,8 +10,8 @@ function transform(nums, tag) {
 /* CODEGEN transform RETURNS
 [[0, 0.5, "a"], [2.5, 3, "b"], [-0.5, 0, False]]
 ---
-transform_0([d1, i2], ⸨False; x3:String⸩):
-  1: AtomicInteger.incrementAndGet(0);
+transform_x0([d1, i2], ⸨False; x3:String⸩):
+  1: CodeGenTarget.incrementCallCount(target:transform_x0);
   2: D5 ← Math.sqrt(D1);
   3: test Double.isNaN(D5) == 0; F:→ 17
   4: D5 ← Math.log10(D5);
@@ -30,7 +30,8 @@ transform_0([d1, i2], ⸨False; x3:String⸩):
 -17: X5 ← newStackEntry(⟦transform.r8t+0:6_0 _t0 = pipe(nums, lambda@6:15) ∥ nums=[D1, I3], tag=⸨False; X4⸩⟧);
  18: X1 ← TState.fillStackEntry(X0, null, X5, ⟨[d0, d0, ⸨False; x0:String⸩]⟩, mMemo_x@xxxx, null);
  19: TState.setStackRest(X0, X1);
- 20: return
+ 20: TState.setUnwoundFrom(X0, target:transform_x0);
+ 21: return
 ---
 allocated=496/19, peak=368
 */

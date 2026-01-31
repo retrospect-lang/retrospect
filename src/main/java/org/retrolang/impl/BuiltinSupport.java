@@ -20,6 +20,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandleProxies;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
@@ -33,8 +34,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 import org.retrolang.code.Loop;
 import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.BuiltinMethod.BuiltinStatic;
@@ -44,6 +47,7 @@ import org.retrolang.impl.BuiltinMethod.LoopContinuation;
 import org.retrolang.impl.BuiltinMethod.Saved;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.Bits;
+import org.retrolang.util.StringUtil;
 
 /**
  * Statics-only class to enable scanning designated classes for definitions of Retrospect built-in
@@ -148,7 +152,7 @@ class BuiltinSupport {
         }
         tstate.dropForThrow();
         e.push(tstate, stackEntryType, args);
-      } catch (RuntimeException e) {
+      } catch (RuntimeException | AssertionError e) {
         // Shouldn't happen, but if it does try to log something useful, then construct an
         // INTERNAL_ERROR stack entry and start unwinding.
         if (tstate.hasCodeGen()) {
@@ -157,15 +161,7 @@ class BuiltinSupport {
         e.printStackTrace();
         // The args may have been mutated or released, but they might be better than nothing
         System.err.printf(
-            "calling "
-                + stackEntryType.toString(
-                    i -> {
-                      try {
-                        return String.valueOf(args[i]);
-                      } catch (RuntimeException nested) {
-                        return "(can't print)";
-                      }
-                    }));
+            "calling " + stackEntryType.toString(i -> StringUtil.safeToString(args[i])));
         // We may have been part way through returning results
         tstate.clearResults();
         Err.INTERNAL_ERROR.pushUnwind(tstate, e.toString());
@@ -184,9 +180,10 @@ class BuiltinSupport {
 
   /**
    * A ContinuationMethod identifies a Java method that will be called with the result of the
-   * function call (for {@link TState#startCall}) or immediateley (for {@link TState#jump}).
+   * function call (for {@link TState#startCall}) or immediately (for {@link TState#jump}).
    */
   static class ContinuationMethod {
+    final BuiltinImpl impl;
     final String name;
 
     /**
@@ -214,8 +211,14 @@ class BuiltinSupport {
     final String[] savedNames;
 
     ContinuationMethod(
-        String name, int order, boolean isLoop, BuiltinEntry builtinEntry, String[] savedNames) {
+        BuiltinImpl impl,
+        String name,
+        int order,
+        boolean isLoop,
+        BuiltinEntry builtinEntry,
+        String[] savedNames) {
       assert order == (short) order;
+      this.impl = impl;
       this.name = name;
       this.order = (short) order;
       this.isLoop = isLoop;
@@ -276,8 +279,12 @@ class BuiltinSupport {
     /** This method's continuations, sorted by order. */
     private ImmutableList<ContinuationMethod> cMethodsInOrder;
 
-    /** The number of @LoopContinuations; must be zero or one. */
-    private int numLoops;
+    /**
+     * If this method has a @LoopContinuation, its index in {@link #cMethodsInOrder}; otherwise -1.
+     */
+    private int loopIndex;
+
+    private ToIntFunction<Object[]> loopBounder;
 
     private int numExtraValueMemos;
 
@@ -301,14 +308,37 @@ class BuiltinSupport {
       this.cMethodsInOrder =
           ImmutableList.sortedCopyOf(Comparator.comparingInt(cm -> cm.order), cMethods);
       // Assign a distinct index to each ContinuationMethod, consistent with their ordering.
+      int loopIndex = -1;
       for (int i = 0; i < cMethodsInOrder.size(); i++) {
-        cMethodsInOrder.get(i).setIndex(i);
+        ContinuationMethod cMethod = cMethodsInOrder.get(i);
+        cMethod.setIndex(i);
+        if (cMethod.isLoop) {
+          Preconditions.checkArgument(
+              loopIndex < 0, "At most one @LoopContinuation allowed (%s)", where);
+          loopIndex = i;
+        }
       }
-      numLoops = (int) cMethodsInOrder.stream().filter(cm -> cm.isLoop).count();
-      Preconditions.checkArgument(
-          numLoops <= 1, "At most one @LoopContinuation allowed (%s)", where);
+      this.loopIndex = loopIndex;
       this.cMethodsByName =
           cMethodsInOrder.stream().collect(ImmutableMap.toImmutableMap(cm -> cm.name, cm -> cm));
+    }
+
+    boolean hasLoop() {
+      assert this.cMethodsInOrder != null;
+      return loopIndex >= 0;
+    }
+
+    ContinuationMethod loopContinuation() {
+      return cMethodsInOrder.get(loopIndex);
+    }
+
+    void setLoopBounder(ToIntFunction<Object[]> loopBounder) {
+      assert this.loopBounder == null;
+      this.loopBounder = loopBounder;
+    }
+
+    int loopBound(Object[] args) {
+      return (loopBounder == null) ? -1 : loopBounder.applyAsInt(args);
     }
 
     /** Returns a distinct CallSite index each time it is called. */
@@ -333,8 +363,12 @@ class BuiltinSupport {
       int numResults = signature.function.numResults;
       int numCallMemos = numCallers;
       int numValueMemos = cMethodsInOrder.size() + numExtraValueMemos;
-      MethodMemo.Factory memoFactory =
-          MethodMemo.Factory.create(numArgs, numResults, numCallMemos, numValueMemos);
+      MethodMemo.Factory memoFactory;
+      if (hasLoop()) {
+        memoFactory = new MethodMemo.LoopFactory(numArgs, numResults, numCallMemos, numValueMemos);
+      } else {
+        memoFactory = MethodMemo.Factory.create(numArgs, numResults, numCallMemos, numValueMemos);
+      }
       signature.function.addMethod(
           new VmMethod(
               signature.function,
@@ -354,58 +388,132 @@ class BuiltinSupport {
     @Override
     public void emit(CodeGen codeGen, ResultsInfo results, MethodMemo mMemo, Object[] args) {
       createStackEntry(codeGen, builtinEntry, args, false);
-      int n = cMethodsInOrder.size();
-      if (n == 0) {
+      if (cMethodsInOrder.isEmpty()) {
         builtinEntry.execute(codeGen.tstate(), results, mMemo, args);
-        return;
+      } else {
+        emit(false, codeGen, results, mMemo, args);
       }
+    }
+
+    void emitFromLoopContinuation(
+        CodeGen codeGen, ResultsInfo results, MethodMemo mMemo, Value[] args) {
+      emit(true, codeGen, results, mMemo, args);
+    }
+
+    private void emit(
+        boolean fromLoopContinuation,
+        CodeGen codeGen,
+        ResultsInfo results,
+        MethodMemo mMemo,
+        Object[] args) {
       EmitState emitState = new EmitState(this, mMemo);
       codeGen.setBuiltinEmitState(emitState);
-      builtinEntry.execute(codeGen.tstate(), results, mMemo, args);
+      // The index of the next continuation to be emitted
+      int next;
+      if (!fromLoopContinuation) {
+        builtinEntry.execute(codeGen.tstate(), results, mMemo, args);
+        next = 0;
+      } else {
+        ContinuationMethod loop = cMethodsInOrder.get(loopIndex);
+        Destination dest = emitState.getDestination(codeGen, loop);
+        dest.forceFull(codeGen);
+        // Value[] initialValues = Arrays.copyOf(args, loop.numArgs(), Value[].class);
+        dest.addBranch(codeGen, (Value[]) args);
+        next = loopIndex;
+      }
+      // If loopBound >= 0 this method has a loop and we are unrolling it
+      int loopBound = -1;
+      boolean unrolling = false;
+      // If we are emitting a loop and haven't unrolled it, backward branches to the
+      // LoopContinuation will be implemented as forward branches to an end-of-loop Destination;
+      // this Runnable will emit the blocks needed at that Destination.
       Runnable emitLoopBack = null;
-      for (int i = 0; i < n; i++) {
-        ContinuationMethod cMethod = cMethodsInOrder.get(i);
-        Destination destination = emitState.destinations[i];
+      int n = cMethodsInOrder.size();
+      for (; ; next++) {
+        if (next == n) {
+          if (unrolling && emitState.destinations[loopIndex] != null) {
+            // We got to the end but we're unrolling a loop so back up and do it again
+            if (loopBound > 0) {
+              next = loopIndex - 1;
+              loopBound--;
+              continue;
+            }
+            // This should be unreachable, and optimization will probably recognize that, but in
+            // the meantime we need to emit something here.
+            emitState.destinations[loopIndex].emit(codeGen);
+            emitState.destinations[loopIndex] = null;
+            codeGen.emitAssertionFailed();
+          }
+          // We should have emitted all the destinations we constructed, except possibly for the one
+          // that emitLoopBack will take care of.
+          boolean finalUnrolling = unrolling;
+          assert IntStream.range(0, n)
+              .allMatch(
+                  j -> emitState.destinations[j] == null || (j == loopIndex && !finalUnrolling));
+          break;
+        }
+        ContinuationMethod cMethod = cMethodsInOrder.get(next);
+        Destination destination = emitState.destinations[next];
         Value[] destinationArgs = (destination == null) ? null : destination.emit(codeGen);
-        emitState.destinations[i] = null;
+        emitState.destinations[next] = null;
         if (destinationArgs == null) {
           // Continuation was never referenced or is unreachable.
           // This doesn't handle the case of a built-in that starts in the
           // middle of a loop, but we don't currently have any of those.
           continue;
         }
-        if (cMethod.isLoop) {
-          assert emitLoopBack == null;
-          // Loop destinations are created with forceFull(), so they have their own registers;
-          // those will be the loop registers (along with the stackRest, which will be updated
-          // by any tracing).
-          Bits.Builder registers = new Bits.Builder();
-          int firstLoopRegister = destination.firstRegister();
-          int lastLoopRegister = destination.lastRegister();
-          registers.setToRange(firstLoopRegister, lastLoopRegister);
-          registers.set(codeGen.currentCall().stackRest.index);
-          Loop loop = codeGen.cb.startLoop(registers.build());
-          // Subsequent branches to this LoopContinuation should go to the loopBack code,
-          // which we will emit after all the continuations.
-          Destination loopBack = destination.duplicate(codeGen);
-          // A duplicate after forceFull is also full, so this is redundant:
-          // loopBack.forceFull(codeGen);
-          emitState.destinations[i] = loopBack;
-          emitLoopBack =
-              () -> {
-                if (loopBack.emit(codeGen) == null) {
-                  loop.disable();
-                } else {
-                  // Copy each loopBack register to the corresponding loop register.
-                  int diff = loopBack.firstRegister() - firstLoopRegister;
-                  for (int j = firstLoopRegister; j <= lastLoopRegister; j++) {
-                    codeGen.emitSet(codeGen.cb.register(j), codeGen.cb.register(j + diff));
+        if (cMethod.isLoop && !unrolling) {
+          // First time we encounter the LoopContinuation
+          assert emitLoopBack == null && loopBound < 0;
+          if (!fromLoopContinuation) {
+            loopBound = loopBound(destinationArgs);
+            if (loopBound == 0) {
+              unrolling = true;
+            } else if (loopBound > 0 && loopBound <= 6) {
+              // TODO: we need a more sophisticated policy for when to unroll loops
+              int limit = Math.min(24, 100 / loopBound);
+              unrolling = !mMemo.weightExceeds(codeGen.tstate().scope(), limit);
+            }
+          }
+          if (!unrolling) {
+            // Start by ensuring that the loop state is in a fresh set of registers.
+            if (!destination.isFull()) {
+              destination = destination.duplicate(codeGen);
+              destination.forceFull(codeGen);
+              destination.addBranch(codeGen, destinationArgs);
+              destinationArgs = destination.emit(codeGen);
+            }
+            // Those will be the loop registers.
+            Bits.Builder registers = new Bits.Builder();
+            int firstLoopRegister = destination.firstRegister();
+            int lastLoopRegister = destination.lastRegister();
+            registers.setToRange(firstLoopRegister, lastLoopRegister);
+            // We also have to include the stackRest, since it will be updated by any tracing.
+            registers.set(codeGen.currentCall().stackRest.index);
+            Loop loop = codeGen.cb.startLoop(registers.build());
+            // Subsequent branches to this LoopContinuation should go to the loopBack code,
+            // which we will emit after all the continuations.
+            Destination loopBack = destination.duplicate(codeGen);
+            // A duplicate of a full Destination is also full, so this would be redundant:
+            // loopBack.forceFull(codeGen);
+            emitState.destinations[next] = loopBack;
+            emitLoopBack =
+                () -> {
+                  if (loopBack.emit(codeGen) == null) {
+                    loop.disable();
+                  } else {
+                    // Copy each loopBack register to the corresponding loop register.
+                    int diff = loopBack.firstRegister() - firstLoopRegister;
+                    for (int j = firstLoopRegister; j <= lastLoopRegister; j++) {
+                      codeGen.emitSet(codeGen.cb.register(j), codeGen.cb.register(j + diff));
+                    }
+                    loop.complete();
                   }
-                  loop.complete();
-                }
-              };
+                };
+          }
         }
-        createStackEntry(codeGen, cMethod.builtinEntry, destinationArgs, cMethod.isLoop);
+        createStackEntry(
+            codeGen, cMethod.builtinEntry, destinationArgs, cMethod.isLoop && !unrolling);
         cMethod.builtinEntry.execute(codeGen.tstate(), results, mMemo, destinationArgs);
       }
       if (emitLoopBack != null) {
@@ -466,9 +574,6 @@ class BuiltinSupport {
       Destination result = destinations[index];
       if (result == null) {
         result = Destination.fromValueMemo(cm.valueMemo(codeGen.tstate(), memo));
-        if (cm.isLoop) {
-          result.forceFull(codeGen);
-        }
         destinations[index] = result;
       }
       return result;
@@ -953,13 +1058,31 @@ class BuiltinSupport {
     List<ContinuationMethod> continuations = new ArrayList<>();
     Set<String> continuationNames = new HashSet<>();
     for (Method m : klass.getDeclaredMethods()) {
+      String mName = m.getName();
+      String where = cName + "." + mName;
       Continuation annotation = m.getAnnotation(Continuation.class);
       LoopContinuation annotation2 = m.getAnnotation(LoopContinuation.class);
+      if (mName.equals("loopBound")) {
+        Preconditions.checkArgument(
+            Modifier.isStatic(m.getModifiers()), "Should be static (%s)", where);
+        Preconditions.checkArgument(
+            m.getReturnType() == int.class, "Return type should be int (%s)", where);
+        Class<?>[] params = m.getParameterTypes();
+        Preconditions.checkArgument(
+            params.length == 1 && params[0].equals(Object[].class),
+            "Parameter type should be Object[] (%s)",
+            where);
+        Preconditions.checkArgument(
+            annotation == null && annotation2 == null, "Should not be annotated (%s)", where);
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        ToIntFunction<Object[]> bounder =
+            MethodHandleProxies.asInterfaceInstance(ToIntFunction.class, Handle.forMethod(m));
+        impl.setLoopBounder(bounder);
+      }
       if (annotation == null && annotation2 == null) {
         continue;
       }
-      String mName = m.getName();
-      String where = cName + "." + mName;
       Preconditions.checkArgument(
           continuationNames.add(mName), "Ambiguous continuation name %s", where);
       Preconditions.checkArgument(
@@ -971,7 +1094,12 @@ class BuiltinSupport {
       prepared.checkSignature(where, -1, signature.function.numResults, true);
       continuations.add(
           new ContinuationMethod(
-              mName, order, annotation2 != null, prepared.builtinEntry, prepared.savedNames()));
+              impl,
+              mName,
+              order,
+              annotation2 != null,
+              prepared.builtinEntry,
+              prepared.savedNames()));
     }
     impl.setContinuations(continuations);
     // Third pass: initialize all the Caller and ExtraValueMemo fields

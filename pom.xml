@@ -63,7 +63,7 @@
       <dependency>
         <groupId>com.google.errorprone</groupId>
         <artifactId>error_prone_annotations</artifactId>
-        <version>2.44.0</version>
+        <version>2.46.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
@@ -77,7 +77,7 @@
     <dependency>
       <groupId>com.google.testparameterinjector</groupId>
       <artifactId>test-parameter-injector</artifactId>
-      <version>1.19</version>
+      <version>1.21</version>
     </dependency>
     <dependency>
       <groupId>pl.pragmatists</groupId>
@@ -112,12 +112,12 @@
     <dependency>
       <groupId>com.google.errorprone</groupId>
       <artifactId>error_prone_annotations</artifactId>
-      <version>2.44.0</version>
+      <version>2.46.0</version>
     </dependency>
     <dependency>
       <groupId>org.ow2.asm</groupId>
       <artifactId>asm-util</artifactId>
-      <version>9.9</version>
+      <version>9.9.1</version>
     </dependency>
     <dependency>
       <groupId>org.antlr</groupId>

@@ -37,6 +37,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.retrolang.Vm;
 import org.retrolang.compiler.Compiler;
+import org.retrolang.testing.TestMonitor;
 import org.retrolang.testing.TestdataScanner;
 import org.retrolang.testing.TestdataScanner.TestProgram;
 import org.retrolang.util.Pair;
@@ -82,8 +83,14 @@ public class VirtualMachineTest {
    */
   private static final Pattern FIRST_LINE_PATTERN =
       Pattern.compile(
-          "\\((?<args>[^\\)]*)\\) *(LIMIT \\((?<limit>\\d+)\\))? *(?<returns>RETURNS|ERRORS)"
-              + " *(?<debug>RC_DEBUG *)?\n");
+          """
+          \\((?<args>[^\\)]*)\\) *\
+          (LIMIT\\((?<limit>\\d+)\\) *)?\
+          (CODEGEN\\((?<codegen>\\d+)\\) *)?\
+          (?<returns>RETURNS|ERRORS) *\
+          (?<debug>RC_DEBUG *)?\
+          \n\
+          """);
 
   @Test
   public void runOne(
@@ -100,16 +107,20 @@ public class VirtualMachineTest {
     long limit =
         Optional.ofNullable(argsMatcher.group("limit")).map(Long::parseLong).orElse(200_000L);
     boolean expectReturn = argsMatcher.group("returns").equals("RETURNS");
+    Optional<Integer> codeGen =
+        Optional.ofNullable(argsMatcher.group("codegen")).map(Integer::parseInt);
     boolean rcDebug = argsMatcher.group("debug") != null;
     String expected = testProgram.comment().substring(argsMatcher.end());
     String expectedTraces = "";
     String[] parts = expected.split("\n---\n");
-    if (parts.length == 3) {
+    expected = parts[0];
+    int minParts = codeGen.isPresent() ? 3 : 2;
+    if (parts.length == minParts + 1) {
       expectedTraces = parts[1];
     } else {
-      assertThat(parts).hasLength(2);
+      assertThat(parts).hasLength(minParts);
     }
-    expected = parts[0];
+    String expectedCodeGen = codeGen.isPresent() ? parts[parts.length - 2] : null;
     String expectedResources = parts[parts.length - 1].trim();
     // Compile the program into a new module
     VirtualMachine vm = new VirtualMachine();
@@ -120,6 +131,14 @@ public class VirtualMachineTest {
         Compiler.compile(
             CharStreams.fromString(testProgram.code()), testProgram.name(), vm, module, argNames);
     module.build();
+    TestMonitor monitor = null;
+    if (codeGen.isPresent()) {
+      CodeGenManager codeGenManager = vm.scope.codeGenManager;
+      codeGenManager.setThresholds(2 * codeGen.get(), codeGen.get());
+      codeGenManager.enableCodeGenDebugging();
+      monitor = new TestMonitor(true);
+      codeGenManager.setMonitor(monitor);
+    }
     // Now set up to execute the compiled code, passing any arg values that were given.
     // Use a relatively low maxTraces to make testing easier.
     ResourceTracker tracker = vm.newResourceTracker(limit, /* maxTraces= */ 6, rcDebug);
@@ -154,6 +173,9 @@ public class VirtualMachineTest {
     assertWithMessage("Trace doesn't match")
         .that(cleanIds(cleanLines(traces)))
         .isEqualTo(cleanLines(expectedTraces));
+    if (codeGen.isPresent()) {
+      assertThat(vm.scope.codeGenDebugging().takeLog()).isEqualTo(expectedCodeGen.trim());
+    }
     // Now everything should have been released
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
     // Confirm that memory use matched expectations

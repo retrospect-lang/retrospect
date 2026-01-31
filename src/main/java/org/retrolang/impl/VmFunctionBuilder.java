@@ -194,7 +194,7 @@ public abstract class VmFunctionBuilder {
               /* isDefault= */ false,
               new SimpleImpl(name, op, mayReturnNaN),
               MethodMemo.EXLINE_CALL_WEIGHT,
-              /* memoFactory= */ null));
+              MethodMemo.Factory.TRIVIAL));
       return fn;
     }
   }

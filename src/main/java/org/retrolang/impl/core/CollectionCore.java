@@ -28,6 +28,7 @@ import org.retrolang.impl.Err;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.RC;
 import org.retrolang.impl.RValue;
+import org.retrolang.impl.Singleton;
 import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.VmFunctionBuilder;
@@ -54,11 +55,6 @@ public final class CollectionCore {
   /** {@code private compound WithKeysMatrix is Matrix} */
   @Core.Private
   static final BaseType.Named WITH_KEYS_MATRIX = Core.newBaseType("WithKeysMatrix", 1, Core.MATRIX);
-
-  /** {@code private compound WithKeysIterator is Iterator} */
-  @Core.Private
-  static final BaseType.Named WITH_KEYS_ITERATOR =
-      Core.newBaseType("WithKeysIterator", 1, LoopCore.ITERATOR);
 
   /** {@code function withKeys(collection)} */
   @Core.Public
@@ -113,18 +109,17 @@ public final class CollectionCore {
       Core.newBaseType("TransformedMatrix", 2, Core.MATRIX);
 
   /**
-   * {@code private compound TransformedIterator is Iterator}
+   * {@code private compound PipedCollection is Collection}
    *
-   * <p>Elements are {@code it}, {@code eKind}, {@code lambda}.
+   * <p>Elements are {@code base}, {@code step}.
    *
-   * <p>A TransformedIterator applies {@code lambda} to each value returned by the wrapped {@code
-   * it}. If {@code eKind} is not EnumerateValues, {@code it} is expected to return [key, value]
-   * pairs and {@code lambda} is only applied to the value part of each result. If {@code lambda}
-   * returns Absent the result is discarded unless {@code eKind} is EnumerateAllKeys.
+   * <p>{@code step} is not a Lambda (if it were, we would use a TransformedCollection or
+   * TransformedMatrix). The resulting collection does not implement {@code at()}, {@code size()},
+   * or {@code keys()} the only thing you can really do with it is iterate through its elements.
    */
   @Core.Private
-  static final BaseType.Named TRANSFORMED_ITERATOR =
-      Core.newBaseType("TransformedIterator", 3, LoopCore.ITERATOR);
+  public static final BaseType.Named PIPED_COLLECTION =
+      Core.newBaseType("PipedCollection", 2, Core.COLLECTION);
 
   /**
    * {@code private compound JoinedCollection is Collection}
@@ -147,13 +142,16 @@ public final class CollectionCore {
   static final BaseType.Named JOINED_MATRIX = Core.newBaseType("JoinedMatrix", 2, Core.MATRIX);
 
   /**
-   * {@code private compound JoinedIterator is Iterator}
+   * {@code private compound MatchFinder is Lambda}
    *
-   * <p>Elements are {@code it}, {@code c2}, {@code eKind}.
+   * <p>Elements are {@code c2}, {@code eKind}.
    */
   @Core.Private
-  static final BaseType.Named JOINED_ITERATOR =
-      Core.newBaseType("JoinedIterator", 3, LoopCore.ITERATOR);
+  static final BaseType.Named MATCH_FINDER = Core.newBaseType("MatchFinder", 2, Core.LAMBDA);
+
+  /** {@code singleton DuplicateKey is Lambda} */
+  @Core.Private
+  public static final Singleton DUPLICATE_KEY = Core.newSingleton("DuplicateKey", Core.LAMBDA);
 
   /** {@code method filter(lambda) = Filter_(lambda) // v -> (lambda @ v) ? v : Absent} */
   @Core.Method("filter(Lambda)")
@@ -245,66 +243,41 @@ public final class CollectionCore {
 
   /**
    * <pre>
-   * method iterator(wk, eKind) (wk is WithKeys or wk is WithKeysMatrix) {
+   * method iterator(wk, eKind, loop=, initialState=) (wk is WithKeys or wk is WithKeysMatrix) {
    *   if eKind is EnumerateValues {
-   *     return iterator(wk_, EnumerateWithKeys)
+   *     return iterator(wk_, EnumerateWithKeys, loop=, initialState=)
    *   }
-   *   return WithKeysIterator_(iterator(wk_, eKind))
+   *   loop = transformLoop([k, v] -> [k, [k, v]], loop)
+   *   return iterator(wk_, eKind, loop=, initialState=)
    * </pre>
    */
-  static class IteratorWithKeys extends BuiltinMethod {
-    static final Caller iterator = new Caller("iterator:2", "afterIterator");
-
-    @Core.Method("iterator(WithKeys|WithKeysMatrix, EnumerationKind)")
-    static void begin(TState tstate, Value tc, @RC.Singleton Value eKind) {
-      Value eKind2 =
-          eKind.is(LoopCore.ENUMERATE_VALUES).choose(LoopCore.ENUMERATE_WITH_KEYS, eKind);
-      tstate.startCall(iterator, tc.element(0), eKind2).saving(eKind);
-    }
-
-    @Continuation
-    static Value afterIterator(
-        TState tstate, @RC.In Value innerIt, @Saved @RC.Singleton Value eKind) {
-      return eKind
-          .is(LoopCore.ENUMERATE_VALUES)
-          .choose(() -> innerIt, () -> tstate.compound(WITH_KEYS_ITERATOR, innerIt));
-    }
+  @Core.Method("iterator(WithKeys|WithKeysMatrix, EnumerationKind, Loop, _)")
+  static void iteratorWithKeys(
+      TState tstate,
+      Value wk,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState,
+      @Fn("iterator:4") Caller iterator) {
+    Value inner = wk.element(0);
+    eKind
+        .is(LoopCore.ENUMERATE_VALUES)
+        .test(
+            () ->
+                tstate.startCall(iterator, inner, LoopCore.ENUMERATE_WITH_KEYS, loop, initialState),
+            () -> {
+              Value loop2 = tstate.compound(LoopCore.TRANSFORMED_LOOP, DUPLICATE_KEY, loop);
+              tstate.startCall(iterator, inner, eKind, loop2, initialState);
+            });
   }
 
-  /**
-   * <pre>
-   * method next(WithKeysIterator it=) {
-   *   result = next(it_=)
-   *   if result is not Absent {
-   *     [k, v] = result
-   *     result = [k, result]
-   *   }
-   *   return result
-   * }
-   * </pre>
-   */
-  static class NextWithKeysIterator extends BuiltinMethod {
-    static final Caller next = new Caller("next:1", "afterNext");
-
-    @Core.Method("next(WithKeysIterator)")
-    static void begin(TState tstate, Value it) {
-      tstate.startCall(next, it.element(0));
-    }
-
-    @Continuation
-    static void afterNext(TState tstate, @RC.In Value result, @RC.In Value innerIt)
-        throws BuiltinException {
-      Value withKey =
-          result
-              .is(Core.ABSENT)
-              .chooseExcept(
-                  () -> Core.ABSENT,
-                  () -> {
-                    Err.NOT_PAIR.unless(result.isArrayOfLength(2));
-                    return tstate.arrayValue(result.element(0), result);
-                  });
-      tstate.setResults(withKey, tstate.compound(WITH_KEYS_ITERATOR, innerIt));
-    }
+  /** {@code method at(DuplicateKey, [k, v]) = [k, [k, v]] } */
+  @Core.Method("at(DuplicateKey, Array)")
+  static Value atDuplicateKey(TState tstate, Value duplicateKey, @RC.In Value pair)
+      throws BuiltinException {
+    Err.NOT_PAIR.unless(pair.isArrayOfLength(2));
+    Value key = pair.element(0);
+    return tstate.arrayValue(key, pair);
   }
 
   /**
@@ -433,130 +406,40 @@ public final class CollectionCore {
 
   /**
    * <pre>
-   * method iterator(tc, eKind) (tc is TransformedCollection or tc is TransformedMatrix) =
-   *     TransformedIterator_({it: iterator(tc_.base, eKind), eKind, lambda: tc_.lambda})
-   * </pre>
-   */
-  static class IteratorTransformed extends BuiltinMethod {
-    static final Caller iterator = new Caller("iterator:2", "afterIterator");
-
-    @Core.Method("iterator(TransformedCollection|TransformedMatrix, EnumerationKind)")
-    static void begin(TState tstate, Value tc, @RC.Singleton Value eKind) {
-      tstate.startCall(iterator, tc.element(0), eKind).saving(eKind, tc.element(1));
-    }
-
-    @Continuation
-    static Value afterIterator(
-        TState tstate,
-        @RC.In Value innerIt,
-        @Saved @RC.Singleton Value eKind,
-        @RC.In Value innerLambda) {
-      return tstate.compound(TRANSFORMED_ITERATOR, innerIt, eKind, innerLambda);
-    }
-  }
-
-  /**
-   * <pre>
-   * method next(TransformedIterator it=) {
-   *   for sequential it {
-   *     item = next(it_.it=)
-   *     if item is Absent {
-   *       break { return Absent }
-   *     }
-   *     if it_.eKind is not EnumerateValues {
-   *       [key, item] = item
-   *     }
-   *     transformed = item is Absent ? Absent : it_.lambda @ item
-   *     if transformed is not Absent or it_.eKind is EnumerateAllKeys
-   *       break {
-   *         return it_.eKind is EnumerateValues ? transformed : [key, transformed]
-   *       }
-   *     }
-   *   }
+   * method iterator(tc, eKind, loop=, initialState=)
+   *      (tc is TransformedCollection or tc is TransformedMatrix or tc is PipedCollection) {
+   *   addLoopStep(tc_.step, eKind, loop=, initialState=)
+   *   return iterator(tc_.base, eKind, loop=, initialState=)
    * }
    * </pre>
    */
-  static class NextTransformedIterator extends BuiltinMethod {
-    static final Caller next = new Caller("next:1", "afterNext");
-    static final Caller at = new Caller("at:2", "afterAt");
+  static class IteratorPiped extends BuiltinMethod {
+    static final Caller addLoopStep = new Caller("addLoopStep:4", "afterAddLoopStep");
 
-    @Core.Method("next(TransformedIterator)")
-    static void begin(TState tstate, @RC.In Value it) {
-      // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
-      Value innerIt = it.element(0);
-      it = it.replaceElement(tstate, 0, Core.TO_BE_SET);
-      tstate.jump("loop", innerIt, it);
+    @Core.Method("iterator(TransformedCollection|TransformedMatrix|PipedCollection, EnumerationKind, Loop, _)")
+    static void begin(TState tstate,
+                      Value tc,
+                      @RC.Singleton Value eKind,
+                      @RC.In Value loop,
+                      @RC.In Value initialState) {
+      Value base = tc.element(0);
+      Value step = tc.element(1);
+      tstate.startCall(addLoopStep, step, eKind, loop, initialState).saving(base, eKind);
     }
 
-    @LoopContinuation
-    static void loop(TState tstate, @RC.In Value innerIt, @RC.In Value it) {
-      tstate.startCall(next, innerIt).saving(it);
-    }
-
-    @Continuation(order = 2)
-    static void afterNext(
-        TState tstate, @RC.In Value item, @RC.In Value innerIt, @Saved @RC.In Value it)
-        throws BuiltinException {
-      item.is(Core.ABSENT)
-          .testExcept(
-              () -> tstate.setResults(Core.ABSENT, it.replaceElement(tstate, 0, innerIt)),
-              () -> {
-                Value eKind = it.peekElement(1);
-                eKind
-                    .is(LoopCore.ENUMERATE_VALUES)
-                    .testExcept(
-                        () -> {
-                          Value lambda = it.element(2);
-                          // We won't use this value, but we have to put something there.
-                          Value key = Core.UNDEF;
-                          tstate.startCall(at, lambda, item).saving(key, innerIt, it);
-                        },
-                        () -> {
-                          Err.NOT_PAIR.unless(item.isArrayOfLength(2));
-                          Value key = item.element(0);
-                          Value value = item.element(1);
-                          tstate.dropValue(item);
-                          value
-                              .is(Core.ABSENT)
-                              .test(
-                                  () -> tstate.jump("afterAt", Core.ABSENT, key, innerIt, it),
-                                  () -> {
-                                    Value lambda = it.element(2);
-                                    tstate.startCall(at, lambda, value).saving(key, innerIt, it);
-                                  });
-                        });
-              });
-    }
-
-    @Continuation(order = 3)
-    static void afterAt(
-        TState tstate,
-        @RC.In Value transformed,
-        @Saved Value key,
-        @RC.In Value innerIt,
-        @RC.In Value it) {
-      Value eKind = it.peekElement(1);
-      transformed
-          .is(Core.ABSENT)
-          .and(eKind.is(LoopCore.ENUMERATE_ALL_KEYS).not())
-          .test(
-              () -> tstate.jump("loop", innerIt, it),
-              () -> {
-                Value result =
-                    eKind
-                        .is(LoopCore.ENUMERATE_VALUES)
-                        .choose(
-                            () -> transformed, () -> tstate.arrayValue(addRef(key), transformed));
-                tstate.setResults(result, it.replaceElement(tstate, 0, innerIt));
-              });
+    @Continuation
+    static void afterAddLoopStep(
+        TState tstate, @RC.In Value loop, @RC.In Value initialState, @Saved @RC.In Value base, @RC.Singleton Value eKind,
+        @Fn("iterator:4") Caller iterator) {
+      tstate.startCall(iterator, base, eKind, loop, initialState);
     }
   }
 
   /**
    * <pre>
-   * method at(JoinedCollection c, key) {
-   *   x1 = c_.c1 @ key
-   *   x2 = c_.c2 @ key
+   * method at(JoinedCollection jc, key) {
+   *   x1 = jc_.c1 @ key
+   *   x2 = jc_.c2 @ key
    *   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
    * }
    * </pre>
@@ -566,8 +449,8 @@ public final class CollectionCore {
     static final Caller atC2 = new Caller("at:2", "afterAtC2");
 
     @Core.Method("at(JoinedCollection, _)")
-    static void begin(TState tstate, Value c, @RC.In Value key) {
-      tstate.startCall(atC1, c.element(0), addRef(key)).saving(c.element(1), key);
+    static void begin(TState tstate, Value jc, @RC.In Value key) {
+      tstate.startCall(atC1, jc.element(0), addRef(key)).saving(jc.element(1), key);
     }
 
     @Continuation
@@ -586,9 +469,9 @@ public final class CollectionCore {
 
   /**
    * <pre>
-   * method element(JoinedMatrixc, key) {
-   *   x1 = element(c_.c1, key)
-   *   x2 = element(c_.c2, key)
+   * method element(JoinedMatrix jc, key) {
+   *   x1 = element(jc_.c1, key)
+   *   x2 = element(jc_.c2, key)
    *   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
    * }
    * </pre>
@@ -598,8 +481,8 @@ public final class CollectionCore {
     static final Caller elementC2 = new Caller("element:2", "afterElementC2");
 
     @Core.Method("element(JoinedMatrix, _)")
-    static void begin(TState tstate, Value c, @RC.In Value key) {
-      tstate.startCall(elementC1, c.element(0), addRef(key)).saving(c.element(1), key);
+    static void begin(TState tstate, Value jc, @RC.In Value key) {
+      tstate.startCall(elementC1, jc.element(0), addRef(key)).saving(jc.element(1), key);
     }
 
     @Continuation
@@ -618,111 +501,76 @@ public final class CollectionCore {
 
   /**
    * <pre>
-   * method iterator(c, eKind) (c is JoinedCollection or c is JoinedMatrix) {
-   *   return JoinedIterator_({it: iterator(c_.c1, EnumerateAllKeys), c2: c_.c2, eKind})
+   * method iterator(jc, eKind, loop=, initialState=) (jc is JoinedCollection or jc is JoinedMatrix) {
+   *   loop = transformLoop(MatchFinder_({c2: jc_.c2, eKind: eKind}), loop)
+   *   return iterator(jc_.c1, EnumerateAllKeys, loop=, initialState)
    * }
    * </pre>
    */
-  static class IteratorJoinedCollection extends BuiltinMethod {
-    static final Caller iterator = new Caller("iterator:2", "afterIterator");
-
-    @Core.Method("iterator(JoinedCollection|JoinedMatrix, EnumerationKind)")
-    static void begin(TState tstate, Value c, @RC.Singleton Value eKind) {
-      tstate
-          .startCall(iterator, c.element(0), LoopCore.ENUMERATE_ALL_KEYS)
-          .saving(c.element(1), eKind);
-    }
-
-    @Continuation
-    static Value afterIterator(
-        TState tstate, @RC.In Value it, @Saved @RC.In Value c2, @RC.Singleton Value eKind) {
-      return tstate.compound(JOINED_ITERATOR, it, c2, eKind);
-    }
+  @Core.Method("iterator(JoinedCollection|JoinedMatrix, EnumerationKind, Loop, _)")
+  static void iteratorJoined(
+      TState tstate,
+      Value jc,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState,
+      @Fn("iterator:4") Caller iterator) {
+    Value lambda = tstate.compound(MATCH_FINDER, jc.element(1), eKind);
+    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    tstate.startCall(iterator, jc.element(0), LoopCore.ENUMERATE_ALL_KEYS, loop, initialState);
   }
 
   /**
    * <pre>
-   * method next(JoinedIterator it=) {
-   *   for sequential it {
-   *     x1 = next(it_.it=)
-   *     if x1 is Absent {
-   *       break { return Absent }
-   *     }
-   *     [key, x1] = x1
-   *     x2 = it_.c2 @ key
-   *     if x1 is Absent and x2 is Absent {
-   *       if it_.eKind is not EnumerateAllKeys {
-   *         continue
-   *       }
-   *       x = Absent
-   *     } else {
-   *       x = [x1, x2]
-   *     }
-   *     return it_.eKind is EnumerateValues ? x : [key, x]
+   * method at(MatchFinder mf, [key, v1]) {
+   *   v2 = mf_.c2 @ key
+   *   if v1 is Absent and v2 is Absent and mf_.eKind is not EnumerateAllKeys {
+   *     return Absent
    *   }
+   *   v = [v1, v2]
+   *   return (eKind is EnumerateValues) ? v : [key, v]
    * }
    * </pre>
    */
-  static class NextJoinedIterator extends BuiltinMethod {
-    static final Caller next = new Caller("next:1", "afterNext");
+  static class AtMatchFinder extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 
-    @Core.Method("next(JoinedIterator)")
-    static void begin(TState tstate, @RC.In Value it) {
-      // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
-      Value innerIt = it.element(0);
-      it = it.replaceElement(tstate, 0, Core.TO_BE_SET);
-      tstate.jump("loop", innerIt, it);
+    @Core.Method("at(MatchFinder, Array)")
+    static void begin(TState tstate, Value mf, Value pair) throws BuiltinException {
+      Err.NOT_PAIR.unless(pair.isArrayOfLength(2));
+      Value key = pair.element(0);
+      Value v1 = pair.element(1);
+      Value c2 = mf.element(0);
+      Value eKind = mf.element(1);
+      tstate.startCall(at, c2, addRef(key)).saving(key, v1, eKind);
     }
 
-    @LoopContinuation
-    static void loop(TState tstate, @RC.In Value innerIt, @RC.In Value it) {
-      tstate.startCall(next, innerIt).saving(it);
-    }
-
-    @Continuation(order = 2)
-    static void afterNext(TState tstate, Value x1, @RC.In Value innerIt, @Saved @RC.In Value it)
-        throws BuiltinException {
-      x1.is(Core.ABSENT)
-          .testExcept(
-              () -> tstate.setResults(Core.ABSENT, it.replaceElement(tstate, 0, innerIt)),
-              () -> {
-                Err.NOT_PAIR.unless(x1.isArrayOfLength(2));
-                Value key = x1.element(0);
-                Value innerX1 = x1.element(1);
-                Value c2 = it.element(1);
-                tstate.startCall(at, c2, addRef(key)).saving(innerIt, it, key, innerX1);
-              });
-    }
-
-    @Continuation(order = 3)
+    @Continuation
     static void afterAt(
         TState tstate,
-        @RC.In Value x2,
-        @Saved @RC.In Value innerIt,
-        @RC.In Value it,
-        Value key,
-        @RC.In Value x1) {
-      Value eKind = it.peekElement(2);
-      x1.is(Core.ABSENT)
-          .and(x2.is(Core.ABSENT))
+        @RC.In Value v2,
+        @Saved @RC.In Value key,
+        @RC.In Value v1,
+        @RC.Singleton Value eKind) {
+      v1.is(Core.ABSENT)
+          .and(v2.is(Core.ABSENT))
+          .and(eKind.is(LoopCore.ENUMERATE_ALL_KEYS).not())
           .test(
-              () ->
-                  eKind
-                      .is(LoopCore.ENUMERATE_ALL_KEYS)
-                      .test(
-                          () -> {
-                            Value result = tstate.arrayValue(addRef(key), Core.ABSENT);
-                            tstate.setResults(result, it.replaceElement(tstate, 0, innerIt));
-                          },
-                          () -> tstate.jump("loop", innerIt, it)),
               () -> {
-                Value result1 = tstate.arrayValue(x1, x2);
-                Value result2 =
+                tstate.dropValue(key);
+                tstate.setResult(Core.ABSENT);
+              },
+              () -> {
+                Value v = tstate.arrayValue(v1, v2);
+                tstate.setResult(
                     eKind
                         .is(LoopCore.ENUMERATE_VALUES)
-                        .choose(() -> result1, () -> tstate.arrayValue(addRef(key), result1));
-                tstate.setResults(result2, it.replaceElement(tstate, 0, innerIt));
+                        .choose(
+                            () -> {
+                              tstate.dropValue(key);
+                              return v;
+                            },
+                            () -> tstate.arrayValue(key, v)));
               });
     }
   }

@@ -29,8 +29,8 @@ test_x0(i1):
   1: CodeGenTarget.incrementCallCount(target:test_x0);
   2: I3 ← 0;
   3: I4 ← 0;
-  4: I5 ← 1;
-  5: X2 ← []; → 16
+  4: X2 ← [];
+  5: I5 ← 1; → 16
 = 6: test I3 < 0; T:→ 32
   7: I5 ← 1;
 = 8: test I3 < I5; T:→ 16
@@ -49,16 +49,16 @@ test_x0(i1):
 -21: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
  22: setObject[](TState.fnResults(X0, 1), 0, X2);
  23: return
--24: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I5, I3, None), loop=SaveUnordered, state=X2⟧);
- 25: X2 ← TState.fillStackEntry(X0, null, X6, ⟨x0:*[]@xxxx⟩, lmMemo_4@xxxx, null);
- 26: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_5@xxxx, null);
- 27: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.EmitAll.enumerate⟧, ⟨LoopRW(Absent, x0:*[]@xxxx)⟩, mMemo_6@xxxx, null);
+-24: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=X2, loop=SaveUnordered, it=RangeIterator(I5, I3, None)⟧);
+ 25: X2 ← TState.fillStackEntry(X0, null, X6, ⟨x0:*[]@xxxx⟩, lmMemo_5@xxxx, null);
+ 26: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_6@xxxx, null);
+ 27: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.EmitAll.enumerate⟧, ⟨LoopRW(Absent, x0:*[]@xxxx)⟩, mMemo_7@xxxx, null);
  28: X5 ← newStackEntry(⟦emit_all.r8t+0:15_3 result_rw = emitAll(result_ro, result_rw, _t0) ∥ i=I3, len=I4, n=I1⟧);
- 29: X2 ← TState.fillStackEntry(X0, X2, X5, ⟨⸨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@14_state⸨result_rw=LoopRW(Absent, x0:*[]@xxxx), i=b0, len=b0⸩⸩, loop@14⸨result_ro=LoopRO(EnumerateValues, SaveUnordered, True), n=b0⸩⟩, mMemo_18@xxxx, null);
+ 29: X2 ← TState.fillStackEntry(X0, X2, X5, ⟨⸨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩); loop@14_state⸨result_rw=LoopRW(Absent, x0:*[]@xxxx), i=b0, len=b0⸩⸩, loop@14⸨result_ro=LoopRO(EnumerateValues, SaveUnordered, True), n=b0⸩⟩, mMemo_19@xxxx, null);
  30: X3 ← newStackEntry(⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@14⸨result_ro=LoopRO(EnumerateValues, SaveUnordered, True), n=I1⸩⟧);
- 31: X1 ← TState.fillStackEntry(X0, X2, X3, ⟨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, LmMemo_19@xxxx, null); → 34
+ 31: X1 ← TState.fillStackEntry(X0, X2, X3, ⟨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, LmMemo_20@xxxx, null); → 34
 -32: X5 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=loop@14_state⸨result_rw=LoopRW(Absent, X2), i=I3, len=I4⸩, lambda=loop@14⸨result_ro=LoopRO(EnumerateValues, SaveUnordered, True), n=I1⸩⟧);
- 33: X1 ← TState.fillStackEntry(X0, null, X5, ⟨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, LmMemo_19@xxxx, null);
+ 33: X1 ← TState.fillStackEntry(X0, null, X5, ⟨LoopExit(loop@14_break⸨result_rw=LoopRW(Absent, x0:*[]@xxxx)⸩)⟩, LmMemo_20@xxxx, null);
 -34: X1 ← TState.fillStackEntry(X0, X1, ⟦emit_all.r8t+0:14_4 _t0 = iterateUnbounded(loop@14⸨result_ro=result_ro, n=n⸩, loop@14_state⸨result_rw=_t0, i=i, len=len⸩) ∥ result_ro=LoopRO(EnumerateValues, SaveUnordered, True)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
  35: TState.setStackRest(X0, X1);
  36: TState.setUnwoundFrom(X0, target:test_x0);

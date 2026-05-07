@@ -43,13 +43,13 @@ import org.retrolang.impl.ValueUtil;
 public final class ArrayCore {
 
   /**
-   * {@code private compound ArrayIterator is Iterator}
+   * {@code private compound ArrayAccessor is Lambda}
    *
-   * <p>Elements are {@code array}, {@code eKind}, {@code prevIndex}.
+   * <p>Elements {@code array}, {@code eKind}. The {@code at()} method does not check the validity
+   * of its argument! Intended only for internal use; should not be generally accessible.
    */
   @Core.Private
-  static final BaseType.Named ARRAY_ITERATOR =
-      Core.newBaseType("ArrayIterator", 3, LoopCore.ITERATOR);
+  static final BaseType.Named ARRAY_ACCESSOR = Core.newBaseType("ArrayAccessor", 2, Core.LAMBDA);
 
   /**
    * {@code private compound ArrayUpdater is Lambda}
@@ -73,6 +73,11 @@ public final class ArrayCore {
     }
   }
 
+  /** Returns true if {@code index} is a valid zero-based index for {@code array}. */
+  static boolean isValidIndex(Value array, long index) {
+    return index >= 0 && index < array.numElements();
+  }
+
   static Value validateIndex(TState tstate, Value array, Value index) throws BuiltinException {
     return ValueUtil.verifyBoundedInt(
         tstate, index, NumValue.ONE, ValueUtil.numElements(tstate, array));
@@ -80,73 +85,53 @@ public final class ArrayCore {
 
   /**
    * <pre>
-   * method iterate(Array array, EnumerationKind eKind) =
-   *     ArrayIterator_({array, eKind, prevIndex: 0})
+   * method at(ArrayAccessor accessor, i) {
+   *   k = [i + 1]
+   *   v = accessor_.array @ k
+   *   if accessor_.eKind is EnumerateValues
+   *       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
+   *     return v
+   *   } else {
+   *     return [k, v]
+   *   }
    * </pre>
    */
-  @Core.Method("iterator(Array, EnumerationKind)")
-  static Value iteratorArray(TState tstate, @RC.In Value array, @RC.Singleton Value eKind) {
-    return tstate.compound(ARRAY_ITERATOR, array, eKind, NumValue.ZERO);
+  @Core.Method("at(ArrayAccessor, _)")
+  static Value atArrayAccessor(TState tstate, Value accessor, Value index) throws BuiltinException {
+    Value array = accessor.peekElement(0);
+    Value eKind = accessor.peekElement(1);
+    Value v = ValueUtil.element(tstate, array, index, 0);
+    return eKind
+        .is(LoopCore.ENUMERATE_VALUES)
+        .or(v.is(Core.ABSENT).and(eKind.is(LoopCore.ENUMERATE_WITH_KEYS)))
+        .choose(
+            () -> v,
+            () -> {
+              Value oneBased = ValueUtil.addInts(tstate, index, NumValue.ONE);
+              return tstate.arrayValue(tstate.arrayValue(oneBased), v);
+            });
   }
 
   /**
    * <pre>
-   * method next(ArrayIterator it=) {
-   *   index = it_.prevIndex
-   *   for sequential index {
-   *     if index &gt;= size(it_.array) {
-   *       break { return Absent }
-   *     }
-   *     index += 1
-   *     v = it_.array[index]
-   *     if v is Absent and it_.eKind is not EnumerateAllKeys {
-   *       continue
-   *     }
-   *     it_.prevIndex = index
-   *     break { return it_.eKind is EnumerateValues ? v : [[index], v] }
-   *   }
+   * method iterator(Array array, EnumerationKind eKind, loop=, initialState=) {
+   *   addLoopStep(ArrayAccessor_({array, eKind}), EnumerateValues, loop=, initialState=)
+   *   return SimpleRangeIterator(size(array))
    * }
    * </pre>
    */
-  static class NextArrayIterator extends BuiltinMethod {
-    @Core.Method("next(ArrayIterator)")
-    static void begin(TState tstate, @RC.In Value it) {
-      tstate.jump("startLoop", it.element(2), it);
-    }
-
-    @LoopContinuation
-    static void startLoop(TState tstate, Value index, @RC.In Value it) {
-      Value array = it.peekElement(0);
-      Value size = ValueUtil.numElements(tstate, array);
-      Condition.numericLessThan(index, size)
-          .test(
-              () -> {
-                Value newIndex = ValueUtil.addInts(tstate, index, NumValue.ONE);
-                Value v = ValueUtil.element(tstate, array, index, 0);
-                Value eKind = it.peekElement(1);
-                v.is(Core.ABSENT)
-                    .and(eKind.is(LoopCore.ENUMERATE_ALL_KEYS).not())
-                    .test(
-                        () -> tstate.jump("startLoop", newIndex, it),
-                        () -> {
-                          Value result = nextResult(tstate, eKind, newIndex, v);
-                          Value newIt = it.replaceElement(tstate, 2, newIndex);
-                          tstate.setResults(result, newIt);
-                        });
-              },
-              () -> tstate.setResults(Core.ABSENT, it));
-    }
-
-    /**
-     * Returns {@code (eKind is EnumerateValues) ? v : [[index], v]}. Written as a separate function
-     * just to stop the code formatter from losing it.
-     */
-    @RC.Out
-    private static Value nextResult(TState tstate, Value eKind, Value index, @RC.In Value v) {
-      return eKind
-          .is(LoopCore.ENUMERATE_VALUES)
-          .choose(() -> v, () -> tstate.arrayValue(tstate.arrayValue(addRef(index)), v));
-    }
+  @Core.Method("iterator(Array, EnumerationKind, Loop, _)")
+  static void iteratorArray(
+      TState tstate,
+      @RC.In Value array,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState) {
+    Value lambda = tstate.compound(ARRAY_ACCESSOR, array, eKind);
+    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    Value size = sizeArray(tstate, array);
+    Value iterator = tstate.compound(RangeCore.SIMPLE_RANGE_ITERATOR, NumValue.NEGATIVE_ONE, size);
+    tstate.setResults(iterator, loop, initialState);
   }
 
   /** {@code method size(Array x) = ...} */
@@ -290,11 +275,6 @@ public final class ArrayCore {
                 });
       }
     }
-  }
-
-  /** Returns true if {@code index} is a valid zero-based index for {@code array}. */
-  static boolean isValidIndex(Value array, long index) {
-    return index >= 0 && index < array.numElements();
   }
 
   /**

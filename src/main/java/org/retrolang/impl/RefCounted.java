@@ -207,6 +207,20 @@ public abstract class RefCounted {
     return cnt != -1;
   }
 
+  /** Returns true if {@code x} is a transient RefCounted. */
+  public static boolean isTransient(Object x) {
+    return (x instanceof RefCounted rc) && rc.isTransient();
+  }
+
+  /** Returns true if this object is transient. */
+  public final boolean isTransient() {
+    int cnt = refCnt;
+    if (cnt == 0) {
+      throw new IllegalStateException();
+    }
+    return cnt == -2;
+  }
+
   /**
    * Returns true if {@code x} is a RefCounted and {@link #setUncounted()} has not been called, or
    * {@code x} is a {@link Value.NotStorable}.

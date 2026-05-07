@@ -421,6 +421,10 @@ public abstract class Condition {
 
     @Override
     public Value choose(Value ifTrue, Value ifFalse) {
+      // If ifTrue or ifFalse is refCounted this is a likely refCount leak (and you should have
+      // been using one of the Supplier versions).  Transient values are OK.
+      assert RefCounted.isTransient(ifTrue) || !RefCounted.isRefCounted(ifTrue);
+      assert RefCounted.isTransient(ifFalse) || !RefCounted.isRefCounted(ifFalse);
       return value ? ifTrue : ifFalse;
     }
 
@@ -544,7 +548,7 @@ public abstract class Condition {
   private static void emitEqual(CodeGen codeGen, Value v1, Value v2, FutureBlock elseBranch) {
     Template t1 = RValue.toTemplate(v1);
     Template t2 = RValue.toTemplate(v2);
-    CopyPlan plan = CopyPlan.create(t1, t2);
+    CopyPlan plan = CopyPlan.create(t1, t2, false);
     if (v2 instanceof RValue) {
       Template.IndexBounds bounds = new Template.IndexBounds(t2);
       plan = CopyOptimizer.equalsRegisters(plan, bounds.minIndex, bounds.maxIndex + 1);

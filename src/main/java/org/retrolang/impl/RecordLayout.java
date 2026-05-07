@@ -416,7 +416,7 @@ public class RecordLayout extends FrameLayout {
           }
         };
     return (Template newElement, int i) -> {
-      CopyPlan plan = CopyPlan.create(newElement, template.element(i));
+      CopyPlan plan = CopyPlan.create(newElement, template.element(i), true);
       plan =
           CopyOptimizer.optimize(
               plan, RecordLayout.this, CopyOptimizer.Policy.NUM_VARS_ARE_BYTE_OFFSETS);
@@ -742,6 +742,8 @@ public class RecordLayout extends FrameLayout {
     /** The index of the next refvar. */
     private int nextX;
 
+    private boolean dropToBeSetFromUnions = false;
+
     private VarAllocator(int dAlignment) {
       assert dAlignment == 0 || dAlignment == 4;
       nextD = dAlignment;
@@ -752,6 +754,7 @@ public class RecordLayout extends FrameLayout {
       nextI = toDuplicate.nextI;
       nextD = toDuplicate.nextD;
       nextX = toDuplicate.nextX;
+      dropToBeSetFromUnions = toDuplicate.dropToBeSetFromUnions;
     }
 
     /** Returns a new VarAllocator that will allocate doubles at offsets 0, 8, 16, etc. */
@@ -784,6 +787,21 @@ public class RecordLayout extends FrameLayout {
       assert nextB == 0 && nextI == 0 && (nextD & ~4) == 0 && nextX == 0;
       nextB = -1;
       return this;
+    }
+
+    /**
+     * Should only be called on a newly-allocated VarAllocator; indicates that this allocator should
+     * not create templates containing {@link Core#TO_BE_SET}. Returns this.
+     */
+    VarAllocator setDropToBeSetFromUnions() {
+      assert nextB <= 0 && nextI == 0 && (nextD & ~4) == 0 && nextX == 0;
+      dropToBeSetFromUnions = true;
+      return this;
+    }
+
+    @Override
+    public boolean dropToBeSetFromUnions() {
+      return dropToBeSetFromUnions;
     }
 
     /**

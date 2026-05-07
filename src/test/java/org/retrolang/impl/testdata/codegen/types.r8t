@@ -27,48 +27,43 @@ function test(array) {
 ---
 test_x0(x1:*[]@xxxx):
   1: CodeGenTarget.incrementCallCount(target:test_x0);
-  2: I2 ← 0;
-  3: I3 ← 0;
-  4: I4 ← 0;
-  5: I5 ← 0;
-= 6: test X1 is *[]⸨x0:*[]@xxxx; False; True; x0:String⸩@xxxx; F:→ 35
-  7: test I2 < Frame1i2x.i0(X1); F:→ 28
-  8: X7 ← Value.fromArray(Frame1i2x.x0(X1), I2);
-  9: test X7 == Absent; T:→ 28
- 10: I6 ← iAdd(I2, 1);
- 11: test X7 instanceof Frame; T:→ 16
- 12: test X7 == False; T:→ 18
- 13: test X7 == True; T:→ 18
- 14: test X7 instanceof StringValue; F:→ 35
- 15: I8 ← I3; → 21
--16: test X7 == False; T:→ 18
- 17: test X7 == True; F:→ 19
--18: I8 ← Math.addExact(I3, 1); → 20, ArithmeticException:→ 35
--19: I8 ← I3;
--20: test X7 instanceof StringValue; F:→ 23
--21: I7 ← Math.addExact(I4, 1); ArithmeticException:→ 35
- 22: I4 ← I7; → 26
--23: test X7 instanceof Frame; F:→ 26
- 24: I7 ← Math.addExact(I5, 1); ArithmeticException:→ 35
- 25: I5 ← I7;
--26: I2 ← I6;
- 27: I3 ← I8; → 6
--28: dropRef{X1};
- 29: TState.setResultTemplates(X0, [{arrays: i0, bools: i4, strings: i8}]);
- 30: X1 ← TState.fnResultBytes(X0, 12);
- 31: setInt[](X1, 0, I5);
- 32: setInt[](X1, 4, I3);
- 33: setInt[](X1, 8, I4);
- 34: return
--35: X6 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I2, it=ArrayIterator(X1, EnumerateValues, I2)⟧);
- 36: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨x0:*[]@xxxx; False; True; Absent; x0:String⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), loop@7⸨bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues⸩, loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, lmMemo_1@xxxx, null);
- 37: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@7⸨bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues⸩, state=loop@7_state⸨bools_rw=LoopRW(Absent, I3), strings_rw=LoopRW(Absent, I4), arrays_rw=LoopRW(Absent, I5)⸩⟧);
- 38: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, lmMemo_24@xxxx, null);
- 39: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, mMemo_25@xxxx, null);
- 40: X1 ← TState.fillStackEntry(X0, X1, ⟦types.r8t+0:7_6 _t0 = enumerate(array, _t1, loop@7⸨bools_ro=bools_ro, strings_ro=strings_ro, arrays_ro=arrays_ro, _eKind=_t1⸩, loop@7_state⸨bools_rw=_t0, strings_rw=_t2, arrays_rw=_t3⸩) ∥ bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True)⟧, ⟨{arrays: b0, bools: b0, strings: b0}⟩, mMemo_x@xxxx, null);
- 41: TState.setStackRest(X0, X1);
- 42: TState.setUnwoundFrom(X0, target:test_x0);
- 43: return
+  2: test X1 is *[]⸨x0:*[]@xxxx; False; True; x0:String⸩@xxxx; F:→ 34
+  3: I2 ← 0;
+  4: I3 ← 0;
+  5: I4 ← 0;
+  6: I5 ← -1;
+  7: I6 ← Frame1i2x.i0(X1);
+= 8: I7 ← iAdd(I5, 1);
+  9: test I7 < I6; F:→ 23
+ 10: X8 ← Value.fromArray(Frame1i2x.x0(X1), I7);
+ 11: test X8 == False; T:→ 13
+ 12: test X8 == True; F:→ 14
+-13: I9 ← Math.addExact(I2, 1); → 15, ArithmeticException:→ 30
+-14: I9 ← I2;
+-15: test X8 instanceof StringValue; F:→ 18
+ 16: I8 ← Math.addExact(I3, 1); ArithmeticException:→ 30
+ 17: I3 ← I8; → 21
+-18: test X8 instanceof Frame; F:→ 21
+ 19: I8 ← Math.addExact(I4, 1); ArithmeticException:→ 30
+ 20: I4 ← I8;
+-21: I2 ← I9;
+ 22: I5 ← I7; → 8
+-23: dropRef{X1};
+ 24: TState.setResultTemplates(X0, [{arrays: i0, bools: i4, strings: i8}]);
+ 25: X1 ← TState.fnResultBytes(X0, 12);
+ 26: setInt[](X1, 0, I4);
+ 27: setInt[](X1, 4, I2);
+ 28: setInt[](X1, 8, I3);
+ 29: return
+-30: X7 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@7_state⸨bools_rw=LoopRW(Absent, I2), strings_rw=LoopRW(Absent, I3), arrays_rw=LoopRW(Absent, I4)⸩, loop=TransformedLoop(ArrayAccessor(X1, EnumerateValues), loop@7⸨bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True), _eKind=EnumerateValues⸩), it=SimpleRangeIterator(I5, I6)⟧);
+ 31: X1 ← TState.fillStackEntry(X0, null, X7, ⟨loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, lmMemo_28@xxxx, null);
+ 32: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨loop@7_state⸨bools_rw=LoopRW(Absent, b0), strings_rw=LoopRW(Absent, b0), arrays_rw=LoopRW(Absent, b0)⸩⟩, mMemo_29@xxxx, null);
+ 33: X1 ← TState.fillStackEntry(X0, X1, ⟦types.r8t+0:7_6 _t0 = enumerate(array, _t1, loop@7⸨bools_ro=bools_ro, strings_ro=strings_ro, arrays_ro=arrays_ro, _eKind=_t1⸩, loop@7_state⸨bools_rw=_t0, strings_rw=_t2, arrays_rw=_t3⸩) ∥ bools_ro=LoopRO(EnumerateValues, Sum(0), True), strings_ro=LoopRO(EnumerateValues, Sum(0), True), arrays_ro=LoopRO(EnumerateValues, Sum(0), True)⟧, ⟨{arrays: b0, bools: b0, strings: b0}⟩, mMemo_x@xxxx, null); → 36
+-34: X2 ← newStackEntry(⟦types.r8t+0:7_0 bools_ro = sum() ∥ array=X1⟧);
+ 35: X1 ← TState.fillStackEntry(X0, null, X2, ⟨{arrays: b0, bools: b0, strings: b0}⟩, mMemo_x@xxxx, null);
+-36: TState.setStackRest(X0, X1);
+ 37: TState.setUnwoundFrom(X0, target:test_x0);
+ 38: return
 ---
 allocated=256/9, peak=56
 */

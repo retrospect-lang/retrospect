@@ -30,14 +30,16 @@ return waitFor(^x) | save
 ⟦Error while computing future() value ∥ futureStack=[⟦No matching method ∥ function="multiply:2", args=[2, None]⟧, ⟦future.r8t+25:1_8 _t0 = multiply(i, _t0)⟧, ⟦FutureValue.FutureMethod.begin⟧]⟧
 ⟦WaitFor ∥ fv=⊠xxxx⟧
 ⟦`waitFor:1`⟧
-⟦CollectionCore.NextTransformedIterator.at ∥ key=[2], innerIt=ArrayIterator([⊡xxxx:1, ⊠xxxx, ⊡xxxx:9, ⊡xxxx:16], EnumerateAllKeys, 2), it=TransformedIterator(ToBeSet, EnumerateAllKeys, ⟦`waitFor:1`⟧)⟧
-⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
+⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[2]⟧
+⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(⟦`waitFor:1`⟧, False), SaverLoop(SaveElements)), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
+⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([⊡xxxx:1, ⊠xxxx, ⊡xxxx:9, ⊡xxxx:16], EnumerateAllKeys), TransformedLoop(KeyValueLambda(⟦`waitFor:1`⟧, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(1, 4)⟧
 ⟦LoopCore.enumerateDefault⟧
-⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧
+⟦LoopCore.PipeCollectionCollector.enumerate⟧
 ⟦future.r8t+25:2_6 _t0 = pipe(_t0, _t1)⟧
 ⟦StackBase⟧
 ---
-allocated=6960‥7560/261‥280, peak=1168‥1432
+allocated=7000‥7800/261‥280, peak=1200‥1680
 */
 
 // Fibonacci with futures!
@@ -78,7 +80,7 @@ return waitFor(last)
 /* RUN () RETURNS
 3.54224848179262E20
 ---
-allocated=229832‥314472/8527‥11471, peak=10456‥66088
+allocated=260000‥320000/9000‥12000, peak=20000‥100000
 */
 
 // Start with Fibonacci, but create a parallel set of "spam" futures that will
@@ -107,7 +109,7 @@ return waitFor(last)
 /* RUN () RETURNS
 3.54224848179262E20
 ---
-allocated=264200‥378808/9795‥13711, peak=20680‥90400
+allocated=300000‥400000/9800‥15000, peak=40000‥120000
 */
 
 // Force some layout evolution & replacement while multiple threads are active

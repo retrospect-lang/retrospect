@@ -247,7 +247,7 @@ class VArrayReplacer implements Evolver.FrameReplacer {
 
   /** Returns a VArrayReplacer for the given source and destination layouts. */
   static VArrayReplacer create(VArrayLayout srcLayout, VArrayLayout dstLayout) {
-    CopyPlan plan = CopyPlan.create(srcLayout.template, dstLayout.template);
+    CopyPlan plan = CopyPlan.create(srcLayout.template, dstLayout.template, true);
     plan = CopyOptimizer.optimize(plan, dstLayout, Policy.VARRAY_REPLACE);
     // COPY_NUM or COPY_REF steps that we will handle by sharing
     ImmutableList.Builder<Basic> sharesBuilder = ImmutableList.builder();

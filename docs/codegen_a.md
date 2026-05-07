@@ -57,13 +57,13 @@ method pipe(Collection collection, Collector collector) {
   } else {
     state = iterate(collection, eKind, loop, initialState)
   }
-  return finalResult(loop, state)
+  // The pipe result is the final state, unwrapped if it's a LoopExit
+  return loopExitState(state)
 }
 ```
 
-This method in turn calls several other functions (`collectorSetup`, `enumerate`
-or `iterate`, and `finalResult`). Since `Sum` is a subtype of `Reducer`, the
-relevant methods are:
+This method in turn calls `collectorSetup` to get the arguments it will pass to `enumerate`
+or `iterate`; since `Sum` is a subtype of `Reducer`, the relevant methods are:
 
 ```
 method collectorSetup(SequentialCollector sc, collection) {
@@ -80,9 +80,6 @@ method collectorSetup(Reducer reducer, _) = {
   }
 
 method emptyState(Sum reducer) = reducer_
-
-method finalResult(Loop loop, finalState) default =
-    finalState is LoopExit ? loopExitState(finalState) : finalState
 ```
 
 Putting those together, `collectorSetup` on `sequentially(sum())` will return

@@ -2,10 +2,22 @@
 return [firstTwo(withKeys([1.1, 1.2, 1.3])), firstTwo(withKeys([2.1, 2.2, 2.3]))]
 
 function firstTwo(array) {
-  it = iterator(array, EnumerateValues)
-  first = next(it=)
-  second = next(it=)
+  loop = SimpleLoop
+  state = Absent
+  it = iterator(array, EnumerateValues, loop=, state=)
+  assert state is Absent
+  first = next(it=, loop)
+  second = next(it=, loop)
   return { first, second }
+}
+
+singleton SimpleLoop is Loop
+method nextState(SimpleLoop, _, x) = x
+
+function next(it=, loop) {
+  x = next(it=)
+  assert x is not Absent
+  return nextState(loop, Absent, x)
 }
 
 /* CODEGEN firstTwo RETURNS

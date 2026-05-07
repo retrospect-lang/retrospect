@@ -471,7 +471,7 @@ class BuiltinSupport {
               unrolling = true;
             } else if (loopBound > 0 && loopBound <= 6) {
               // TODO: we need a more sophisticated policy for when to unroll loops
-              int limit = Math.min(24, 100 / loopBound);
+              int limit = Math.min(35, 120 / loopBound);
               unrolling = !mMemo.weightExceeds(codeGen.tstate().scope(), limit);
             }
           }

@@ -93,9 +93,7 @@ public abstract class TemplateBuilder {
    * the given value. The result may or may not be identical to this.
    */
   final TemplateBuilder add(Value v) {
-    if (v == Core.TO_BE_SET) {
-      return this;
-    } else if (this == Template.EMPTY
+    if (this == Template.EMPTY
         || this instanceof UnionBase
         || v.baseType().sortOrder == baseType().sortOrder) {
       return addImpl(v);
@@ -156,8 +154,7 @@ public abstract class TemplateBuilder {
    */
   @RC.Out
   final @Nullable Value cast(TState tstate, Value v) {
-    // TO_BE_SET can be stored anywhere
-    return v == Core.TO_BE_SET ? v : castImpl(tstate, v);
+    return castImpl(tstate, v);
   }
 
   /**
@@ -171,39 +168,36 @@ public abstract class TemplateBuilder {
      *
      * <p>Not valid for calls to {@link #isSubsetOf}.
      */
-    EVOLUTION_OK(true, false),
+    EVOLUTION_OK,
 
     /**
      * Will return true only if the relationship (cast or subset) holds without additional evolution
-     * of FrameLayouts. There is no special treatment of NumVars.
+     * of FrameLayouts. There is no special treatment of ToBeSet or NumVars.
      */
-    NO_EVOLUTION(false, false),
+    NO_EVOLUTION,
+
+    /**
+     * Will return true only if the relationship (cast or subset) holds without additional evolution
+     * of FrameLayouts. ToBeSet values can be ignored. There is no special treatment of NumVars.
+     */
+    DROP_TO_BE_SET,
 
     /**
      * NumVars with encodings smaller than {@link NumEncoding#INT32} are treated as if they were
      * {@link NumEncoding#INT32}. Implies {@link #NO_EVOLUTION}.
      */
-    UPGRADE_SUB_INTS(false, true);
+    UPGRADE_SUB_INTS;
 
-    /**
-     * If true, {@link #couldCast} will return true even if some FrameLayout evolution would be
-     * required to make the cast possible. If false, {@link #couldCast} will return true only if the
-     * cast is possible without any additional evolution of FrameLayouts.
-     *
-     * <p>Must be false for calls to {@link #isSubsetOf}.
-     */
-    final boolean evolutionAllowed;
+    boolean evolutionAllowed() {
+      return this == EVOLUTION_OK;
+    }
 
-    /**
-     * If true, NumVars with encodings smaller than {@link NumEncoding#INT32} are treated as if they
-     * were {@link NumEncoding#INT32}. If false NumVars are assumed to only hold numbers that are
-     * consistent with their encoding.
-     */
-    final boolean upgradeSubInts;
+    boolean dropToBeSetFromUnions() {
+      return this == DROP_TO_BE_SET;
+    }
 
-    private TestOption(boolean evolutionAllowed, boolean upgradeSubInts) {
-      this.evolutionAllowed = evolutionAllowed;
-      this.upgradeSubInts = upgradeSubInts;
+    boolean upgradeSubInts() {
+      return this == UPGRADE_SUB_INTS;
     }
 
     /** If this is {@link #EVOLUTION_OK}, returns {@link #NO_EVOLUTION}; otherwise returns this. */
@@ -219,8 +213,7 @@ public abstract class TemplateBuilder {
 
   /** Returns true if {@link #cast} would return a non-null Value, subject to the given option. */
   final boolean couldCast(Value v, TestOption option) {
-    assert option != null;
-    return v == Core.TO_BE_SET || couldCastImpl(v, option);
+    return (v == Core.TO_BE_SET && option.dropToBeSetFromUnions()) || couldCastImpl(v, option);
   }
 
   /**
@@ -236,23 +229,32 @@ public abstract class TemplateBuilder {
    * {@code other}, subject to the given option.
    */
   final boolean isSubsetOf(TemplateBuilder other, TestOption option) {
-    assert !option.evolutionAllowed;
-    if (this == Template.EMPTY || this == other) {
+    assert !option.evolutionAllowed();
+    if (this == Template.EMPTY
+        || this == other
+        || (this == Core.TO_BE_SET.asTemplate && option.dropToBeSetFromUnions())) {
       return true;
     } else if (other == Template.EMPTY) {
       return false;
-    } else if (this instanceof UnionBase) {
-      if (!(other instanceof UnionBase)) {
+    }
+    TemplateBuilder t = this;
+    if (this instanceof UnionBase union) {
+      if (option.dropToBeSetFromUnions()
+          && union.numChoices() == 2
+          && union.choiceBuilder(1) == Core.TO_BE_SET.asTemplate) {
+        t = union.choiceBuilder(0);
+      } else if (!(other instanceof UnionBase)) {
         return false;
       }
-    } else if (other instanceof UnionBase union) {
-      int i = union.indexOf(baseType().sortOrder);
+    }
+    if (other instanceof UnionBase union && !(t instanceof UnionBase)) {
+      int i = union.indexOf(t.baseType().sortOrder);
       if (i < 0) {
         return false;
       }
       other = union.choiceBuilder(i);
     }
-    return isSubsetOfImpl(other, option);
+    return t.isSubsetOfImpl(other, option);
   }
 
   /**
@@ -431,6 +433,11 @@ public abstract class TemplateBuilder {
       return true;
     }
 
+    /** Returns true if Unions in the resulting template should drop any ToBeSet choice. */
+    default boolean dropToBeSetFromUnions() {
+      return false;
+    }
+
     /**
      * Returns a new VarAllocator that will assign the same indices as this; used when building
      * unions.
@@ -542,8 +549,8 @@ public abstract class TemplateBuilder {
         FrameLayout layout = rv.frameLayout();
         recursiveTemplate = layout.template().toBuilder();
         // We're going to compare against the layout's template, not the original template,
-        // so revert to the default treatment of NumVars.
-        recursiveOption = TestOption.NO_EVOLUTION;
+        // so discard ToBeSet and revert to the default treatment of NumVars.
+        recursiveOption = TestOption.DROP_TO_BE_SET;
         if (layout instanceof VArrayLayout) {
           // If other is a varray ref, each element of this compound must be a subset of the
           // element template.
@@ -776,6 +783,19 @@ public abstract class TemplateBuilder {
      * new one.
      */
     abstract UnionBuilder withNewChoice(int index, TemplateBuilder choice);
+
+    /** Returns true if this union has a {@link Core#TO_BE_SET} choice. */
+    boolean hasToBeSet() {
+      // We chose the sortIndex of TO_BE_SET so that it would (almost always) be at the end.
+      // (If it's not at the end, it's followed by UNDEF, but the unions that we're testing
+      // here should never contain UNDEF).
+      TemplateBuilder lastChoice = choiceBuilder(numChoices() - 1);
+      if (lastChoice == Core.TO_BE_SET.asTemplate) {
+        return true;
+      }
+      assert lastChoice.baseType().sortOrder < BaseType.SORT_ORDER_TO_BE_SET;
+      return false;
+    }
 
     @Override
     public BaseType baseType() {
@@ -1024,10 +1044,14 @@ public abstract class TemplateBuilder {
 
     @Override
     Template build(VarAllocator allocator) {
+      int nChoices = numChoices() - (allocator.dropToBeSetFromUnions() && hasToBeSet() ? 1 : 0);
+      if (nChoices == 1) {
+        return choiceBuilder(0).build(allocator);
+      }
       // If we exit this loop with untaggedIndex >= 0 we can use an untagged union,
       // and untaggedIndex is the index of the first RefVar choice.
       int untaggedIndex = -1;
-      for (int i = 0; i < choices.size(); i++) {
+      for (int i = 0; i < nChoices; i++) {
         TemplateBuilder choice = choices.get(i);
         if (choice instanceof RefVar) {
           if (untaggedIndex < 0) {
@@ -1038,7 +1062,7 @@ public abstract class TemplateBuilder {
           break;
         }
       }
-      Template[] newChoices = new Template[choices.size()];
+      Template[] newChoices = new Template[nChoices];
       // If we're going to need a tag, allocate it first.
       NumVar tag =
           (untaggedIndex >= 0)

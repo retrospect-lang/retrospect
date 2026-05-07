@@ -166,7 +166,7 @@ class MockVM implements Vm.VirtualMachine {
         "bitShift",
         "div",
         "anotherRw",
-        "finalResultHelper",
+        "finalStateHelper",
         "at",
         "reversedAt",
         "iterateUnbounded",
@@ -186,7 +186,7 @@ class MockVM implements Vm.VirtualMachine {
         1,
         "nextState",
         "combineStates",
-        "finalResultHelper",
+        "finalStateHelper",
         "combineStatesHelper",
         "replaceElement");
     // function f(x, y, z, w)

@@ -95,5 +95,5 @@ at_x0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
  45: TState.setUnwoundFrom(X0, target:at_x0);
  46: return
 ---
-allocated=197704/7545, peak=56
+allocated=195944/7490, peak=56
 */

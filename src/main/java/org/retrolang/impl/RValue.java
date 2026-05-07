@@ -300,7 +300,7 @@ public class RValue implements Value {
     int registersEnd = codeGen.cb.numRegisters();
     // Create a (very simple) plan to copy elements out of the frame into the
     // corresponding registers, and emit it.
-    CopyPlan plan = CopyPlan.create(element, result);
+    CopyPlan plan = CopyPlan.create(element, result, false);
     plan = CopyOptimizer.toRegisters(plan, registersStart, registersEnd, result);
     layout.copyFrom(register, index).emit(codeGen, plan, codeGen.escapeLink());
     return new RValue(result);

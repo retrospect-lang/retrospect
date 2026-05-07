@@ -39,260 +39,248 @@ function multiply_At(v) =
 function multiply_A_At(v) = multiply_At(multiply_A(v))
 
 /* CODEGEN spectral RETURNS
-1.2742241527925104
+1.2742241527925133
 ---
 spectral_x0(i1):
    1: CodeGenTarget.incrementCallCount(target:spectral_x0);
-   2: test I1 < 0; T:→ 113
-   3: test TState.reserveForChange(X0, *[]d0@xxxx, null, I1) == 0; T:→ 113
+   2: test I1 < 0; T:→ 107
+   3: test TState.reserveForChange(X0, *[]d0@xxxx, null, I1) == 0; T:→ 107
    4: X2 ← null;
    5: X3 ← alloc*[]d0@xxxx(X0, I1);
    6: ArrayUtil.bytesFillD(Frame1i2x.x0(X3), 0, I1, 1);
    7: X1 ← null;
-   8: I4 ← 1;
-   9: X5 ← None; → 11
+   8: X5 ← None;
+   9: I4 ← 1; → 11
 = 10: test 10 < I4; T:→ 45
-- 11: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 110
+- 11: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 104
   12: dropRef{X5};
   13: X4 ← null;
   14: X7 ← null;
-  15: [x0:*[]@xxxx] ← multiply_A_x1(X0, X3); X8 ← stackRest; unwind:→ 106
+  15: [x0:*[]@xxxx] ← multiply_A_x1(X0, X3); X8 ← stackRest; unwind:→ 100
   16: X3 ← TState.fnResult(X0, 0);
   17: TState.clearResults(X0);
   18: test X8 == null; T:→ 20
   19: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
-- 20: [x0:*[]@xxxx] ← multiply_At_x2(X0, X3); X8 ← stackRest; unwind:→ 105
+- 20: [x0:*[]@xxxx] ← multiply_At_x2(X0, X3); X8 ← stackRest; unwind:→ 99
   21: X5 ← TState.fnResult(X0, 0);
   22: TState.clearResults(X0);
   23: test X8 == null; T:→ 25
   24: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7);
 - 25: test X7 == null; T:→ 27
-  26: X4 ← TState.fillStackEntry(X0, X7, ⟦spectral_norm.r8t+3:14_1 v = multiply_A_At(u)⟧, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, null);
+  26: X4 ← TState.fillStackEntry(X0, X7, ⟦spectral_norm.r8t+3:14_1 v = multiply_A_At(u)⟧, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=⸨x0:*[]@xxxx; None⸩⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, null);
 - 27: X7 ← null;
-  28: [x0:*[]@xxxx] ← multiply_A_x1(X0, addRef(X5)); X8 ← stackRest; unwind:→ 102
+  28: [x0:*[]@xxxx] ← multiply_A_x1(X0, addRef(X5)); X8 ← stackRest; unwind:→ 96
   29: X3 ← TState.fnResult(X0, 0);
   30: TState.clearResults(X0);
   31: test X8 == null; T:→ 33
   32: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
-- 33: [x0:*[]@xxxx] ← multiply_At_x2(X0, X3); X8 ← stackRest; unwind:→ 101
+- 33: [x0:*[]@xxxx] ← multiply_At_x2(X0, X3); X8 ← stackRest; unwind:→ 95
   34: X3 ← TState.fnResult(X0, 0);
   35: TState.clearResults(X0);
   36: test X8 == null; T:→ 38
   37: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7);
 - 38: test X7 == null; T:→ 41
   39: addRef(X5); X8 ← newStackEntry(⟦spectral_norm.r8t+3:15_2 u = multiply_A_At(v) ∥ v=X5⟧);
-  40: X4 ← TState.fillStackEntry(X0, X7, X8, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, X4);
+  40: X4 ← TState.fillStackEntry(X0, X7, X8, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=⸨x0:*[]@xxxx; None⸩⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, X4);
 - 41: test X4 == null; T:→ 44
   42: X7 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@13, it=RangeIterator(I6, 10, None)⟧);
-  43: X1 ← TState.fillStackEntry(X0, X4, X7, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_19@xxxx, X1);
+  43: X1 ← TState.fillStackEntry(X0, X4, X7, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_20@xxxx, X1);
 - 44: I4 ← I6; → 10
-- 45: test X5 instanceof Frame; F:→ 110
-  46: test X5 is *[]d0@xxxx; F:→ 110
+- 45: test X5 instanceof Frame; F:→ 104
+  46: test X5 is *[]d0@xxxx; F:→ 104
   47: test X1 == null; T:→ 49
   48: X2 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:13_3 _t0 = iterate(_t0, EnumerateValues, loop@13, loop@13_state⸨u=u, v=v⸩)⟧, ⟨d0⟩, mMemo_x@xxxx, null);
 - 49: X1 ← null;
-  50: test X3 is *[]d0@xxxx; F:→ 110
-  51: test Frame1i2x.i0(X3) == Frame1i2x.i0(X5); F:→ 110
-  52: I1 ← 0;
-  53: D9 ← 0;
-= 54: test I1 < Frame1i2x.i0(X3); F:→ 60
-  55: I4 ← iAdd(I1, 1);
-  56: test I4 < 1; T:→ 90
-  57: test Frame1i2x.i0(X5) < I4; T:→ 90
-  58: I1 ← I4;
-  59: D9 ← dAdd(D9, dMul(double[](Frame1i2x.x0(X3), iShl(I4, 3)), double[](Frame1i2x.x0(X5), iShl(iSub(I4, 1), 3)))); → 54
-- 60: test Frame1i2x.i0(X5) == Frame1i2x.i0(X5); F:→ 90
-  61: dropRef{X3};
-  62: I1 ← 0;
-  63: D3 ← 0;
-= 64: test I1 < Frame1i2x.i0(X5); F:→ 70
-  65: I6 ← iAdd(I1, 1);
-  66: test I6 < 1; T:→ 79
-  67: test Frame1i2x.i0(X5) < I6; T:→ 79
-  68: I1 ← I6;
-  69: D3 ← dAdd(D3, dMul(double[](Frame1i2x.x0(X5), iShl(I6, 3)), double[](Frame1i2x.x0(X5), iShl(iSub(I6, 1), 3)))); → 64
-- 70: D6 ← dDiv(D9, D3);
-  71: test Double.isNaN(D6) == 0; F:→ 79
-  72: D6 ← Math.sqrt(D6);
-  73: test Double.isNaN(D6) == 0; F:→ 79
-  74: dropRef{X5};
-  75: TState.setResultTemplates(X0, [d0]);
-  76: setDouble[](TState.fnResultBytes(X0, 8), 0, D6);
-  77: TState.setStackRest(X0, X2);
-  78: return
-- 79: addRef(X5); X6 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I1, it=ArrayIterator(X5, EnumerateAllKeys, I1)⟧);
-  80: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), JoinedIterator((empty), x0:*[]@xxxx, EnumerateValues)⟩, lmMemo_1@xxxx, null);
-  81: X6 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.next ∥ it=JoinedIterator((empty), X5, EnumerateValues)⟧);
-  82: X1 ← TState.fillStackEntry(X0, X1, X6, ⟨⸨[d0, d0]; Absent⸩, JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), x0:*[]@xxxx, EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, lmMemo_4@xxxx, null);
-  83: X8 ← TState.fillStackEntry(X0, X1, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨d0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), x0:*[]@xxxx, EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), d0⟩, lmMemo_7@xxxx, null);
-  84: X1 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D3⟧);
-  85: X7 ← TState.fillStackEntry(X0, X8, X1, ⟨d0, Sum(0)⟩, lmMemo_15@xxxx, null);
-  86: X4 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_16@xxxx, null);
-  87: X1 ← TState.fillStackEntry(X0, X4, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_20@xxxx, null);
-  88: X3 ← newStackEntry(⟦spectral_norm.r8t+3:19_10 vv = pipe(_t0, _t1) ∥ vBv=D9⟧);
-  89: X2 ← TState.fillStackEntry(X0, X1, X3, ⟨d0⟩, mMemo_x@xxxx, X2); → 115
-- 90: X4 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I1, it=ArrayIterator(X3, EnumerateAllKeys, I1)⟧);
-  91: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), JoinedIterator((empty), x0:*[]@xxxx, EnumerateValues)⟩, lmMemo_1@xxxx, null);
-  92: addRef(X5); X3 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.next ∥ it=JoinedIterator((empty), X5, EnumerateValues)⟧);
-  93: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨⸨[d0, d0]; Absent⸩, JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), x0:*[]@xxxx, EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`multiply:2`⟧)⟩, lmMemo_4@xxxx, null);
-  94: X8 ← TState.fillStackEntry(X0, X1, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`multiply:2`⟧)⟧, ⟨⸨d0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), x0:*[]@xxxx, EnumerateValues), EnumerateValues, ⟦`multiply:2`⟧), Sum(0), d0⟩, lmMemo_7@xxxx, null);
-  95: X1 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D9⟧);
-  96: X7 ← TState.fillStackEntry(X0, X8, X1, ⟨d0, Sum(0)⟩, lmMemo_15@xxxx, null);
-  97: X4 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_16@xxxx, null);
-  98: X1 ← TState.fillStackEntry(X0, X4, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_20@xxxx, null);
-  99: X3 ← newStackEntry(⟦spectral_norm.r8t+3:18_7 vBv = pipe(_t0, _t1) ∥ v=X5⟧);
- 100: X2 ← TState.fillStackEntry(X0, X1, X3, ⟨d0⟩, mMemo_x@xxxx, X2); → 115
--101: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7); → 103
--102: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
--103: X3 ← newStackEntry(⟦spectral_norm.r8t+3:15_2 u = multiply_A_At(v) ∥ v=X5⟧);
- 104: X4 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, X4); → 108
--105: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7); → 107
--106: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
--107: X4 ← TState.fillStackEntry(X0, X7, ⟦spectral_norm.r8t+3:14_1 v = multiply_A_At(u)⟧, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, null);
--108: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@13, it=RangeIterator(I6, 10, None)⟧);
- 109: X1 ← TState.fillStackEntry(X0, X4, X3, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_19@xxxx, X1); → 112
--110: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I4, 10, None), loop=loop@13, state=loop@13_state⸨u=X3, v=⸨X5; None⸩⸩⟧);
- 111: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_19@xxxx, X1);
--112: X2 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:13_3 _t0 = iterate(_t0, EnumerateValues, loop@13, loop@13_state⸨u=u, v=v⸩)⟧, ⟨d0⟩, mMemo_x@xxxx, X2); → 115
--113: X2 ← newStackEntry(⟦spectral_norm.r8t+3:8_0 u = newMatrix([n], 1) ∥ n=I1⟧);
- 114: X2 ← TState.fillStackEntry(X0, null, X2, ⟨d0⟩, mMemo_x@xxxx, null);
--115: TState.setStackRest(X0, X2);
- 116: TState.setUnwoundFrom(X0, target:spectral_x0);
- 117: return
+  50: test X3 is *[]d0@xxxx; F:→ 104
+  51: test Frame1i2x.i0(X3) == Frame1i2x.i0(X5); F:→ 104
+  52: D8 ← 0;
+  53: I1 ← -1;
+  54: I4 ← Frame1i2x.i0(X3);
+= 55: I6 ← iAdd(I1, 1);
+  56: test I6 < I4; F:→ 62
+  57: I7 ← iAdd(I6, 1);
+  58: test I7 < 1; T:→ 89
+  59: test Frame1i2x.i0(X5) < I7; T:→ 89
+  60: D8 ← dAdd(D8, dMul(double[](Frame1i2x.x0(X3), iShl(I6, 3)), double[](Frame1i2x.x0(X5), iShl(iSub(I7, 1), 3))));
+  61: I1 ← I6; → 55
+- 62: test Frame1i2x.i0(X5) == Frame1i2x.i0(X5); F:→ 89
+  63: dropRef{X3};
+  64: D3 ← 0;
+  65: I1 ← -1;
+  66: I6 ← Frame1i2x.i0(X5);
+= 67: I7 ← iAdd(I1, 1);
+  68: test I7 < I6; F:→ 74
+  69: I10 ← iAdd(I7, 1);
+  70: test I10 < 1; T:→ 83
+  71: test Frame1i2x.i0(X5) < I10; T:→ 83
+  72: D3 ← dAdd(D3, dMul(double[](Frame1i2x.x0(X5), iShl(I7, 3)), double[](Frame1i2x.x0(X5), iShl(iSub(I10, 1), 3))));
+  73: I1 ← I7; → 67
+- 74: D10 ← dDiv(D8, D3);
+  75: test Double.isNaN(D10) == 0; F:→ 83
+  76: D10 ← Math.sqrt(D10);
+  77: test Double.isNaN(D10) == 0; F:→ 83
+  78: dropRef{X5};
+  79: TState.setResultTemplates(X0, [d0]);
+  80: setDouble[](TState.fnResultBytes(X0, 8), 0, D10);
+  81: TState.setStackRest(X0, X2);
+  82: return
+- 83: X7 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=D3, loop=TransformedLoop(ArrayAccessor(X5, EnumerateAllKeys), TransformedLoop(MatchFinder(X5, EnumerateValues), TransformedLoop(⟦`multiply:2`⟧, Sum(0)))), it=SimpleRangeIterator(I1, I6)⟧);
+  84: X7 ← TState.fillStackEntry(X0, null, X7, ⟨d0⟩, lmMemo_23@xxxx, null);
+  85: X4 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.enumerateDefault⟧, ⟨d0⟩, mMemo_24@xxxx, null);
+  86: X1 ← TState.fillStackEntry(X0, X4, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨d0⟩, mMemo_27@xxxx, null);
+  87: X3 ← newStackEntry(⟦spectral_norm.r8t+3:19_10 vv = pipe(_t0, _t1) ∥ vBv=D8⟧);
+  88: X2 ← TState.fillStackEntry(X0, X1, X3, ⟨d0⟩, mMemo_x@xxxx, X2); → 109
+- 89: addRef(X5); X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=D8, loop=TransformedLoop(ArrayAccessor(X3, EnumerateAllKeys), TransformedLoop(MatchFinder(X5, EnumerateValues), TransformedLoop(⟦`multiply:2`⟧, Sum(0)))), it=SimpleRangeIterator(I1, I4)⟧);
+  90: X7 ← TState.fillStackEntry(X0, null, X6, ⟨d0⟩, lmMemo_23@xxxx, null);
+  91: X4 ← TState.fillStackEntry(X0, X7, ⟦LoopCore.enumerateDefault⟧, ⟨d0⟩, mMemo_24@xxxx, null);
+  92: X1 ← TState.fillStackEntry(X0, X4, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨d0⟩, mMemo_27@xxxx, null);
+  93: X3 ← newStackEntry(⟦spectral_norm.r8t+3:18_7 vBv = pipe(_t0, _t1) ∥ v=X5⟧);
+  94: X2 ← TState.fillStackEntry(X0, X1, X3, ⟨d0⟩, mMemo_x@xxxx, X2); → 109
+- 95: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7); → 97
+- 96: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
+- 97: X3 ← newStackEntry(⟦spectral_norm.r8t+3:15_2 u = multiply_A_At(v) ∥ v=X5⟧);
+  98: X4 ← TState.fillStackEntry(X0, X7, X3, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=⸨x0:*[]@xxxx; None⸩⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, X4); → 102
+- 99: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_1 _t0 = multiply_At(_t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, X7); → 101
+-100: X7 ← TState.fillStackEntry(X0, X8, ⟦spectral_norm.r8t+3:36_0 _t0 = multiply_A(v)⟧, ⟨x0:*[]@xxxx⟩, mMemo_7@xxxx, null);
+-101: X4 ← TState.fillStackEntry(X0, X7, ⟦spectral_norm.r8t+3:14_1 v = multiply_A_At(u)⟧, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=⸨x0:*[]@xxxx; None⸩⸩, loop@13, RangeIterator(b0, 10, None)⟩, mMemo_16@xxxx, null);
+-102: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@13, it=RangeIterator(I6, 10, None)⟧);
+ 103: X1 ← TState.fillStackEntry(X0, X4, X3, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_20@xxxx, X1); → 106
+-104: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@13_state⸨u=X3, v=⸨X5; None⸩⸩, loop=loop@13, it=RangeIterator(I4, 10, None)⟧);
+ 105: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@13_state⸨u=x0:*[]@xxxx, v=x0:*[]@xxxx⸩⟩, LmMemo_20@xxxx, X1);
+-106: X2 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:13_3 _t0 = iterate(_t0, EnumerateValues, loop@13, loop@13_state⸨u=u, v=v⸩)⟧, ⟨d0⟩, mMemo_x@xxxx, X2); → 109
+-107: X2 ← newStackEntry(⟦spectral_norm.r8t+3:8_0 u = newMatrix([n], 1) ∥ n=I1⟧);
+ 108: X2 ← TState.fillStackEntry(X0, null, X2, ⟨d0⟩, mMemo_x@xxxx, null);
+-109: TState.setStackRest(X0, X2);
+ 110: TState.setUnwoundFrom(X0, target:spectral_x0);
+ 111: return
 
 multiply_A_x1(x1:*[]@xxxx):
   1: CodeGenTarget.incrementCallCount(target:multiply_A_x1);
-  2: test X1 is *[]d0@xxxx; F:→ 61
+  2: test X1 is *[]d0@xxxx; F:→ 58
   3: I2 ← Frame1i2x.i0(X1);
-  4: test I2 == 0; T:→ 61
-  5: test TState.reserveForChange(X0, *[]d0@xxxx, null, I2) == 0; T:→ 61
+  4: test I2 == 0; T:→ 58
+  5: test TState.reserveForChange(X0, *[]d0@xxxx, null, I2) == 0; T:→ 58
   6: X4 ← alloc*[]d0@xxxx(X0, I2);
-  7: I5 ← 1; → 9
-= 8: test I2 < I5; T:→ 36
-- 9: I6 ← Math.addExact(I5, 1); ArithmeticException:→ 54
- 10: I3 ← Frame1i2x.i0(X1);
- 11: test Frame1i2x.i0(X1) == I3; F:→ 54
- 12: I7 ← 0;
+  7: I3 ← 1; → 9
+= 8: test I2 < I3; T:→ 38
+- 9: I5 ← Math.addExact(I3, 1); ArithmeticException:→ 53
+ 10: I6 ← Frame1i2x.i0(X1);
+ 11: test Frame1i2x.i0(X1) == I6; F:→ 53
+ 12: I7 ← Frame1i2x.i0(X1);
  13: D8 ← 0;
-=14: test I7 < Frame1i2x.i0(X1); F:→ 32
- 15: I10 ← iAdd(I7, 1);
- 16: D11 ← double[](Frame1i2x.x0(X1), iShl(I7, 3));
- 17: I13 ← Math.addExact(1, Math.subtractExact(I10, 1)); ArithmeticException:→ 42
- 18: I14 ← Math.addExact(I5, I13); ArithmeticException:→ 42
- 19: I14 ← Math.subtractExact(I14, 2); ArithmeticException:→ 42
- 20: I13 ← Math.addExact(I5, I13); ArithmeticException:→ 42
- 21: I13 ← Math.subtractExact(I13, 1); ArithmeticException:→ 42
- 22: I13 ← Math.multiplyExact(I14, I13); ArithmeticException:→ 42
- 23: D13 ← dDiv(I13, 2);
- 24: test Double.isNaN(D13) == 0; F:→ 42
- 25: I15 ← d2i(D13);
- 26: test D13 == I15; F:→ 42
- 27: I13 ← Math.addExact(I15, I5); ArithmeticException:→ 42
- 28: D11 ← dDiv(D11, I13);
- 29: test Double.isNaN(D11) == 0; F:→ 42
- 30: I7 ← I10;
- 31: D8 ← dAdd(D8, D11); → 14
--32: test I5 < 1; T:→ 40
- 33: test Frame1i2x.i0(X4) < I5; T:→ 40
- 34: setDouble[](Frame1i2x.x0(X4), iShl(iSub(I5, 1), 3), D8);
- 35: I5 ← I6; → 8
--36: dropRef{X1};
- 37: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
- 38: setObject[](TState.fnResults(X0, 1), 0, X4);
- 39: return
--40: X3 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=[[I5], D8], it=TransformedIterator(RangeIterator(I6, I2, 0), EnumerateAllKeys, lambda@29:19⸨v=X1⸩), loop=SaverLoop(SaveElements), state=X4⟧);
- 41: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, LmMemo_h43@xxxx, null); → 58
--42: addRef(X1); X10 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I7, it=ArrayIterator(X1, EnumerateAllKeys, I7)⟧);
- 43: X7 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), JoinedIterator((empty), TransformedMatrix(Range(1, b0), iLambda@29:27⸨i=b0⸩), EnumerateValues)⟩, lmMemo_1@xxxx, null);
- 44: X10 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.next ∥ it=JoinedIterator((empty), TransformedMatrix(Range(1, I3), iLambda@29:27⸨i=I5⸩), EnumerateValues)⟧);
- 45: X3 ← TState.fillStackEntry(X0, X7, X10, ⟨⸨[d0, b0]; Absent⸩, JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), TransformedMatrix(Range(1, b0), iLambda@29:27⸨i=b0⸩), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`divide:2`⟧)⟩, lmMemo_15@xxxx, null);
- 46: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`divide:2`⟧)⟧, ⟨⸨d0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), TransformedMatrix(Range(1, b0), iLambda@29:27⸨i=b0⸩), EnumerateValues), EnumerateValues, ⟦`divide:2`⟧), Sum(0), d0⟩, lmMemo_18@xxxx, null);
- 47: X7 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D8⟧);
- 48: X3 ← TState.fillStackEntry(X0, X3, X7, ⟨d0, Sum(0)⟩, LmMemo_26@xxxx, null);
- 49: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_27@xxxx, null);
- 50: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_31@xxxx, null);
- 51: X3 ← TState.fillStackEntry(X0, X3, ⟦spectral_norm.r8t+3:29_6 _t0 = pipe(_t0, _t1)⟧, ⟨d0, [b0], RangeIterator(b0, b0, 0), TransformedIterator((empty), EnumerateAllKeys, lambda@29:19⸨v=x0:*[]@xxxx⸩)⟩, mMemo_h43@xxxx, null);
- 52: X7 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=[I5], innerIt=RangeIterator(I6, I2, 0), it=TransformedIterator((empty), EnumerateAllKeys, lambda@29:19⸨v=X1⸩)⟧);
- 53: X1 ← TState.fillStackEntry(X0, X3, X7, ⟨⸨[[b0], d0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@29:19⸨v=x0:*[]@xxxx⸩), SaverLoop(SaveElements), x0:*[]@xxxx⟩, lmMemo_h39@xxxx, null); → 56
--54: X3 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I5, I2, 0), it=TransformedIterator((empty), EnumerateAllKeys, lambda@29:19⸨v=X1⸩)⟧);
- 55: X1 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], d0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@29:19⸨v=x0:*[]@xxxx⸩), SaverLoop(SaveElements), x0:*[]@xxxx⟩, lmMemo_h39@xxxx, null);
--56: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=X4⟧);
- 57: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, LmMemo_h43@xxxx, null);
--58: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, mMemo_h38@xxxx, null);
- 59: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨x0:*[]@xxxx⟩, mMemo_h44@xxxx, null);
- 60: X1 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:29_4 _t0 = pipe(_t0, _t1)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 63
--61: X2 ← newStackEntry(⟦spectral_norm.r8t+3:29_0 _t0 = size(v) ∥ v=X1⟧);
- 62: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
--63: TState.setStackRest(X0, X1);
- 64: TState.setUnwoundFrom(X0, target:multiply_A_x1);
- 65: return
+ 14: I10 ← -1;
+=15: I11 ← iAdd(I10, 1);
+ 16: test I11 < I7; F:→ 34
+ 17: D12 ← double[](Frame1i2x.x0(X1), iShl(I11, 3));
+ 18: I14 ← iAdd(I11, 1);
+ 19: I14 ← Math.addExact(1, Math.subtractExact(I14, 1)); ArithmeticException:→ 42
+ 20: I15 ← Math.addExact(I3, I14); ArithmeticException:→ 42
+ 21: I15 ← Math.subtractExact(I15, 2); ArithmeticException:→ 42
+ 22: I14 ← Math.addExact(I3, I14); ArithmeticException:→ 42
+ 23: I14 ← Math.subtractExact(I14, 1); ArithmeticException:→ 42
+ 24: I14 ← Math.multiplyExact(I15, I14); ArithmeticException:→ 42
+ 25: D14 ← dDiv(I14, 2);
+ 26: test Double.isNaN(D14) == 0; F:→ 42
+ 27: I16 ← d2i(D14);
+ 28: test D14 == I16; F:→ 42
+ 29: I14 ← Math.addExact(I16, I3); ArithmeticException:→ 42
+ 30: D12 ← dDiv(D12, I14);
+ 31: test Double.isNaN(D12) == 0; F:→ 42
+ 32: D8 ← dAdd(D8, D12);
+ 33: I10 ← I11; → 15
+-34: test I3 < 1; T:→ 42
+ 35: test Frame1i2x.i0(X4) < I3; T:→ 42
+ 36: setDouble[](Frame1i2x.x0(X4), iShl(iSub(I3, 1), 3), D8);
+ 37: I3 ← I5; → 8
+-38: dropRef{X1};
+ 39: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
+ 40: setObject[](TState.fnResults(X0, 1), 0, X4);
+ 41: return
+-42: addRef(X1); X11 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=D8, loop=TransformedLoop(ArrayAccessor(X1, EnumerateAllKeys), TransformedLoop(MatchFinder(TransformedMatrix(Range(1, I6), iLambda@29:27⸨i=I3⸩), EnumerateValues), TransformedLoop(⟦`divide:2`⟧, Sum(0)))), it=SimpleRangeIterator(I10, I7)⟧);
+ 43: X6 ← TState.fillStackEntry(X0, null, X11, ⟨d0⟩, LmMemo_34@xxxx, null);
+ 44: X6 ← TState.fillStackEntry(X0, X6, ⟦LoopCore.enumerateDefault⟧, ⟨d0⟩, mMemo_35@xxxx, null);
+ 45: X6 ← TState.fillStackEntry(X0, X6, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨d0⟩, mMemo_38@xxxx, null);
+ 46: X6 ← TState.fillStackEntry(X0, X6, ⟦spectral_norm.r8t+3:29_6 _t0 = pipe(_t0, _t1)⟧, ⟨d0, False, [b0]⟩, mMemo_h50@xxxx, null);
+ 47: X7 ← newStackEntry(⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[I3]⟧);
+ 48: X3 ← TState.fillStackEntry(X0, X6, X7, ⟨[[b0], d0], TransformedLoop(KeyValueLambda(lambda@29:19⸨v=x0:*[]@xxxx⸩, False), SaverLoop(SaveElements)), x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 49: addRef(X1); X6 ← newStackEntry(⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(lambda@29:19⸨v=X1⸩, False), SaverLoop(SaveElements)), state=X4⟧);
+ 50: X3 ← TState.fillStackEntry(X0, X3, X6, ⟨x0:*[]@xxxx, TransformedLoop(KeyValueLambda(lambda@29:19⸨v=x0:*[]@xxxx⸩, False), SaverLoop(SaveElements)), RangeIterator(b0, b0, 0)⟩, mMemo_h45@xxxx, null);
+ 51: X4 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(KeyValueLambda(lambda@29:19⸨v=X1⸩, False), SaverLoop(SaveElements)), it=RangeIterator(I5, I2, 0)⟧);
+ 52: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨x0:*[]@xxxx⟩, LmMemo_h48@xxxx, null); → 55
+-53: X5 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=X4, loop=TransformedLoop(KeyValueLambda(lambda@29:19⸨v=X1⸩, False), SaverLoop(SaveElements)), it=RangeIterator(I3, I2, 0)⟧);
+ 54: X1 ← TState.fillStackEntry(X0, null, X5, ⟨x0:*[]@xxxx⟩, LmMemo_h48@xxxx, null);
+-55: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 56: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨x0:*[]@xxxx⟩, mMemo_h47@xxxx, null);
+ 57: X1 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:29_4 _t0 = pipe(_t0, _t1)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 60
+-58: X2 ← newStackEntry(⟦spectral_norm.r8t+3:29_0 _t0 = size(v) ∥ v=X1⟧);
+ 59: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
+-60: TState.setStackRest(X0, X1);
+ 61: TState.setUnwoundFrom(X0, target:multiply_A_x1);
+ 62: return
 
 multiply_At_x2(x1:*[]@xxxx):
   1: CodeGenTarget.incrementCallCount(target:multiply_At_x2);
-  2: test X1 is *[]d0@xxxx; F:→ 61
+  2: test X1 is *[]d0@xxxx; F:→ 58
   3: I2 ← Frame1i2x.i0(X1);
-  4: test I2 == 0; T:→ 61
-  5: test TState.reserveForChange(X0, *[]d0@xxxx, null, I2) == 0; T:→ 61
+  4: test I2 == 0; T:→ 58
+  5: test TState.reserveForChange(X0, *[]d0@xxxx, null, I2) == 0; T:→ 58
   6: X4 ← alloc*[]d0@xxxx(X0, I2);
-  7: I5 ← 1; → 9
-= 8: test I2 < I5; T:→ 36
-- 9: I6 ← Math.addExact(I5, 1); ArithmeticException:→ 54
- 10: I3 ← Frame1i2x.i0(X1);
- 11: test Frame1i2x.i0(X1) == I3; F:→ 54
- 12: I7 ← 0;
+  7: I3 ← 1; → 9
+= 8: test I2 < I3; T:→ 38
+- 9: I5 ← Math.addExact(I3, 1); ArithmeticException:→ 53
+ 10: I6 ← Frame1i2x.i0(X1);
+ 11: test Frame1i2x.i0(X1) == I6; F:→ 53
+ 12: I7 ← Frame1i2x.i0(X1);
  13: D8 ← 0;
-=14: test I7 < Frame1i2x.i0(X1); F:→ 32
- 15: I10 ← iAdd(I7, 1);
- 16: D11 ← double[](Frame1i2x.x0(X1), iShl(I7, 3));
- 17: I13 ← Math.addExact(1, Math.subtractExact(I10, 1)); ArithmeticException:→ 42
- 18: I14 ← Math.addExact(I13, I5); ArithmeticException:→ 42
- 19: I14 ← Math.subtractExact(I14, 2); ArithmeticException:→ 42
- 20: I15 ← Math.addExact(I13, I5); ArithmeticException:→ 42
- 21: I15 ← Math.subtractExact(I15, 1); ArithmeticException:→ 42
- 22: I14 ← Math.multiplyExact(I14, I15); ArithmeticException:→ 42
- 23: D14 ← dDiv(I14, 2);
- 24: test Double.isNaN(D14) == 0; F:→ 42
- 25: I16 ← d2i(D14);
- 26: test D14 == I16; F:→ 42
- 27: I13 ← Math.addExact(I16, I13); ArithmeticException:→ 42
- 28: D11 ← dDiv(D11, I13);
- 29: test Double.isNaN(D11) == 0; F:→ 42
- 30: I7 ← I10;
- 31: D8 ← dAdd(D8, D11); → 14
--32: test I5 < 1; T:→ 40
- 33: test Frame1i2x.i0(X4) < I5; T:→ 40
- 34: setDouble[](Frame1i2x.x0(X4), iShl(iSub(I5, 1), 3), D8);
- 35: I5 ← I6; → 8
--36: dropRef{X1};
- 37: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
- 38: setObject[](TState.fnResults(X0, 1), 0, X4);
- 39: return
--40: X3 ← newStackEntry(⟦LoopCore.Iterate.afterNext ∥ element=[[I5], D8], it=TransformedIterator(RangeIterator(I6, I2, 0), EnumerateAllKeys, lambda@33:19⸨v=X1⸩), loop=SaverLoop(SaveElements), state=X4⟧);
- 41: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, LmMemo_h43@xxxx, null); → 58
--42: addRef(X1); X10 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I7, it=ArrayIterator(X1, EnumerateAllKeys, I7)⟧);
- 43: X7 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[[b0], d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), JoinedIterator((empty), TransformedMatrix(Range(1, b0), iLambda@33:27⸨i=b0⸩), EnumerateValues)⟩, lmMemo_1@xxxx, null);
- 44: X10 ← newStackEntry(⟦CollectionCore.NextJoinedIterator.next ∥ it=JoinedIterator((empty), TransformedMatrix(Range(1, I3), iLambda@33:27⸨i=I5⸩), EnumerateValues)⟧);
- 45: X3 ← TState.fillStackEntry(X0, X7, X10, ⟨⸨[d0, b0]; Absent⸩, JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), TransformedMatrix(Range(1, b0), iLambda@33:27⸨i=b0⸩), EnumerateValues), TransformedIterator((empty), EnumerateValues, ⟦`divide:2`⟧)⟩, lmMemo_15@xxxx, null);
- 46: X3 ← TState.fillStackEntry(X0, X3, ⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator(ToBeSet, EnumerateValues, ⟦`divide:2`⟧)⟧, ⟨⸨d0; Absent⸩, TransformedIterator(JoinedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateAllKeys, b0), TransformedMatrix(Range(1, b0), iLambda@33:27⸨i=b0⸩), EnumerateValues), EnumerateValues, ⟦`divide:2`⟧), Sum(0), d0⟩, lmMemo_18@xxxx, null);
- 47: X7 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D8⟧);
- 48: X3 ← TState.fillStackEntry(X0, X3, X7, ⟨d0, Sum(0)⟩, LmMemo_26@xxxx, null);
- 49: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_27@xxxx, null);
- 50: X3 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_31@xxxx, null);
- 51: X3 ← TState.fillStackEntry(X0, X3, ⟦spectral_norm.r8t+3:33_6 _t0 = pipe(_t0, _t1)⟧, ⟨d0, [b0], RangeIterator(b0, b0, 0), TransformedIterator((empty), EnumerateAllKeys, lambda@33:19⸨v=x0:*[]@xxxx⸩)⟩, mMemo_h43@xxxx, null);
- 52: X7 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.at ∥ key=[I5], innerIt=RangeIterator(I6, I2, 0), it=TransformedIterator((empty), EnumerateAllKeys, lambda@33:19⸨v=X1⸩)⟧);
- 53: X1 ← TState.fillStackEntry(X0, X3, X7, ⟨⸨[[b0], d0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@33:19⸨v=x0:*[]@xxxx⸩), SaverLoop(SaveElements), x0:*[]@xxxx⟩, lmMemo_h39@xxxx, null); → 56
--54: X3 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I5, I2, 0), it=TransformedIterator((empty), EnumerateAllKeys, lambda@33:19⸨v=X1⸩)⟧);
- 55: X1 ← TState.fillStackEntry(X0, null, X3, ⟨⸨[[b0], d0]; Absent⸩, TransformedIterator(RangeIterator(b0, b0, 0), EnumerateAllKeys, lambda@33:19⸨v=x0:*[]@xxxx⸩), SaverLoop(SaveElements), x0:*[]@xxxx⟩, lmMemo_h39@xxxx, null);
--56: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=X4⟧);
- 57: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, LmMemo_h43@xxxx, null);
--58: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx, SaverLoop(SaveElements)⟩, mMemo_h38@xxxx, null);
- 59: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧, ⟨x0:*[]@xxxx⟩, mMemo_h44@xxxx, null);
- 60: X1 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:33_4 _t0 = pipe(_t0, _t1)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 63
--61: X2 ← newStackEntry(⟦spectral_norm.r8t+3:33_0 _t0 = size(v) ∥ v=X1⟧);
- 62: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
--63: TState.setStackRest(X0, X1);
- 64: TState.setUnwoundFrom(X0, target:multiply_At_x2);
- 65: return
+ 14: I10 ← -1;
+=15: I11 ← iAdd(I10, 1);
+ 16: test I11 < I7; F:→ 34
+ 17: D12 ← double[](Frame1i2x.x0(X1), iShl(I11, 3));
+ 18: I14 ← iAdd(I11, 1);
+ 19: I14 ← Math.addExact(1, Math.subtractExact(I14, 1)); ArithmeticException:→ 42
+ 20: I15 ← Math.addExact(I14, I3); ArithmeticException:→ 42
+ 21: I15 ← Math.subtractExact(I15, 2); ArithmeticException:→ 42
+ 22: I16 ← Math.addExact(I14, I3); ArithmeticException:→ 42
+ 23: I16 ← Math.subtractExact(I16, 1); ArithmeticException:→ 42
+ 24: I15 ← Math.multiplyExact(I15, I16); ArithmeticException:→ 42
+ 25: D15 ← dDiv(I15, 2);
+ 26: test Double.isNaN(D15) == 0; F:→ 42
+ 27: I17 ← d2i(D15);
+ 28: test D15 == I17; F:→ 42
+ 29: I14 ← Math.addExact(I17, I14); ArithmeticException:→ 42
+ 30: D12 ← dDiv(D12, I14);
+ 31: test Double.isNaN(D12) == 0; F:→ 42
+ 32: D8 ← dAdd(D8, D12);
+ 33: I10 ← I11; → 15
+-34: test I3 < 1; T:→ 42
+ 35: test Frame1i2x.i0(X4) < I3; T:→ 42
+ 36: setDouble[](Frame1i2x.x0(X4), iShl(iSub(I3, 1), 3), D8);
+ 37: I3 ← I5; → 8
+-38: dropRef{X1};
+ 39: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
+ 40: setObject[](TState.fnResults(X0, 1), 0, X4);
+ 41: return
+-42: addRef(X1); X11 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=D8, loop=TransformedLoop(ArrayAccessor(X1, EnumerateAllKeys), TransformedLoop(MatchFinder(TransformedMatrix(Range(1, I6), iLambda@33:27⸨i=I3⸩), EnumerateValues), TransformedLoop(⟦`divide:2`⟧, Sum(0)))), it=SimpleRangeIterator(I10, I7)⟧);
+ 43: X6 ← TState.fillStackEntry(X0, null, X11, ⟨d0⟩, LmMemo_34@xxxx, null);
+ 44: X6 ← TState.fillStackEntry(X0, X6, ⟦LoopCore.enumerateDefault⟧, ⟨d0⟩, mMemo_35@xxxx, null);
+ 45: X6 ← TState.fillStackEntry(X0, X6, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨d0⟩, mMemo_38@xxxx, null);
+ 46: X6 ← TState.fillStackEntry(X0, X6, ⟦spectral_norm.r8t+3:33_6 _t0 = pipe(_t0, _t1)⟧, ⟨d0, False, [b0]⟩, mMemo_h50@xxxx, null);
+ 47: X7 ← newStackEntry(⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[I3]⟧);
+ 48: X3 ← TState.fillStackEntry(X0, X6, X7, ⟨[[b0], d0], TransformedLoop(KeyValueLambda(lambda@33:19⸨v=x0:*[]@xxxx⸩, False), SaverLoop(SaveElements)), x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 49: addRef(X1); X6 ← newStackEntry(⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(lambda@33:19⸨v=X1⸩, False), SaverLoop(SaveElements)), state=X4⟧);
+ 50: X3 ← TState.fillStackEntry(X0, X3, X6, ⟨x0:*[]@xxxx, TransformedLoop(KeyValueLambda(lambda@33:19⸨v=x0:*[]@xxxx⸩, False), SaverLoop(SaveElements)), RangeIterator(b0, b0, 0)⟩, mMemo_h45@xxxx, null);
+ 51: X4 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(KeyValueLambda(lambda@33:19⸨v=X1⸩, False), SaverLoop(SaveElements)), it=RangeIterator(I5, I2, 0)⟧);
+ 52: X1 ← TState.fillStackEntry(X0, X3, X4, ⟨x0:*[]@xxxx⟩, LmMemo_h48@xxxx, null); → 55
+-53: X5 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=X4, loop=TransformedLoop(KeyValueLambda(lambda@33:19⸨v=X1⸩, False), SaverLoop(SaveElements)), it=RangeIterator(I3, I2, 0)⟧);
+ 54: X1 ← TState.fillStackEntry(X0, null, X5, ⟨x0:*[]@xxxx⟩, LmMemo_h48@xxxx, null);
+-55: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_h42@xxxx, null);
+ 56: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨x0:*[]@xxxx⟩, mMemo_h47@xxxx, null);
+ 57: X1 ← TState.fillStackEntry(X0, X1, ⟦spectral_norm.r8t+3:33_4 _t0 = pipe(_t0, _t1)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 60
+-58: X2 ← newStackEntry(⟦spectral_norm.r8t+3:33_0 _t0 = size(v) ∥ v=X1⟧);
+ 59: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
+-60: TState.setStackRest(X0, X1);
+ 61: TState.setUnwoundFrom(X0, target:multiply_At_x2);
+ 62: return
 ---
 allocated=2017296/86, peak=147624
 */

@@ -447,7 +447,7 @@ class Evolver {
       TemplateBuilder.VarAllocator allocator =
           isVarray
               ? new VArrayLayout.VarAllocator()
-              : RecordLayout.VarAllocator.newForRecordLayout();
+              : RecordLayout.VarAllocator.newForRecordLayout().setDropToBeSetFromUnions();
       Template template = builder.build(allocator);
       // Second check: do any of our layouts match the template we built?
       for (FrameLayout layout : layouts) {

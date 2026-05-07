@@ -50,7 +50,7 @@ public class CopyPlanTest {
             NumVar.FLOAT64.withIndex(1),
             Core.STRING.asRefVar,
             Core.STRING.asRefVar.withIndex(1));
-    assertThat(cleanString(CopyPlan.create(src, dst)))
+    assertThat(cleanString(CopyPlan.create(src, dst, false)))
         .isEqualTo("set(0, b0), copy(b0, d1), set('x', x0), copy(x0, x1)");
   }
 
@@ -67,20 +67,21 @@ public class CopyPlanTest {
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
     // dst is constant 1: verify the tag and the int var used for numbers
-    assertThat(cleanString(CopyPlan.create(union, Constant.of(NumValue.ONE))))
+    assertThat(cleanString(CopyPlan.create(union, Constant.of(NumValue.ONE), false)))
         .isEqualTo("verify(b0, 0), verify(i1, 1)");
     // dst is [b0, 0]: verify the tag, copy the first element to b0, and verify that the
     // second element was 0
     assertThat(
-            cleanString(CopyPlan.create(union, arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)))))
+            cleanString(
+                CopyPlan.create(union, arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), false)))
         .isEqualTo("verify(b0, 1), copy(i1, b0), verify(i2, 0)");
     // dst is None: always fails (the src can't have that value)
-    assertThat(cleanString(CopyPlan.create(union, Core.NONE.asTemplate))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(union, Core.NONE.asTemplate, false))).isEqualTo("FAIL");
     // dst is True: just verify the tag
-    assertThat(cleanString(CopyPlan.create(union, Core.TRUE.asTemplate)))
+    assertThat(cleanString(CopyPlan.create(union, Core.TRUE.asTemplate, false)))
         .isEqualTo("verify(b0, 3)");
     // dst is constant "x": verify the tag and the RefVar used for strings
-    assertThat(cleanString(CopyPlan.create(union, stringX)))
+    assertThat(cleanString(CopyPlan.create(union, stringX, false)))
         .isEqualTo("verify(b0, 4), verify(x0, 'x')");
   }
 
@@ -97,19 +98,22 @@ public class CopyPlanTest {
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
     // src is constant 1: set the tag and the int var used for numbers
-    assertThat(cleanString(CopyPlan.create(Constant.of(NumValue.ONE), union)))
+    assertThat(cleanString(CopyPlan.create(Constant.of(NumValue.ONE), union, false)))
         .isEqualTo("set(0, b0), set(1, i1)");
     // src is [b0, 0]: set the tag, copy b0 to the first element, and set the
     // second element to 0
     assertThat(
-            cleanString(CopyPlan.create(arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), union)))
+            cleanString(
+                CopyPlan.create(arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), union, false)))
         .isEqualTo("set(1, b0), copy(b0, i1), set(0, i2)");
     // src is None: always fails (the dst can't have that value)
-    assertThat(cleanString(CopyPlan.create(Core.NONE.asTemplate, union))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(Core.NONE.asTemplate, union, false))).isEqualTo("FAIL");
     // src is True: just set the tag
-    assertThat(cleanString(CopyPlan.create(Core.TRUE.asTemplate, union))).isEqualTo("set(3, b0)");
+    assertThat(cleanString(CopyPlan.create(Core.TRUE.asTemplate, union, false)))
+        .isEqualTo("set(3, b0)");
     // src is constant "x": set the tag and the RefVar used for strings
-    assertThat(cleanString(CopyPlan.create(stringX, union))).isEqualTo("set(4, b0), set('x', x0)");
+    assertThat(cleanString(CopyPlan.create(stringX, union, false)))
+        .isEqualTo("set(4, b0), set('x', x0)");
   }
 
   @Test
@@ -127,17 +131,19 @@ public class CopyPlanTest {
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
     // dst is constant 1: always fails (the src can't be a number)
-    assertThat(cleanString(CopyPlan.create(union, Constant.of(NumValue.ONE)))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(union, Constant.of(NumValue.ONE), false)))
+        .isEqualTo("FAIL");
     // dst is [b0, 0]: verify that src has the frame layout, and use FRAME_TO_COMPOUND to do the
     // actual decoding and checking
     assertThat(
-            cleanString(CopyPlan.create(union, arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)))))
+            cleanString(
+                CopyPlan.create(union, arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), false)))
         .isEqualTo("verifyType(x0, VArray), fromFrame(x0, [b0, 0])");
     // dst is True: verify that src is True
-    assertThat(cleanString(CopyPlan.create(union, Core.TRUE.asTemplate)))
+    assertThat(cleanString(CopyPlan.create(union, Core.TRUE.asTemplate, false)))
         .isEqualTo("verifyType(x0, True)");
     // dst is constant "x": verify that src has the required type, and then check its value
-    assertThat(cleanString(CopyPlan.create(union, stringX)))
+    assertThat(cleanString(CopyPlan.create(union, stringX, false)))
         .isEqualTo("verifyType(x0, String), verify(x0, 'x')");
   }
 
@@ -155,16 +161,18 @@ public class CopyPlanTest {
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
     // src is constant 1: always fails (the dst can't represent a number)
-    assertThat(cleanString(CopyPlan.create(Constant.of(NumValue.ONE), union))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(Constant.of(NumValue.ONE), union, false)))
+        .isEqualTo("FAIL");
     // src is [b0, 0]: use COMPOUND_TO_FRAME to allocate and initialize a new frame
     assertThat(
-            cleanString(CopyPlan.create(arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), union)))
+            cleanString(
+                CopyPlan.create(arrayOf(NumVar.UINT8, Constant.of(NumValue.ZERO)), union, false)))
         .isEqualTo("toFrame([b0, 0], x0)");
     // src is True: set x0 to a constant value
-    assertThat(cleanString(CopyPlan.create(Core.TRUE.asTemplate, union)))
+    assertThat(cleanString(CopyPlan.create(Core.TRUE.asTemplate, union, false)))
         .isEqualTo("set(True, x0)");
     // src is constant "x": set x0 to a constant value
-    assertThat(cleanString(CopyPlan.create(stringX, union))).isEqualTo("set('x', x0)");
+    assertThat(cleanString(CopyPlan.create(stringX, union, false))).isEqualTo("set('x', x0)");
   }
 
   @Test
@@ -188,7 +196,7 @@ public class CopyPlanTest {
             Core.STRING.asRefVar);
     // A switch on the source's tag, that fails on some branches and sets dst's tag appropriately
     // on the others
-    assertThat(cleanString(CopyPlan.create(src, dst1)))
+    assertThat(cleanString(CopyPlan.create(src, dst1, false)))
         .isEqualTo(
             "b0⸨0:FAIL; 1:set(0, b0), copy(i1, b1), copy(i2, i2); 2:set(1, b0); 3:FAIL;"
                 + " 4:set(2, b0), copy(x0, x0)⸩");
@@ -202,12 +210,13 @@ public class CopyPlanTest {
             Core.TRUE.asTemplate,
             Core.ABSENT.asTemplate,
             Core.STRING.asRefVar);
-    assertThat(cleanString(CopyPlan.create(src, dst2)))
+    assertThat(cleanString(CopyPlan.create(src, dst2, false)))
         .isEqualTo("copy(b0, b0), b0⸨0:copy(i1, b1); 1:FAIL; 2:FAIL; 3:EMPTY; 4:copy(x0, x0)⸩");
     // If only one of src's branches can be represented by dst, just verify the tag's value
     Template dst3 =
         new Template.Union(NumVar.UINT8, null, Core.NONE.asTemplate, Core.UNDEF.asTemplate);
-    assertThat(cleanString(CopyPlan.create(src, dst3))).isEqualTo("verify(b0, 2), set(0, b0)");
+    assertThat(cleanString(CopyPlan.create(src, dst3, false)))
+        .isEqualTo("verify(b0, 2), set(0, b0)");
     // If none of src's branches can be represented by dst just fail
     Template dst4 =
         new Template.Union(
@@ -215,7 +224,7 @@ public class CopyPlanTest {
             null,
             Constant.of(Core.RANGE.uncountedOf(NumValue.ZERO, NumValue.ONE)),
             Core.UNDEF.asTemplate);
-    assertThat(cleanString(CopyPlan.create(src, dst4))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(src, dst4, false))).isEqualTo("FAIL");
   }
 
   @Test
@@ -223,7 +232,7 @@ public class CopyPlanTest {
     // Copying a simple union of enums to the same union can just copy the tag, no switch needed
     Template bool =
         new Template.Union(NumVar.UINT8, null, Core.FALSE.asTemplate, Core.TRUE.asTemplate);
-    assertThat(cleanString(CopyPlan.create(bool, bool))).isEqualTo("copy(b0, b0)");
+    assertThat(cleanString(CopyPlan.create(bool, bool, false))).isEqualTo("copy(b0, b0)");
   }
 
   @Test
@@ -238,7 +247,7 @@ public class CopyPlanTest {
             Core.FALSE.asTemplate,
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
-    assertThat(cleanString(CopyPlan.create(bool, dst)))
+    assertThat(cleanString(CopyPlan.create(bool, dst, false)))
         .isEqualTo("b0⸨0:set(False, x0); 1:set(True, x0)⸩");
   }
 
@@ -262,19 +271,19 @@ public class CopyPlanTest {
             arrayOf(NumVar.UINT8.withIndex(1), NumVar.INT32.withIndex(2)),
             Core.FALSE.asTemplate,
             Core.STRING.asRefVar);
-    assertThat(cleanString(CopyPlan.create(src, dst1)))
+    assertThat(cleanString(CopyPlan.create(src, dst1, false)))
         .isEqualTo(
             "x0⸨Array:set(0, b0), fromFrame(x0, [b1, i2]); False:set(1, b0); True:FAIL;"
                 + " String:set(2, b0), copy(x0, x0)⸩");
     // If only one of src's branches can be represented by dst, just verify the RefVar's type
     Template dst2 =
         new Template.Union(NumVar.UINT8, null, Core.FALSE.asTemplate, Core.NONE.asTemplate);
-    assertThat(cleanString(CopyPlan.create(src, dst2)))
+    assertThat(cleanString(CopyPlan.create(src, dst2, false)))
         .isEqualTo("verifyType(x0, False), set(0, b0)");
     // If none of src's branches can be represented by dst just fail
     Template dst3 =
         new Template.Union(NumVar.UINT8, null, Core.NONE.asTemplate, Core.ABSENT.asTemplate);
-    assertThat(cleanString(CopyPlan.create(src, dst3))).isEqualTo("FAIL");
+    assertThat(cleanString(CopyPlan.create(src, dst3, false))).isEqualTo("FAIL");
   }
 
   @Test
@@ -289,7 +298,7 @@ public class CopyPlanTest {
     Template dst1 =
         new Template.Union(
             null, bytes.asRefVar, bytes.asRefVar, Core.FALSE.asTemplate, Core.STRING.asRefVar);
-    assertThat(cleanString(CopyPlan.create(src, dst1)))
+    assertThat(cleanString(CopyPlan.create(src, dst1, false)))
         .isEqualTo("x0⸨Array:copy(x0, x0); True:FAIL; String:copy(x0, x0)⸩");
     // If dst is a superset we don't need to switch
     Template dst2 =
@@ -300,6 +309,6 @@ public class CopyPlanTest {
             Core.FALSE.asTemplate,
             Core.TRUE.asTemplate,
             Core.STRING.asRefVar);
-    assertThat(cleanString(CopyPlan.create(src, dst2))).isEqualTo("copy(x0, x0)");
+    assertThat(cleanString(CopyPlan.create(src, dst2, false))).isEqualTo("copy(x0, x0)");
   }
 }

@@ -96,10 +96,10 @@ method stats(nums) {
     anomalies_ro, _t4, _t1 = loopHelper(anomalies_ro, nums, _t1, True)
     _t0 = enumerate(nums, _t1, loop@2(n_ro, anomalies_ro, _eKind: _t1), loop@2_state(n_rw: _t0, xSum_rw: _t2, x2Sum_rw: _t3, anomalies_rw: _t4))
     n, xSum, x2Sum, anomalies = unloop@2_state(_t0)
-    n = finalResultHelper(n_ro, n)
-    xSum = finalResultHelper(n_ro, xSum)
-    x2Sum = finalResultHelper(n_ro, x2Sum)
-    anomalies = finalResultHelper(anomalies_ro, anomalies)
+    n = finalStateHelper(n_ro, n)
+    xSum = finalStateHelper(n_ro, xSum)
+    x2Sum = finalStateHelper(n_ro, x2Sum)
+    anomalies = finalStateHelper(anomalies_ro, anomalies)
     _t0 = lessThan(n, 2)  // 14:2
     branch L1 if not _t0
     _t1 = equal(n, 0)  // 15:4

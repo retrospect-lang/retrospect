@@ -15,34 +15,25 @@ function sumSqDistance([x, y], pts) = pts | [px, py] -> (x - px) ** 2 + (y - py)
 ---
 sumSqDistance_x0([d1, d2], x3:*[]@xxxx):
   1: CodeGenTarget.incrementCallCount(target:sumSqDistance_x0);
-  2: I6 ← 0;
-  3: D7 ← 0;
-= 4: I9 ← I6;
-= 5: test X5 is *[]b0⸨0:[i1, d2]; 1:Absent⸩@xxxx; F:→ 18
-  6: test I9 < Frame1i4x.i0(X5); F:→ 14
-  7: I10 ← iAdd(I9, 1);
-  8: test uint8[](Frame1i4x.x0(X5), I9) 1 (< 2); F:→ 10
-  9: I9 ← I10; → 5
--10: D11 ← dSub(D1, int[](Frame1i4x.x1(X5), iShl(I9, 2)));
- 11: D13 ← dSub(D3, double[](Frame1i4x.x2(X5), iShl(I9, 3)));
- 12: I6 ← I10;
- 13: D7 ← dAdd(D7, dAdd(dMul(D11, D11), dMul(D13, D13))); → 4
--14: dropRef{X5};
- 15: TState.setResultTemplates(X0, [d0]);
- 16: setDouble[](TState.fnResultBytes(X0, 8), 0, D7);
- 17: return
--18: X10 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I9, it=ArrayIterator(X5, EnumerateValues, I6)⟧);
- 19: X5 ← TState.fillStackEntry(X0, null, X10, ⟨⸨[i0, d0]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), TransformedIterator((empty), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩)⟩, LmMemo_1@xxxx, null);
- 20: X6 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.next ∥ it=TransformedIterator((empty), EnumerateValues, lambda@11:53⸨x=D1, y=D3⸩)⟧);
- 21: X1 ← TState.fillStackEntry(X0, X5, X6, ⟨⸨d0; Absent⸩, TransformedIterator(ArrayIterator(x0:*[]@xxxx, EnumerateValues, b0), EnumerateValues, lambda@11:53⸨x=d0, y=d0⸩), Sum(0), d0⟩, lmMemo_10@xxxx, null);
- 22: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=D7⟧);
- 23: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨d0, Sum(0)⟩, LmMemo_17@xxxx, null);
- 24: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨d0, Sum(0)⟩, mMemo_18@xxxx, null);
- 25: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨d0⟩, mMemo_22@xxxx, null);
- 26: X1 ← TState.fillStackEntry(X0, X1, ⟦varray.r8t+0:11_3 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_x@xxxx, null);
- 27: TState.setStackRest(X0, X1);
- 28: TState.setUnwoundFrom(X0, target:sumSqDistance_x0);
- 29: return
+  2: test X5 is *[]b0⸨0:[i1, d2]; 1:Absent⸩@xxxx; F:→ 16
+  3: D6 ← 0;
+  4: I8 ← -1;
+  5: I9 ← Frame1i4x.i0(X5);
+= 6: I8 ← iAdd(I8, 1);
+  7: test I8 < I9; F:→ 12
+  8: test uint8[](Frame1i4x.x0(X5), I8) 1 (< 2); T:→ 6
+  9: D10 ← dSub(D1, int[](Frame1i4x.x1(X5), iShl(I8, 2)));
+ 10: D12 ← dSub(D3, double[](Frame1i4x.x2(X5), iShl(I8, 3)));
+ 11: D6 ← dAdd(D6, dAdd(dMul(D10, D10), dMul(D12, D12))); → 6
+-12: dropRef{X5};
+ 13: TState.setResultTemplates(X0, [d0]);
+ 14: setDouble[](TState.fnResultBytes(X0, 8), 0, D6);
+ 15: return
+-16: X6 ← newStackEntry(⟦varray.r8t+0:11_0 x, y = unarray2(_a0) ∥ _a0=[D1, D3], pts=X5⟧);
+ 17: X1 ← TState.fillStackEntry(X0, null, X6, ⟨d0⟩, mMemo_x@xxxx, null);
+ 18: TState.setStackRest(X0, X1);
+ 19: TState.setUnwoundFrom(X0, target:sumSqDistance_x0);
+ 20: return
 ---
-allocated=20592/784, peak=96
+allocated=20336/772, peak=96
 */

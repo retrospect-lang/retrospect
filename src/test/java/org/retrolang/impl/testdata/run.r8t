@@ -55,9 +55,7 @@ function shift(Num x=) {
 }
 
 /* RUN () RETURNS
-  [MultiBit([One, One]),
-   MultiBit([Zero, MultiBit([One, One])]),
-   MultiBit([Zero, MultiBit([Zero, MultiBit([Zero, One])])])]
+[MultiBit([One, One]), MultiBit([Zero, MultiBit([One, One])]), MultiBit([Zero, MultiBit([Zero, MultiBit([Zero, One])])])]
 ---
 allocated=6416/230, peak=632
 */
@@ -110,9 +108,9 @@ function shift(Num x=) {
 
 /* RUN () ERRORS
 ⟦No matching method ∥ function="add:3", args=[MultiBit([Zero, One]), Zero, MultiBit([Zero, One])]⟧
-⟦run.r8t+67:30_28 _t0 = add(a, b, cNext) ∥ carry=One⟧
-⟦run.r8t+67:12_0 _t0 = add(a, b, Zero)⟧
-⟦run.r8t+67:2_2 _t0 = add(four, One)⟧
+⟦run.r8t+65:30_28 _t0 = add(a, b, cNext) ∥ carry=One⟧
+⟦run.r8t+65:12_0 _t0 = add(a, b, Zero)⟧
+⟦run.r8t+65:2_2 _t0 = add(four, One)⟧
 ⟦StackBase⟧
 ---
 allocated=1080/38, peak=456
@@ -142,47 +140,47 @@ procedure f(a, b, c, d) {
   f(True, a, b, c)
 }
 /* RUN () RETURNS
-  42
+42
 ---
             ⟦StackBase⟧
-        (3) ⟦run.r8t+123:1_0 f(None, None, None, None)⟧
-            ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=None, b=None, c=None⟧
-        (2) ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=False, b=None, c=None⟧
-        (1) ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=False, b=False, c=None⟧
-            ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=False, b=False, c=False⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=False, b=False, c=False, d=False⟧
+        (3) ⟦run.r8t+121:1_0 f(None, None, None, None)⟧
+            ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=None, b=None, c=None⟧
+        (2) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=None, c=None⟧
+        (1) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=False, c=None⟧
+            ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=False, c=False⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=False, c=False, d=False⟧
             ... (1) ...
-            ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=False, d=False⟧
+            ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=False, d=False⟧
             ... (2) ...
-            ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-            ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=True, b=False, c=False⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=False, d=False⟧
+            ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+            ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=False, c=False⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=False, d=False⟧
             ... (3) ...
-        (5) ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-        (4) ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=True, b=None, c=None⟧
-            ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=False, b=True, c=None⟧
-0.0s) ⟦run.r8t+123:16_5 trace ∥ a=False, b=False, c=True⟧
+        (5) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+        (4) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=None, c=None⟧
+            ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=True, c=None⟧
+0.0s) ⟦run.r8t+121:16_5 trace ∥ a=False, b=False, c=True⟧
             ... (4) ...
-            ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+123:16_5 trace ∥ a=True, b=False, c=True⟧
+            ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+0.0s) ⟦run.r8t+121:16_5 trace ∥ a=True, b=False, c=True⟧
             ... (5) ...
-        (7) ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-        (6) ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=True, b=True, c=None⟧
-0.0s) ⟦run.r8t+123:16_5 trace ∥ a=False, b=True, c=True⟧
+        (7) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+        (6) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=True, c=None⟧
+0.0s) ⟦run.r8t+121:16_5 trace ∥ a=False, b=True, c=True⟧
 (dropped 10)
             ... (6) ...
-            ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=True, d=True⟧
+            ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=True, d=True⟧
             ... (7) ...
-        (8) ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+123:16_5 trace ∥ a=True, b=True, c=True⟧
+        (8) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+0.0s) ⟦run.r8t+121:16_5 trace ∥ a=True, b=True, c=True⟧
             ... (8) ...
-            ⟦run.r8t+123:18_7 f(False, a, b, c) ∥ a=True, b=True, c=True⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=True, d=True⟧
+            ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=True, c=True⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=True, d=True⟧
             ... (8) ...
-            ⟦run.r8t+123:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+123:10_1 trace "Complete" a, b, c, d ∥ a=True, b=True, c=True, d=True⟧
+            ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
+0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=True, c=True, d=True⟧
 ---
 allocated=5008/155, peak=2200
 */
@@ -195,7 +193,7 @@ function foo(x) {
   return {aa: a, bb: b}
 }
 /* RUN () RETURNS
-  {aa: 3, bb: 4}
+{aa: 3, bb: 4}
 ---
 allocated=200/8, peak=48
 */
@@ -204,17 +202,17 @@ a = (1..4) ^** 2 | save
 a[2] = 1
 return [a, a | sum]
 /* RUN () RETURNS
-  [[1, 1, 9, 16], 27]
+[[1, 1, 9, 16], 27]
 ---
-allocated=5120/190, peak=104
+allocated=5344/197, peak=104
 */
 
 x = 0
 return [-1, 1, 2, 3] | filter(-> # > 0) | -> # * # + x | sum
 /* RUN () RETURNS
-  14
+14
 ---
-allocated=3680/140, peak=0
+allocated=3840/144, peak=0
 */
 
 x = newMatrix([2, 2])
@@ -223,7 +221,7 @@ x[2,2] = 2
 return x
 
 /* RUN () RETURNS
-  ReshapedArray([2, 2], [1, Absent, Absent, 2])
+ReshapedArray([2, 2], [1, Absent, Absent, 2])
 ---
 allocated=240/9, peak=104
 */
@@ -231,9 +229,9 @@ allocated=240/9, peak=104
 return -4..10 | filter(-> # % 3 != 0) | saveSequential
 
 /* RUN () RETURNS
-  [-4, -2, -1, 1, 2, 4, 5, 7, 8, 10]
+[-4, -2, -1, 1, 2, 4, 5, 7, 8, 10]
 ---
-allocated=7544/279, peak=88
+allocated=6960/254, peak=88
 $0 = *[]i0
 */
 
@@ -241,9 +239,9 @@ m = matrix([4, 4]) | [i, j] -> i + j
 return m[2..3, 3..] | save
 
 /* RUN () RETURNS
-  ReshapedArray([2, 2], [5, 6, 6, 7])
+ReshapedArray([2, 2], [5, 6, 6, 7])
 ---
-allocated=4568/173, peak=152
+allocated=4496/170, peak=152
 */
 
 x = {a: newMatrix([2, 1], "yet")}
@@ -256,8 +254,7 @@ procedure swap(x=, y=) {
 }
 
 /* RUN () RETURNS
-  {x: {a: ReshapedArray([2, 1], ["yet", "if"])},
-   y: ["as", "yet"]}
+{x: {a: ReshapedArray([2, 1], ["yet", "if"])}, y: ["as", "yet"]}
 ---
 allocated=752/30, peak=240
 */
@@ -265,9 +262,9 @@ allocated=752/30, peak=240
 return [1..3, 5] | sum([0, 0, 0])
 
 /* RUN () RETURNS
-  [6, 7, 8]
+[6, 7, 8]
 ---
-allocated=5032/188, peak=56
+allocated=5160/193, peak=56
 */
 
 return [myFn(3), myFn(True), myFn(MySingleton)]
@@ -279,7 +276,7 @@ method myFn(True) = "no"
 method myFn(_) default = "maybe"
 
 /* RUN () RETURNS
-  ["maybe", "no", "yes"]
+["maybe", "no", "yes"]
 ---
 allocated=256/10, peak=56
 */
@@ -291,18 +288,18 @@ z = withKeys(a) | [[i, j], v] -> (i == j ? v : 0)
 return a + z | save
 
 /* RUN () RETURNS
-  ReshapedArray([2, 3], [4, 0, 10, 0, -4, 11])
+ReshapedArray([2, 3], [4, 0, 10, 0, -4, 11])
 ---
-allocated=10928/416, peak=136
+allocated=11472/433, peak=136
 */
 
 a = {x: 3, y: -1, z: 2}
 return withKeys(a) | [k, v] -> (v >= 0 ? k : Absent) | saveSequential
 
 /* RUN () RETURNS
-  ["x", "z"]
+["x", "z"]
 ---
-allocated=2392/89, peak=56
+allocated=2552/93, peak=56
 $0 = *[]x0:String
 */
 
@@ -312,29 +309,29 @@ http = codePoints("http") | save
 return {three, http}
 
 /* RUN () RETURNS
-  {http: [104, 116, 116, 112], three: 3}
+{http: [104, 116, 116, 112], three: 3}
 ---
-allocated=8928/333, peak=104
+allocated=8768/324, peak=104
 */
 
 return "Hello, world!" == "Hello, world!"
 
 /* RUN () RETURNS
-  True
+True
 ---
 allocated=72/3, peak=0
 */
 
 return "Hello, you!" == "Hello, me!"
 /* RUN () RETURNS
-  False
+False
 ---
 allocated=72/3, peak=0
 */
 
 return "Hello" & " world!"
 /* RUN () RETURNS
-    "Hello world!"
+"Hello world!"
 ---
 allocated=160/4, peak=88
 */
@@ -343,7 +340,7 @@ return -2147483648 ++ 0
 /* RUN () ERRORS
 ⟦Invalid argument⟧
 ⟦RangeCore.rangeWithSize ∥ min=-2147483648, size=0⟧
-⟦run.r8t+341:1_0 _t0 = rangeWithSize(-2147483648, 0)⟧
+⟦run.r8t+338:1_0 _t0 = rangeWithSize(-2147483648, 0)⟧
 ⟦StackBase⟧
 ---
 allocated=168/6, peak=144
@@ -355,9 +352,9 @@ maxWithKey = withKeys(nums) | maxAt([2])
 return {min: min(nums), max: max(nums), minAbs, maxWithKey}
 
 /* RUN () RETURNS
-  {max: 314, maxWithKey: [[3], 314], min: -10, minAbs: 1}
+{max: 314, maxWithKey: [[3], 314], min: -10, minAbs: 1}
 ---
-allocated=8256/306, peak=176
+allocated=9872/361, peak=176
 */
 
 // Start with a simple matrix and square each element in place
@@ -374,10 +371,9 @@ a2 |= keys(a) | [i, j] -> (-> (i == j ? # + 100 : #))
 return {a, a2}
 
 /* RUN () RETURNS
-  {a: ReshapedArray([2, 2], [1, 8, 9, 20]),
-   a2: ReshapedArray([2, 2], [101, 8, 9, 120])}
+{a: ReshapedArray([2, 2], [1, 8, 9, 20]), a2: ReshapedArray([2, 2], [101, 8, 9, 120])}
 ---
-allocated=21592/817, peak=256
+allocated=22488/845, peak=256
 */
 
 // Make sure that TState.dropOnThrow() works as expected
@@ -388,7 +384,7 @@ return ["a", "b", "c"][2..4]
 ⟦Invalid argument⟧
 ⟦MatrixCore.SubMatrix.afterSizes ∥ sizes=[3], m=["a", "b", "c"], key=[Range(2, 4)]⟧
 ⟦MatrixCore.at⟧
-⟦run.r8t+384:1_1 _t0 = at(["a", "b", "c"], [_t0])⟧
+⟦run.r8t+380:1_1 _t0 = at(["a", "b", "c"], [_t0])⟧
 ⟦StackBase⟧
 ---
 allocated=520/20, peak=328
@@ -428,7 +424,7 @@ return 1..2 | i -> size(i == 1 ? [4, 5] : [6, 7, 8]) | save
 /* RUN () RETURNS
 [2, 3]
 ---
-allocated=2408/91, peak=48
+allocated=2424/91, peak=48
 $0 = *[]b0
 */
 
@@ -468,16 +464,16 @@ a = {x: 3, y: -1, z: 2}
 return a^ + 1 | save
 
 /* RUN () RETURNS
-  {x: 4, y: 0, z: 3}
+{x: 4, y: 0, z: 3}
 ---
-allocated=2536/94, peak=56
+allocated=2808/103, peak=56
 */
 
 a = {x: 3, y: -1, z: 2}
 return keys(a) | -> # & "!" | save
 
 /* RUN () RETURNS
-  {x: "x!", y: "y!", z: "z!"}
+{x: "x!", y: "y!", z: "z!"}
 ---
-allocated=2872/101, peak=272
+allocated=3144/110, peak=272
 */

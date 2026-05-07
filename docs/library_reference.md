@@ -546,13 +546,13 @@ The Reducer API consists of four functions:
 *   `initialState(reducer)`
 *   `nextState(reducer, state, element)`
 *   `combineStates(reducer, state1, state2)`
-*   `finalResult(reducer, state)`
+*   `finalState(reducer, state)`
 
 The Saver API consists of three functions:
 
 *   `savedValue(saver, value)`
 *   `nextState(saver, state, element)`
-*   `finalResult(saver, state)`
+*   `finalState(saver, state)`
 
 See the enumeration API doc for details.
 

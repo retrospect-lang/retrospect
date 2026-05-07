@@ -104,7 +104,7 @@ public class ValueUtil {
             codeGen.materialize(
                 Op.SUBTRACT_INTS.result(indexCV, CodeValue.of(firstIndex)), int.class);
       }
-      CopyPlan plan = CopyPlan.create(layout.template(), result);
+      CopyPlan plan = CopyPlan.create(layout.template(), result, false);
       plan = CopyOptimizer.toRegisters(plan, registerStart, registerEnd, result);
       ((VArrayLayout) layout).copyFrom(arrayCV, indexCV).emit(codeGen, plan, codeGen.escapeLink());
     } else {
@@ -165,8 +165,7 @@ public class ValueUtil {
     }
     Template arrayT = RValue.toTemplate(array);
     CodeBuilder cb = codeGen.cb;
-    if (newElementT == Template.EMPTY) {
-      assert newElement == Core.TO_BE_SET;
+    if (newElement == Core.TO_BE_SET) {
       FutureBlock done = new FutureBlock();
       codeGen.emitSwitch(
           indexCV,
@@ -679,10 +678,11 @@ public class ValueUtil {
       Template elementTemplate = vLayout.template;
       for (int i = 0; i < newElements.length; i++) {
         Template newTemplate = RValue.toTemplate(newElements[i]);
-        if (!newTemplate.toBuilder().isSubsetOf(elementTemplate.toBuilder())) {
+        if (!newTemplate.toBuilder()
+            .isSubsetOf(elementTemplate.toBuilder(), TemplateBuilder.TestOption.DROP_TO_BE_SET)) {
           // Try copying this element into the varray's template, but with an emitter that doesn't
           // actually store the values (but will escape if they don't fit).
-          CopyPlan plan = CopyPlan.create(newTemplate, elementTemplate);
+          CopyPlan plan = CopyPlan.create(newTemplate, elementTemplate, true);
           plan = CopyOptimizer.toVArray(plan, vLayout);
           TEST_STORE.emit(codeGen, plan, codeGen.escapeLink());
         }

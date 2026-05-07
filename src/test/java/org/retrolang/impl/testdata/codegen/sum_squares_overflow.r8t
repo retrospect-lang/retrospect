@@ -17,21 +17,19 @@ sumSquares_x0(Range(i1, i2)):
   4: I4 ← Math.addExact(I1, 1); ArithmeticException:→ 12
   5: I5 ← Math.multiplyExact(I1, I1); ArithmeticException:→ 12
   6: I5 ← Math.addExact(I3, I5); ArithmeticException:→ 12
-  7: I1 ← I4;
-  8: I3 ← I5; → 3
+  7: I3 ← I5;
+  8: I1 ← I4; → 3
 - 9: TState.setResultTemplates(X0, [i0]);
  10: setInt[](TState.fnResultBytes(X0, 4), 0, I3);
  11: return
--12: X4 ← newStackEntry(⟦CollectionCore.NextTransformedIterator.loop ∥ innerIt=RangeIterator(I1, I2, None), it=TransformedIterator(ToBeSet, EnumerateValues, iLambda@3:29)⟧);
- 13: X1 ← TState.fillStackEntry(X0, null, X4, ⟨⸨i0; Absent⸩, TransformedIterator(RangeIterator(i0, i0, None), EnumerateValues, iLambda@3:29), Sum(0), i0⟩, lmMemo_4@xxxx, null);
- 14: X2 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=Sum(0), state=I3⟧);
- 15: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨i0, Sum(0)⟩, LmMemo_11@xxxx, null);
- 16: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨i0, Sum(0)⟩, mMemo_12@xxxx, null);
- 17: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨i0⟩, mMemo_16@xxxx, null);
- 18: X1 ← TState.fillStackEntry(X0, X1, ⟦sum_squares_overflow.r8t+4:3_2 _t0 = pipe(_t0, _t1)⟧, ⟨i0⟩, mMemo_x@xxxx, null);
- 19: TState.setStackRest(X0, X1);
- 20: TState.setUnwoundFrom(X0, target:sumSquares_x0);
- 21: return
+-12: X4 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=I3, loop=TransformedLoop(iLambda@3:29, Sum(0)), it=RangeIterator(I1, I2, None)⟧);
+ 13: X1 ← TState.fillStackEntry(X0, null, X4, ⟨i0⟩, LmMemo_14@xxxx, null);
+ 14: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨i0⟩, mMemo_15@xxxx, null);
+ 15: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨i0⟩, mMemo_18@xxxx, null);
+ 16: X1 ← TState.fillStackEntry(X0, X1, ⟦sum_squares_overflow.r8t+4:3_2 _t0 = pipe(_t0, _t1)⟧, ⟨i0⟩, mMemo_x@xxxx, null);
+ 17: TState.setStackRest(X0, X1);
+ 18: TState.setUnwoundFrom(X0, target:sumSquares_x0);
+ 19: return
 ---
-allocated=4364024/162836, peak=96
+allocated=3712704/138412, peak=96
 */

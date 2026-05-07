@@ -67,20 +67,22 @@ public abstract class BaseType implements PtrInfo {
   static final long SORT_ORDER_ARRAY = 2;
 
   /**
-   * The sortOrder of Core.TO_BE_SET. TO_BE_SET cannot appear as a choice in a Union, so this
-   * sortOrder isn't really used, but giving TO_BE_SET a distinct sortOrder allows us to give it
-   * special treatment in the BaseType constructor.
-   */
-  static final long SORT_ORDER_TO_BE_SET = 3;
-
-  /**
    * The sortOrder of Core.UNDEF. I think that always putting this last in a union will allow us to
    * generate simpler code.
    */
   static final long SORT_ORDER_UNDEF = Long.MAX_VALUE - 1; // Ordered.search() adds 1
 
+  /**
+   * The sortOrder of Core.TO_BE_SET. Some unions (e.g. in RValues) can include TO_BE_SET, but
+   * others (e.g. in a VArrayLayout) exclude them; I think that putting them at the end of the
+   * unions that do include them will allow us to generate simpler code.
+   */
+  static final long SORT_ORDER_TO_BE_SET = SORT_ORDER_UNDEF - 1;
+
+  static final long LAST_UNRESERVED_SORT_ORDER = SORT_ORDER_TO_BE_SET - 1;
+
   /** All other BaseTypes will be assigned arbitrary sequential sortOrders starting here. */
-  static final long FIRST_UNRESERVED_SORT_ORDER = 4;
+  static final long FIRST_UNRESERVED_SORT_ORDER = 3;
 
   private static final AtomicLong nextSortOrder = new AtomicLong(FIRST_UNRESERVED_SORT_ORDER);
 
@@ -93,12 +95,12 @@ public abstract class BaseType implements PtrInfo {
 
   BaseType(int size, long sortOrder) {
     this.size = size;
-    asSingleton = (size == 0) ? new Singleton(this, sortOrder == SORT_ORDER_TO_BE_SET) : null;
+    asSingleton = (size == 0) ? new Singleton(this) : null;
     if (sortOrder == ALLOC_NEW_SORT_ORDER) {
       this.sortOrder = nextSortOrder.getAndIncrement();
     } else {
       assert sortOrder > 0
-          && (sortOrder < FIRST_UNRESERVED_SORT_ORDER || sortOrder == SORT_ORDER_UNDEF);
+          && (sortOrder < FIRST_UNRESERVED_SORT_ORDER || sortOrder > LAST_UNRESERVED_SORT_ORDER);
       this.sortOrder = sortOrder;
     }
   }

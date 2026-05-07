@@ -45,8 +45,8 @@ method replaceElement(BST bst, [key], value) {
 }
 
 /* RUN () RETURNS
-  [24, 12, 1, Absent]
+[24, 12, 1, Absent]
 ---
-allocated=205888/7834, peak=56
+allocated=204464/7790, peak=56
 $0 = *{key: d4, left: b0⸨0:NonEmpty(x0:$0); 1:Empty⸩, right: b1⸨0:NonEmpty(x1:$0); 1:Empty⸩, value: b2}
 */

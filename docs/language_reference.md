@@ -203,7 +203,7 @@ For example, Retrospect's API for *reducers* uses four functions:
 open function initialState(reducer)
 open function nextState(reducer, state, input)
 open function combineStates(reducer, state1, state2)
-open function finalResult(reducer, state)
+open function finalState(reducer, state)
 ```
 
 To implement a simple "mean" Reducer we could declare a new type (in this case a
@@ -218,7 +218,7 @@ method nextState(MeanReducer, state, Number input) =
 method combineStates(MeanReducer, state1, state2) =
     { count: state1.count+state2.count, sum: state1.sum+state2.sum }
 
-method finalResult(MeanReducer, state) = state.sum / state.count
+method finalState(MeanReducer, state) = state.sum / state.count
 ```
 
 ### Default methods

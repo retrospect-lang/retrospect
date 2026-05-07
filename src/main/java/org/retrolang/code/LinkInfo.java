@@ -577,6 +577,23 @@ public class LinkInfo {
             } else if (info1 == CodeValue.NONE || info2 == ValueInfo.ANY) {
               return info2;
             }
+            ValueInfo resolved1 = info1;
+            if (info1 instanceof Register r1) {
+              // We need to resolve info1 using the savedRegisters, not the ones we may already have
+              // started modifying.
+              resolved1 = savedRegisters.get(r1.index);
+              if (resolved1 instanceof Const) {
+                // There's no reason to keep a reference to a Const
+                info1 = resolved1;
+              }
+            }
+            ValueInfo resolved2 = info2;
+            if (info2 instanceof Register r2) {
+              resolved2 = other.register(r2.index);
+              if (resolved2 instanceof Const) {
+                info2 = resolved2;
+              }
+            }
             if (info1 instanceof Register r1) {
               // Even though info2 isn't r1, any of these would allow us to conclude that this
               // register is a copy of r1:
@@ -632,12 +649,7 @@ public class LinkInfo {
               }
             }
             // Everything else is handled by BinaryOps.union()
-            if (info1 instanceof Register) {
-              // We need to resolve info1 using the savedRegisters, not the ones we may already have
-              // started modifying.
-              info1 = savedRegisters.get(((Register) info1).index);
-            }
-            return cb.binaryOps.union(info1, other.resolve(info2));
+            return cb.binaryOps.union(resolved1, resolved2);
           });
       // We're almost done, but if the first pass replaced any constants by registers there's a
       // chance that we've ended up with a copy-of-a-copy; we have to make sure those are cleaned

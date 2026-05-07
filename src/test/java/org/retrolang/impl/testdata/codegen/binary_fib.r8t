@@ -91,13 +91,13 @@ fib_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
  35: test X2 == null; T:→ 38
  36: X5 ← newStackEntry(⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, I6⸨0:False; 1:True⸩, I7⸨0:False; 1:True⸩]⟧);
  37: X4 ← TState.fillStackEntry(X0, X2, X5, ⟨[⸨False; True⸩, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X4);
--38: test I7 0 (< 2); F:→ 40
- 39: test I3 0 (< 2); T:→ 57, F:→ 43
--40: test I3 0 (< 2); T:→ 43
- 41: I2 ← 1;
- 42: I8 ← 0; → 45
--43: I2 ← 0;
- 44: I8 ← 1;
+-38: test I7 0 (< 2); F:→ 41
+ 39: test I3 0 (< 2); T:→ 57
+ 40: I2 ← 0; → 44
+-41: I2 ← I3;
+ 42: test I3 0 (< 2); T:→ 44
+ 43: I8 ← 0; → 45
+-44: I8 ← 1;
 -45: test I6 0 (< 2); F:→ 47
  46: test I1 0 (< 2); T:→ 50, F:→ 57
 -47: test I1 0 (< 2); F:→ 50

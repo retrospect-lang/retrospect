@@ -214,6 +214,15 @@ public abstract class TestBlock extends Block.Split {
       Block afterSet = setBlock.next.targetBlock();
       setBlock.moveAllInLinks(afterSet);
       setBlock.next.detach();
+      // Remove register information that was invalidated by this reordering,
+      // to avoid being misled by it later.
+      for (Block b = afterSet; b instanceof SetBlock sb; ) {
+        sb.next.info.updateInfo(setBlock.lhs, null);
+        setBlock.next.info.updateInfo(sb.lhs, null);
+        b = sb.next.targetBlock();
+      }
+      next.info.updateInfo(setBlock.lhs, null);
+      alternate.info.updateInfo(setBlock.lhs, null);
       // If it's already queued, changing its zone/order might leave the priority queue in an
       // inconsistent state.
       cb.cancelProp(setBlock);

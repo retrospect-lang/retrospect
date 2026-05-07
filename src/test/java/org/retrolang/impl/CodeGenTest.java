@@ -21,6 +21,8 @@ import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
 import com.google.common.truth.Expect;
+import com.google.common.truth.StandardSubjectBuilder;
+import com.google.common.truth.Truth;
 import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 import java.nio.file.Path;
@@ -137,7 +139,12 @@ public class CodeGenTest {
     String expectedBlocks = parts[1];
     String expectedResources = parts[parts.length - 1].trim();
 
-    // Configure it to always exline the specified function.
+    // When writing a new input file we use `expect` for any non-fatal checks so that the output
+    // file gets written; otherwise use `assert` so that IntelliJ gives us the helpful diff window.
+    StandardSubjectBuilder assertOrExpect =
+        (testProgram.writer() == null) ? Truth.assert_() : expect;
+
+    // Configure the VM to always exline the specified function.
     vm.enableDebugging();
     ModuleBuilder module = (ModuleBuilder) vm.newModule("(input)");
     vm.scope.setForceExlined(method -> isExlined(method, fnName, module));
@@ -196,7 +203,7 @@ public class CodeGenTest {
       // most important thing to know).
       traces = getTraces(tracker);
       assertWithMessage("Expected error, executed OK").that(expectReturn).isTrue();
-      expect.that(resultOrError).isEqualTo(cleanValue(expectedResult));
+      assertOrExpect.that(resultOrError).isEqualTo(cleanValue(expectedResult));
     } catch (Vm.RuntimeError e) {
       // Error during execution, so confirm that was expected
       String stack = String.join("\n", e.stack());
@@ -205,7 +212,7 @@ public class CodeGenTest {
       traces = getTraces(tracker);
       assertWithMessage("Unexpected error %s", e).that(expectReturn).isFalse();
       resultOrError = cleanIds(stack);
-      expect
+      assertOrExpect
           .withMessage("Unexpected error %s", e)
           .that(resultOrError)
           .isEqualTo(cleanLines(expectedResult));
@@ -214,15 +221,15 @@ public class CodeGenTest {
     System.out.println("Counters: " + monitor.counters());
     assertThat(tracker.escapeCount()).isEqualTo(escapeCount);
     traces = cleanIds(traces);
-    expect
+    assertOrExpect
         .withMessage("Trace doesn't match")
         .that(cleanLines(traces))
         .isEqualTo(cleanLines(expectedTraces));
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
     String blocks = cleanBlocks(monitor.blocks.toString());
-    expect.that(blocks).isEqualTo(cleanBlocks(expectedBlocks));
+    assertOrExpect.that(blocks).isEqualTo(cleanBlocks(expectedBlocks));
     String resources = tracker.toString();
-    expect.that(resources).isEqualTo(expectedResources);
+    assertOrExpect.that(resources).isEqualTo(expectedResources);
     if (testProgram.writer() != null) {
       String newTest = argsMatcher.group() + resultOrError + "\n---\n" + blocks + "\n---\n";
       if (!traces.isEmpty()) {

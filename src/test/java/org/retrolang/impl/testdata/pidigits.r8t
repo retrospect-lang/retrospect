@@ -505,7 +505,7 @@ private function divMagByU32(mag=, denom) {
  45: r LoopCore.Iterate // pidigits.r8t+3:263_10 _t0 = iterate(_t0, EnumerateValues, loop@263⸨k=k⸩, loop@263_state⸨carry=carry, mag=mag⸩)
  46: iterate_r30 (45)
 ---
-allocated=112521696/264406, peak=42875
+allocated=112521720/264407, peak=42875
 $0 = *[]b0
 $1 = *[]U32(i0)
 */

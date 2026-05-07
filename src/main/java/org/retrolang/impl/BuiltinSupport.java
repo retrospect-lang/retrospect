@@ -632,10 +632,11 @@ class BuiltinSupport {
      * separated by "|".
      */
     private static final Pattern SIGNATURE_PATTERN =
-        Pattern.compile("(\\w+)\\(([\\w|, ]*)\\)( default)?");
+        Pattern.compile("(\\w+)\\(([\\w\\-|, ]*)\\)( default)?");
 
     private static final Pattern ARG_SEPARATOR = Pattern.compile(", *");
-    private static final Pattern TYPE_NAME_SEPARATOR = Pattern.compile(" *\\| *");
+    private static final Pattern ALTERNATIVE_SEPARATOR = Pattern.compile(" *\\| *");
+    private static final Pattern TYPE_NAME_SEPARATOR = Pattern.compile(" *- *");
 
     /**
      * Parses the given signature.
@@ -676,22 +677,29 @@ class BuiltinSupport {
     /**
      * Parses the given argument type into a MethodPredicate.
      *
-     * <p>{@code arg} may be {@code "_"} (trivially true), a type name (true if the argument has
-     * that type), or multiple type names separated by {@code "|"} (true if the argument has any of
-     * those types).
+     * <p>{@code arg} may be {@code "_"} (trivially true), a (possibly restricted) type name (true
+     * if the argument has that type), or multiple (possibly restricted) type names separated by
+     * {@code "|"} (true if the argument has any of those types).
+     *
+     * <p>A restricted type name is a type name followed by one or more negated type names.
      */
     private static MethodPredicate asMethodPredicate(
         String where, String arg, int index, Map<String, VmType> types) {
       if (arg.equals("_")) {
         return MethodPredicate.TRUE;
       }
-      String[] typeNames = TYPE_NAME_SEPARATOR.split(arg, -1);
+      String[] alternatives = ALTERNATIVE_SEPARATOR.split(arg, -1);
       MethodPredicate result = null;
-      for (String typeName : typeNames) {
-        VmType type = types.get(typeName);
-        Preconditions.checkArgument(type != null, "Unknown type (%s) for %s", typeName, where);
-        MethodPredicate predicate = new MethodPredicate.Simple(index, type, true);
-        result = (result == null) ? predicate : result.or(predicate);
+      for (String alternative : alternatives) {
+        String[] typeNames = TYPE_NAME_SEPARATOR.split(alternative, -1);
+        MethodPredicate disjunct = null;
+        for (String typeName : typeNames) {
+          VmType type = types.get(typeName);
+          Preconditions.checkArgument(type != null, "Unknown type (%s) for %s", typeName, where);
+          MethodPredicate predicate = new MethodPredicate.Simple(index, type, disjunct == null);
+          disjunct = (disjunct == null) ? predicate : disjunct.and(predicate);
+        }
+        result = (result == null) ? disjunct : result.or(disjunct);
       }
       return result;
     }

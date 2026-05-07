@@ -477,3 +477,29 @@ return keys(a) | -> # & "!" | save
 ---
 allocated=3144/110, peak=272
 */
+
+return [4, 5, 6] | (limit(2) | save)
+
+/* RUN () ERRORS
+⟦No matching method ∥ function="keys:1", args=[PipedCollectionCannotSave]⟧
+⟦SaveCore.CollectorSetupSaveWithDefault.keys ∥ initialValue=Absent⟧
+⟦LoopCore.CollectorSetupPiped.collectorSetup ∥ step=LimitStep(2)⟧
+⟦LoopCore.PipeCollectionCollector.collectorSetup ∥ collection=[4, 5, 6]⟧
+⟦run.r8t+480:1_3 _t0 = pipe([4, 5, 6], _t0)⟧
+⟦StackBase⟧
+---
+allocated=792/29, peak=528
+*/
+
+// Like the preceding test, but parenthesized to change the order in which things run
+return ([4, 5, 6] | limit(2)) | save
+
+/* RUN () ERRORS
+⟦No matching method ∥ function="keys:1", args=[PipedCollection([4, 5, 6], LimitStep(2))]⟧
+⟦SaveCore.CollectorSetupSaveWithDefault.keys ∥ initialValue=Absent⟧
+⟦LoopCore.PipeCollectionCollector.collectorSetup ∥ collection=PipedCollection([4, 5, 6], LimitStep(2))⟧
+⟦run.r8t+494:1_3 _t0 = pipe(_t0, _t1)⟧
+⟦StackBase⟧
+---
+allocated=664/24, peak=496
+*/

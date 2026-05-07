@@ -31,8 +31,11 @@ import org.retrolang.code.CodeBuilder.PrintOptions;
  */
 class Sequencer implements PrintOptions {
 
-  /** The sequencing policy; see the constructor for details. */
-  private final boolean forEmit;
+  /**
+   * True if Registers should be identified by their JVM local index, rather than their register
+   * index.
+   */
+  private final boolean useJvmLocals;
 
   /** The sequence of blocks constructed by the Sequencer. */
   private final List<Block> orderedBlocks;
@@ -56,12 +59,11 @@ class Sequencer implements PrintOptions {
   }
 
   /**
-   * Sequences the given set of Blocks. If {@code forEmit} is false, we prioritize keeping blocks in
-   * their assigned order; if {@code forEmit} is true we prioritize falling through whenever
-   * possible (to minimize the number of branches we emit).
+   * Sequences the given set of Blocks. {@code useJvmLocals} does not affect the sequencing, but
+   * controls how the blocks are printed.
    */
-  Sequencer(List<Block> blocks, boolean forEmit) {
-    this.forEmit = forEmit;
+  Sequencer(List<Block> blocks, boolean useJvmLocals) {
+    this.useJvmLocals = useJvmLocals;
     orderedBlocks = new ArrayList<>(blocks.size());
     blockPos = new int[blocks.size()];
     Arrays.fill(blockPos, -1);
@@ -152,7 +154,7 @@ class Sequencer implements PrintOptions {
 
   @Override
   public boolean useJvmLocals() {
-    return forEmit;
+    return useJvmLocals;
   }
 
   @Override

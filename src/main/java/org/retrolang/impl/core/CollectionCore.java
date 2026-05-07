@@ -535,6 +535,11 @@ public final class CollectionCore {
    *   return iterator(jc_.c1, EnumerateAllKeys, loop=, initialState)
    * }
    * </pre>
+   *
+   * <p>Note that this implementation assumes that the joined collections have the same key set,
+   * which is true for the only joined collections we have implemented so far (matrices). If we
+   * start supporting joins between collections with different key sets we will need to revisit
+   * this.
    */
   @Core.Method("iterator(JoinedCollection|JoinedMatrix, EnumerationKind, Loop, _)")
   static void iteratorJoined(

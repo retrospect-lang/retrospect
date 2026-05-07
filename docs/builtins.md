@@ -419,7 +419,7 @@ static class IterateUnbounded extends BuiltinMethod {
 One more example: piping a collection into a collector. In Retrospect:
 
 ```
-default method pipe(Collection collection, Collector collector) {
+method pipe(Collection collection, Collector collector) default {
   { eKind, initialState, loop, canParallel } = collectorSetup(collector, collection)
   if initialState is LoopExit {
     state = initialState

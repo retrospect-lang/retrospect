@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.google.common.truth.Expect;
 import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 import java.nio.file.Path;
@@ -29,6 +30,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.retrolang.Vm;
@@ -111,6 +113,8 @@ public class CodeGenTest {
     return vm.core().lookupSingleton(name).asValue();
   }
 
+  @Rule public final Expect expect = Expect.create();
+
   @Test
   public void codeGenTest(
       @TestParameter(valuesProvider = AllPrograms.class) TestProgram testProgram) {
@@ -179,19 +183,20 @@ public class CodeGenTest {
 
     // Execute with prep = false, this time (hopefully) using the generated code
     tstate.bindTo(newTracker());
+    String resultOrError;
     String traces;
     try {
       Value result = run(ib, mMemo, falseValue);
       // Executed without errors, so make sure we got what we expected
-      String resultAsString = result.toString();
+      resultOrError = result.toString();
       tstate.dropValue(result);
-      System.out.format("result: %s\n", resultAsString);
+      System.out.format("result: %s\n", resultOrError);
       // Save and log any traces now (they can be useful for debugging failed tests), but delay
       // checking them until we've checked the result (since if the result is wrong that's the
       // most important thing to know).
       traces = getTraces(tracker);
       assertWithMessage("Expected error, executed OK").that(expectReturn).isTrue();
-      assertThat(resultAsString).isEqualTo(cleanValue(expectedResult));
+      expect.that(resultOrError).isEqualTo(cleanValue(expectedResult));
     } catch (Vm.RuntimeError e) {
       // Error during execution, so confirm that was expected
       String stack = String.join("\n", e.stack());
@@ -199,25 +204,33 @@ public class CodeGenTest {
       // See comment above about why we grab (and log) any traces now but only check them later.
       traces = getTraces(tracker);
       assertWithMessage("Unexpected error %s", e).that(expectReturn).isFalse();
-      assertWithMessage("Unexpected error %s", e)
-          .that(cleanIds(stack))
+      resultOrError = cleanIds(stack);
+      expect
+          .withMessage("Unexpected error %s", e)
+          .that(resultOrError)
           .isEqualTo(cleanLines(expectedResult));
       e.close();
     }
     System.out.println("Counters: " + monitor.counters());
     assertThat(tracker.escapeCount()).isEqualTo(escapeCount);
-    assertWithMessage("Trace doesn't match")
-        .that(cleanIds(cleanLines(traces)))
+    traces = cleanIds(traces);
+    expect
+        .withMessage("Trace doesn't match")
+        .that(cleanLines(traces))
         .isEqualTo(cleanLines(expectedTraces));
-
-    if (!tracker.allReleased()) {
-      // TODO: reenable this assert once we generate proper reference-counting code
-      // assertWithMessage("Reference counting error: %s", tracker)
-      //     .that(tracker.allReleased()).isTrue();
-      System.out.println("Reference counting error: " + tracker);
+    assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
+    String blocks = cleanBlocks(monitor.blocks.toString());
+    expect.that(blocks).isEqualTo(cleanBlocks(expectedBlocks));
+    String resources = tracker.toString();
+    expect.that(resources).isEqualTo(expectedResources);
+    if (testProgram.writer() != null) {
+      String newTest = argsMatcher.group() + resultOrError + "\n---\n" + blocks + "\n---\n";
+      if (!traces.isEmpty()) {
+        newTest += traces + "---\n";
+      }
+      newTest += resources + "\n";
+      testProgram.writer().accept(newTest);
     }
-    assertThat(cleanBlocks(monitor.blocks.toString())).isEqualTo(cleanBlocks(expectedBlocks));
-    assertThat(tracker.toString()).isEqualTo(expectedResources);
   }
 
   /** Returns true if {@code method} is for a function with the given name in the given module. */

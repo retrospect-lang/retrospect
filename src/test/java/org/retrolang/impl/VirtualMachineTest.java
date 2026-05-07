@@ -20,6 +20,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.truth.Truth.assertThat;
 import static com.google.common.truth.Truth.assertWithMessage;
 
+import com.google.common.truth.Expect;
 import com.google.testing.junit.testparameterinjector.TestParameter;
 import com.google.testing.junit.testparameterinjector.TestParameterInjector;
 import java.nio.file.Path;
@@ -31,8 +32,8 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.retrolang.Vm;
@@ -92,6 +93,8 @@ public class VirtualMachineTest {
           \n\
           """);
 
+  @Rule public final Expect expect = Expect.create();
+
   @Test
   public void runOne(
       @TestParameter(valuesProvider = AllProgramsProvider.class) TestProgram testProgram) {
@@ -103,7 +106,7 @@ public class VirtualMachineTest {
     List<Pair<String, String>> args =
         Arrays.stream(splitAndTrim(argsMatcher.group("args")))
             .map(VirtualMachineTest::parseRunArg)
-            .collect(Collectors.toList());
+            .toList();
     long limit =
         Optional.ofNullable(argsMatcher.group("limit")).map(Long::parseLong).orElse(200_000L);
     boolean expectReturn = argsMatcher.group("returns").equals("RETURNS");
@@ -145,18 +148,19 @@ public class VirtualMachineTest {
     // Currently only supports integer-valued arguments
     Vm.Value[] argValues =
         args.stream().map(p -> tracker.asValue(Integer.parseInt(p.y))).toArray(Vm.Value[]::new);
+    String resultOrError;
     String traces;
     try (Vm.Value result = insts.applyToArgs(tracker, argValues)) {
       waitForThreadCompletion();
       // Executed without errors, so make sure we got what we expected
-      String resultAsString = result.toString();
-      System.out.println("result: " + resultAsString);
+      resultOrError = result.toString();
+      System.out.println("result: " + resultOrError);
       // Save and log any traces now (they can be useful for debugging failed tests), but delay
       // checking them until we've checked the result (since if the result is wrong that's the
       // most important thing to know).
       traces = getTraces(tracker);
       assertWithMessage("Expected error, executed OK").that(expectReturn).isTrue();
-      assertThat(resultAsString).isEqualTo(cleanValue(expected));
+      expect.that(resultOrError).isEqualTo(cleanValue(expected));
     } catch (Vm.RuntimeError e) {
       waitForThreadCompletion();
       // Error during execution, so confirm that was expected
@@ -165,16 +169,22 @@ public class VirtualMachineTest {
       // See comment above about why we grab (and log) any traces now but only check them later.
       traces = getTraces(tracker);
       assertWithMessage("Unexpected error %s", e).that(expectReturn).isFalse();
-      assertWithMessage("Unexpected error %s", e)
-          .that(cleanIds(stack))
+      resultOrError = cleanIds(stack);
+      expect
+          .withMessage("Unexpected error %s", e)
+          .that(resultOrError)
           .isEqualTo(cleanLines(expected));
       e.close();
     }
-    assertWithMessage("Trace doesn't match")
-        .that(cleanIds(cleanLines(traces)))
+    traces = cleanIds(traces);
+    expect
+        .withMessage("Trace doesn't match")
+        .that(cleanLines(traces))
         .isEqualTo(cleanLines(expectedTraces));
+    String codeGenLog = null;
     if (codeGen.isPresent()) {
-      assertThat(vm.scope.codeGenDebugging().takeLog()).isEqualTo(expectedCodeGen.trim());
+      codeGenLog = vm.scope.codeGenDebugging().takeLog();
+      expect.that(codeGenLog).isEqualTo(expectedCodeGen.trim());
     }
     // Now everything should have been released
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
@@ -182,7 +192,22 @@ public class VirtualMachineTest {
     String layouts = vm.getDebuggingSummary();
     String actualResources = tracker + (layouts.isEmpty() ? "" : "\n" + layouts);
     if (!checkForRanges(actualResources, expectedResources)) {
-      assertThat(actualResources).isEqualTo(expectedResources);
+      expect.that(actualResources).isEqualTo(expectedResources);
+    }
+    if (testProgram.writer() != null) {
+      String newTest = argsMatcher.group() + resultOrError + "\n---\n";
+      if (!traces.isEmpty()) {
+        newTest += traces + "---\n";
+      }
+      if (codeGenLog != null) {
+        newTest += codeGenLog + "\n---\n";
+      }
+      if (NUMERIC_RANGE.matcher(expectedResources).find()) {
+        newTest += expectedResources + "\n";
+      } else {
+        newTest += actualResources + "\n";
+      }
+      testProgram.writer().accept(newTest);
     }
   }
 

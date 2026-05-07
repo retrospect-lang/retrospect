@@ -23,17 +23,33 @@ import com.google.testing.junit.testparameterinjector.TestParameterValuesProvide
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
-import org.jspecify.annotations.Nullable;
 
 /**
  * A {@link TestParameterValuesProvider} that provides {@link TestProgram} arguments to tests
  * consisting of each Retrospect source fragment in a directory of test files.
  */
 public abstract class TestdataScanner extends TestParameterValuesProvider {
+
+  private static final Path outputDir;
+
+  static {
+    String output = System.getProperty("newTestFiles");
+    if (output == null) {
+      outputDir = null;
+    } else {
+      try {
+        outputDir = Files.createDirectory(Path.of(output));
+      } catch (IOException e) {
+        throw new IllegalStateException("Unable to create output directory " + output, e);
+      }
+    }
+  }
 
   private final Path dir;
   private final Pattern endComment;
@@ -44,7 +60,7 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
   }
 
   /** A test program written in Retrospect. */
-  public record TestProgram(String name, String code, @Nullable String comment) {
+  public record TestProgram(String name, String code, String comment, Consumer<String> writer) {
     @Override
     public final String toString() {
       return name();
@@ -113,6 +129,7 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
     ImmutableList.Builder<TestProgram> results = ImmutableList.builder();
     for (; ; ) {
       // Skip over any leading comments & blank lines, incrementing skippedLines appropriately.
+      int leadingStart = start;
       leadingCommentsMatcher.region(start, source.length());
       if (leadingCommentsMatcher.lookingAt()) {
         skippedLines += countNewLines(leadingCommentsMatcher.group());
@@ -127,13 +144,19 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
       if (!endCommentMatcher.find(start)) {
         // Code without a following endComment.  Include an entry with a null comment, which will
         // show up as a failed test.
-        results.add(new TestProgram(testName, source.substring(start), null));
+        results.add(new TestProgram(testName, source.substring(start), null, null));
         break;
       }
       String code = source.substring(start, endCommentMatcher.start());
       String comment = endCommentMatcher.group(1);
-      results.add(new TestProgram(testName, code, comment));
       int newStart = endCommentMatcher.end();
+      Consumer<String> writer = null;
+      if (outputDir != null) {
+        String leading = source.substring(leadingStart, endCommentMatcher.start(1));
+        String trailing = source.substring(endCommentMatcher.end(1), newStart);
+        writer = s -> writeOutput(name, leading + s + trailing);
+      }
+      results.add(new TestProgram(testName, code, comment, writer));
       skippedLines += countNewLines(source.substring(start, newStart));
       start = newStart;
     }
@@ -142,5 +165,14 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
 
   private static int countNewLines(String s) {
     return (int) s.chars().filter(c -> c == '\n').count();
+  }
+
+  private static void writeOutput(String name, String s) {
+    Path f = outputDir.resolve(name);
+    try {
+      Files.writeString(f, s, StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+    } catch (IOException e) {
+      throw new IllegalStateException("Unable to write new test to " + f, e);
+    }
   }
 }

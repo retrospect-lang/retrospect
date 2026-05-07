@@ -252,6 +252,16 @@ public final class LoopCore {
   @Core.Private
   static final BaseType.Named PIPED_COLLECTOR = Core.newBaseType("PipedCollector", 2, COLLECTOR);
 
+  /**
+   * {@code singleton PipedCollectionCannotSave is Collection}
+   *
+   * <p>This is used only as a dummy value when calling {@code collectorSetup} through a pipeline
+   * with a {@code limit}.
+   */
+  @Core.Public
+  public static final Singleton PIPED_COLLECTION_NO_KEYS =
+      Core.newSingleton("PipedCollectionCannotSave", Core.COLLECTION);
+
   /** {@code private compound SequentialCollector is Collector} */
   @Core.Private
   static final BaseType.Named SEQUENTIAL_COLLECTOR =
@@ -1688,6 +1698,12 @@ public final class LoopCore {
   /**
    * <pre>
    * method collectorSetup(PipedCollector pc, collection) {
+   *   // If the step is anything other than a lambda, replace the collection with something that
+   *   // doesn't implement keys(); this will ensure that e.g. `matrix | limit(5) | save` gets an
+   *   // error.
+   *   if pc_.step is  not Lambda {
+   *     collection = PipedCollectionCannotSave
+   *   }
    *   {eKind, loop, initialState, canParallel} = collectorSetup(pc_.collector, collection)
    *   addLoopStep(pc_.step, eKind, loop=, initialState=)
    *   return {eKind, loop, initialState, canParallel}
@@ -1702,7 +1718,15 @@ public final class LoopCore {
     static void begin(TState tstate, Value pc, @RC.In Value collection) {
       Value step = pc.element(0);
       Value collector = pc.element(1);
-      tstate.startCall(collectorSetup, collector, collection).saving(step);
+      Value c =
+          step.isa(Core.LAMBDA)
+              .choose(
+                  () -> collection,
+                  () -> {
+                    tstate.dropValue(collection);
+                    return PIPED_COLLECTION_NO_KEYS;
+                  });
+      tstate.startCall(collectorSetup, collector, c).saving(step);
     }
 
     @Continuation

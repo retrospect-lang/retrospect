@@ -44,7 +44,7 @@ public class Err extends BaseType.SimpleStackEntryType {
 
     @RC.Out
     Value takeStackEntry() {
-      assert stackEntry != null && stackEntry != ESCAPE;
+      assert stackEntry != null && baseType() != ESCAPE;
       Value result = stackEntry;
       stackEntry = null;
       return result;

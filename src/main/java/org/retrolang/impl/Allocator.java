@@ -55,7 +55,7 @@ public interface Allocator {
    */
   void adjustAlloc(RefCounted obj, long sizeDelta);
 
-  /** Records true if objects returned created with this allocator are counted. */
+  /** Returns true if objects returned created with this allocator are counted. */
   boolean isCounted();
 
   static final byte[] EMPTY_BYTES = new byte[0];

@@ -16,73 +16,73 @@ function test(m, n) {
 ---
 test_x0(i1, i2):
   1: CodeGenTarget.incrementCallCount(target:test_x0);
-  2: test I1 < 0; T:→ 83
-  3: test I2 < 0; T:→ 83
-  4: test I1 == 0; T:→ 51
-  5: test I2 == 0; T:→ 83
+  2: test I1 < 0; T:→ 80
+  3: test I2 < 0; T:→ 80
+  4: test I1 == 0; T:→ 9
+  5: test I2 == 0; T:→ 80
   6: I3 ← 0;
   7: I4 ← iAdd(I1, I2);
-  8: I5 ← I2;
-= 9: I6 ← Math.addExact(I1, I2); ArithmeticException:→ 83
- 10: test I6 < 0; T:→ 83
- 11: test I4 < 0; T:→ 83
- 12: test I4 == I6; F:→ 83
- 13: test I3 1 (< 2); F:→ 54
- 14: I5 ← iAdd(1, I4);
- 15: I1 ← I4;
- 16: I7 ← 0;
- 17: I8 ← 0;
- 18: I2 ← I5;
- 19: I9 ← 0;
-=20: test I4 < 1; T:→ 69
- 21: I14 ← Math.subtractExact(I4, 1); ArithmeticException:→ 72
- 22: I12 ← Math.subtractExact(I2, I4); ArithmeticException:→ 72
- 23: I13 ← I4;
- 24: I15 ← 0;
- 25: I11 ← 0;
- 26: I16 ← 0;
- 27: I17 ← 0;
- 28: I10 ← I2;
-=29: I12 ← Math.addExact(1, Math.subtractExact(I12, 1)); ArithmeticException:→ 72
- 30: I12 ← Math.floorMod(I12, 3);
- 31: I12 ← Math.multiplyExact(I13, I12); ArithmeticException:→ 72
- 32: I12 ← Math.addExact(I9, I12); ArithmeticException:→ 72
- 33: I4 ← I14;
- 34: I2 ← I10;
- 35: I1 ← I15;
- 36: I5 ← I11;
- 37: I7 ← I16;
- 38: I8 ← I17;
- 39: I9 ← I12;
- 40: test I3 0 (< 2); F:→ 20
- 41: test I4 0 (< 2); T:→ 59
-=42: test I1 < I2; T:→ 59
- 43: I10 ← Math.addExact(I2, 1); ArithmeticException:→ 72
- 44: I12 ← I2;
- 45: I13 ← I2;
- 46: I14 ← 1;
- 47: I15 ← I1;
- 48: I11 ← I5;
-=49: I16 ← I7;
- 50: I17 ← I8; → 29
--51: I5 ← 0;
- 52: I3 ← 1;
- 53: I4 ← I2; → 9
--54: I7 ← iAdd(1, I5);
- 55: I8 ← I1;
- 56: I4 ← 1;
- 57: I2 ← 1;
- 58: I9 ← 0; → 42
--59: test I5 < 1; T:→ 69
- 60: I11 ← Math.subtractExact(I5, 1); ArithmeticException:→ 72
- 61: I10 ← Math.subtractExact(I7, I5); ArithmeticException:→ 72
- 62: test I10 < 0; T:→ 72
- 63: I12 ← iAdd(I10, I8);
- 64: test I12 < 0; T:→ 72
- 65: I13 ← I5;
- 66: I10 ← 0;
- 67: I15 ← 0;
- 68: I14 ← 0; → 49
+  8: I5 ← I2; → 12
+- 9: I5 ← 0;
+ 10: I3 ← 1;
+ 11: I4 ← I2;
+-12: I6 ← Math.addExact(I1, I2); ArithmeticException:→ 80
+ 13: test I6 < 0; T:→ 80
+ 14: test I4 < 0; T:→ 80
+ 15: test I4 == I6; F:→ 80
+ 16: test I3 1 (< 2); F:→ 23
+ 17: I5 ← iAdd(1, I4);
+ 18: I1 ← I4;
+ 19: I7 ← 0;
+ 20: I8 ← 0;
+ 21: I2 ← I5;
+ 22: I9 ← 0; → 49
+-23: I7 ← iAdd(1, I5);
+ 24: I8 ← I1;
+ 25: I4 ← 1;
+ 26: I2 ← 1;
+ 27: I9 ← 0; → 30
+=28: test I3 0 (< 2); F:→ 49
+ 29: test I4 0 (< 2); T:→ 37
+-30: test I1 < I2; T:→ 37
+ 31: I10 ← Math.addExact(I2, 1); ArithmeticException:→ 72
+ 32: I12 ← I2;
+ 33: I13 ← I2;
+ 34: I14 ← 1;
+ 35: I15 ← I1;
+ 36: I11 ← I5; → 47
+-37: test I5 < 1; T:→ 69
+ 38: I11 ← Math.subtractExact(I5, 1); ArithmeticException:→ 72
+ 39: I10 ← Math.subtractExact(I7, I5); ArithmeticException:→ 72
+ 40: test I10 < 0; T:→ 72
+ 41: I12 ← iAdd(I10, I8);
+ 42: test I12 < 0; T:→ 72
+ 43: I13 ← I5;
+ 44: I10 ← 0;
+ 45: I15 ← 0;
+ 46: I14 ← 0;
+-47: I16 ← I7;
+ 48: I17 ← I8; → 58
+-49: test I4 < 1; T:→ 69
+ 50: I14 ← Math.subtractExact(I4, 1); ArithmeticException:→ 72
+ 51: I12 ← Math.subtractExact(I2, I4); ArithmeticException:→ 72
+ 52: I13 ← I4;
+ 53: I15 ← 0;
+ 54: I11 ← 0;
+ 55: I16 ← 0;
+ 56: I17 ← 0;
+ 57: I10 ← I2;
+-58: I12 ← Math.addExact(1, Math.subtractExact(I12, 1)); ArithmeticException:→ 72
+ 59: I12 ← Math.floorMod(I12, 3);
+ 60: I12 ← Math.multiplyExact(I13, I12); ArithmeticException:→ 72
+ 61: I12 ← Math.addExact(I9, I12); ArithmeticException:→ 72
+ 62: I4 ← I14;
+ 63: I2 ← I10;
+ 64: I1 ← I15;
+ 65: I5 ← I11;
+ 66: I7 ← I16;
+ 67: I8 ← I17;
+ 68: I9 ← I12; → 28
 -69: TState.setResultTemplates(X0, [i0]);
  70: setInt[](TState.fnResultBytes(X0, 4), 0, I9);
  71: return
@@ -93,12 +93,12 @@ test_x0(i1, i2):
  76: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨b0, Sum(0)⟩, LmMemo_25@xxxx, null);
  77: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨b0, Sum(0)⟩, mMemo_26@xxxx, null);
  78: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=Sum(0)⟧, ⟨b0⟩, mMemo_30@xxxx, null);
- 79: X1 ← TState.fillStackEntry(X0, X1, ⟦concat.r8t+0:11_9 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, null);
-=80: TState.setStackRest(X0, X1);
- 81: TState.setUnwoundFrom(X0, target:test_x0);
- 82: return
--83: X3 ← newStackEntry(⟦concat.r8t+0:9_0 _t0 = range(1, m) ∥ m=I1, n=I2⟧);
- 84: X1 ← TState.fillStackEntry(X0, null, X3, ⟨b0⟩, mMemo_x@xxxx, null); → 80
+ 79: X1 ← TState.fillStackEntry(X0, X1, ⟦concat.r8t+0:11_9 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, null); → 82
+-80: X3 ← newStackEntry(⟦concat.r8t+0:9_0 _t0 = range(1, m) ∥ m=I1, n=I2⟧);
+ 81: X1 ← TState.fillStackEntry(X0, null, X3, ⟨b0⟩, mMemo_x@xxxx, null);
+-82: TState.setStackRest(X0, X1);
+ 83: TState.setUnwoundFrom(X0, target:test_x0);
+ 84: return
 ---
 allocated=152/6, peak=48
 */

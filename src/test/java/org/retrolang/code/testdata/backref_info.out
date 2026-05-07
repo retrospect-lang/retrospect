@@ -10,14 +10,14 @@
 -10: return i2                                               // return count
 ---
  1: I2 ← 0;                                                 // count = 0
-=2: test I1 < 0; T:→ 9                                      // if m < 0 {
- 3: test I0 == 1; T:→ 8                                     // if n == 1 {
- 4: test iMod(I0, 2) == 0; F:→ 7                            // n = (n % 2 == 0) ? n / 2 : 3 * n + 1
- 5: I0 ← iDiv(I0, 2);
-=6: I2 ← iAdd(I2, 1); → 2                                   // count += 1
--7: I0 ← iAdd(iMul(3, I0), 1); → 6                          // n = (n % 2 == 0) ? n / 2 : 3 * n + 1
--8: return I2                                               // return count
--9: return I1                                               // return m
+=2: test I1 < 0; T:→ 8                                      // if m < 0 {
+ 3: test I0 == 1; T:→ 9                                     // if n == 1 {
+ 4: test iMod(I0, 2) == 0; F:→ 6                            // n = (n % 2 == 0) ? n / 2 : 3 * n + 1
+ 5: I0 ← iDiv(I0, 2); → 7
+-6: I0 ← iAdd(iMul(3, I0), 1);
+-7: I2 ← iAdd(I2, 1); → 2                                   // count += 1
+-8: return I1                                               // return m
+-9: return I2                                               // return count
 ---
 No constants
 ---
@@ -48,16 +48,9 @@ No constants
     ICONST_2
     IDIV
     ISTORE 0
-   L8
-    LINENUMBER 6 L8
-   FRAME SAME
-    ILOAD 2
-    ICONST_1
-    IADD
-    ISTORE 2
-    GOTO L1
+    GOTO L8
    L6
-    LINENUMBER 7 L6
+    LINENUMBER 6 L6
    FRAME SAME
     ICONST_3
     ILOAD 0
@@ -65,16 +58,23 @@ No constants
     ICONST_1
     IADD
     ISTORE 0
-    GOTO L8
-   L4
-    LINENUMBER 8 L4
-   FRAME FULL [T T I] []
+   L8
+    LINENUMBER 7 L8
+   FRAME SAME
     ILOAD 2
-    IRETURN
+    ICONST_1
+    IADD
+    ISTORE 2
+    GOTO L1
    L2
-    LINENUMBER 9 L2
+    LINENUMBER 8 L2
    FRAME FULL [T I] []
     ILOAD 1
+    IRETURN
+   L4
+    LINENUMBER 9 L4
+   FRAME FULL [T T I] []
+    ILOAD 2
     IRETURN
     MAXSTACK = 2
     MAXLOCALS = 3

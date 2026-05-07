@@ -17,19 +17,19 @@ True
 ---
 exactlyTwo_x0(i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True⸩):
   1: CodeGenTarget.incrementCallCount(target:exactlyTwo_x0);
-  2: test I1 0 (< 2); T:→ 11
-  3: test I2 0 (< 2); F:→ 9
-  4: test I3 0 (< 2); T:→ 10
-= 5: I1 ← 1;
-= 6: TState.setResultTemplates(X0, [i0⸨0:False; 1:True⸩]);
-  7: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
-  8: return
-- 9: test I3 0 (< 2); T:→ 5
--10: I1 ← 0; → 6
--11: test I2 0 (< 2); T:→ 14
- 12: test I3 0 (< 2); T:→ 14
- 13: I1 ← 1; → 6
--14: I1 ← 0; → 6
+  2: test I1 0 (< 2); T:→ 8
+  3: test I2 0 (< 2); F:→ 5
+  4: test I3 0 (< 2); T:→ 7, F:→ 6
+- 5: test I3 0 (< 2); F:→ 7
+- 6: I1 ← 1; → 12
+- 7: I1 ← 0; → 12
+- 8: test I2 0 (< 2); T:→ 11
+  9: test I3 0 (< 2); T:→ 11
+ 10: I1 ← 1; → 12
+-11: I1 ← 0;
+-12: TState.setResultTemplates(X0, [i0⸨0:False; 1:True⸩]);
+ 13: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
+ 14: return
 ---
 allocated=216/7, peak=0
 */

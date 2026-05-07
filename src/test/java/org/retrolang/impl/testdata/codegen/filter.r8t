@@ -12,31 +12,31 @@ filtered_x0([d1, d2, d3]):
   1: CodeGenTarget.incrementCallCount(target:filtered_x0);
   2: D7 ← Math.sqrt(D1);
   3: test Double.isNaN(D7) == 0; F:→ 29
-  4: test D7 < 1; F:→ 23
-  5: I9 ← 0;
-= 6: D10 ← Math.sqrt(D3);
-  7: test Double.isNaN(D10) == 0; F:→ 29
-  8: test D10 < 1; F:→ 25
-  9: I12 ← 0;
-=10: D13 ← Math.sqrt(D5);
- 11: test Double.isNaN(D13) == 0; F:→ 29
- 12: test D13 < 1; F:→ 27
- 13: I1 ← 0;
-=14: TState.setResultTemplates(X0, [[i0⸨0:d8; 1:Absent⸩, i4⸨0:d16; 1:Absent⸩, i24⸨0:d32; 1:Absent⸩]]);
- 15: X2 ← TState.fnResultBytes(X0, 40);
- 16: setDouble[](X2, 8, D7);
- 17: setDouble[](X2, 16, D10);
- 18: setDouble[](X2, 32, D13);
- 19: setInt[](X2, 0, I9);
- 20: setInt[](X2, 4, I12);
- 21: setInt[](X2, 24, I1);
- 22: return
--23: D7 ← 0;
- 24: I9 ← 1; → 6
--25: D10 ← 0;
- 26: I12 ← 1; → 10
--27: D13 ← 0;
- 28: I1 ← 1; → 14
+  4: test D7 < 1; F:→ 6
+  5: I9 ← 0; → 8
+- 6: D7 ← 0;
+  7: I9 ← 1;
+- 8: D10 ← Math.sqrt(D3);
+  9: test Double.isNaN(D10) == 0; F:→ 29
+ 10: test D10 < 1; F:→ 12
+ 11: I12 ← 0; → 14
+-12: D10 ← 0;
+ 13: I12 ← 1;
+-14: D13 ← Math.sqrt(D5);
+ 15: test Double.isNaN(D13) == 0; F:→ 29
+ 16: test D13 < 1; F:→ 18
+ 17: I1 ← 0; → 20
+-18: D13 ← 0;
+ 19: I1 ← 1;
+-20: TState.setResultTemplates(X0, [[i0⸨0:d8; 1:Absent⸩, i4⸨0:d16; 1:Absent⸩, i24⸨0:d32; 1:Absent⸩]]);
+ 21: X2 ← TState.fnResultBytes(X0, 40);
+ 22: setDouble[](X2, 8, D7);
+ 23: setDouble[](X2, 16, D10);
+ 24: setDouble[](X2, 32, D13);
+ 25: setInt[](X2, 0, I9);
+ 26: setInt[](X2, 4, I12);
+ 27: setInt[](X2, 24, I1);
+ 28: return
 -29: X7 ← newStackEntry(⟦filter.r8t+0:4_0 _t0 = pipe(nums, ⟦`sqrt:1`⟧) ∥ nums=[D1, D3, D5]⟧);
  30: X1 ← TState.fillStackEntry(X0, null, X7, ⟨[⸨d0; Absent⸩, ⸨d0; Absent⸩, ⸨d0; Absent⸩]⟩, mMemo_x@xxxx, null);
  31: TState.setStackRest(X0, X1);

@@ -20,4 +20,19 @@ package org.retrolang.code;
  * A FutureBlock is used as a placeholder for a not-yet-constructed block; when the block becomes
  * available, {@link LinkTarget#moveAllInLinks} is used to redirect the links from the FutureBlock.
  */
-public final class FutureBlock extends LinkTarget {}
+public final class FutureBlock extends LinkTarget {
+  /** Not used by any code in this package; may be useful for storing debugging information. */
+  public final Object tag;
+
+  public FutureBlock(Object tag) {
+    this.tag = tag;
+  }
+
+  public FutureBlock() {
+    this(null);
+  }
+
+  static Object tag(LinkTarget target) {
+    return (target instanceof FutureBlock fb) ? fb.tag : null;
+  }
+}

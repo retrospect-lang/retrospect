@@ -14,11 +14,11 @@
  1: test I0 == 1; T:→ 9                                     // if n == 1 {
  2: I1 ← 0;                                                 // count = 0
 =3: I1 ← iAdd(I1, 1);                                       // t3 = count + 1
- 4: test iMod(I0, 2) == 0; F:→ 8                            // if t0 == 0 {
- 5: I0 ← iDiv(I0, 2);                                       // t1 = t2
-=6: test I0 == 1; F:→ 3                                     // if n == 1 {
- 7: return I1                                               // return t5
--8: I0 ← iAdd(iMul(3, I0), 1); → 6                          // t1 = t4
+ 4: test iMod(I0, 2) == 0; F:→ 6                            // if t0 == 0 {
+ 5: I0 ← iDiv(I0, 2); → 7                                   // t1 = t2
+-6: I0 ← iAdd(iMul(3, I0), 1);                              // t1 = t4
+-7: test I0 == 1; F:→ 3                                     // if n == 1 {
+ 8: return I1                                               // return t5
 -9: return 0                                                // return 0
 ---
 No constants
@@ -52,18 +52,9 @@ No constants
     ICONST_2
     IDIV
     ISTORE 0
-   L7
-    LINENUMBER 6 L7
-   FRAME SAME
-    ILOAD 0
-    ICONST_1
-    IF_ICMPNE L3
-   L8
-    LINENUMBER 7 L8
-    ILOAD 1
-    IRETURN
+    GOTO L7
    L5
-    LINENUMBER 8 L5
+    LINENUMBER 6 L5
    FRAME SAME
     ICONST_3
     ILOAD 0
@@ -71,7 +62,16 @@ No constants
     ICONST_1
     IADD
     ISTORE 0
-    GOTO L7
+   L7
+    LINENUMBER 7 L7
+   FRAME SAME
+    ILOAD 0
+    ICONST_1
+    IF_ICMPNE L3
+   L8
+    LINENUMBER 8 L8
+    ILOAD 1
+    IRETURN
    L1
     LINENUMBER 9 L1
    FRAME CHOP 2

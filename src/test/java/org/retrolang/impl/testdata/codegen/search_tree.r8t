@@ -45,55 +45,55 @@ method replaceElement(BST bst, [key], value) {
 }
 
 /* CODEGEN at RETURNS
-  [24, 12, 1, Absent]
+[24, 12, 1, Absent]
 ---
 at_x0(i1⸨0:NonEmpty(x2:*@xxxx); 1:Empty⸩, [d3]):
   1: CodeGenTarget.incrementCallCount(target:at_x0);
   2: X5 ← null;
-  3: test I1 1 (< 2); T:→ 23
-  4: test X2 is *{key: d4, left: b0⸨0:NonEmpty(x0:*@xxxx); 1:Empty⸩, right: b1⸨0:NonEmpty(x1:*@xxxx); 1:Empty⸩, value: b2}@xxxx; F:→ 45
+  3: test I1 1 (< 2); T:→ 17
+  4: test X2 is *{key: d4, left: b0⸨0:NonEmpty(x0:*@xxxx); 1:Empty⸩, right: b1⸨0:NonEmpty(x1:*@xxxx); 1:Empty⸩, value: b2}@xxxx; F:→ 42
   5: D6 ← Frame3i2x.d0(X2);
-  6: test D3 < D6; F:→ 26
-  7: test Frame3i2x.b0(X2) == 0; F:→ 45
-  8: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, 0, addRef(Frame3i2x.x0.getValue(X2)), D3); X1 ← stackRest; unwind:→ 43
+  6: test D3 < D6; F:→ 20
+  7: test Frame3i2x.b0(X2) == 0; F:→ 42
+  8: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, 0, addRef(Frame3i2x.x0.getValue(X2)), D3); X1 ← stackRest; unwind:→ 40
   9: dropRef{X2};
  10: X2 ← TState.fnResultBytes(X0, 0);
- 11: test int[](X2, 0) == 0; F:→ 44
+ 11: test int[](X2, 0) == 0; F:→ 41
  12: I3 ← int[](X2, 4);
  13: TState.clearResultTemplates(X0);
  14: test X1 == null; T:→ 16
  15: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:24_10 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null);
--16: I4 ← 0;
-=17: TState.setResultTemplates(X0, [i0⸨0:i4; 1:Absent⸩]);
- 18: X2 ← TState.fnResultBytes(X0, 8);
- 19: setInt[](X2, 4, I3);
- 20: setInt[](X2, 0, I4);
- 21: TState.setStackRest(X0, X5);
- 22: return
--23: dropRef{X2};
- 24: I3 ← 0;
- 25: I4 ← 1; → 17
--26: test D6 < D3; F:→ 35
- 27: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, Frame3i2x.b1(X2), addRef(Frame3i2x.x1.getValue(X2)), D3); X1 ← stackRest; unwind:→ 38
- 28: dropRef{X2};
- 29: X2 ← TState.fnResultBytes(X0, 0);
- 30: I3 ← int[](X2, 4);
- 31: I4 ← int[](X2, 0);
- 32: TState.clearResultTemplates(X0);
- 33: test X1 == null; T:→ 17
- 34: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:26_17 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 17
--35: I4 ← 0;
- 36: I3 ← Frame3i2x.b2(X2);
- 37: dropRef{X2}; → 17
+-16: I4 ← 0; → 32
+-17: dropRef{X2};
+ 18: I3 ← 0;
+ 19: I4 ← 1; → 32
+-20: test D6 < D3; F:→ 29
+ 21: [i0⸨0:i4; 1:Absent⸩] ← at_x0(X0, Frame3i2x.b1(X2), addRef(Frame3i2x.x1.getValue(X2)), D3); X1 ← stackRest; unwind:→ 38
+ 22: dropRef{X2};
+ 23: X2 ← TState.fnResultBytes(X0, 0);
+ 24: I3 ← int[](X2, 4);
+ 25: I4 ← int[](X2, 0);
+ 26: TState.clearResultTemplates(X0);
+ 27: test X1 == null; T:→ 32
+ 28: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:26_17 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 32
+-29: I4 ← 0;
+ 30: I3 ← Frame3i2x.b2(X2);
+ 31: dropRef{X2};
+-32: TState.setResultTemplates(X0, [i0⸨0:i4; 1:Absent⸩]);
+ 33: X2 ← TState.fnResultBytes(X0, 8);
+ 34: setInt[](X2, 4, I3);
+ 35: setInt[](X2, 0, I4);
+ 36: TState.setStackRest(X0, X5);
+ 37: return
 -38: dropRef{X2};
- 39: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:26_17 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null);
-=40: TState.setStackRest(X0, X5);
- 41: TState.setUnwoundFrom(X0, target:at_x0);
- 42: return
--43: dropRef{X2};
--44: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:24_10 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
--45: X1 ← newStackEntry(⟦search_tree.r8t+0:18_0 key = unarray1(_a0) ∥ bst=NonEmpty(X2), _a0=[D3]⟧);
- 46: X5 ← TState.fillStackEntry(X0, null, X1, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 40
+ 39: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:26_17 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 44
+-40: dropRef{X2};
+-41: X5 ← TState.fillStackEntry(X0, X1, ⟦search_tree.r8t+0:24_10 _t0 = at(_t0, [key])⟧, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null); → 44
+-42: X1 ← newStackEntry(⟦search_tree.r8t+0:18_0 key = unarray1(_a0) ∥ bst=NonEmpty(X2), _a0=[D3]⟧);
+ 43: X5 ← TState.fillStackEntry(X0, null, X1, ⟨⸨b0; Absent⸩⟩, mMemo_x@xxxx, null);
+-44: TState.setStackRest(X0, X5);
+ 45: TState.setUnwoundFrom(X0, target:at_x0);
+ 46: return
 ---
 allocated=197704/7545, peak=56
 */

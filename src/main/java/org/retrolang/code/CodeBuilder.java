@@ -759,7 +759,7 @@ public class CodeBuilder {
    * Returns a string representation of this CodeBuilder's block graph, with the blocks ordered by
    * the given Sequencer.
    */
-  String printBlocks(Sequencer sequencer) {
+  String printBlocks(Sequencer sequencer, boolean includeBlockIndex) {
     StringBuilder sb = new StringBuilder();
     Object prevSrc = null;
     String blockNumFormat = "%" + DebugInfo.numDigits(numBlocks() - 1) + "d";
@@ -783,12 +783,18 @@ public class CodeBuilder {
       }
       sb.append(branchMark).append(String.format(blockNumFormat, i)).append(": ");
       String s = printBlock(b, sequencer);
+      int length = s.length();
       sb.append(s);
+      if (includeBlockIndex) {
+        String extra = " (#" + b.index() + ")";
+        length += extra.length();
+        sb.append(extra);
+      }
       // If we have src information for this block, and it differs from the previous block,
       // include it as a inline comment (aligned in the column determined by SRC_PAD).
       if (b.src != null && b.src != prevSrc) {
-        if (s.length() < CodeBuilder.SRC_PAD.length()) {
-          sb.append(CodeBuilder.SRC_PAD, s.length(), CodeBuilder.SRC_PAD.length());
+        if (length < CodeBuilder.SRC_PAD.length()) {
+          sb.append(CodeBuilder.SRC_PAD, length, CodeBuilder.SRC_PAD.length());
         }
         sb.append(" // ");
         if (b.src instanceof Printable pSrc) {
@@ -808,8 +814,8 @@ public class CodeBuilder {
   }
 
   /** Returns a string representation of this CodeBuilder's block graph. */
-  protected String printBlocks() {
-    return printBlocks(new Sequencer(blocks, false));
+  protected String printBlocks(boolean includeBlockIndex) {
+    return printBlocks(new Sequencer(blocks, false), includeBlockIndex);
   }
 
   /** Called after optimization is complete, just before emitting. */
@@ -1044,7 +1050,7 @@ public class CodeBuilder {
       logChanges("Completed pass");
     }
     if (verbose) {
-      debugInfo.postOptimization = printBlocks();
+      debugInfo.postOptimization = printBlocks(false);
     }
   }
 
@@ -1103,7 +1109,7 @@ public class CodeBuilder {
     phase = Phase.EMITTING;
     int numLocals = assigner.assignJavaLocalNumbers();
     Sequencer sequencer = new Sequencer(blocks, true);
-    debugInfo.blocks = printBlocks(sequencer);
+    debugInfo.blocks = printBlocks(sequencer, false);
     logger.atFine().log("Final blocks:\n%s", debugInfo.blocks);
     Emitter emitter = new Emitter(this, returnType, numLocals, sequencer);
     try {

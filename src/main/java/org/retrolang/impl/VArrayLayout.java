@@ -758,7 +758,7 @@ public class VArrayLayout extends FrameLayout {
     if (!dstFrame.isNotShared()) {
       tstate.reserve(sizeOf(numElements(dstFrame)));
       dstFrame = duplicate(tstate, dstFrame);
-      tstate.dropValue(dstFrame);
+      tstate.dropValue(dst);
     }
     Frame srcFrame = (Frame) src;
     assert frameClass.javaClass.isInstance(srcFrame);

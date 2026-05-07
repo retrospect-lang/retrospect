@@ -485,7 +485,7 @@ public class MemoMergerTest {
 
     int topLevelArg = 25;
     // The arg value at which our top level call becomes heavy
-    // (i.e. factorial(15) calling factorial(14))
+    // (i.e. factorial(12) calling factorial(11))
     int thresholdArg = 12;
 
     // Create a trivial MethodMemo in which to make the top-level call

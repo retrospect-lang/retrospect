@@ -251,7 +251,7 @@ class CopyEmitter {
           if (numEmpty == 0) {
             // Any remaining cases are fail
             codeGen.cb.branchTo(onFail);
-          } else if (codeGen.cb.nextIsReachable() && numFail != 0 || !hasTag) {
+          } else if (codeGen.cb.nextIsReachable() && (numFail != 0 || !hasTag)) {
             // Some but not all of the remaining cases are fail.  We'll test for either the empty
             // choices or the fails, whichever is a smaller set.
             boolean testForFail = (hasTag && numFail <= numEmpty);
@@ -265,11 +265,8 @@ class CopyEmitter {
                   .setBranch(testForFail, onFail)
                   .addTo(codeGen.cb);
             } else {
-              new PtrInfo.TypeTest(sw.union, choices, (Register) switchVal)
-                  .addTest(codeGen, testForFail ? onFail : done);
-              if (!testForFail) {
-                codeGen.cb.branchTo(onFail);
-              }
+              new PtrInfo.TypeTest(sw.union, choices, (Register) switchVal).addTest(codeGen, done);
+              codeGen.cb.branchTo(onFail);
             }
           }
           codeGen.cb.mergeNext(done);

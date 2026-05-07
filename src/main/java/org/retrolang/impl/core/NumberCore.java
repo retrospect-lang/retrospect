@@ -932,7 +932,9 @@ public final class NumberCore {
   }
 
   public static int bitShift(int x, int nBits) {
-    if (Math.abs(nBits) > 31) {
+    // This test was `Math.abs(nBits) > 31`, but CodeRabbit pointed out that that doesn't catch
+    // nBits == Integer.MIN_VALUE !
+    if (nBits > 31 || nBits < -31) {
       // Java shifts by mod(nBits, 32), which is just wrong
       return 0;
     } else {

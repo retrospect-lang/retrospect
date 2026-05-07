@@ -355,7 +355,7 @@ class Destination implements ResultsInfo {
       if (savedValues != null) {
         // These blocks will be executed by the first inlink, but not by any that are added later.
         // Save the CodeBuilder's current next block and next src so that we can restore it when
-        // we're done, the set them to the values they had when the values were saved (as if we
+        // we're done, then set them to the values they had when the values were saved (as if we
         // had emitted these blocks then).
         FutureBlock prev = codeGen.cb.swapNext(dest.links);
         dest.links = new FutureBlock();

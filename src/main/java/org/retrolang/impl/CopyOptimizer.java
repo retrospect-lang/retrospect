@@ -637,19 +637,22 @@ class CopyOptimizer {
           public void visitNumVar(NumVar v) {
             // Putting a FRAME_TO_COMPOUND in promotable would probably confuse the code we
             // use to check for overlapping numVars, but we shouldn't ever encounter a
-            // FRAME_TO_COMPOUND
-            // when using this policy.
+            // FRAME_TO_COMPOUND when using this policy.
             assert policy != Policy.NUM_VARS_ARE_BYTE_OFFSETS;
-            int index = index(v);
-            promotable[index] = step;
-            conflicted.set(index);
+            visitVar(index(v));
           }
 
           @Override
           public void visitRefVar(RefVar v) {
-            int index = index(v);
+            visitVar(index(v));
+          }
+
+          private void visitVar(int index) {
             promotable[index] = step;
             conflicted.set(index);
+            if (initialized != null) {
+              initialized.set(index);
+            }
           }
         });
   }

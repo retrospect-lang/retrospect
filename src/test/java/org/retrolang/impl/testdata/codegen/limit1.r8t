@@ -1,0 +1,71 @@
+// test(9, 15) = 10 * (2 + 4 + 6) = 120
+// test(8, 3) = 10 * 2 = 20
+return [test(9, 15), test(8, 3)]
+
+function test(n, m) =
+    (0..n | limit(n-3))
+    | (-> # + 1 | filter(-> (# % 2) == 0) | limit(m) | limit(m - 1))
+    | ((-> # * 10) | limit(m-2) | sum)
+
+/* CODEGEN test RETURNS
+[120, 20]
+---
+test_x0(i1, i2):
+  1: CodeGenTarget.incrementCallCount(target:test_x0);
+  2: test I1 < -1; T:→ 51
+  3: I3 ← Math.subtractExact(I1, 3); ArithmeticException:→ 51
+  4: I4 ← Math.subtractExact(I2, 1); ArithmeticException:→ 51
+  5: I5 ← Math.subtractExact(I2, 2); ArithmeticException:→ 51
+  6: test 0 < I5; F:→ 51
+  7: test 0 < I4; F:→ 51
+  8: test 0 < I2; F:→ 51
+  9: test 0 < I3; F:→ 51
+ 10: I6 ← 0;
+ 11: I7 ← 0;
+=12: test I1 < I7; T:→ 46
+ 13: I8 ← Math.addExact(I7, 1); ArithmeticException:→ 46
+ 14: I9 ← iSub(I3, 1);
+ 15: I10 ← Math.addExact(I7, 1); ArithmeticException:→ 46
+ 16: test Math.floorMod(I10, 2) == 0; F:→ 28
+ 17: test 0 < I2; F:→ 46
+ 18: test 0 < I4; F:→ 46
+ 19: I11 ← iSub(I2, 1);
+ 20: I12 ← iSub(I4, 1);
+ 21: I10 ← Math.multiplyExact(I10, 10); ArithmeticException:→ 46
+ 22: test 0 < I5; F:→ 46
+ 23: I13 ← iSub(I5, 1);
+ 24: I10 ← Math.addExact(I6, I10); ArithmeticException:→ 46
+ 25: test 0 < I13; F:→ 39
+ 26: test 0 < I12; F:→ 46
+ 27: test 0 < I11; T:→ 32, F:→ 46
+-28: I11 ← I2;
+ 29: I12 ← I4;
+ 30: I13 ← I5;
+ 31: I10 ← I6;
+-32: test 0 < I9; F:→ 41
+ 33: I3 ← I9;
+ 34: I2 ← I11;
+ 35: I4 ← I12;
+ 36: I5 ← I13;
+ 37: I6 ← I10;
+ 38: I7 ← I8; → 12
+-39: test I10 == 20; F:→ 46
+ 40: I3 ← 20; → 43
+-41: test I10 == 120; F:→ 46
+ 42: I3 ← 120;
+-43: TState.setResultTemplates(X0, [i0]);
+ 44: setInt[](TState.fnResultBytes(X0, 4), 0, I3);
+ 45: return
+-46: X8 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=[I3, [I2, [I4, [I5, I6]]]], loop=LimitedLoop(TransformedLoop(TransformedLambda(lambda@5:7, Filter(lambda@5:25)), LimitedLoop(LimitedLoop(TransformedLoop(lambda@6:8, LimitedLoop(Sum(0))))))), it=RangeIterator(I7, I1, None)⟧);
+ 47: X1 ← TState.fillStackEntry(X0, null, X8, ⟨LoopExit(b0)⟩, LmMemo_h37@xxxx, null);
+ 48: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨LoopExit(b0)⟩, mMemo_38@xxxx, null);
+ 49: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨b0⟩, mMemo_h45@xxxx, null);
+ 50: X1 ← TState.fillStackEntry(X0, X1, ⟦limit1.r8t+2:4_17 _t0 = pipe(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, null); → 53
+-51: X3 ← newStackEntry(⟦limit1.r8t+2:4_0 _t0 = range(0, n) ∥ n=I1, m=I2⟧);
+ 52: X1 ← TState.fillStackEntry(X0, null, X3, ⟨b0⟩, mMemo_x@xxxx, null);
+-53: TState.setStackRest(X0, X1);
+ 54: TState.setUnwoundFrom(X0, target:test_x0);
+ 55: return
+---
+allocated=152/6, peak=48
+*/

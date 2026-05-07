@@ -21,7 +21,7 @@ return result
   1: r LoopCore.IterateUnbounded // parser.r8t+2:4_11 _t0 = iterateUnbounded(loop@4⸨result_ro=result_ro, oneLine=oneLine⸩, loop@4_state⸨result_rw=_t0, pos=pos, input=input⸩)
   2: iterateUnbounded_r0 (1)
 ---
-allocated=21176/706, peak=0
+allocated=21200/707, peak=0
 */
 
 // See https://adventofcode.com/2025/day/2
@@ -108,5 +108,5 @@ function sum(start, end, p10) {
   4: parse_r1 (1)
   5: r LoopCore.IterateUnbounded // parser.r8t+28:5_15 _t0 = iterateUnbounded(loop@5⸨result_ro=result_ro, endOfInput=endOfInput, onePair=onePair⸩, loop@5_state⸨result_rw=_t0, input=input⸩)
 ---
-allocated=22880/749, peak=24
+allocated=22904/750, peak=24
 */

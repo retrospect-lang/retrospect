@@ -282,26 +282,48 @@ public final class CollectionCore {
 
   /**
    * <pre>
-   * method pipe(Lambda left, Lambda right) default {
-   *   if left is not Collection {
-   *     return TransformedLambda_({first: left, second: right})
-   *   } else if left is TransformedCollection or left is TransformedMatrix {
-   *     // Rather than nest TransformedCollection we compose the Lambdas.
-   *     // There's no clear reason to prefer one or the other.
-   *     right = left_.lambda | right
-   *     left = left_.base
+   * method pipe(PipelineStep left, PipelineStep right) default {
+   *   if left is Collection {
+   *     if right is not Lambda {
+   *       return PipedCollection_({base: left, step: right})
+   *     }
+   *     if left is TransformedCollection or left is TransformedMatrix {
+   *       // Rather than nest TransformedCollection we compose the Lambdas.
+   *       // There's no clear reason to prefer one or the other.
+   *       right = left_.lambda | right
+   *       left = left_.base
+   *     }
+   *     if left is Matrix {
+   *       return TransformedMatrix_({base: left, lambda: right})
+   *     } else {
+   *       return TransformedCollection_({base: left, lambda: right})
+   *     }
    *   }
-   *   if left is Matrix {
-   *     return TransformedMatrix_({base: left, lambda: right})
+   *   if left is Lambda and right is Lambda {
+   *     return TransformedLambda_({first: left, second: right})
    *   } else {
-   *     return TransformedCollection_({base: left, lambda: right})
+   *     return CompoundStep_({step1: left, step2: right})
    *   }
    * }
    * </pre>
    */
-  @Core.Method("pipe(Lambda, Lambda) default")
-  static Value pipeLambdaLambda(TState tstate, @RC.In Value left, @RC.In Value right) {
+  @Core.Method("pipe(PipelineStep, PipelineStep) default")
+  static Value pipeStepStep(TState tstate, @RC.In Value left, @RC.In Value right) {
     return left.isa(Core.COLLECTION)
+        .choose(
+            () -> pipeCollectionStep(tstate, left, right),
+            () ->
+                left.isa(Core.LAMBDA)
+                    .and(right.isa(Core.LAMBDA))
+                    .choose(
+                        () -> tstate.compound(TRANSFORMED_LAMBDA, left, right),
+                        () -> tstate.compound(LoopCore.COMPOUND_STEP, left, right)));
+  }
+
+  @RC.Out
+  private static Value pipeCollectionStep(TState tstate, @RC.In Value left, @RC.In Value right) {
+    return right
+        .isa(Core.LAMBDA)
         .choose(
             () ->
                 left.isa(TRANSFORMED_COLLECTION)
@@ -315,7 +337,7 @@ public final class CollectionCore {
                           return pipeCollectionLambda(tstate, newLeft, newRight);
                         },
                         () -> pipeCollectionLambda(tstate, left, right)),
-            () -> tstate.compound(TRANSFORMED_LAMBDA, left, right));
+            () -> tstate.compound(PIPED_COLLECTION, left, right));
   }
 
   @RC.Out
@@ -416,12 +438,15 @@ public final class CollectionCore {
   static class IteratorPiped extends BuiltinMethod {
     static final Caller addLoopStep = new Caller("addLoopStep:4", "afterAddLoopStep");
 
-    @Core.Method("iterator(TransformedCollection|TransformedMatrix|PipedCollection, EnumerationKind, Loop, _)")
-    static void begin(TState tstate,
-                      Value tc,
-                      @RC.Singleton Value eKind,
-                      @RC.In Value loop,
-                      @RC.In Value initialState) {
+    @Core.Method(
+        "iterator(TransformedCollection|TransformedMatrix|PipedCollection, EnumerationKind, Loop,"
+            + " _)")
+    static void begin(
+        TState tstate,
+        Value tc,
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState) {
       Value base = tc.element(0);
       Value step = tc.element(1);
       tstate.startCall(addLoopStep, step, eKind, loop, initialState).saving(base, eKind);
@@ -429,7 +454,11 @@ public final class CollectionCore {
 
     @Continuation
     static void afterAddLoopStep(
-        TState tstate, @RC.In Value loop, @RC.In Value initialState, @Saved @RC.In Value base, @RC.Singleton Value eKind,
+        TState tstate,
+        @RC.In Value loop,
+        @RC.In Value initialState,
+        @Saved @RC.In Value base,
+        @RC.Singleton Value eKind,
         @Fn("iterator:4") Caller iterator) {
       tstate.startCall(iterator, base, eKind, loop, initialState);
     }

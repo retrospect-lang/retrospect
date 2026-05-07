@@ -48,7 +48,7 @@ function check(TreeNode tree) {
   8: iterate_r4 (6)
   9: r LoopCore.IterateUnbounded // binary_trees.r8t+3:8_10 _t0 = iterateUnbounded(loop@8⸨results_ro=results_ro, maxDepth=maxDepth, minDepth=minDepth⸩, loop@8_state⸨results_rw=_t0, depth=depth⸩)
 ---
-allocated=8164640/205097, peak=130576
+allocated=8164664/205098, peak=130576
 $0 = *[b0⸨0:None; 1:TreeNode(x0:$0)⸩, b1⸨0:None; 1:TreeNode(x1:$0)⸩]
 $1 = *[]{check: i0, depth: b1, iterations: i2}
 */

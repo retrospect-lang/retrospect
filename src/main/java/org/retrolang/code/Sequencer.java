@@ -112,26 +112,25 @@ class Sequencer implements PrintOptions {
       return null;
     }
     Block next = target(nonTerminal.next);
-    if (next != null && !forEmit && !allInlinksDone(next)) {
-      // If !forEmit (we're prioritizing order) and next has inlinks from not-yet-sequenced blocks,
-      // we'd prefer to sequence them first.
+    if (next != null && hasPendingInlink(next)) {
+      // If next has inlinks from not-yet-sequenced blocks, we'd prefer to sequence them first.
       pending.add(next);
       next = null;
     }
     Block alternate = (b instanceof Block.Split split) ? target(split.alternate) : null;
     if (alternate == null) {
       return next;
-    } else if (!(b instanceof TestBlock) || (!forEmit && !allInlinksDone(alternate))) {
+    } else if (!(b instanceof TestBlock) || hasPendingInlink(alternate)) {
       // If this is a SetBlock.WithCatch we're not going to prioritize falling through to the
-      // alternate branch.  Or (like the test of next above) if we're prioritizing order and
-      // alternate has inlinks from not-yet-sequenced blocks.
+      // alternate branch.  Or (like the test of next above) if alternate has inlinks from
+      // not-yet-sequenced blocks, we'd prefer to sequence them first.
       pending.add(alternate);
       return next;
     } else if (next == null) {
       // If the next branch is already sequenced (or not yet constructed) we might as well
       // fall through to the alternate.
       return alternate;
-    } else if (prefer(next, alternate)) {
+    } else if (next.compareTo(alternate) < 0) {
       // Otherwise choose one to fall through to and queue the other.
       pending.add(alternate);
       return next;
@@ -141,32 +140,14 @@ class Sequencer implements PrintOptions {
     }
   }
 
-  /**
-   * Given a TestBlock that can fall through to either of the given blocks, returns true if we would
-   * rather fall through into {@code b1}.
-   */
-  private boolean prefer(Block b1, Block b2) {
-    if (forEmit) {
-      // We prefer a block if all of its inlinks are now sequenced, since that makes this the last
-      // chance to fall through into it
-      boolean b1Preferred = allInlinksDone(b1);
-      if (b1Preferred != allInlinksDone(b2)) {
-        // One of them is preferred and the other isn't
-        return b1Preferred;
-      }
-    }
-    // If both are preferred or neither is preferred, pick the one that orders first
-    return b1.compareTo(b2) < 0;
-  }
-
-  /** Returns true if all of the given block's inlinks have already been sequenced. */
-  private boolean allInlinksDone(Block b) {
-    // We can skip the test if b only has a single inlink, since that must be the block we just
+  /** Returns true the given block has at least one inlink that has not yet been sequenced. */
+  private boolean hasPendingInlink(Block b) {
+    // We can skip the test if b only has a single inlink, since that must be from the block we just
     // sequenced.
     // If we run this (for debugging) while building the block graph we may encounter links from
     // BackRefs that have not yet been added.
-    return !b.hasMultipleInlinks()
-        || b.allInlinks(link -> link.origin.index() < 0 || isDone(link.origin));
+    return b.hasMultipleInlinks()
+        && !b.allInlinks(link -> link.origin.index() < 0 || isDone(link.origin));
   }
 
   @Override

@@ -42,56 +42,53 @@ function findRoot(f, xMin, xMax, eps) {
 }
 
 /* CODEGEN findRoot RETURNS
-  {discontinuous: None,
-   outOfBounds: None,
-   root1: 1.4142136573791504,
-   root2: -1.4142136573791504}
+{discontinuous: None, outOfBounds: None, root1: 1.4142136573791504, root2: -1.4142136573791504}
 ---
 findRoot_x0(i1⸨0:lambda@1:9; 1:lambda@5:22⸩, d2, d3, 1.0E-6):
   1: CodeGenTarget.incrementCallCount(target:findRoot_x0);
-  2: test I1 0 (< 2); T:→ 14
-  3: test D2 == 0; F:→ 20
-  4: test D4 == 2; F:→ 20
-= 5: D6 ← D2;
-  6: D2 ← D4;
-= 7: D4 ← dDiv(dAdd(D6, D2), 2);
-  8: test Double.isNaN(D4) == 0; F:→ 42
-  9: test D4 == D6; T:→ 39
- 10: test D4 == D2; T:→ 42
- 11: test I1 1 (< 2); F:→ 28
- 12: test 1 < D4; T:→ 31
-=13: D6 ← D4; → 7
--14: D6 ← dSub(dMul(D2, D2), 2);
- 15: test 1.0E-6 < Math.abs(D6); F:→ 20
- 16: D8 ← dSub(dMul(D4, D4), 2);
- 17: test 1.0E-6 < Math.abs(D8); F:→ 20
- 18: test D6 < 0; F:→ 25
- 19: test 0 < D8; T:→ 5
-=20: X6 ← newStackEntry(⟦bisection.r8t+3:11_0 fxMin = at(f, [xMin]) ∥ f=I1⸨0:lambda@1:9; 1:lambda@5:22⸩, xMin=D2, xMax=D4, eps=1.0E-6⟧);
- 21: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨d0; None⸩⟩, mMemo_x@xxxx, null);
-=22: TState.setStackRest(X0, X1);
- 23: TState.setUnwoundFrom(X0, target:findRoot_x0);
- 24: return
--25: test 0 < D6; F:→ 20
- 26: test D8 < 0; F:→ 32
- 27: D6 ← D4; → 7
--28: D8 ← dSub(dMul(D4, D4), 2);
- 29: test 1.0E-6 < Math.abs(D8); F:→ 41
- 30: test D8 < 0; T:→ 13
--31: D2 ← D4; → 7
--32: D4 ← 0;
- 33: I1 ← 1;
-=34: TState.setResultTemplates(X0, [i0⸨0:d8; 1:None⸩]);
- 35: X2 ← TState.fnResultBytes(X0, 16);
- 36: setDouble[](X2, 8, D4);
- 37: setInt[](X2, 0, I1);
- 38: return
--39: D4 ← 0;
- 40: I1 ← 1; → 34
--41: I1 ← 0; → 34
--42: X4 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=loop@25_state⸨x0=D6, x1=D2⸩, lambda=loop@25⸨f=I1⸨0:lambda@1:9; 1:lambda@5:22⸩, eps=1.0E-6⸩⟧);
- 43: X1 ← TState.fillStackEntry(X0, null, X4, ⟨LoopExit(⸨loop@25_break@28; loop@25_break@32⸨xm=d0⸩⸩)⟩, LmMemo_20@xxxx, null);
- 44: X1 ← TState.fillStackEntry(X0, X1, ⟦bisection.r8t+3:25_30 _t0 = iterateUnbounded(loop@25⸨f=f, eps=eps⸩, loop@25_state⸨x0=x0, x1=x1⸩)⟧, ⟨⸨d0; None⸩⟩, mMemo_x@xxxx, null); → 22
+  2: test I1 0 (< 2); T:→ 5
+  3: test D2 == 0; F:→ 40
+  4: test D4 == 2; T:→ 11, F:→ 40
+- 5: D6 ← dSub(dMul(D2, D2), 2);
+  6: test 1.0E-6 < Math.abs(D6); F:→ 40
+  7: D8 ← dSub(dMul(D4, D4), 2);
+  8: test 1.0E-6 < Math.abs(D8); F:→ 40
+  9: test D6 < 0; F:→ 13
+ 10: test 0 < D8; F:→ 40
+-11: D6 ← D2;
+ 12: D2 ← D4; → 16
+-13: test 0 < D6; F:→ 40
+ 14: test D8 < 0; F:→ 27
+ 15: D6 ← D4;
+=16: D4 ← dDiv(dAdd(D6, D2), 2);
+ 17: test Double.isNaN(D4) == 0; F:→ 37
+ 18: test D4 == D6; T:→ 29
+ 19: test D4 == D2; T:→ 37
+ 20: test I1 1 (< 2); F:→ 22
+ 21: test 1 < D4; T:→ 26, F:→ 25
+-22: D8 ← dSub(dMul(D4, D4), 2);
+ 23: test 1.0E-6 < Math.abs(D8); F:→ 31
+ 24: test D8 < 0; F:→ 26
+-25: D6 ← D4; → 16
+-26: D2 ← D4; → 16
+-27: D4 ← 0;
+ 28: I1 ← 1; → 32
+-29: D4 ← 0;
+ 30: I1 ← 1; → 32
+-31: I1 ← 0;
+-32: TState.setResultTemplates(X0, [i0⸨0:d8; 1:None⸩]);
+ 33: X2 ← TState.fnResultBytes(X0, 16);
+ 34: setDouble[](X2, 8, D4);
+ 35: setInt[](X2, 0, I1);
+ 36: return
+-37: X4 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=loop@25_state⸨x0=D6, x1=D2⸩, lambda=loop@25⸨f=I1⸨0:lambda@1:9; 1:lambda@5:22⸩, eps=1.0E-6⸩⟧);
+ 38: X1 ← TState.fillStackEntry(X0, null, X4, ⟨LoopExit(⸨loop@25_break@28; loop@25_break@32⸨xm=d0⸩⸩)⟩, LmMemo_20@xxxx, null);
+ 39: X1 ← TState.fillStackEntry(X0, X1, ⟦bisection.r8t+3:25_30 _t0 = iterateUnbounded(loop@25⸨f=f, eps=eps⸩, loop@25_state⸨x0=x0, x1=x1⸩)⟧, ⟨⸨d0; None⸩⟩, mMemo_x@xxxx, null); → 42
+-40: X6 ← newStackEntry(⟦bisection.r8t+3:11_0 fxMin = at(f, [xMin]) ∥ f=I1⸨0:lambda@1:9; 1:lambda@5:22⸩, xMin=D2, xMax=D4, eps=1.0E-6⟧);
+ 41: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨d0; None⸩⟩, mMemo_x@xxxx, null);
+-42: TState.setStackRest(X0, X1);
+ 43: TState.setUnwoundFrom(X0, target:findRoot_x0);
+ 44: return
 ---
 allocated=304/10, peak=104
 */

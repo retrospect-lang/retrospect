@@ -36,23 +36,23 @@ test_x0(x1:*[]@xxxx):
   8: X7 ← Value.fromArray(Frame1i2x.x0(X1), I2);
   9: test X7 == Absent; T:→ 28
  10: I6 ← iAdd(I2, 1);
- 11: test X7 instanceof Frame; T:→ 20
- 12: test X7 == False; T:→ 22
- 13: test X7 == True; T:→ 22
+ 11: test X7 instanceof Frame; T:→ 16
+ 12: test X7 == False; T:→ 18
+ 13: test X7 == True; T:→ 18
  14: test X7 instanceof StringValue; F:→ 35
- 15: I8 ← I3;
-=16: I7 ← Math.addExact(I4, 1); ArithmeticException:→ 35
- 17: I4 ← I7;
-=18: I2 ← I6;
- 19: I3 ← I8; → 6
--20: test X7 == False; T:→ 22
- 21: test X7 == True; F:→ 27
--22: I8 ← Math.addExact(I3, 1); ArithmeticException:→ 35
-=23: test X7 instanceof StringValue; T:→ 16
- 24: test X7 instanceof Frame; F:→ 18
- 25: I7 ← Math.addExact(I5, 1); ArithmeticException:→ 35
- 26: I5 ← I7; → 18
--27: I8 ← I3; → 23
+ 15: I8 ← I3; → 21
+-16: test X7 == False; T:→ 18
+ 17: test X7 == True; F:→ 19
+-18: I8 ← Math.addExact(I3, 1); → 20, ArithmeticException:→ 35
+-19: I8 ← I3;
+-20: test X7 instanceof StringValue; F:→ 23
+-21: I7 ← Math.addExact(I4, 1); ArithmeticException:→ 35
+ 22: I4 ← I7; → 26
+-23: test X7 instanceof Frame; F:→ 26
+ 24: I7 ← Math.addExact(I5, 1); ArithmeticException:→ 35
+ 25: I5 ← I7;
+-26: I2 ← I6;
+ 27: I3 ← I8; → 6
 -28: dropRef{X1};
  29: TState.setResultTemplates(X0, [{arrays: i0, bools: i4, strings: i8}]);
  30: X1 ← TState.fnResultBytes(X0, 12);

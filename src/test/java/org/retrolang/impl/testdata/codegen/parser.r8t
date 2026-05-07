@@ -39,18 +39,18 @@ aoc1_x0(x1:String):
  16: test I8 < 0; T:→ 19
  17: test I8 == 10; F:→ 35
  18: I7 ← iAdd(I7, 1);
--19: test Objects.equals(X6, "L") == 0; T:→ 30
+-19: test Objects.equals(X6, "L") == 0; T:→ 22
  20: dropRef{X6};
- 21: I5 ← Math.negateExact(I5); ArithmeticException:→ 36
-=22: I5 ← Math.addExact(I3, I5); ArithmeticException:→ 36
- 23: I5 ← Math.floorMod(I5, 100);
- 24: test I5 == 0; F:→ 28
- 25: I6 ← iAdd(I2, 1);
- 26: test 0 < I6; F:→ 36
- 27: I2 ← I6;
--28: I3 ← I5;
- 29: I4 ← I7; → 5
--30: dropRef{X6}; → 22
+ 21: I5 ← Math.negateExact(I5); → 23, ArithmeticException:→ 36
+-22: dropRef{X6};
+-23: I5 ← Math.addExact(I3, I5); ArithmeticException:→ 36
+ 24: I5 ← Math.floorMod(I5, 100);
+ 25: test I5 == 0; F:→ 29
+ 26: I6 ← iAdd(I2, 1);
+ 27: test 0 < I6; F:→ 36
+ 28: I2 ← I6;
+-29: I3 ← I5;
+ 30: I4 ← I7; → 5
 -31: dropRef{X1};
  32: TState.setResultTemplates(X0, [i0]);
  33: setInt[](TState.fnResultBytes(X0, 4), 0, I2);

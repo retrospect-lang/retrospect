@@ -7,12 +7,12 @@ function isNegative(x) = sqrt(x) is None ? "yes" : "no"
 ---
 isNegative_x0(i1):
  1: CodeGenTarget.incrementCallCount(target:isNegative_x0);
- 2: test Double.isNaN(Math.sqrt(I1)) == 0; T:→ 7
- 3: X1 ← "yes";
-=4: TState.setResultTemplates(X0, [x0:String]);
- 5: setObject[](TState.fnResults(X0, 1), 0, X1);
- 6: return
--7: X1 ← "no"; → 4
+ 2: test Double.isNaN(Math.sqrt(I1)) == 0; T:→ 4
+ 3: X1 ← "yes"; → 5
+-4: X1 ← "no";
+-5: TState.setResultTemplates(X0, [x0:String]);
+ 6: setObject[](TState.fnResults(X0, 1), 0, X1);
+ 7: return
 ---
 allocated=152/6, peak=48
 */

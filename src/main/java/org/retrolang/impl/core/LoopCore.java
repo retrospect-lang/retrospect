@@ -58,20 +58,29 @@ public final class LoopCore {
       Core.newSingleton("EnumerateAllKeys", ENUMERATION_KIND);
 
   /**
-   * Values of type Iterator are expected to provide a method for {@code next(it=)}.
+   * {@code open type Iterator}
    *
-   * <p>{@code open type Iterator}
+   * <p>Values of type Iterator are expected to provide a method for {@code next(it=)}.
    */
   @Core.Public public static final VmType.Union ITERATOR = Core.newOpenUnion("Iterator");
 
   /**
-   * Returns an Iterator that returns all the elements of {@code collection}, optionally paired with
-   * their keys.
+   * {@code open type Loop}
    *
-   * <p>{@code open function iterator(collection, eKind)}
+   * <p>Values of type Loop are expected to provide a method for {@code nextState(loop, state,
+   * element)}.
+   */
+  @Core.Public public static final VmType.Union LOOP = Core.newOpenUnion("Loop");
+
+  /**
+   * Returns an Iterator that can be used to call {@code nextState()} on {@code loop} with each
+   * element of {@code collection}, optionally paired its key.
+   *
+   * <p>{@code open function iterator(collection, eKind, loop=, initialState=)}
    */
   @Core.Public
-  static final VmFunctionBuilder iterator = VmFunctionBuilder.create("iterator", 2).isOpen();
+  static final VmFunctionBuilder iterator =
+      VmFunctionBuilder.create("iterator", 4).hasInoutArg(2).hasInoutArg(3).isOpen();
 
   /**
    * Returns the next element from an Iterator, or Absent if there are no elements remaining.
@@ -88,6 +97,15 @@ public final class LoopCore {
    */
   @Core.Public
   static final VmFunctionBuilder nextState = VmFunctionBuilder.create("nextState", 3).isOpen();
+
+  /**
+   * Called once on a Loop if all of the input elements have been processed without reaching a
+   * LoopExit state. The default method just returns {@code state} unchanged.
+   *
+   * <p>{@code open function finalState(loop, state)}
+   */
+  @Core.Public
+  static final VmFunctionBuilder finalState = VmFunctionBuilder.create("finalState", 2).isOpen();
 
   /**
    * Returns the empty state of a parallelizable loop.
@@ -135,6 +153,50 @@ public final class LoopCore {
    */
   @Core.Public
   static final VmFunctionBuilder iterateUnbounded = VmFunctionBuilder.create("iterateUnbounded", 2);
+
+  /**
+   * Updates {@code loop} and possibly {@code state} to execute the given pipeline step at the
+   * beginning of the loop.
+   *
+   * <p>{@code open procedure addLoopStep(PipelineStep step, eKind, loop=, initialState=)}
+   */
+  @Core.Public
+  static final VmFunctionBuilder addLoopStep =
+      VmFunctionBuilder.create("addLoopStep", 4)
+          .hasNoResult()
+          .hasInoutArg(2)
+          .hasInoutArg(3)
+          .isOpen();
+
+  /**
+   * {@code private compound CompoundStep is PipelineStep}
+   *
+   * <p>Elements are {@code step1}, {@code step2}.
+   */
+  @Core.Private
+  static final BaseType.Named COMPOUND_STEP =
+      Core.newBaseType("CompoundStep", 2, Core.PIPELINE_STEP);
+
+  /** {@code singleton SimpleLoop is Loop} */
+  @Core.Private public static final Singleton SIMPLE_LOOP = Core.newSingleton("SimpleLoop", LOOP);
+
+  /**
+   * {@code private compound TransformedLoop is Loop}
+   *
+   * <p>Elements are {@code lambda}, {@code loop}.
+   */
+  @Core.Private
+  static final BaseType.Named TRANSFORMED_LOOP = Core.newBaseType("TransformedLoop", 2, LOOP);
+
+  /**
+   * {@code private compound KeyValueLambda is Lambda}
+   *
+   * <p>Elements are {@code inner}, {@code dropAbsent}. Expects the argument to be a [key, value]
+   * pair, and applies {@code inner} to the value. If that returns Absent and {@code dropAbsent} is
+   * True, returns Absent; otherwise returns the original key paired with the result.
+   */
+  @Core.Private
+  static final BaseType.Named KEY_VALUE_LAMBDA = Core.newBaseType("KeyValueLambda", 2, Core.LAMBDA);
 
   /** {@code open function enumerate(collection, eKind, loop, state)} */
   @Core.Public
@@ -201,15 +263,6 @@ public final class LoopCore {
    */
   static final StructType SETUP_KEYS =
       new StructType("canParallel", "eKind", "initialState", "loop");
-
-  /**
-   * Given the final state of a Collector's loop, returns the value of the pipeline. The default
-   * implementation returns the final state after removing any LoopExit wrapper.
-   *
-   * <p>{@code open function finalResult(loop, finalState)}
-   */
-  @Core.Public
-  static final VmFunctionBuilder finalResult = VmFunctionBuilder.create("finalResult", 2).isOpen();
 
   /**
    * {@code private compound LoopRO}
@@ -283,25 +336,25 @@ public final class LoopCore {
       VmFunctionBuilder.create("loopHelper", 1).hasResults(2);
 
   /**
-   * {@code function finalResultHelper(ro, rw)}
+   * {@code function finalStateHelper(ro, rw)}
    *
-   * <p>A call to {@code finalResultHelper()} is emitted by the compiler to determine the value of
+   * <p>A call to {@code finalStateHelper()} is emitted by the compiler to determine the value of
    * each collected variable when a "for" loop completes.
    */
   @Core.Public
-  static final VmFunctionBuilder finalResultHelper2 =
-      VmFunctionBuilder.create("finalResultHelper", 2);
+  static final VmFunctionBuilder finalStateHelper2 =
+      VmFunctionBuilder.create("finalStateHelper", 2);
 
   /**
-   * {@code function finalResultHelper(ro, rw, key)}
+   * {@code function finalStateHelper(ro, rw, key)}
    *
-   * <p>A call to this {@code finalResultHelper()} is emitted by the compiler for a {@code break}
-   * out of a sequential loop; it combines the functionality of {@code emitKey()} and {@code
-   * finalResultHelper(ro, rw)}.
+   * <p>A call to this {@code finalStateHelper()} is emitted by the compiler for a {@code break} out
+   * of a sequential loop; it combines the functionality of {@code emitKey()} and {@code
+   * finalStateHelper(ro, rw)}.
    */
   @Core.Public
-  static final VmFunctionBuilder finalResultHelper3 =
-      VmFunctionBuilder.create("finalResultHelper", 3);
+  static final VmFunctionBuilder finalStateHelper3 =
+      VmFunctionBuilder.create("finalStateHelper", 3);
 
   /**
    * {@code function emptyStateHelper(ro)}
@@ -340,6 +393,132 @@ public final class LoopCore {
    */
   @Core.Public
   static final VmFunctionBuilder verifyEv = VmFunctionBuilder.create("verifyEV", 1).hasNoResult();
+
+  /** {@code method nextState(SimpleLoop, state, element) = element} */
+  @Core.Method("nextState(SimpleLoop, _, _)")
+  static Value nextStateSimpleLoop(
+      @RC.Singleton Value simpleLoop, Value state, @RC.In Value element) {
+    return element;
+  }
+
+  /**
+   * <pre>
+   * method nextState(TransformedLoop transformed, state, item) {
+   *   item = transformed_.lambda @ item
+   *   // If item transformed to Absent, skip the rest of the loop by returning state unchanged
+   *   if item is Absent {
+   *     return state
+   *   }
+   *   // Run the rest of the loop on the transformed value.
+   *   return nextState(transformed_.loop, state, item)
+   * }
+   * </pre>
+   */
+  static class NextStateTransformedLoop extends BuiltinMethod {
+    static final Caller at = new Caller("at:2", "afterAt");
+
+    @Core.Method("nextState(TransformedLoop, _, _)")
+    static void begin(
+        TState tstate, @RC.In Value transformed, @RC.In Value state, @RC.In Value item)
+        throws BuiltinException {
+      Value lambda = transformed.element(0);
+      tstate.startCall(at, lambda, item).saving(transformed, state);
+    }
+
+    @Continuation
+    static void afterAt(
+        TState tstate,
+        @RC.In Value item,
+        @Saved Value transformed,
+        @RC.In Value state,
+        @Fn("nextState:3") Caller nextState) {
+      item.is(Core.ABSENT)
+          .test(
+              () -> tstate.setResult(state),
+              () -> {
+                Value inner = transformed.element(1);
+                tstate.startCall(nextState, inner, state, item);
+              });
+    }
+  }
+
+  /**
+   * <pre>
+   * method finalState(TransformedLoop transformed, state) = finalState(transformed_.loop, state)
+   * </pre>
+   */
+  @Core.Method("finalState(TransformedLoop, _)")
+  static void finalStateTransformedLoop(
+      TState tstate, Value transformed, @RC.In Value state, @Fn("finalState:2") Caller finalState) {
+    Value loop = transformed.element(1);
+    tstate.startCall(finalState, loop, state);
+  }
+
+  /**
+   * <pre>
+   * method applyToValues(Lambda lambda, EnumerationKind eKind) =
+   *     (eKind is EnumerateValues) ? lambda
+   *                                : KeyValueLambda_({inner: lambda, dropAbsent: eKind is EnumerateWithKeys})
+   * </pre>
+   */
+  @RC.Out
+  static Value applyToValues(TState tstate, @RC.In Value lambda, @RC.Singleton Value eKind) {
+    return eKind
+        .is(ENUMERATE_VALUES)
+        .choose(
+            () -> lambda,
+            () ->
+                tstate.compound(KEY_VALUE_LAMBDA, lambda, eKind.is(ENUMERATE_WITH_KEYS).asValue()));
+  }
+
+  /**
+   * <pre>
+   * method at(KeyValueLambda kvLambda, [key, value]) {
+   *   // Don't transform Absent
+   *   if value is Absent {
+   *     return [key, Absent]
+   *   }
+   *   value = value kvLambda_.inner @ value
+   *   return (value is Absent and kvLambda_.dropAbsent) ? Absent : [key, value]
+   * }
+   * </pre>
+   */
+  static class AtKeyValueLambda extends BuiltinMethod {
+    static final Caller at = new Caller("at:2", "afterAt");
+
+    @Core.Method("at(KeyValueLambda, Array)")
+    static void begin(TState tstate, Value kvLambda, Value pair) throws BuiltinException {
+      Err.NOT_PAIR.unless(pair.isArrayOfLength(2));
+      Value value = pair.element(1);
+      value
+          .is(Core.ABSENT)
+          .test(
+              () -> tstate.setResult(addRef(pair)),
+              () -> {
+                Value key = pair.element(0);
+                Value inner = kvLambda.element(0);
+                Value dropAbsent = kvLambda.element(1);
+                tstate.startCall(at, inner, value).saving(dropAbsent, key);
+              });
+    }
+
+    @Continuation
+    static void afterAt(
+        TState tstate,
+        @RC.In Value value,
+        @Saved @RC.Singleton Value dropAbsent,
+        @RC.In Value key) {
+      value
+          .is(Core.ABSENT)
+          .and(dropAbsent.is(Core.TRUE))
+          .test(
+              () -> {
+                tstate.dropValue(key);
+                tstate.setResult(Core.ABSENT);
+              },
+              () -> tstate.setResult(tstate.arrayValue(key, value)));
+    }
+  }
 
   /** {@code method oneElementIterator(x) = TrivialIterator_(x)} */
   @Core.Method("oneElementIterator(_)")
@@ -388,15 +567,12 @@ public final class LoopCore {
 
   /**
    * <pre>
-   * method finalResult(Loop loop, finalState) default =
-   *     finalState is LoopExit ? loopExitState(finalState) : finalState
+   * method finalState(Loop loop, state) default = state
    * </pre>
    */
-  @Core.Method("finalResult(_, _) default")
-  static Value finalResultDefault(Value loop, Value finalState) {
-    return finalState
-        .isa(Core.LOOP_EXIT)
-        .choose(() -> finalState.element(0), () -> addRef(finalState));
+  @Core.Method("finalState(_, _) default")
+  static Value finalStateDefault(Value loop, @RC.In Value finalState) {
+    return finalState;
   }
 
   /**
@@ -413,16 +589,64 @@ public final class LoopCore {
 
   /**
    * <pre>
-   * function loopExitState(exit) {
-   *   assert exit is LoopExit
-   *   return exit_
-   * }
+   * function loopExitState(exit) = (exit is LoopExit) ? exit_ : exit
    * </pre>
    */
   @Core.Method("loopExitState(_)")
-  static Value loopExitState(Value exit) throws BuiltinException {
-    Err.INVALID_ARGUMENT.unless(exit.isa(Core.LOOP_EXIT));
-    return exit.element(0);
+  static Value loopExitState(Value exit) {
+    return exit.isa(Core.LOOP_EXIT).choose(() -> exit.element(0), () -> addRef(exit));
+  }
+
+  /**
+   * <pre>
+   * method addLoopStep(Lambda lambda, eKind, loop=, initialState=) {
+   *   lambda = applyToValues(lambda, eKind)
+   *   loop = TransformedLoop_({lambda, loop})
+   * }
+   * </pre>
+   */
+  @Core.Method("addLoopStep(Lambda, EnumerationKind, Loop, _)")
+  static void addLoopStepLambda(
+      TState tstate,
+      @RC.In Value lambda,
+      Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState) {
+    lambda = applyToValues(tstate, lambda, eKind);
+    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    tstate.setResults(loop, initialState);
+  }
+
+  /**
+   * <pre>
+   * method addLoopStep(CompoundStep cs, eKind, loop=, initialState=) {
+   *   {step1, step2} = cs_
+   *   addLoopStep(step2, eKind, loop=, initialState=)
+   *   addLoopStep(step1, eKind, loop=, initialState=)
+   * }
+   * </pre>
+   */
+  static class AddLoopStepCompound extends BuiltinMethod {
+    static final Caller addStep2 = new Caller("addLoopStep:4", "afterAddStep2");
+
+    @Core.Method("addLoopStep(CompoundStep, EnumerationKind, Loop, _)")
+    static void begin(
+        TState tstate, Value cs, Value eKind, @RC.In Value loop, @RC.In Value initialState) {
+      Value step1 = cs.element(0);
+      Value step2 = cs.element(1);
+      tstate.startCall(addStep2, step2, eKind, loop, initialState).saving(step1, eKind);
+    }
+
+    @Continuation
+    static void afterAddStep2(
+        TState tstate,
+        @RC.In Value loop,
+        @RC.In Value initialState,
+        @Saved @RC.In Value step1,
+        Value eKind,
+        @Fn("addLoopStep:4") Caller addStep1) {
+      tstate.startCall(addStep1, step1, eKind, loop, initialState);
+    }
   }
 
   /**
@@ -504,104 +728,86 @@ public final class LoopCore {
    * <p>Currently recognizes
    *
    * <ul>
-   *   <li>ArrayIterator if the array's length is known,
-   *   <li>RangeIterator or ReversedRangeIterator with a bound other than None,
-   *   <li>constant base matrices (as returned by {@code keys(Matrix)}),
-   *   <li>a transformed or reshaped collection if we recognize the base collection, and
-   *   <li>a join result, if we recognize either of the collections being joined.
+   *   <li>SimpleRangeIterator,
+   *   <li>RangeIterator or ReversedRangeIterator with a bound other than None, and
+   *   <li>constant base matrices (as returned by {@code keys(Matrix)}).
    * </ul>
    */
   private static int iteratorBound(Value it) {
     it = RValue.exploreSafely(it);
-    for (; ; ) {
-      BaseType baseType = it.baseType();
-      if (baseType == ArrayCore.ARRAY_ITERATOR) {
-        Value array = it.peekElement(0);
-        int numElements = array.numElements();
-        if (numElements > 0) {
-          Value prevIndex = it.peekElement(2);
-          if (prevIndex instanceof NumValue) {
-            numElements -= NumValue.asInt(prevIndex);
-          }
+    BaseType baseType = it.baseType();
+    if (baseType == RangeCore.RANGE_ITERATOR
+        || baseType == RangeCore.REVERSED_RANGE_ITERATOR
+        || baseType == RangeCore.SIMPLE_RANGE_ITERATOR) {
+      Value next = it.peekElement(0);
+      Value end = it.peekElement(1);
+      if (next instanceof NumValue && end instanceof NumValue) {
+        long result = NumValue.asInt(end) - (long) NumValue.asInt(next);
+        if (baseType == RangeCore.RANGE_ITERATOR) {
+          result = result + 1;
+        } else if (baseType == RangeCore.REVERSED_RANGE_ITERATOR) {
+          result = 1 - result;
+        } else {
+          assert baseType == RangeCore.SIMPLE_RANGE_ITERATOR;
+          result = result - 1;
         }
-        return numElements;
-      } else if (baseType == RangeCore.RANGE_ITERATOR
-          || baseType == RangeCore.REVERSED_RANGE_ITERATOR) {
-        Value next = it.peekElement(0);
-        Value end = it.peekElement(1);
-        if (next instanceof NumValue && end instanceof NumValue) {
-          long result = NumValue.asInt(end) - (long) NumValue.asInt(next);
-          result = Math.abs(result + (baseType == RangeCore.RANGE_ITERATOR ? 1 : -1));
-          try {
-            return Math.toIntExact(result);
-          } catch (ArithmeticException e) {
-            return -1;
-          }
-        }
-        return -1;
-      } else if (baseType == TRIVIAL_ITERATOR) {
-        Value v = it.peekElement(0);
-        return (v == Core.ABSENT) ? 0 : 1;
-      } else if (baseType == StructCore.STRUCT_ITERATOR) {
-        Value v = it.peekElement(0);
-        BaseType vBaseType = v.baseType();
-        if (vBaseType == null) {
+        try {
+          return Math.toIntExact(result);
+        } catch (ArithmeticException e) {
           return -1;
         }
-        int size = vBaseType.size();
-        Value prevIndex = it.peekElement(2);
-        return (prevIndex instanceof NumValue) ? size - NumValue.asInt(prevIndex) : size;
-      } else if (baseType == MatrixCore.BASE_ITERATOR) {
-        Value sizes = it.peekElement(2);
-        if (RValue.isExplorer(sizes)) {
-          return -1;
-        }
-        int n = sizes.numElements();
-        int size = ArrayUtil.productAsInt(sizes::elementAsIntOrMinusOne, n);
-        if (size < 0) {
-          // Overflowed
-          return -1;
-        }
-        Value prev = it.peekElement(1);
-        if (RValue.isExplorer(prev)) {
-          return size;
-        }
-        int skip = 0;
-        for (int i = 0; i < n; i++) {
-          skip = skip * sizes.elementAsInt(i) + prev.elementAsInt(i) - 1;
-        }
-        skip += 1;
-        assert skip >= 0 && skip <= size;
-        return size - skip;
-      } else if (baseType == CollectionCore.TRANSFORMED_ITERATOR
-          || baseType == CollectionCore.WITH_KEYS_ITERATOR
-          || baseType == MatrixCore.RESHAPED_ITERATOR
-          || baseType == CollectionCore.JOINED_ITERATOR) {
-        it = it.peekElement(0);
-        continue;
       }
-      // TODO: CONCAT_ITERATOR?
       return -1;
+    } else if (baseType == TRIVIAL_ITERATOR) {
+      Value v = it.peekElement(0);
+      return (v == Core.ABSENT) ? 0 : 1;
+    } else if (baseType == MatrixCore.BASE_ITERATOR) {
+      Value sizes = it.peekElement(2);
+      if (RValue.isExplorer(sizes)) {
+        return -1;
+      }
+      int n = sizes.numElements();
+      int size = ArrayUtil.productAsInt(sizes::elementAsIntOrMinusOne, n);
+      if (size < 0) {
+        // Overflowed
+        return -1;
+      }
+      Value prev = it.peekElement(1);
+      if (RValue.isExplorer(prev)) {
+        return size;
+      }
+      int skip = 0;
+      for (int i = 0; i < n; i++) {
+        skip = skip * sizes.elementAsInt(i) + prev.elementAsInt(i) - 1;
+      }
+      skip += 1;
+      assert skip >= 0 && skip <= size;
+      return size - skip;
     }
+    // TODO: CONCAT_ITERATOR?
+    return -1;
   }
 
   /**
    * <pre>
    * function iterate(collection, eKind, loop, state) {
    *   if state is LoopExit { return state }
-   *   it = iterator(collection, eKind)
+   *   it = iterator(collection, eKind, loop=, state=)
    *   for sequential state, it {
+   *     if state is LoopExit {
+   *       break { return state }
+   *     }
    *     element = next(it=)
-   *     if element is Absent { break }
+   *     if element is Absent {
+   *       break { return finalState(loop, state) }
+   *     }
    *     state = nextState(loop, state, element)
-   *     if state is LoopExit { break }
    *   }
-   *   return state
    * }
    * </pre>
    */
   static class Iterate extends BuiltinMethod {
-    static final Caller iterator = new Caller("iterator:2", "afterIterator");
+    static final Caller iterator = new Caller("iterator:4", "afterIterator");
     static final Caller next = new Caller("next:1", "afterNext");
     static final Caller nextState = new Caller("nextState:3", "afterNextState");
 
@@ -620,7 +826,7 @@ public final class LoopCore {
                 tstate.dropValue(loop);
                 tstate.setResult(state);
               },
-              () -> tstate.startCall(iterator, collection, eKind).saving(loop, state));
+              () -> tstate.startCall(iterator, collection, eKind, loop, state));
     }
 
     /**
@@ -630,34 +836,16 @@ public final class LoopCore {
      * choose to unroll the loop. May return -1 to indicate that no bound is available.
      */
     static int loopBound(Object[] continuationArgs) {
-      return iteratorBound((Value) continuationArgs[0]);
+      return iteratorBound((Value) continuationArgs[2]);
     }
 
-    @LoopContinuation
+    @Continuation
     static void afterIterator(
-        TState tstate, @RC.In Value it, @Saved @RC.In Value loop, @RC.In Value state) {
-      tstate.startCall(next, it).saving(loop, state);
+        TState tstate, @RC.In Value it, @RC.In Value loop, @RC.In Value state) {
+      tstate.jump("afterNextState", state, loop, it);
     }
 
-    @Continuation(order = 2)
-    static void afterNext(
-        TState tstate,
-        @RC.In Value element,
-        @RC.In Value it,
-        @Saved @RC.In Value loop,
-        @RC.In Value state) {
-      element
-          .is(Core.ABSENT)
-          .test(
-              () -> {
-                tstate.dropValue(it);
-                tstate.dropValue(loop);
-                tstate.setResult(state);
-              },
-              () -> tstate.startCall(nextState, addRef(loop), state, element).saving(loop, it));
-    }
-
-    @Continuation(order = 3)
+    @LoopContinuation(order = 2)
     static void afterNextState(
         TState tstate, @RC.In Value state, @Saved @RC.In Value loop, @RC.In Value it) {
       state
@@ -668,7 +856,25 @@ public final class LoopCore {
                 tstate.dropValue(loop);
                 tstate.setResult(state);
               },
-              () -> tstate.jump("afterIterator", it, loop, state));
+              () -> tstate.startCall(next, it).saving(loop, state));
+    }
+
+    @Continuation(order = 3)
+    static void afterNext(
+        TState tstate,
+        @RC.In Value element,
+        @RC.In Value it,
+        @Saved @RC.In Value loop,
+        @RC.In Value state,
+        @Fn("finalState:2") Caller finalState) {
+      element
+          .is(Core.ABSENT)
+          .test(
+              () -> {
+                tstate.dropValue(it);
+                tstate.startCall(finalState, loop, state);
+              },
+              () -> tstate.startCall(nextState, addRef(loop), state, element).saving(loop, it));
     }
   }
 
@@ -683,7 +889,7 @@ public final class LoopCore {
    *   } else {
    *     state = iterate(collection, eKind, loop, initialState)
    *   }
-   *   return finalResult(loop, state)
+   *   return loopExitState(state)
    * }
    * </pre>
    */
@@ -698,7 +904,7 @@ public final class LoopCore {
     }
 
     @Continuation
-    static void afterCollectorSetup(TState tstate, Value csResult, @Saved Value collection)
+    static void afterCollectorSetup(TState tstate, Value csResult, @Saved @RC.In Value collection)
         throws BuiltinException {
       Err.COLLECTOR_SETUP_RESULT.unless(SETUP_KEYS.matches(csResult));
       Value canParallel = csResult.peekElement(0);
@@ -710,38 +916,21 @@ public final class LoopCore {
       initialState
           .isa(Core.LOOP_EXIT)
           .test(
-              () -> tstate.jump("done", initialState, loop),
+              () -> {
+                tstate.dropValue(collection);
+                tstate.jump("done", initialState);
+              },
               () ->
                   canParallel
                       .is(Core.TRUE)
                       .test(
-                          () ->
-                              tstate
-                                  .startCall(
-                                      enumerate,
-                                      addRef(collection),
-                                      eKind,
-                                      addRef(loop),
-                                      initialState)
-                                  .saving(loop),
-                          () ->
-                              tstate
-                                  .startCall(
-                                      iterate,
-                                      addRef(collection),
-                                      eKind,
-                                      addRef(loop),
-                                      initialState)
-                                  .saving(loop)));
+                          () -> tstate.startCall(enumerate, collection, eKind, loop, initialState),
+                          () -> tstate.startCall(iterate, collection, eKind, loop, initialState)));
     }
 
     @Continuation(order = 2)
-    static void done(
-        TState tstate,
-        @RC.In Value state,
-        @Saved @RC.In Value loop,
-        @Fn("finalResult:2") Caller finalResult) {
-      tstate.startCall(finalResult, loop, state);
+    static Value done(Value state) {
+      return loopExitState(state);
     }
   }
 
@@ -831,22 +1020,22 @@ public final class LoopCore {
 
   /**
    * <pre>
-   * function finalResultHelper(ro, rw) {
+   * function finalStateHelper(ro, rw) {
    *   {pendingValue, state} = rw_
    *   assert pendingValue is Absent
-   *   return finalResult(ro_.loop, state)
+   *   return finalState(ro_.loop, state)
    * }
    * </pre>
    */
-  @Core.Method("finalResultHelper(LoopRO, LoopRW)")
-  static void finalResultHelper(
-      TState tstate, Value ro, Value rw, @Fn("finalResult:2") Caller finalResult)
+  @Core.Method("finalStateHelper(LoopRO, LoopRW)")
+  static void finalStateHelper(
+      TState tstate, Value ro, Value rw, @Fn("finalState:2") Caller finalState)
       throws BuiltinException {
     Value pendingValue = rw.peekElement(0);
     Err.INVALID_ARGUMENT.unless(pendingValue.is(Core.ABSENT));
     Value loop = ro.element(1);
     Value state = rw.element(1);
-    tstate.startCall(finalResult, loop, state);
+    tstate.startCall(finalState, loop, state);
   }
 
   /**

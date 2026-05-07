@@ -473,75 +473,75 @@ run_x0(i1):
    6: X7 ← alloc*[]b0@xxxx(X0, I1);
    7: X3 ← null;
    8: I8 ← 1;
-   9: I9 ← 1;
-  10: X10 ← alloc*[]U32(i0)@xxxx(X0, 1);
-  11: setInt[](Frame1i2x.x0(X10), 0, 1);
-  12: X11 ← [];
-  13: I12 ← 0;
-  14: X13 ← alloc*[]U32(i0)@xxxx(X0, 1);
-  15: setInt[](Frame1i2x.x0(X13), 0, 1); → 17
-= 16: test I1 < I8; T:→ 117
-- 17: I14 ← Math.addExact(I8, 1); ArithmeticException:→ 147
+   9: X9 ← alloc*[]U32(i0)@xxxx(X0, 1);
+  10: setInt[](Frame1i2x.x0(X9), 0, 1);
+  11: X10 ← [];
+  12: I11 ← 0;
+  13: X12 ← alloc*[]U32(i0)@xxxx(X0, 1);
+  14: setInt[](Frame1i2x.x0(X12), 0, 1);
+  15: I13 ← 1; → 17
+= 16: test I1 < I13; T:→ 117
+- 17: I14 ← Math.addExact(I13, 1); ArithmeticException:→ 147
   18: X4 ← null;
   19: X5 ← null;
   20: X6 ← null; → 22
 = 21: test I15 0 (< 2); T:→ 75
 - 22: X19 ← null;
-  23: [i0] ← extract_x1(X0, addRef(X10), addRef(X11), I12, addRef(X13), 3); X15 ← stackRest; unwind:→ 137
+  23: [i0] ← extract_x1(X0, addRef(X9), addRef(X10), I11, addRef(X12), 3); X15 ← stackRest; unwind:→ 137
   24: I17 ← int[](TState.fnResultBytes(X0, 0), 0);
   25: TState.clearResultTemplates(X0);
   26: test X15 == null; T:→ 29
-  27: addRef(X10); addRef(X11); addRef(X13); X16 ← newStackEntry(⟦pidigits.r8t+3:25_2 digit = extract(_t0, 3) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
+  27: addRef(X9); addRef(X10); addRef(X12); X16 ← newStackEntry(⟦pidigits.r8t+3:25_2 digit = extract(_t0, 3) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⟧);
   28: X19 ← TState.fillStackEntry(X0, X15, X16, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, null);
-- 29: [i0] ← extract_x1(X0, addRef(X10), addRef(X11), I12, addRef(X13), 4); X15 ← stackRest; unwind:→ 135
+- 29: [i0] ← extract_x1(X0, addRef(X9), addRef(X10), I11, addRef(X12), 4); X15 ← stackRest; unwind:→ 135
   30: I16 ← int[](TState.fnResultBytes(X0, 0), 0);
   31: TState.clearResultTemplates(X0);
   32: test X15 == null; T:→ 35
-  33: addRef(X10); addRef(X11); addRef(X13); X18 ← newStackEntry(⟦pidigits.r8t+3:26_4 _t0 = extract(_t0, 4) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I17⟧);
+  33: addRef(X9); addRef(X10); addRef(X12); X18 ← newStackEntry(⟦pidigits.r8t+3:26_4 _t0 = extract(_t0, 4) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I17⟧);
   34: X19 ← TState.fillStackEntry(X0, X15, X18, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19);
 - 35: test I17 == I16; T:→ 68
-  36: I15 ← Math.multiplyExact(4, I9); ArithmeticException:→ 133
+  36: I15 ← Math.multiplyExact(4, I8); ArithmeticException:→ 133
   37: I15 ← Math.addExact(I15, 2); ArithmeticException:→ 133
-  38: I18 ← Math.multiplyExact(2, I9); ArithmeticException:→ 133
+  38: I18 ← Math.multiplyExact(2, I8); ArithmeticException:→ 133
   39: I18 ← Math.addExact(I18, 1); ArithmeticException:→ 133
-  40: test I9 == 0; T:→ 133
-  41: test I9 < 0; T:→ 133
+  40: test I8 == 0; T:→ 133
+  41: test I8 < 0; T:→ 133
   42: test I15 == 0; T:→ 133
   43: test I15 < 0; T:→ 133
   44: test I18 == 0; T:→ 133
   45: test I18 < 0; T:→ 133
   46: X16 ← alloc*[]U32(i0)@xxxx(X0, 1);
-  47: setInt[](Frame1i2x.x0(X16), 0, I9);
+  47: setInt[](Frame1i2x.x0(X16), 0, I8);
   48: X17 ← alloc*[]U32(i0)@xxxx(X0, 1);
   49: setInt[](Frame1i2x.x0(X17), 0, I15);
   50: X15 ← alloc*[]U32(i0)@xxxx(X0, 1);
   51: setInt[](Frame1i2x.x0(X15), 0, I18);
-  52: [{q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x1:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x2:*[]@xxxx, signum: 1})}] ← compose_x2(X0, addRef(X10), addRef(X11), I12, addRef(X13), X16, X17, 1, X15); X15 ← stackRest; unwind:→ 131
+  52: [{q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x1:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x2:*[]@xxxx, signum: 1})}] ← compose_x2(X0, addRef(X9), addRef(X10), I11, addRef(X12), X16, X17, 1, X15); X15 ← stackRest; unwind:→ 131
   53: X20 ← TState.fnResult(X0, 0);
   54: X21 ← TState.fnResult(X0, 1);
   55: X22 ← TState.fnResult(X0, 2);
   56: I18 ← int[](TState.fnResultBytes(X0, 0), 0);
   57: TState.clearResults(X0);
   58: test X15 == null; T:→ 61
-  59: addRef(X10); addRef(X11); addRef(X13); X16 ← newStackEntry(⟦pidigits.r8t+3:32_13 _t0 = compose(_t0, _t1) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
+  59: addRef(X9); addRef(X10); addRef(X12); X16 ← newStackEntry(⟦pidigits.r8t+3:32_13 _t0 = compose(_t0, _t1) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⟧);
   60: X19 ← TState.fillStackEntry(X0, X15, X16, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19);
-- 61: I17 ← Math.addExact(I9, 1); ArithmeticException:→ 129
-  62: dropRef{X10, X11, X13};
+- 61: I17 ← Math.addExact(I8, 1); ArithmeticException:→ 129
+  62: dropRef{X9, X10, X12};
   63: I16 ← 0;
   64: I15 ← 1;
-  65: X10 ← X20;
-  66: X11 ← X21;
-  67: X13 ← X22; → 71
+  65: X9 ← X20;
+  66: X10 ← X21;
+  67: X12 ← X22; → 71
 - 68: I15 ← 0;
-  69: I18 ← I9;
-  70: I16 ← I12;
+  69: I18 ← I8;
+  70: I16 ← I11;
 - 71: test X19 == null; T:→ 73
-  72: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, X6);
-- 73: I9 ← I17;
-  74: I12 ← I18; → 21
+  72: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h42@xxxx, X6);
+- 73: I8 ← I17;
+  74: I11 ← I18; → 21
 - 75: test X6 == null; T:→ 77
-  76: X5 ← TState.fillStackEntry(X0, X6, ⟦pidigits.r8t+3:24_0 _t0 = iterateUnbounded(loop@24, loop@24_state⸨spigot=spigot⸩)⟧, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, null);
-- 77: I6 ← Math.multiplyExact(-10, I9); ArithmeticException:→ 140
+  76: X5 ← TState.fillStackEntry(X0, X6, ⟦pidigits.r8t+3:24_0 _t0 = iterateUnbounded(loop@24, loop@24_state⸨spigot=spigot⸩)⟧, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h70@xxxx, null);
+- 77: I6 ← Math.multiplyExact(-10, I8); ArithmeticException:→ 140
   78: test I6 == 0; T:→ 85
   79: test I6 < 0; F:→ 140
   80: I6 ← Math.negateExact(I6); ArithmeticException:→ 140
@@ -555,64 +555,64 @@ run_x0(i1):
   88: setInt[](Frame1i2x.x0(X17), 0, 10);
   89: X18 ← alloc*[]U32(i0)@xxxx(X0, 1);
   90: setInt[](Frame1i2x.x0(X18), 0, 1);
-  91: [{q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x1:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x2:*[]@xxxx, signum: 1})}] ← compose_x2(X0, X17, X15, I6, X18, addRef(X10), addRef(X11), I16, addRef(X13)); X6 ← stackRest; unwind:→ 127
+  91: [{q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x1:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x2:*[]@xxxx, signum: 1})}] ← compose_x2(X0, X17, X15, I6, X18, addRef(X9), addRef(X10), I16, addRef(X12)); X6 ← stackRest; unwind:→ 127
   92: X15 ← TState.fnResult(X0, 0);
   93: X17 ← TState.fnResult(X0, 1);
   94: X18 ← TState.fnResult(X0, 2);
   95: I19 ← int[](TState.fnResultBytes(X0, 0), 0);
   96: TState.clearResults(X0);
   97: test X6 == null; T:→ 100
-  98: addRef(X10); addRef(X11); addRef(X13); X20 ← newStackEntry(⟦pidigits.r8t+3:28_6 _t0 = compose(_t0, _t1) ∥ spigot={k: I12, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I9⟧);
-  99: X5 ← TState.fillStackEntry(X0, X6, X20, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, X5);
+  98: addRef(X9); addRef(X10); addRef(X12); X20 ← newStackEntry(⟦pidigits.r8t+3:28_6 _t0 = compose(_t0, _t1) ∥ spigot={k: I11, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I8⟧);
+  99: X5 ← TState.fillStackEntry(X0, X6, X20, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h70@xxxx, X5);
 -100: test X5 == null; T:→ 103
- 101: addRef(X7); X4 ← newStackEntry(⟦pidigits.r8t+3:10_7 _t0, spigot = nextDigit(spigot) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), digits_rw=LoopRW(Absent, X7), _key=[I8]⟧);
- 102: X4 ← TState.fillStackEntry(X0, X5, X4, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩, loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, RangeIterator(b0, b0, 0)⟩, mMemo_h46@xxxx, null);
--103: test I8 < 1; T:→ 125
- 104: test Frame1i2x.i0(X7) < I8; T:→ 125
- 105: test I9 isUint8; F:→ 125
- 106: dropRef{X10, X11, X13};
- 107: setUint8[](Frame1i2x.x0(X7), iSub(I8, 1), I9);
+ 101: addRef(X7); X4 ← newStackEntry(⟦pidigits.r8t+3:10_7 _t0, spigot = nextDigit(spigot) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), digits_rw=LoopRW(Absent, X7), _key=[I13]⟧);
+ 102: X4 ← TState.fillStackEntry(X0, X5, X4, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩, loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, RangeIterator(b0, b0, 0)⟩, mMemo_h50@xxxx, null);
+-103: test I13 < 1; T:→ 125
+ 104: test Frame1i2x.i0(X7) < I13; T:→ 125
+ 105: test I8 isUint8; F:→ 125
+ 106: dropRef{X9, X10, X12};
+ 107: setUint8[](Frame1i2x.x0(X7), iSub(I13, 1), I8);
  108: test X4 == null; T:→ 111
  109: X5 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, it=RangeIterator(I14, I1, 0)⟧);
- 110: X3 ← TState.fillStackEntry(X0, X4, X5, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3);
--111: I8 ← I14;
- 112: I9 ← I12;
- 113: X10 ← X15;
- 114: X11 ← X17;
- 115: I12 ← I19;
- 116: X13 ← X18; → 16
--117: test I12 == -1; F:→ 147
- 118: dropRef{X10, X11, X13};
+ 110: X3 ← TState.fillStackEntry(X0, X4, X5, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h45@xxxx, X3);
+-111: I8 ← I11;
+ 112: X9 ← X15;
+ 113: X10 ← X17;
+ 114: I11 ← I19;
+ 115: X12 ← X18;
+ 116: I13 ← I14; → 16
+-117: test I11 == -1; F:→ 147
+ 118: dropRef{X9, X10, X12};
  119: test X3 == null; T:→ 121
  120: X2 ← TState.fillStackEntry(X0, X3, ⟦pidigits.r8t+3:9_4 _t0 = iterate(_t0, _t2, loop@9⸨digits_ro=digits_ro, _eKind=_t2⸩, loop@9_state⸨digits_rw=_t1, spigot=spigot⸩) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
 -121: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
  122: setObject[](TState.fnResults(X0, 1), 0, X7);
  123: TState.setStackRest(X0, X2);
  124: return
--125: X2 ← newStackEntry(⟦pidigits.r8t+3:28_7 spigot = replaceElement(spigot, "z", _t0) ∥ spigot={k: I12, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I9, _t0={q: BigInt({mag: X15, signum: 1}), r: BigInt({mag: X17, signum: I19}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X18, signum: 1})}⟧);
- 126: X5 ← TState.fillStackEntry(X0, null, X2, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, null); → 143
--127: X2 ← newStackEntry(⟦pidigits.r8t+3:28_6 _t0 = compose(_t0, _t1) ∥ spigot={k: I12, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I9⟧);
- 128: X5 ← TState.fillStackEntry(X0, X6, X2, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, X5); → 143
--129: X2 ← newStackEntry(⟦pidigits.r8t+3:32_14 spigot = replaceElement(spigot, "z", _t0) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, _t0={q: BigInt({mag: X20, signum: 1}), r: BigInt({mag: X21, signum: I18}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X22, signum: 1})}⟧);
+-125: X2 ← newStackEntry(⟦pidigits.r8t+3:28_7 spigot = replaceElement(spigot, "z", _t0) ∥ spigot={k: I11, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I8, _t0={q: BigInt({mag: X15, signum: 1}), r: BigInt({mag: X17, signum: I19}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X18, signum: 1})}⟧);
+ 126: X5 ← TState.fillStackEntry(X0, null, X2, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h70@xxxx, null); → 143
+-127: X2 ← newStackEntry(⟦pidigits.r8t+3:28_6 _t0 = compose(_t0, _t1) ∥ spigot={k: I11, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I8⟧);
+ 128: X5 ← TState.fillStackEntry(X0, X6, X2, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h70@xxxx, X5); → 143
+-129: X2 ← newStackEntry(⟦pidigits.r8t+3:32_14 spigot = replaceElement(spigot, "z", _t0) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, _t0={q: BigInt({mag: X20, signum: 1}), r: BigInt({mag: X21, signum: I18}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X22, signum: 1})}⟧);
  130: X19 ← TState.fillStackEntry(X0, null, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19); → 139
--131: X2 ← newStackEntry(⟦pidigits.r8t+3:32_13 _t0 = compose(_t0, _t1) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
+-131: X2 ← newStackEntry(⟦pidigits.r8t+3:32_13 _t0 = compose(_t0, _t1) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⟧);
  132: X19 ← TState.fillStackEntry(X0, X15, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19); → 139
--133: X2 ← newStackEntry(⟦pidigits.r8t+3:26_5 _t0 = equal(digit, _t0) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I17, _t0=I16⟧);
+-133: X2 ← newStackEntry(⟦pidigits.r8t+3:26_5 _t0 = equal(digit, _t0) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I17, _t0=I16⟧);
  134: X19 ← TState.fillStackEntry(X0, null, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19); → 139
--135: X2 ← newStackEntry(⟦pidigits.r8t+3:26_4 _t0 = extract(_t0, 4) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}, digit=I17⟧);
+-135: X2 ← newStackEntry(⟦pidigits.r8t+3:26_4 _t0 = extract(_t0, 4) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}, digit=I17⟧);
  136: X19 ← TState.fillStackEntry(X0, X15, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, X19); → 139
--137: X2 ← newStackEntry(⟦pidigits.r8t+3:25_2 digit = extract(_t0, 3) ∥ spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⟧);
+-137: X2 ← newStackEntry(⟦pidigits.r8t+3:25_2 digit = extract(_t0, 3) ∥ spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⟧);
  138: X19 ← TState.fillStackEntry(X0, X15, X2, ⟨⸨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩); loop@24_state⸨spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⸩, loop@24⟩, mMemo_h47@xxxx, null);
--139: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, X6); → 142
--140: X2 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=LoopExit(loop@24_break@28⸨digit=I9, spigot={k: I12, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⸩), lambda=loop@24⟧);
- 141: X6 ← TState.fillStackEntry(X0, null, X2, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h38@xxxx, null);
--142: X5 ← TState.fillStackEntry(X0, X6, ⟦pidigits.r8t+3:24_0 _t0 = iterateUnbounded(loop@24, loop@24_state⸨spigot=spigot⸩)⟧, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h66@xxxx, X5);
--143: X2 ← newStackEntry(⟦pidigits.r8t+3:10_7 _t0, spigot = nextDigit(spigot) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), digits_rw=LoopRW(Absent, X7), _key=[I8]⟧);
- 144: X4 ← TState.fillStackEntry(X0, X5, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩, loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, RangeIterator(b0, b0, 0)⟩, mMemo_h46@xxxx, X4);
+-139: X6 ← TState.fillStackEntry(X0, X19, ⟦LoopCore.IterateUnbounded.at ∥ lambda=loop@24⟧, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h42@xxxx, X6); → 142
+-140: X2 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=LoopExit(loop@24_break@28⸨digit=I8, spigot={k: I11, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I16}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⸩), lambda=loop@24⟧);
+ 141: X6 ← TState.fillStackEntry(X0, null, X2, ⟨LoopExit(loop@24_break@28⸨digit=b0, spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩)⟩, LmMemo_h42@xxxx, null);
+-142: X5 ← TState.fillStackEntry(X0, X6, ⟦pidigits.r8t+3:24_0 _t0 = iterateUnbounded(loop@24, loop@24_state⸨spigot=spigot⸩)⟧, ⟨b0, {k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⟩, mMemo_h70@xxxx, X5);
+-143: X2 ← newStackEntry(⟦pidigits.r8t+3:10_7 _t0, spigot = nextDigit(spigot) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), digits_rw=LoopRW(Absent, X7), _key=[I13]⟧);
+ 144: X4 ← TState.fillStackEntry(X0, X5, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: i0}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩, loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, RangeIterator(b0, b0, 0)⟩, mMemo_h50@xxxx, X4);
  145: X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, it=RangeIterator(I14, I1, 0)⟧);
- 146: X3 ← TState.fillStackEntry(X0, X4, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3); → 149
--147: X2 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I8, I1, 0), loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, state=loop@9_state⸨digits_rw=LoopRW(Absent, X7), spigot={k: I9, z: {q: BigInt({mag: X10, signum: 1}), r: BigInt({mag: X11, signum: I12}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X13, signum: 1})}}⸩⟧);
- 148: X3 ← TState.fillStackEntry(X0, null, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h40@xxxx, X3);
+ 146: X3 ← TState.fillStackEntry(X0, X4, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h45@xxxx, X3); → 149
+-147: X2 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@9_state⸨digits_rw=LoopRW(Absent, X7), spigot={k: I8, z: {q: BigInt({mag: X9, signum: 1}), r: BigInt({mag: X10, signum: I11}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X12, signum: 1})}}⸩, loop=loop@9⸨digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True), _eKind=EnumerateAllKeys⸩, it=RangeIterator(I13, I1, 0)⟧);
+ 148: X3 ← TState.fillStackEntry(X0, null, X2, ⟨loop@9_state⸨digits_rw=LoopRW(Absent, x0:*[]@xxxx), spigot={k: i0, z: {q: BigInt({mag: x0:*[]@xxxx, signum: 1}), r: BigInt({mag: x0:*[]@xxxx, signum: -1}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x0:*[]@xxxx, signum: 1})}}⸩⟩, LmMemo_h45@xxxx, X3);
 -149: X2 ← TState.fillStackEntry(X0, X3, ⟦pidigits.r8t+3:9_4 _t0 = iterate(_t0, _t2, loop@9⸨digits_ro=digits_ro, _eKind=_t2⸩, loop@9_state⸨digits_rw=_t1, spigot=spigot⸩) ∥ digits_ro=LoopRO(EnumerateAllKeys, SaverLoop(SaveElements), True)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 152
 -150: X2 ← newStackEntry(⟦pidigits.r8t+3:8_0 spigot = initialSpigot() ∥ n=I1⟧);
  151: X2 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
@@ -622,291 +622,296 @@ run_x0(i1):
 
 extract_x1({q: BigInt({mag: x1:*[]@xxxx, signum: 1}), r: BigInt({mag: x2:*[]@xxxx, signum: i3}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x4:*[]@xxxx, signum: 1})}, i5):
    1: CodeGenTarget.incrementCallCount(target:extract_x1);
-   2: test I5 == 0; T:→ 282
-   3: test I5 < 0; T:→ 282
+   2: test I5 == 0; T:→ 287
+   3: test I5 < 0; T:→ 287
    4: X6 ← null;
    5: X7 ← alloc*[]U32(i0)@xxxx(X0, 1);
    6: setInt[](Frame1i2x.x0(X7), 0, I5);
-   7: [BigInt({mag: x0:*[]@xxxx, signum: i0})] ← multiply_x3(X0, X1, 1, X7, 1); X1 ← stackRest; unwind:→ 280
+   7: [BigInt({mag: x0:*[]@xxxx, signum: i0})] ← multiply_x3(X0, X1, 1, X7, 1); X1 ← stackRest; unwind:→ 285
    8: X7 ← TState.fnResult(X0, 0);
-   9: test int[](TState.fnResultBytes(X0, 0), 0) == 1; F:→ 279
+   9: test int[](TState.fnResultBytes(X0, 0), 0) == 1; F:→ 284
   10: TState.clearResults(X0);
   11: test X1 == null; T:→ 14
   12: addRef(X2); addRef(X4); X6 ← newStackEntry(⟦pidigits.r8t+3:48_2 _t0 = multiply(q, j) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), r=BigInt({mag: X2, signum: I3}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
   13: X6 ← TState.fillStackEntry(X0, X1, X6, ⟨b0⟩, mMemo_x@xxxx, null);
-- 14: [BigInt({mag: x0:*[]@xxxx, signum: i0})] ← add_x4(X0, X7, 1, X2, I3); X1 ← stackRest; unwind:→ 277
+- 14: [BigInt({mag: x0:*[]@xxxx, signum: i0})] ← add_x4(X0, X7, 1, X2, I3); X1 ← stackRest; unwind:→ 282
   15: X2 ← TState.fnResult(X0, 0);
   16: I3 ← int[](TState.fnResultBytes(X0, 0), 0);
   17: TState.clearResults(X0);
   18: test X1 == null; T:→ 21
   19: addRef(X4); X7 ← newStackEntry(⟦pidigits.r8t+3:48_3 _t0 = add(_t0, r) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
   20: X6 ← TState.fillStackEntry(X0, X1, X7, ⟨b0⟩, mMemo_x@xxxx, X6);
-- 21: test I3 == 0; T:→ 210
-  22: test I3 == 1; F:→ 275
-  23: test X2 is *[]U32(i0)@xxxx; F:→ 275
-  24: test X4 is *[]U32(i0)@xxxx; F:→ 275
+- 21: test I3 == 0; T:→ 214
+  22: test I3 == 1; F:→ 280
+  23: test X2 is *[]U32(i0)@xxxx; F:→ 280
+  24: test X4 is *[]U32(i0)@xxxx; F:→ 280
   25: I1 ← Frame1i2x.i0(X2);
   26: I3 ← Frame1i2x.i0(X4);
   27: test I1 == I3; T:→ 29
   28: test I1 < I3; T:→ 56, F:→ 38
-= 29: test I1 < 1; T:→ 266
-  30: I3 ← Math.subtractExact(I1, 1); ArithmeticException:→ 266
-  31: test Frame1i2x.i0(X2) < I1; T:→ 266
-  32: test Frame1i2x.i0(X4) < I1; T:→ 266
+= 29: test I1 < 1; T:→ 271
+  30: I3 ← Math.subtractExact(I1, 1); ArithmeticException:→ 271
+  31: test Frame1i2x.i0(X2) < I1; T:→ 271
+  32: test Frame1i2x.i0(X4) < I1; T:→ 271
   33: I5 ← int[](Frame1i2x.x0(X2), iShl(iSub(I1, 1), 2));
   34: I1 ← int[](Frame1i2x.x0(X4), iShl(iSub(I1, 1), 2));
   35: test I5 == I1; F:→ 37
   36: I1 ← I3; → 29
 - 37: test Integer.toUnsignedLong(I5) < Integer.toUnsignedLong(I1); T:→ 56
 - 38: test Frame1i2x.i0(X4) == 1; F:→ 58
-  39: test Frame1i2x.i0(X4) < 1; T:→ 264
+  39: test Frame1i2x.i0(X4) < 1; T:→ 269
   40: I1 ← int[](Frame1i2x.x0(X4), 0);
-  41: test Integer.toUnsignedLong(I1) == 1; T:→ 204
-  42: test 2 < Frame1i2x.i0(X2); T:→ 264
+  41: test Integer.toUnsignedLong(I1) == 1; T:→ 208
+  42: test 2 < Frame1i2x.i0(X2); T:→ 269
   43: test Frame1i2x.i0(X2) == 1; T:→ 47
-  44: test Frame1i2x.i0(X2) < 2; T:→ 264
-  45: test int[](Frame1i2x.x0(X2), 4) == 1; F:→ 264
+  44: test Frame1i2x.i0(X2) < 2; T:→ 269
+  45: test int[](Frame1i2x.x0(X2), 4) == 1; F:→ 269
   46: I3 ← 1; → 48
 - 47: I3 ← 0;
-- 48: test Frame1i2x.i0(X2) < 1; T:→ 264
+- 48: test Frame1i2x.i0(X2) < 1; T:→ 269
   49: L7 ← Long.divideUnsigned(lAdd(lShl(I3, 32), Integer.toUnsignedLong(int[](Frame1i2x.x0(X2), 0))), Integer.toUnsignedLong(I1));
-  50: test toInt(lShr(L7, 32)) == 0; F:→ 264
+  50: test toInt(lShr(L7, 32)) == 0; F:→ 269
   51: I1 ← toInt(L7);
-  52: test Integer.toUnsignedLong(I1) == 0; T:→ 264
+  52: test Integer.toUnsignedLong(I1) == 0; T:→ 269
   53: dropRef{X4, X2};
   54: X2 ← alloc*[]U32(i0)@xxxx(X0, 1);
-  55: setInt[](Frame1i2x.x0(X2), 0, I1); → 205
+  55: setInt[](Frame1i2x.x0(X2), 0, I1); → 209
 - 56: dropRef{X4, X2};
-  57: X2 ← []; → 205
+  57: X2 ← []; → 209
 - 58: I3 ← Frame1i2x.i0(X4);
   59: I5 ← Frame1i2x.i0(X2);
-  60: I1 ← Math.subtractExact(I5, I3); ArithmeticException:→ 264
-  61: I7 ← Math.addExact(I1, 1); ArithmeticException:→ 264
-  62: test I3 < 1; T:→ 264
-  63: test Frame1i2x.i0(X4) < I3; T:→ 264
+  60: I1 ← Math.subtractExact(I5, I3); ArithmeticException:→ 269
+  61: I7 ← Math.addExact(I1, 1); ArithmeticException:→ 269
+  62: test I3 < 1; T:→ 269
+  63: test Frame1i2x.i0(X4) < I3; T:→ 269
   64: I1 ← NumberCore.bitLastOne(int[](Frame1i2x.x0(X4), iShl(iSub(I3, 1), 2)));
-  65: I8 ← Math.subtractExact(31, I1); ArithmeticException:→ 264
-  66: test I8 < 32; F:→ 264
+  65: I8 ← Math.subtractExact(31, I1); ArithmeticException:→ 269
+  66: test I8 < 32; F:→ 269
   67: test I8 == 0; T:→ 90
-  68: I1 ← 1;
-  69: I9 ← Frame1i2x.i0(X4);
-  70: I10 ← 0;
-  71: X11 ← X4;
-  72: addRef{X11};
-= 73: test I9 < I1; T:→ 85
-  74: I12 ← Math.addExact(I1, 1); ArithmeticException:→ 258
-  75: test I1 < 1; T:→ 258
-  76: test Frame1i2x.i0(X11) < I1; T:→ 258
-  77: test Frame1i2x.i0(X11) < I1; T:→ 258
-  78: I13 ← int[](Frame1i2x.x0(X11), iShl(iSub(I1, 1), 2));
-  79: I10 ← toInt(Long.rotateLeft(lAdd(lShl(I10, 32), Integer.toUnsignedLong(I13)), I8));
-  80: I1 ← iSub(I1, 1);
-  81: X11 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X11);
-  82: setInt[](Frame1i2x.x0(X11), iShl(I1, 2), I10);
-  83: I1 ← I12;
-  84: I10 ← I13; → 73
-- 85: test toInt(Long.rotateLeft(lShl(I10, 32), I8)) == 0; F:→ 258
+  68: I1 ← 0;
+  69: X9 ← X4;
+  70: I10 ← 1;
+  71: I11 ← Frame1i2x.i0(X4);
+  72: addRef{X9};
+= 73: test I11 < I10; T:→ 85
+  74: I12 ← Math.addExact(I10, 1); ArithmeticException:→ 263
+  75: test I10 < 1; T:→ 263
+  76: test Frame1i2x.i0(X9) < I10; T:→ 263
+  77: test Frame1i2x.i0(X9) < I10; T:→ 263
+  78: I13 ← int[](Frame1i2x.x0(X9), iShl(iSub(I10, 1), 2));
+  79: I1 ← toInt(Long.rotateLeft(lAdd(lShl(I1, 32), Integer.toUnsignedLong(I13)), I8));
+  80: I10 ← iSub(I10, 1);
+  81: X9 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X9);
+  82: setInt[](Frame1i2x.x0(X9), iShl(I10, 2), I1);
+  83: I1 ← I13;
+  84: I10 ← I12; → 73
+- 85: test toInt(Long.rotateLeft(lShl(I1, 32), I8)) == 0; F:→ 263
   86: test I8 == 0; T:→ 92
-  87: I1 ← 1;
-  88: I9 ← Frame1i2x.i0(X2);
-  89: I10 ← 0; → 93
-- 90: X11 ← X4;
-  91: addRef{X11};
-- 92: I9 ← 0; → 106
-= 93: test I9 < I1; T:→ 105
-  94: I12 ← Math.addExact(I1, 1); ArithmeticException:→ 252
-  95: test I1 < 1; T:→ 252
-  96: test Frame1i2x.i0(X2) < I1; T:→ 252
-  97: test Frame1i2x.i0(X2) < I1; T:→ 252
-  98: I13 ← int[](Frame1i2x.x0(X2), iShl(iSub(I1, 1), 2));
-  99: I10 ← toInt(Long.rotateLeft(lAdd(lShl(I10, 32), Integer.toUnsignedLong(I13)), I8));
- 100: I1 ← iSub(I1, 1);
+  87: I1 ← 0;
+  88: I10 ← 1;
+  89: I11 ← Frame1i2x.i0(X2); → 93
+- 90: X9 ← X4;
+  91: addRef{X9};
+- 92: I10 ← 0; → 106
+= 93: test I11 < I10; T:→ 105
+  94: I12 ← Math.addExact(I10, 1); ArithmeticException:→ 257
+  95: test I10 < 1; T:→ 257
+  96: test Frame1i2x.i0(X2) < I10; T:→ 257
+  97: test Frame1i2x.i0(X2) < I10; T:→ 257
+  98: I13 ← int[](Frame1i2x.x0(X2), iShl(iSub(I10, 1), 2));
+  99: I1 ← toInt(Long.rotateLeft(lAdd(lShl(I1, 32), Integer.toUnsignedLong(I13)), I8));
+ 100: I10 ← iSub(I10, 1);
  101: X2 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X2);
- 102: setInt[](Frame1i2x.x0(X2), iShl(I1, 2), I10);
- 103: I1 ← I12;
- 104: I10 ← I13; → 93
--105: I9 ← toInt(Long.rotateLeft(lShl(I10, 32), I8));
--106: test I7 < 0; T:→ 250
- 107: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, null, I7) == 0; T:→ 250
- 108: X10 ← alloc*[]U32(i0)@xxxx(X0, I7);
- 109: ArrayUtil.bytesFillI(Frame1i2x.x0(X10), 0, I7, 0);
- 110: test Frame1i2x.i0(X11) < I3; T:→ 249
- 111: I12 ← int[](Frame1i2x.x0(X11), iShl(iSub(I3, 1), 2));
- 112: I1 ← Math.subtractExact(I3, 1); ArithmeticException:→ 249
- 113: test I1 < 1; T:→ 249
- 114: test Frame1i2x.i0(X11) < I1; T:→ 249
- 115: I13 ← int[](Frame1i2x.x0(X11), iShl(iSub(I1, 1), 2));
- 116: I14 ← Math.subtractExact(I7, 1); ArithmeticException:→ 249
- 117: test I14 < -1; T:→ 249
+ 102: setInt[](Frame1i2x.x0(X2), iShl(I10, 2), I1);
+ 103: I1 ← I13;
+ 104: I10 ← I12; → 93
+-105: I10 ← toInt(Long.rotateLeft(lShl(I1, 32), I8));
+-106: test I7 < 0; T:→ 255
+ 107: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, null, I7) == 0; T:→ 255
+ 108: X11 ← alloc*[]U32(i0)@xxxx(X0, I7);
+ 109: ArrayUtil.bytesFillI(Frame1i2x.x0(X11), 0, I7, 0);
+ 110: test Frame1i2x.i0(X9) < I3; T:→ 254
+ 111: I12 ← int[](Frame1i2x.x0(X9), iShl(iSub(I3, 1), 2));
+ 112: I1 ← Math.subtractExact(I3, 1); ArithmeticException:→ 254
+ 113: test I1 < 1; T:→ 254
+ 114: test Frame1i2x.i0(X9) < I1; T:→ 254
+ 115: I13 ← int[](Frame1i2x.x0(X9), iShl(iSub(I1, 1), 2));
+ 116: I14 ← Math.subtractExact(I7, 1); ArithmeticException:→ 254
+ 117: test I14 < -1; T:→ 254
  118: I15 ← 0;
-=119: test I14 < I15; T:→ 184
- 120: I16 ← Math.addExact(I15, 1); ArithmeticException:→ 245
- 121: I1 ← Math.subtractExact(I5, I15); ArithmeticException:→ 245
- 122: test I1 < 1; T:→ 245
- 123: test Frame1i2x.i0(X2) < I1; T:→ 245
+=119: test I14 < I15; T:→ 186
+ 120: I16 ← Math.addExact(I15, 1); ArithmeticException:→ 250
+ 121: I1 ← Math.subtractExact(I5, I15); ArithmeticException:→ 250
+ 122: test I1 < 1; T:→ 250
+ 123: test Frame1i2x.i0(X2) < I1; T:→ 250
  124: I1 ← int[](Frame1i2x.x0(X2), iShl(iSub(I1, 1), 2));
- 125: I17 ← Math.subtractExact(I5, I15); ArithmeticException:→ 245
- 126: I17 ← Math.subtractExact(I17, 1); ArithmeticException:→ 245
- 127: test I17 < 1; T:→ 245
- 128: test Frame1i2x.i0(X2) < I17; T:→ 245
- 129: L18 ← lAdd(lShl(I9, 32), Integer.toUnsignedLong(I1));
+ 125: I17 ← Math.subtractExact(I5, I15); ArithmeticException:→ 250
+ 126: I17 ← Math.subtractExact(I17, 1); ArithmeticException:→ 250
+ 127: test I17 < 1; T:→ 250
+ 128: test Frame1i2x.i0(X2) < I17; T:→ 250
+ 129: L18 ← lAdd(lShl(I10, 32), Integer.toUnsignedLong(I1));
  130: L20 ← Integer.toUnsignedLong(I12);
  131: L22 ← Long.divideUnsigned(L18, L20);
- 132: test toInt(lShr(L22, 32)) == 0; F:→ 245
+ 132: test toInt(lShr(L22, 32)) == 0; F:→ 250
  133: I22 ← toInt(L22);
  134: I1 ← toInt(Long.remainderUnsigned(L18, L20));
  135: I18 ← int[](Frame1i2x.x0(X2), iShl(iSub(I17, 1), 2));
- 136: test Integer.toUnsignedLong(toInt(lShr(lMul(Integer.toUnsignedLong(I22), Integer.toUnsignedLong(I13)), 32))) < Integer.toUnsignedLong(I1); F:→ 237
+ 136: test Integer.toUnsignedLong(toInt(lShr(lMul(Integer.toUnsignedLong(I22), Integer.toUnsignedLong(I13)), 32))) < Integer.toUnsignedLong(I1); F:→ 242
  137: I17 ← 0;
  138: I1 ← 0;
  139: test Integer.toUnsignedLong(I22) == 0; F:→ 145
- 140: test Integer.toUnsignedLong(I9) == 0; F:→ 238
- 141: I19 ← Math.subtractExact(I5, I15); ArithmeticException:→ 238
- 142: test I19 < 1; T:→ 238
- 143: test Frame1i2x.i0(X2) < I19; T:→ 238
- 144: I9 ← int[](Frame1i2x.x0(X2), iShl(iSub(I19, 1), 2)); → 183
--145: I19 ← Math.subtractExact(I7, I15); ArithmeticException:→ 238
- 146: test I19 == 1; F:→ 238
+ 140: test Integer.toUnsignedLong(I10) == 0; F:→ 243
+ 141: I19 ← Math.subtractExact(I5, I15); ArithmeticException:→ 243
+ 142: test I19 < 1; T:→ 243
+ 143: test Frame1i2x.i0(X2) < I19; T:→ 243
+ 144: I10 ← int[](Frame1i2x.x0(X2), iShl(iSub(I19, 1), 2)); → 185
+-145: I19 ← Math.subtractExact(I7, I15); ArithmeticException:→ 243
+ 146: test I19 == 1; F:→ 243
  147: I1 ← 0;
- 148: I17 ← 0;
-=149: test I1 < Frame1i2x.i0(X11); F:→ 170
- 150: L19 ← lMul(Integer.toUnsignedLong(I22), Integer.toUnsignedLong(int[](Frame1i2x.x0(X11), iShl(I1, 2))));
- 151: I21 ← toInt(L19);
- 152: L23 ← lAdd(Integer.toUnsignedLong(I21), Integer.toUnsignedLong(I17));
- 153: test toInt(lShr(L23, 32)) == 0; F:→ 231
- 154: I18 ← iAdd(I1, 1);
- 155: test I18 < 1; T:→ 231
- 156: test Frame1i2x.i0(X2) < I18; T:→ 231
- 157: test Frame1i2x.i0(X2) < I18; T:→ 231
- 158: I1 ← toInt(lShr(L19, 32));
- 159: I17 ← toInt(L23);
- 160: L19 ← lSub(Integer.toUnsignedLong(int[](Frame1i2x.x0(X2), iShl(iSub(I18, 1), 2))), Integer.toUnsignedLong(I17));
- 161: I23 ← toInt(L19);
- 162: I19 ← toInt(lShr(L19, 32));
- 163: I20 ← iSub(I18, 1);
- 164: X2 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X2);
- 165: setInt[](Frame1i2x.x0(X2), iShl(I20, 2), I23);
- 166: L24 ← Integer.toUnsignedLong(I1);
- 167: test toInt(lShr(L24, 32)) == 0; F:→ 227
- 168: I1 ← I18;
- 169: I17 ← toInt(lSub(Integer.toUnsignedLong(toInt(L24)), Integer.toUnsignedLong(I19))); → 149
--170: L18 ← lSub(Integer.toUnsignedLong(I9), Integer.toUnsignedLong(I17));
- 171: test toInt(lShr(L18, 32)) == 0; F:→ 231
- 172: test toInt(L18) == 0; F:→ 231
- 173: I18 ← Math.subtractExact(I7, I15); ArithmeticException:→ 231
- 174: test I18 == 1; F:→ 231
- 175: test X10 is *[]U32(i0)@xxxx; F:→ 231
- 176: test Frame1i2x.i0(X10) < 1; T:→ 231
- 177: X10 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X10);
- 178: setInt[](Frame1i2x.x0(X10), 0, I22);
- 179: I1 ← Math.subtractExact(I5, I15); ArithmeticException:→ 225
- 180: test I1 < 1; T:→ 225
- 181: test Frame1i2x.i0(X2) < I1; T:→ 225
- 182: I9 ← int[](Frame1i2x.x0(X2), iShl(iSub(I1, 1), 2));
--183: I15 ← I16; → 119
--184: test X10 is *[]U32(i0)@xxxx; F:→ 245
- 185: dropRef{X11};
- 186: I5 ← Frame1i2x.i0(X10);
- 187: I1 ← I5;
-=188: test I1 < 1; T:→ 219
- 189: I7 ← Math.subtractExact(I1, 1); ArithmeticException:→ 219
- 190: test Frame1i2x.i0(X10) < I1; T:→ 219
- 191: test Integer.toUnsignedLong(int[](Frame1i2x.x0(X10), iShl(iSub(I1, 1), 2))) == 0; F:→ 193
- 192: I1 ← I7; → 188
--193: test I1 == 1; F:→ 219
- 194: test 1 < I5; F:→ 201
- 195: I7 ← Frame1i2x.i0(X10);
- 196: test I7 < 1; T:→ 219
- 197: dropRef{X4, X2};
- 198: I1 ← iSub(I7, 1);
- 199: test I1 == 0; T:→ 202
- 200: X2 ← removeRange*[]U32(i0)@xxxx(X0, X10, 1, I1, 0); → 205
--201: dropRef{X4, X2};
--202: X2 ← X10;
- 203: addRef{X2} dropRef{X10}; → 205
--204: dropRef{X4};
--205: test Frame1i2x.i0(X2) == 0; T:→ 211
- 206: test Frame1i2x.i0(X2) == 1; F:→ 217
- 207: I1 ← int[](Frame1i2x.x0(X2), 0);
- 208: test I1 < 0; T:→ 217
- 209: dropRef{X2}; → 213
--210: dropRef{X4, X2}; → 212
--211: dropRef{X2};
--212: I1 ← 0;
--213: TState.setResultTemplates(X0, [i0]);
- 214: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
- 215: TState.setStackRest(X0, X6);
- 216: return
--217: X1 ← newStackEntry(⟦pidigits.r8t+3:141_1 return _t0 ∥ _t0=BigInt({mag: X2, signum: 1})⟧);
- 218: X1 ← TState.fillStackEntry(X0, null, X1, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h38@xxxx, null); → 274
--219: addRef(X10); X7 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I1, 1, None), loop=loop@xxx⸨mag=X10⸩, state=Absent⟧);
- 220: X1 ← TState.fillStackEntry(X0, null, X7, ⟨LoopExit(loop@xxx_break@xxx⸨i=1⸩)⟩, lmMemo_9@xxxx, null);
- 221: X7 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X10, end=I5⟧);
- 222: X1 ← TState.fillStackEntry(X0, X1, X7, ⟨x0:*[]@xxxx⟩, mMemo_24@xxxx, null);
- 223: X5 ← newStackEntry(⟦pidigits.r8t+3:395_62 q = dropLeadingZeros(q) ∥ u=X2, withRemainder=False, vSize=I3, normalizeShift=I8⟧);
- 224: X1 ← TState.fillStackEntry(X0, X1, X5, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--225: X1 ← newStackEntry(⟦pidigits.r8t+3:393_47 _t0 = subtract(uSize, j) ∥ q=X10, u=X2, j=I15, uSize=I5⟧);
- 226: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null); → 243
--227: X20 ← newStackEntry(⟦pidigits.r8t+3:373_15 _t0 = at(p, "high") ∥ u=X2, p={high: U32(I1), low: U32(I21)}, p2={high: 0x0, low: U32(I17)}, t={high: U32(I19), low: U32(I23)}⟧);
- 228: X1 ← TState.fillStackEntry(X0, null, X20, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩, loop@xxx⸨qHat=U32(b0), uStart=0⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0)⟩, mMemo_23@xxxx, null);
- 229: addRef(X11); X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨qHat=U32(I22), uStart=0⸩, it=ArrayIterator(X11, EnumerateWithKeys, I18)⟧);
- 230: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_26@xxxx, null); → 235
--231: addRef(X11); X18 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=I1, it=ArrayIterator(X11, EnumerateWithKeys, I1)⟧);
- 232: X1 ← TState.fillStackEntry(X0, null, X18, ⟨⸨[[b0], U32(i0)]; Absent⸩, ArrayIterator(x0:*[]@xxxx, EnumerateWithKeys, b0), loop@xxx⸨qHat=U32(b0), uStart=0⸩, loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, lmMemo_1@xxxx, null);
- 233: X18 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@xxx⸨qHat=U32(I22), uStart=0⸩, state=loop@xxx_state⸨borrow=U32(I17), u=X2⸩⟧);
- 234: X1 ← TState.fillStackEntry(X0, X1, X18, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_26@xxxx, null);
--235: addRef(X11); X2 ← newStackEntry(⟦pidigits.r8t+3:368_22 _t0 = iterate(v, EnumerateWithKeys, loop@xxx⸨qHat=qHat, uStart=uStart⸩, loop@xxx_state⸨borrow=borrow, u=u⸩) ∥ q=X10, uTop=U32(I9), j=I15, qHat=U32(I22), uStart=0, uSize=I5, qSize=I7, v=X11⟧);
- 236: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null); → 243
--237: I17 ← 1;
--238: X19 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=I17⸨0:LoopExit(loop@xxx_break⸨qHat=U32(I22)⸩); 1:loop@xxx_state⸨qHat=U32(I22), qHigh=0x0, rHat=U32(I1)⸩⸩, lambda=loop@xxx⸨vTop2=U32(I13), uTop3=U32(I18), vTop=U32(I12)⸩⟧);
- 239: X1 ← TState.fillStackEntry(X0, null, X19, ⟨LoopExit(loop@xxx_break⸨qHat=U32(b0)⸩)⟩, LmMemo_9@xxxx, null);
- 240: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:413_3 _t0 = iterateUnbounded(loop@xxx⸨vTop2=vTop2, uTop3=uTop3, vTop=vTop⸩, loop@xxx_state⸨qHat=qHat, qHigh=qHigh, rHat=rHat⸩)⟧, ⟨U32(b0)⟩, mMemo_15@xxxx, null);
- 241: addRef(X11); X17 ← newStackEntry(⟦pidigits.r8t+3:357_8 qHat = qHat(uTop, _t0, _t1, vTop, vTop2) ∥ q=X10, u=X2, uTop=U32(I9), j=I15, uSize=I5, qSize=I7, v=X11⟧);
- 242: X1 ← TState.fillStackEntry(X0, X1, X17, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h71@xxxx, null);
--243: X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X11⸩, it=RangeIterator(I16, I14, None)⟧);
- 244: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h40@xxxx, null); → 247
--245: X1 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I15, I14, None), loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X11⸩, state=loop@xxx_state⸨q=X10, u=X2, uTop=U32(I9)⸩⟧);
- 246: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h40@xxxx, null);
--247: X2 ← newStackEntry(⟦pidigits.r8t+3:350_60 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨uSize=uSize, vTop=vTop, vTop2=vTop2, qSize=qSize, v=v⸩, loop@xxx_state⸨q=q, u=u, uTop=uTop⸩) ∥ withRemainder=False, vSize=I3, normalizeShift=I8⟧);
- 248: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--249: dropRef{X10};
--250: X1 ← newStackEntry(⟦pidigits.r8t+3:347_53 _t0 = u32(0) ∥ u=X2, v=X11, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8, uTop=U32(I9)⟧);
- 251: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--252: X12 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I1, I9, None), loop=loop@xxx⸨n=I8⸩, state=loop@xxx_state⸨prev=U32(I10), mag=X2⸩⟧);
- 253: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
- 254: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
- 255: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
- 256: X2 ← newStackEntry(⟦pidigits.r8t+3:345_52 uTop, u = shiftMagLeft(u, normalizeShift) ∥ v=X11, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
- 257: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--258: X12 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I1, I9, None), loop=loop@xxx⸨n=I8⸩, state=loop@xxx_state⸨prev=U32(I10), mag=X11⸩⟧);
- 259: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
- 260: X9 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
- 261: X1 ← TState.fillStackEntry(X0, X1, X9, ⟨U32(0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
- 262: X9 ← newStackEntry(⟦pidigits.r8t+3:343_47 carry, v = shiftMagLeft(v, normalizeShift) ∥ u=X2, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
- 263: X1 ← TState.fillStackEntry(X0, X1, X9, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--264: addRef(X4); X1 ← newStackEntry(⟦pidigits.r8t+3:321_1 _t0 = lessThan(cmp, 0) ∥ u=X2, v=X4, withRemainder=False, cmp=1⟧);
- 265: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null); → 271
--266: addRef(X2); addRef(X4); X3 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I1, 1, None), loop=loop@xxx⸨m1=X2, m2=X4⸩, state=Absent⟧);
- 267: X1 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⟩, lmMemo_11@xxxx, null);
- 268: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_21@xxxx, null);
- 269: addRef(X4); X3 ← newStackEntry(⟦pidigits.r8t+3:320_0 cmp = compareMags(u, v) ∥ u=X2, v=X4, withRemainder=False⟧);
- 270: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h165@xxxx, null);
--271: X2 ← newStackEntry(⟦pidigits.r8t+3:157_25 result = divMags(_t0, _t1, withRemainder) ∥ y=BigInt({mag: X4, signum: 1}), withRemainder=False, signum=1⟧);
- 272: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h62@xxxx, null);
- 273: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:141_0 _t0 = div(x, y, False)⟧, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h38@xxxx, null);
--274: X6 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:48_6 _t0 = div(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, X6); → 284
--275: X1 ← newStackEntry(⟦pidigits.r8t+3:48_4 _t1 = multiply(s, j) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1}), _t0=BigInt({mag: X2, signum: I3})⟧);
- 276: X6 ← TState.fillStackEntry(X0, null, X1, ⟨b0⟩, mMemo_x@xxxx, X6); → 284
--277: X2 ← newStackEntry(⟦pidigits.r8t+3:48_3 _t0 = add(_t0, r) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
- 278: X6 ← TState.fillStackEntry(X0, X1, X2, ⟨b0⟩, mMemo_x@xxxx, X6); → 284
--279: dropRef{X7};
--280: X6 ← newStackEntry(⟦pidigits.r8t+3:48_2 _t0 = multiply(q, j) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), r=BigInt({mag: X2, signum: I3}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
- 281: X6 ← TState.fillStackEntry(X0, X1, X6, ⟨b0⟩, mMemo_x@xxxx, null); → 284
--282: X6 ← newStackEntry(⟦pidigits.r8t+3:46_0 q, r, s, t = un{q,r,s,t}(_a0) ∥ _a0={q: BigInt({mag: X1, signum: 1}), r: BigInt({mag: X2, signum: I3}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X4, signum: 1})}, j=I5⟧);
- 283: X6 ← TState.fillStackEntry(X0, null, X6, ⟨b0⟩, mMemo_x@xxxx, null);
--284: TState.setStackRest(X0, X6);
- 285: TState.setUnwoundFrom(X0, target:extract_x1);
- 286: return
+ 148: I17 ← -1;
+ 149: I18 ← Frame1i2x.i0(X9);
+=150: I19 ← iAdd(I17, 1);
+ 151: test I19 < I18; F:→ 172
+ 152: L23 ← lMul(Integer.toUnsignedLong(I22), Integer.toUnsignedLong(int[](Frame1i2x.x0(X9), iShl(I19, 2))));
+ 153: I21 ← toInt(L23);
+ 154: L25 ← lAdd(Integer.toUnsignedLong(I21), Integer.toUnsignedLong(I1));
+ 155: test toInt(lShr(L25, 32)) == 0; F:→ 238
+ 156: I20 ← iAdd(I19, 1);
+ 157: test I20 < 1; T:→ 238
+ 158: test Frame1i2x.i0(X2) < I20; T:→ 238
+ 159: test Frame1i2x.i0(X2) < I20; T:→ 238
+ 160: I1 ← toInt(lShr(L23, 32));
+ 161: I17 ← toInt(L25);
+ 162: L23 ← lSub(Integer.toUnsignedLong(int[](Frame1i2x.x0(X2), iShl(iSub(I20, 1), 2))), Integer.toUnsignedLong(I17));
+ 163: I25 ← toInt(L23);
+ 164: I23 ← toInt(lShr(L23, 32));
+ 165: I20 ← iSub(I20, 1);
+ 166: X2 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X2);
+ 167: setInt[](Frame1i2x.x0(X2), iShl(I20, 2), I25);
+ 168: L26 ← Integer.toUnsignedLong(I1);
+ 169: test toInt(lShr(L26, 32)) == 0; F:→ 233
+ 170: I1 ← toInt(lSub(Integer.toUnsignedLong(toInt(L26)), Integer.toUnsignedLong(I23)));
+ 171: I17 ← I19; → 150
+-172: L19 ← lSub(Integer.toUnsignedLong(I10), Integer.toUnsignedLong(I1));
+ 173: test toInt(lShr(L19, 32)) == 0; F:→ 238
+ 174: test toInt(L19) == 0; F:→ 238
+ 175: I19 ← Math.subtractExact(I7, I15); ArithmeticException:→ 238
+ 176: test I19 == 1; F:→ 238
+ 177: test X11 is *[]U32(i0)@xxxx; F:→ 238
+ 178: test Frame1i2x.i0(X11) < 1; T:→ 238
+ 179: X11 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X11);
+ 180: setInt[](Frame1i2x.x0(X11), 0, I22);
+ 181: I1 ← Math.subtractExact(I5, I15); ArithmeticException:→ 231
+ 182: test I1 < 1; T:→ 231
+ 183: test Frame1i2x.i0(X2) < I1; T:→ 231
+ 184: I10 ← int[](Frame1i2x.x0(X2), iShl(iSub(I1, 1), 2));
+-185: I15 ← I16; → 119
+-186: test X11 is *[]U32(i0)@xxxx; F:→ 250
+ 187: dropRef{X9};
+ 188: I5 ← Frame1i2x.i0(X11);
+ 189: I1 ← 0;
+ 190: I7 ← I5;
+=191: test I7 < 1; T:→ 225
+ 192: I9 ← Math.subtractExact(I7, 1); ArithmeticException:→ 225
+ 193: test Frame1i2x.i0(X11) < I7; T:→ 225
+ 194: test Integer.toUnsignedLong(int[](Frame1i2x.x0(X11), iShl(iSub(I7, 1), 2))) == 0; F:→ 197
+ 195: I1 ← 0;
+ 196: I7 ← I9; → 191
+-197: test I7 == 1; F:→ 225
+ 198: test 1 < I5; F:→ 205
+ 199: I1 ← Frame1i2x.i0(X11);
+ 200: test I1 < 1; T:→ 223
+ 201: dropRef{X4, X2};
+ 202: I1 ← iSub(I1, 1);
+ 203: test I1 == 0; T:→ 206
+ 204: X2 ← removeRange*[]U32(i0)@xxxx(X0, X11, 1, I1, 0); → 209
+-205: dropRef{X4, X2};
+-206: X2 ← X11;
+ 207: addRef{X2} dropRef{X11}; → 209
+-208: dropRef{X4};
+-209: test Frame1i2x.i0(X2) == 0; T:→ 215
+ 210: test Frame1i2x.i0(X2) == 1; F:→ 221
+ 211: I1 ← int[](Frame1i2x.x0(X2), 0);
+ 212: test I1 < 0; T:→ 221
+ 213: dropRef{X2}; → 217
+-214: dropRef{X4, X2}; → 216
+-215: dropRef{X2};
+-216: I1 ← 0;
+-217: TState.setResultTemplates(X0, [i0]);
+ 218: setInt[](TState.fnResultBytes(X0, 4), 0, I1);
+ 219: TState.setStackRest(X0, X6);
+ 220: return
+-221: X1 ← newStackEntry(⟦pidigits.r8t+3:141_1 return _t0 ∥ _t0=BigInt({mag: X2, signum: 1})⟧);
+ 222: X1 ← TState.fillStackEntry(X0, null, X1, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h42@xxxx, null); → 279
+-223: I1 ← 1;
+ 224: I7 ← I9;
+-225: addRef(X11); X9 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=I1⸨0:Absent; 1:LoopExit(loop@xxx_break@xxx⸨i=1⸩)⸩, loop=loop@xxx⸨mag=X11⸩, it=ReversedRangeIterator(I7, 1, None)⟧);
+ 226: X1 ← TState.fillStackEntry(X0, null, X9, ⟨LoopExit(loop@xxx_break@xxx⸨i=1⸩)⟩, lmMemo_9@xxxx, null);
+ 227: X7 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X11, end=I5⟧);
+ 228: X1 ← TState.fillStackEntry(X0, X1, X7, ⟨x0:*[]@xxxx⟩, mMemo_26@xxxx, null);
+ 229: X5 ← newStackEntry(⟦pidigits.r8t+3:395_62 q = dropLeadingZeros(q) ∥ u=X2, withRemainder=False, vSize=I3, normalizeShift=I8⟧);
+ 230: X1 ← TState.fillStackEntry(X0, X1, X5, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-231: X1 ← newStackEntry(⟦pidigits.r8t+3:393_47 _t0 = subtract(uSize, j) ∥ q=X11, u=X2, j=I15, uSize=I5⟧);
+ 232: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h75@xxxx, null); → 248
+-233: X20 ← newStackEntry(⟦pidigits.r8t+3:373_15 _t0 = at(p, "high") ∥ u=X2, p={high: U32(I1), low: U32(I21)}, p2={high: 0x0, low: U32(I17)}, t={high: U32(I23), low: U32(I25)}⟧);
+ 234: X1 ← TState.fillStackEntry(X0, null, X20, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩, TransformedLoop(ArrayAccessor(x0:*[]@xxxx, EnumerateWithKeys), loop@xxx⸨qHat=U32(b0), uStart=0⸩), SimpleRangeIterator(i0, b0)⟩, mMemo_23@xxxx, null);
+ 235: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.NextStateTransformedLoop.afterAt⟧, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩, TransformedLoop(ArrayAccessor(x0:*[]@xxxx, EnumerateWithKeys), loop@xxx⸨qHat=U32(b0), uStart=0⸩), SimpleRangeIterator(i0, b0)⟩, mMemo_25@xxxx, null);
+ 236: addRef(X9); X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor(X9, EnumerateWithKeys), loop@xxx⸨qHat=U32(I22), uStart=0⸩), it=SimpleRangeIterator(I19, I18)⟧);
+ 237: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_30@xxxx, null); → 240
+-238: addRef(X9); X19 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨borrow=U32(I1), u=X2⸩, loop=TransformedLoop(ArrayAccessor(X9, EnumerateWithKeys), loop@xxx⸨qHat=U32(I22), uStart=0⸩), it=SimpleRangeIterator(I17, I18)⟧);
+ 239: X1 ← TState.fillStackEntry(X0, null, X19, ⟨loop@xxx_state⸨borrow=U32(b0), u=x0:*[]@xxxx⸩⟩, LmMemo_30@xxxx, null);
+-240: addRef(X9); X2 ← newStackEntry(⟦pidigits.r8t+3:368_22 _t0 = iterate(v, EnumerateWithKeys, loop@xxx⸨qHat=qHat, uStart=uStart⸩, loop@xxx_state⸨borrow=borrow, u=u⸩) ∥ q=X11, uTop=U32(I10), j=I15, qHat=U32(I22), uStart=0, uSize=I5, qSize=I7, v=X9⟧);
+ 241: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h75@xxxx, null); → 248
+-242: I17 ← 1;
+-243: X19 ← newStackEntry(⟦LoopCore.IterateUnbounded.afterAt ∥ state=I17⸨0:LoopExit(loop@xxx_break⸨qHat=U32(I22)⸩); 1:loop@xxx_state⸨qHat=U32(I22), qHigh=0x0, rHat=U32(I1)⸩⸩, lambda=loop@xxx⸨vTop2=U32(I13), uTop3=U32(I18), vTop=U32(I12)⸩⟧);
+ 244: X1 ← TState.fillStackEntry(X0, null, X19, ⟨LoopExit(loop@xxx_break⸨qHat=U32(b0)⸩)⟩, LmMemo_9@xxxx, null);
+ 245: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:413_3 _t0 = iterateUnbounded(loop@xxx⸨vTop2=vTop2, uTop3=uTop3, vTop=vTop⸩, loop@xxx_state⸨qHat=qHat, qHigh=qHigh, rHat=rHat⸩)⟧, ⟨U32(b0)⟩, mMemo_15@xxxx, null);
+ 246: addRef(X9); X17 ← newStackEntry(⟦pidigits.r8t+3:357_8 qHat = qHat(uTop, _t0, _t1, vTop, vTop2) ∥ q=X11, u=X2, uTop=U32(I10), j=I15, uSize=I5, qSize=I7, v=X9⟧);
+ 247: X1 ← TState.fillStackEntry(X0, X1, X17, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩, loop@xxx⸨uSize=b0, vTop=U32(i0), vTop2=U32(i0), qSize=b0, v=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_h75@xxxx, null);
+-248: X2 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X9⸩, it=RangeIterator(I16, I14, None)⟧);
+ 249: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h45@xxxx, null); → 252
+-250: X1 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨q=X11, u=X2, uTop=U32(I10)⸩, loop=loop@xxx⸨uSize=I5, vTop=U32(I12), vTop2=U32(I13), qSize=I7, v=X9⸩, it=RangeIterator(I15, I14, None)⟧);
+ 251: X1 ← TState.fillStackEntry(X0, null, X1, ⟨loop@xxx_state⸨q=x0:*[]@xxxx, u=x0:*[]@xxxx, uTop=U32(i0)⸩⟩, lmMemo_h45@xxxx, null);
+-252: X2 ← newStackEntry(⟦pidigits.r8t+3:350_60 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨uSize=uSize, vTop=vTop, vTop2=vTop2, qSize=qSize, v=v⸩, loop@xxx_state⸨q=q, u=u, uTop=uTop⸩) ∥ withRemainder=False, vSize=I3, normalizeShift=I8⟧);
+ 253: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-254: dropRef{X11};
+-255: X1 ← newStackEntry(⟦pidigits.r8t+3:347_53 _t0 = u32(0) ∥ u=X2, v=X9, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8, uTop=U32(I10)⟧);
+ 256: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-257: X12 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨prev=U32(I1), mag=X2⸩, loop=loop@xxx⸨n=I8⸩, it=RangeIterator(I10, I11, None)⟧);
+ 258: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_11@xxxx, null);
+ 259: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
+ 260: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_21@xxxx, null);
+ 261: X2 ← newStackEntry(⟦pidigits.r8t+3:345_52 uTop, u = shiftMagLeft(u, normalizeShift) ∥ v=X9, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
+ 262: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-263: X12 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨prev=U32(I1), mag=X9⸩, loop=loop@xxx⸨n=I8⸩, it=RangeIterator(I10, I11, None)⟧);
+ 264: X1 ← TState.fillStackEntry(X0, null, X12, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_11@xxxx, null);
+ 265: X9 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I8⟧);
+ 266: X1 ← TState.fillStackEntry(X0, X1, X9, ⟨U32(0), x0:*[]@xxxx⟩, mMemo_21@xxxx, null);
+ 267: X9 ← newStackEntry(⟦pidigits.r8t+3:343_47 carry, v = shiftMagLeft(v, normalizeShift) ∥ u=X2, withRemainder=False, vSize=I3, uSize=I5, qSize=I7, normalizeShift=I8⟧);
+ 268: X1 ← TState.fillStackEntry(X0, X1, X9, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-269: addRef(X4); X1 ← newStackEntry(⟦pidigits.r8t+3:321_1 _t0 = lessThan(cmp, 0) ∥ u=X2, v=X4, withRemainder=False, cmp=1⟧);
+ 270: X1 ← TState.fillStackEntry(X0, null, X1, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null); → 276
+-271: addRef(X2); addRef(X4); X3 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=Absent, loop=loop@xxx⸨m1=X2, m2=X4⸩, it=ReversedRangeIterator(I1, 1, None)⟧);
+ 272: X1 ← TState.fillStackEntry(X0, null, X3, ⟨LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⟩, LmMemo_11@xxxx, null);
+ 273: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_21@xxxx, null);
+ 274: addRef(X4); X3 ← newStackEntry(⟦pidigits.r8t+3:320_0 cmp = compareMags(u, v) ∥ u=X2, v=X4, withRemainder=False⟧);
+ 275: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨{q: x0:*[]@xxxx, r: None}⟩, mMemo_h173@xxxx, null);
+-276: X2 ← newStackEntry(⟦pidigits.r8t+3:157_25 result = divMags(_t0, _t1, withRemainder) ∥ y=BigInt({mag: X4, signum: 1}), withRemainder=False, signum=1⟧);
+ 277: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h66@xxxx, null);
+ 278: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:141_0 _t0 = div(x, y, False)⟧, ⟨BigInt({mag: x0:*[]@xxxx, signum: b0})⟩, mMemo_h42@xxxx, null);
+-279: X6 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:48_6 _t0 = div(_t0, _t1)⟧, ⟨b0⟩, mMemo_x@xxxx, X6); → 289
+-280: X1 ← newStackEntry(⟦pidigits.r8t+3:48_4 _t1 = multiply(s, j) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1}), _t0=BigInt({mag: X2, signum: I3})⟧);
+ 281: X6 ← TState.fillStackEntry(X0, null, X1, ⟨b0⟩, mMemo_x@xxxx, X6); → 289
+-282: X2 ← newStackEntry(⟦pidigits.r8t+3:48_3 _t0 = add(_t0, r) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
+ 283: X6 ← TState.fillStackEntry(X0, X1, X2, ⟨b0⟩, mMemo_x@xxxx, X6); → 289
+-284: dropRef{X7};
+-285: X6 ← newStackEntry(⟦pidigits.r8t+3:48_2 _t0 = multiply(q, j) ∥ j=BigInt({mag: [U32(I5)], signum: 1}), r=BigInt({mag: X2, signum: I3}), s=BigInt({mag: [], signum: 0}), t=BigInt({mag: X4, signum: 1})⟧);
+ 286: X6 ← TState.fillStackEntry(X0, X1, X6, ⟨b0⟩, mMemo_x@xxxx, null); → 289
+-287: X6 ← newStackEntry(⟦pidigits.r8t+3:46_0 q, r, s, t = un{q,r,s,t}(_a0) ∥ _a0={q: BigInt({mag: X1, signum: 1}), r: BigInt({mag: X2, signum: I3}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: X4, signum: 1})}, j=I5⟧);
+ 288: X6 ← TState.fillStackEntry(X0, null, X6, ⟨b0⟩, mMemo_x@xxxx, null);
+-289: TState.setStackRest(X0, X6);
+ 290: TState.setUnwoundFrom(X0, target:extract_x1);
+ 291: return
 
 compose_x2({q: BigInt({mag: x1:*[]@xxxx, signum: 1}), r: BigInt({mag: x2:*[]@xxxx, signum: i3}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x4:*[]@xxxx, signum: 1})}, {q: BigInt({mag: x5:*[]@xxxx, signum: 1}), r: BigInt({mag: x6:*[]@xxxx, signum: i7}), s: BigInt({mag: [], signum: 0}), t: BigInt({mag: x8:*[]@xxxx, signum: 1})}):
    1: CodeGenTarget.incrementCallCount(target:compose_x2);
@@ -1080,278 +1085,277 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
    1: CodeGenTarget.incrementCallCount(target:add_x4);
    2: X5 ← null;
    3: test I2 == 0; T:→ 11
-   4: test I4 == 0; T:→ 94
-   5: test I2 == I4; F:→ 56
-   6: test X1 is *[]U32(i0)@xxxx; F:→ 127
-   7: test X3 is *[]U32(i0)@xxxx; F:→ 127
+   4: test I4 == 0; T:→ 93
+   5: test I2 == I4; F:→ 55
+   6: test X1 is *[]U32(i0)@xxxx; F:→ 122
+   7: test X3 is *[]U32(i0)@xxxx; F:→ 122
    8: test Frame1i2x.i0(X1) < Frame1i2x.i0(X3); T:→ 14
    9: X4 ← X1;
   10: addRef{X1}; → 17
 - 11: dropRef{X1};
   12: X1 ← X3;
-  13: I2 ← I4; → 95
+  13: I2 ← I4; → 94
 - 14: X4 ← X3;
   15: X3 ← X1;
   16: addRef{X3};
-- 17: I6 ← 1;
-  18: I7 ← Frame1i2x.i0(X4);
-  19: I8 ← 0;
-= 20: test I7 < I6; T:→ 44
-  21: I9 ← Math.addExact(I6, 1); ArithmeticException:→ 122
-  22: test Frame1i2x.i0(X3) < I6; T:→ 28
-  23: test I6 < 1; T:→ 122
-  24: test Frame1i2x.i0(X3) < I6; T:→ 122
-  25: L10 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X3), iShl(iSub(I6, 1), 2))), Integer.toUnsignedLong(I8));
-  26: test toInt(lShr(L10, 32)) == 0; F:→ 122
+- 17: I6 ← 0;
+  18: I7 ← 1;
+  19: I8 ← Frame1i2x.i0(X4);
+= 20: test I8 < I7; T:→ 42
+  21: I9 ← Math.addExact(I7, 1); ArithmeticException:→ 117
+  22: test Frame1i2x.i0(X3) < I7; T:→ 28
+  23: test I7 < 1; T:→ 117
+  24: test Frame1i2x.i0(X3) < I7; T:→ 117
+  25: L10 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X3), iShl(iSub(I7, 1), 2))), Integer.toUnsignedLong(I6));
+  26: test toInt(lShr(L10, 32)) == 0; F:→ 117
   27: I10 ← toInt(L10); → 30
-- 28: test Integer.toUnsignedLong(I8) == 0; T:→ 42
-  29: I10 ← I8;
-- 30: test Frame1i2x.i0(X4) < I6; T:→ 122
-  31: test Frame1i2x.i0(X4) < I6; T:→ 122
-  32: L11 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X4), iShl(iSub(I6, 1), 2))), Integer.toUnsignedLong(I10));
-  33: I8 ← toInt(L11);
+- 28: test Integer.toUnsignedLong(I6) == 0; T:→ 52
+  29: I10 ← I6;
+- 30: test Frame1i2x.i0(X4) < I7; T:→ 117
+  31: test Frame1i2x.i0(X4) < I7; T:→ 117
+  32: L11 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X4), iShl(iSub(I7, 1), 2))), Integer.toUnsignedLong(I10));
+  33: I6 ← toInt(L11);
   34: I11 ← toInt(lShr(L11, 32));
-  35: I6 ← iSub(I6, 1);
+  35: I7 ← iSub(I7, 1);
   36: X4 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X4);
-  37: setInt[](Frame1i2x.x0(X4), iShl(I6, 2), I8);
-  38: L12 ← Integer.toUnsignedLong(I11);
-  39: test toInt(lShr(L12, 32)) == 0; F:→ 118
-  40: I6 ← I9;
-  41: I8 ← toInt(L12); → 20
-- 42: test I8 == 0; F:→ 122
-  43: dropRef{X1, X3}; → 55
-- 44: dropRef{X3};
-  45: test Integer.toUnsignedLong(I8) == 0; T:→ 54
-  46: test I8 == 1; F:→ 116
-  47: I6 ← Frame1i2x.i0(X4);
-  48: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X4, iAdd(I6, 1)) == 0; T:→ 116
-  49: X4 ← removeRange*[]U32(i0)@xxxx(X0, X4, I6, 0, 1);
-  50: test I6 < Frame1i2x.i0(X4); F:→ 110
-  51: dropRef{X1};
-  52: setInt[](Frame1i2x.x0(X4), iShl(I6, 2), 1);
-  53: X1 ← X4; → 95
-- 54: dropRef{X1};
-- 55: X1 ← X4; → 95
-- 56: test I2 == 1; F:→ 127
-  57: test I4 == -1; F:→ 127
-  58: test X1 is *[]U32(i0)@xxxx; F:→ 127
-  59: test X3 is *[]U32(i0)@xxxx; F:→ 127
-  60: I2 ← Frame1i2x.i0(X1);
-  61: I4 ← Frame1i2x.i0(X3);
-  62: test I2 == I4; T:→ 64
-  63: test I2 < I4; T:→ 82, F:→ 73
-= 64: test I2 < 1; T:→ 79
-  65: I4 ← Math.subtractExact(I2, 1); ArithmeticException:→ 105
-  66: test Frame1i2x.i0(X1) < I2; T:→ 105
-  67: test Frame1i2x.i0(X3) < I2; T:→ 105
-  68: I6 ← int[](Frame1i2x.x0(X1), iShl(iSub(I2, 1), 2));
-  69: I2 ← int[](Frame1i2x.x0(X3), iShl(iSub(I2, 1), 2));
-  70: test I6 == I2; F:→ 72
-  71: I2 ← I4; → 64
-- 72: test Integer.toUnsignedLong(I6) < Integer.toUnsignedLong(I2); T:→ 82
-- 73: [x0:*[]@xxxx] ← subtractMags_x6(X0, addRef(X1), X3); X4 ← stackRest; unwind:→ 103
-  74: X2 ← TState.fnResult(X0, 0);
-  75: TState.clearResults(X0);
-  76: test X4 == null; T:→ 88
-  77: X3 ← newStackEntry(⟦pidigits.r8t+3:112_43 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=1⟧);
-  78: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 89
-- 79: dropRef{X1, X3};
-  80: X1 ← [];
-  81: I2 ← 0; → 95
-- 82: [x0:*[]@xxxx] ← subtractMags_x6(X0, X3, addRef(X1)); X4 ← stackRest; unwind:→ 101
-  83: X2 ← TState.fnResult(X0, 0);
-  84: TState.clearResults(X0);
-  85: test X4 == null; T:→ 91
-  86: X3 ← newStackEntry(⟦pidigits.r8t+3:112_50 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=-1⟧);
-  87: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 92
-- 88: dropRef{X1};
-- 89: X1 ← X2;
-  90: I2 ← 1; → 95
-- 91: dropRef{X1};
-- 92: X1 ← X2;
-  93: I2 ← -1; → 95
-- 94: dropRef{X3};
-- 95: TState.setResultTemplates(X0, [BigInt({mag: x0:*[]@xxxx, signum: i0})]);
-  96: X3 ← TState.fnResultBytes(X0, 4);
-  97: setObject[](TState.fnResults(X0, 1), 0, X1);
-  98: setInt[](X3, 0, I2);
-  99: TState.setStackRest(X0, X5);
- 100: return
--101: X2 ← newStackEntry(⟦pidigits.r8t+3:112_50 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=-1⟧);
- 102: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 129
--103: X2 ← newStackEntry(⟦pidigits.r8t+3:112_43 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=1⟧);
- 104: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 129
--105: addRef(X1); addRef(X3); X4 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I2, 1, None), loop=loop@xxx⸨m1=X1, m2=X3⸩, state=Absent⟧);
- 106: X4 ← TState.fillStackEntry(X0, null, X4, ⟨⸨Absent; LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⸩⟩, LmMemo_11@xxxx, null);
- 107: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_21@xxxx, null);
- 108: X2 ← newStackEntry(⟦pidigits.r8t+3:108_31 cmp = compareMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), y=BigInt({mag: X3, signum: -1})⟧);
- 109: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 129
--110: X3 ← TState.fillStackEntry(X0, null, ⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([0x1], EnumerateAllKeys, 0)⟧, ⟨⸨[[1], U32(1)]; Absent⸩, ArrayIterator([U32(1)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
- 111: X5 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveWithOffset(I6)), state=X4⟧);
- 112: X3 ← TState.fillStackEntry(X0, X3, X5, ⟨x0:*[]@xxxx⟩, lmMemo_5@xxxx, null);
- 113: X4 ← TState.fillStackEntry(X0, X3, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_6@xxxx, null);
- 114: X4 ← TState.fillStackEntry(X0, X4, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_8@xxxx, null);
- 115: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:224_19 x = concatUpdate(x, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_h43@xxxx, null); → 125
--116: X3 ← newStackEntry(⟦pidigits.r8t+3:210_10 branch b_2 if _t0 is not LoopExit ∥ _t0=loop@xxx_state⸨carry=U32(I8), x=X4⸩⟧);
- 117: X4 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx⟩, mMemo_h43@xxxx, null); → 125
--118: X5 ← newStackEntry(⟦pidigits.r8t+3:221_23 _t0 = at(y_i_plus_carry, "high") ∥ x=X4, y_i_plus_carry={high: 0x0, low: U32(I10)}, high=U32(I11)⟧);
- 119: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩, loop@xxx⸨y=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_20@xxxx, null);
- 120: X5 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨y=X3⸩, it=RangeIterator(I9, I7, None)⟧);
- 121: X4 ← TState.fillStackEntry(X0, X4, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null); → 124
--122: X5 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I6, I7, None), loop=loop@xxx⸨y=X3⸩, state=loop@xxx_state⸨carry=U32(I8), x=X4⸩⟧);
- 123: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null);
--124: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:210_9 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨carry=carry, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_h43@xxxx, null);
--125: X3 ← newStackEntry(⟦pidigits.r8t+3:106_22 _t0 = addMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: I2})⟧);
- 126: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 129
--127: X5 ← newStackEntry(⟦pidigits.r8t+3:101_0 _t0 = _(x) ∥ x=BigInt({mag: X1, signum: I2}), y=BigInt({mag: X3, signum: I4})⟧);
- 128: X5 ← TState.fillStackEntry(X0, null, X5, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null);
--129: TState.setStackRest(X0, X5);
- 130: TState.setUnwoundFrom(X0, target:add_x4);
- 131: return
+  37: setInt[](Frame1i2x.x0(X4), iShl(I7, 2), I6);
+  38: L6 ← Integer.toUnsignedLong(I11);
+  39: test toInt(lShr(L6, 32)) == 0; F:→ 113
+  40: I6 ← toInt(L6);
+  41: I7 ← I9; → 20
+- 42: test Integer.toUnsignedLong(I6) == 0; T:→ 53
+  43: test I6 == 1; F:→ 117
+  44: I9 ← Frame1i2x.i0(X4);
+  45: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X4, iAdd(I9, 1)) == 0; T:→ 117
+  46: dropRef{X3};
+  47: X3 ← removeRange*[]U32(i0)@xxxx(X0, X4, I9, 0, 1);
+  48: test I9 < Frame1i2x.i0(X3); F:→ 109
+  49: dropRef{X1};
+  50: setInt[](Frame1i2x.x0(X3), iShl(I9, 2), 1);
+  51: X1 ← X3; → 94
+- 52: test I6 == 0; F:→ 117
+- 53: dropRef{X1, X3};
+  54: X1 ← X4; → 94
+- 55: test I2 == 1; F:→ 122
+  56: test I4 == -1; F:→ 122
+  57: test X1 is *[]U32(i0)@xxxx; F:→ 122
+  58: test X3 is *[]U32(i0)@xxxx; F:→ 122
+  59: I2 ← Frame1i2x.i0(X1);
+  60: I4 ← Frame1i2x.i0(X3);
+  61: test I2 == I4; T:→ 63
+  62: test I2 < I4; T:→ 81, F:→ 72
+= 63: test I2 < 1; T:→ 78
+  64: I4 ← Math.subtractExact(I2, 1); ArithmeticException:→ 104
+  65: test Frame1i2x.i0(X1) < I2; T:→ 104
+  66: test Frame1i2x.i0(X3) < I2; T:→ 104
+  67: I6 ← int[](Frame1i2x.x0(X1), iShl(iSub(I2, 1), 2));
+  68: I2 ← int[](Frame1i2x.x0(X3), iShl(iSub(I2, 1), 2));
+  69: test I6 == I2; F:→ 71
+  70: I2 ← I4; → 63
+- 71: test Integer.toUnsignedLong(I6) < Integer.toUnsignedLong(I2); T:→ 81
+- 72: [x0:*[]@xxxx] ← subtractMags_x6(X0, addRef(X1), X3); X4 ← stackRest; unwind:→ 102
+  73: X2 ← TState.fnResult(X0, 0);
+  74: TState.clearResults(X0);
+  75: test X4 == null; T:→ 87
+  76: X3 ← newStackEntry(⟦pidigits.r8t+3:112_43 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=1⟧);
+  77: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 88
+- 78: dropRef{X1, X3};
+  79: X1 ← [];
+  80: I2 ← 0; → 94
+- 81: [x0:*[]@xxxx] ← subtractMags_x6(X0, X3, addRef(X1)); X4 ← stackRest; unwind:→ 100
+  82: X2 ← TState.fnResult(X0, 0);
+  83: TState.clearResults(X0);
+  84: test X4 == null; T:→ 90
+  85: X3 ← newStackEntry(⟦pidigits.r8t+3:112_50 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=-1⟧);
+  86: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 91
+- 87: dropRef{X1};
+- 88: X1 ← X2;
+  89: I2 ← 1; → 94
+- 90: dropRef{X1};
+- 91: X1 ← X2;
+  92: I2 ← -1; → 94
+- 93: dropRef{X3};
+- 94: TState.setResultTemplates(X0, [BigInt({mag: x0:*[]@xxxx, signum: i0})]);
+  95: X3 ← TState.fnResultBytes(X0, 4);
+  96: setObject[](TState.fnResults(X0, 1), 0, X1);
+  97: setInt[](X3, 0, I2);
+  98: TState.setStackRest(X0, X5);
+  99: return
+-100: X2 ← newStackEntry(⟦pidigits.r8t+3:112_50 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=-1⟧);
+ 101: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 124
+-102: X2 ← newStackEntry(⟦pidigits.r8t+3:112_43 mag = subtractMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), cmp=1⟧);
+ 103: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 124
+-104: addRef(X1); addRef(X3); X4 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=Absent, loop=loop@xxx⸨m1=X1, m2=X3⸩, it=ReversedRangeIterator(I2, 1, None)⟧);
+ 105: X4 ← TState.fillStackEntry(X0, null, X4, ⟨⸨Absent; LoopExit(loop@xxx_break@xxx⸨m1_i=U32(i0), m2_i=U32(i0)⸩)⸩⟩, LmMemo_12@xxxx, null);
+ 106: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:190_15 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨m1=m1, m2=m2⸩, Absent)⟧, ⟨i0⟩, mMemo_22@xxxx, null);
+ 107: X2 ← newStackEntry(⟦pidigits.r8t+3:108_31 cmp = compareMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: 1}), y=BigInt({mag: X3, signum: -1})⟧);
+ 108: X5 ← TState.fillStackEntry(X0, X4, X2, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 124
+-109: X4 ← newStackEntry(⟦LoopCore.enumerateDefault ∥ collection=[0x1], eKind=EnumerateAllKeys, loop=SaverLoop(SaveWithOffset(I9)), state=X3⟧);
+ 110: X4 ← TState.fillStackEntry(X0, null, X4, ⟨x0:*[]@xxxx⟩, mMemo_10@xxxx, null);
+ 111: X4 ← TState.fillStackEntry(X0, X4, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_12@xxxx, null);
+ 112: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:224_19 x = concatUpdate(x, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_h48@xxxx, null); → 120
+-113: X5 ← newStackEntry(⟦pidigits.r8t+3:221_23 _t0 = at(y_i_plus_carry, "high") ∥ x=X4, y_i_plus_carry={high: 0x0, low: U32(I10)}, high=U32(I11)⟧);
+ 114: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩, loop@xxx⸨y=x0:*[]@xxxx⸩, RangeIterator(b0, b0, None)⟩, mMemo_20@xxxx, null);
+ 115: X5 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨y=X3⸩, it=RangeIterator(I9, I8, None)⟧);
+ 116: X4 ← TState.fillStackEntry(X0, X4, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_24@xxxx, null); → 119
+-117: X5 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨carry=U32(I6), x=X4⸩, loop=loop@xxx⸨y=X3⸩, it=RangeIterator(I7, I8, None)⟧);
+ 118: X4 ← TState.fillStackEntry(X0, null, X5, ⟨⸨LoopExit(loop@xxx_break⸨carry=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨carry=U32(b0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_24@xxxx, null);
+-119: X4 ← TState.fillStackEntry(X0, X4, ⟦pidigits.r8t+3:210_9 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨carry=carry, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_h48@xxxx, null);
+-120: X3 ← newStackEntry(⟦pidigits.r8t+3:106_22 _t0 = addMags(_t0, _t1) ∥ x=BigInt({mag: X1, signum: I2})⟧);
+ 121: X5 ← TState.fillStackEntry(X0, X4, X3, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null); → 124
+-122: X5 ← newStackEntry(⟦pidigits.r8t+3:101_0 _t0 = _(x) ∥ x=BigInt({mag: X1, signum: I2}), y=BigInt({mag: X3, signum: I4})⟧);
+ 123: X5 ← TState.fillStackEntry(X0, null, X5, ⟨BigInt({mag: x0:*[]@xxxx, signum: i0})⟩, mMemo_x@xxxx, null);
+-124: TState.setStackRest(X0, X5);
+ 125: TState.setUnwoundFrom(X0, target:add_x4);
+ 126: return
 
 multiplyMagByU32_x5(x1:*[]@xxxx, U32(i2)):
   1: CodeGenTarget.incrementCallCount(target:multiplyMagByU32_x5);
   2: test Integer.bitCount(I2) == 1; F:→ 22
   3: I3 ← NumberCore.bitFirstOne(I2);
-  4: test I3 < 32; F:→ 75
+  4: test I3 < 32; F:→ 72
   5: test I3 == 0; T:→ 51
-  6: test X1 is *[]U32(i0)@xxxx; F:→ 75
-  7: I2 ← 1;
-  8: I4 ← Frame1i2x.i0(X1);
-  9: I5 ← 0;
-=10: test I4 < I2; T:→ 44
- 11: I6 ← Math.addExact(I2, 1); ArithmeticException:→ 70
- 12: test I2 < 1; T:→ 70
- 13: test Frame1i2x.i0(X1) < I2; T:→ 70
- 14: test Frame1i2x.i0(X1) < I2; T:→ 70
- 15: I7 ← int[](Frame1i2x.x0(X1), iShl(iSub(I2, 1), 2));
- 16: I5 ← toInt(Long.rotateLeft(lAdd(lShl(I5, 32), Integer.toUnsignedLong(I7)), I3));
- 17: I2 ← iSub(I2, 1);
+  6: test X1 is *[]U32(i0)@xxxx; F:→ 72
+  7: I2 ← 0;
+  8: I4 ← 1;
+  9: I5 ← Frame1i2x.i0(X1);
+=10: test I5 < I4; T:→ 44
+ 11: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 67
+ 12: test I4 < 1; T:→ 67
+ 13: test Frame1i2x.i0(X1) < I4; T:→ 67
+ 14: test Frame1i2x.i0(X1) < I4; T:→ 67
+ 15: I7 ← int[](Frame1i2x.x0(X1), iShl(iSub(I4, 1), 2));
+ 16: I2 ← toInt(Long.rotateLeft(lAdd(lShl(I2, 32), Integer.toUnsignedLong(I7)), I3));
+ 17: I4 ← iSub(I4, 1);
  18: X1 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X1);
- 19: setInt[](Frame1i2x.x0(X1), iShl(I2, 2), I5);
- 20: I2 ← I6;
- 21: I5 ← I7; → 10
--22: test X1 is *[]U32(i0)@xxxx; F:→ 75
- 23: I3 ← 1;
- 24: I4 ← Frame1i2x.i0(X1);
- 25: I5 ← 0;
-=26: test I4 < I3; T:→ 45
- 27: I6 ← Math.addExact(I3, 1); ArithmeticException:→ 67
- 28: test I3 < 1; T:→ 67
- 29: test Frame1i2x.i0(X1) < I3; T:→ 67
- 30: L7 ← lMul(Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I3, 1), 2))), Integer.toUnsignedLong(I2));
+ 19: setInt[](Frame1i2x.x0(X1), iShl(I4, 2), I2);
+ 20: I2 ← I7;
+ 21: I4 ← I6; → 10
+-22: test X1 is *[]U32(i0)@xxxx; F:→ 72
+ 23: I3 ← 0;
+ 24: I4 ← 1;
+ 25: I5 ← Frame1i2x.i0(X1);
+=26: test I5 < I4; T:→ 45
+ 27: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 64
+ 28: test I4 < 1; T:→ 64
+ 29: test Frame1i2x.i0(X1) < I4; T:→ 64
+ 30: L7 ← lMul(Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I4, 1), 2))), Integer.toUnsignedLong(I2));
  31: I9 ← toInt(L7);
- 32: L10 ← lAdd(Integer.toUnsignedLong(I9), Integer.toUnsignedLong(I5));
- 33: test toInt(lShr(L10, 32)) == 0; F:→ 67
- 34: test Frame1i2x.i0(X1) < I3; T:→ 67
- 35: I5 ← toInt(lShr(L7, 32));
+ 32: L10 ← lAdd(Integer.toUnsignedLong(I9), Integer.toUnsignedLong(I3));
+ 33: test toInt(lShr(L10, 32)) == 0; F:→ 64
+ 34: test Frame1i2x.i0(X1) < I4; T:→ 64
+ 35: I3 ← toInt(lShr(L7, 32));
  36: I7 ← toInt(L10);
- 37: I3 ← iSub(I3, 1);
+ 37: I4 ← iSub(I4, 1);
  38: X1 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X1);
- 39: setInt[](Frame1i2x.x0(X1), iShl(I3, 2), I7);
- 40: L10 ← Integer.toUnsignedLong(I5);
- 41: test toInt(lShr(L10, 32)) == 0; F:→ 63
- 42: I3 ← I6;
- 43: I5 ← toInt(L10); → 26
--44: I5 ← toInt(Long.rotateLeft(lShl(I5, 32), I3));
--45: test Integer.toUnsignedLong(I5) == 0; T:→ 51
- 46: I3 ← Frame1i2x.i0(X1);
- 47: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X1, iAdd(I3, 1)) == 0; T:→ 61
- 48: X1 ← removeRange*[]U32(i0)@xxxx(X0, X1, I3, 0, 1);
- 49: test I3 < Frame1i2x.i0(X1); F:→ 54
- 50: setInt[](Frame1i2x.x0(X1), iShl(I3, 2), I5);
+ 39: setInt[](Frame1i2x.x0(X1), iShl(I4, 2), I7);
+ 40: L10 ← Integer.toUnsignedLong(I3);
+ 41: test toInt(lShr(L10, 32)) == 0; F:→ 60
+ 42: I3 ← toInt(L10);
+ 43: I4 ← I6; → 26
+-44: I3 ← toInt(Long.rotateLeft(lShl(I2, 32), I3));
+-45: test Integer.toUnsignedLong(I3) == 0; T:→ 51
+ 46: I2 ← Frame1i2x.i0(X1);
+ 47: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X1, iAdd(I2, 1)) == 0; T:→ 58
+ 48: X1 ← removeRange*[]U32(i0)@xxxx(X0, X1, I2, 0, 1);
+ 49: test I2 < Frame1i2x.i0(X1); F:→ 54
+ 50: setInt[](Frame1i2x.x0(X1), iShl(I2, 2), I3);
 -51: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
  52: setObject[](TState.fnResults(X0, 1), 0, X1);
  53: return
--54: X2 ← newStackEntry(⟦ArrayCore.NextArrayIterator.startLoop ∥ index=0, it=ArrayIterator([U32(I5)], EnumerateAllKeys, 0)⟧);
- 55: X2 ← TState.fillStackEntry(X0, null, X2, ⟨⸨[[1], U32(i0)]; Absent⸩, ArrayIterator([U32(i0)], EnumerateAllKeys, 1), SaverLoop(SaveWithOffset(b0)), x0:*[]@xxxx⟩, lmMemo_1@xxxx, null);
- 56: X4 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveWithOffset(I3)), state=X1⟧);
- 57: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, lmMemo_5@xxxx, null);
- 58: X1 ← TState.fillStackEntry(X0, X1, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_6@xxxx, null);
- 59: X1 ← TState.fillStackEntry(X0, X1, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_8@xxxx, null);
- 60: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:279_15 mag = concatUpdate(mag, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 77
--61: X2 ← newStackEntry(⟦pidigits.r8t+3:278_13 _t0 = equal(carry, 0) ∥ mag=X1, carry=U32(I5)⟧);
- 62: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 77
--63: X3 ← newStackEntry(⟦pidigits.r8t+3:275_9 _t0 = at(t1, "high") ∥ mag=X1, t1={high: U32(I5), low: U32(I9)}, t2={high: 0x0, low: U32(I7)}⟧);
- 64: X1 ← TState.fillStackEntry(X0, null, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩, loop@xxx⸨k=U32(i0)⸩, RangeIterator(b0, b0, None)⟩, mMemo_14@xxxx, null);
- 65: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨k=U32(I2)⸩, it=RangeIterator(I6, I4, None)⟧);
- 66: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_17@xxxx, null); → 69
--67: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I3, I4, None), loop=loop@xxx⸨k=U32(I2)⸩, state=loop@xxx_state⸨carry=U32(I5), mag=X1⸩⟧);
- 68: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_17@xxxx, null);
--69: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:271_10 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨k=k⸩, loop@xxx_state⸨carry=carry, mag=mag⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 77
--70: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I2, I4, None), loop=loop@xxx⸨n=I3⸩, state=loop@xxx_state⸨prev=U32(I5), mag=X1⸩⟧);
- 71: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_10@xxxx, null);
- 72: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I3⟧);
- 73: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_20@xxxx, null);
- 74: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:268_4 carry, mag = shiftMagLeft(mag, _t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 77
--75: X3 ← newStackEntry(⟦pidigits.r8t+3:267_0 _t0 = bitCount(k) ∥ mag=X1, k=U32(I2)⟧);
- 76: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
--77: TState.setStackRest(X0, X1);
- 78: TState.setUnwoundFrom(X0, target:multiplyMagByU32_x5);
- 79: return
+-54: X4 ← newStackEntry(⟦LoopCore.enumerateDefault ∥ collection=[U32(I3)], eKind=EnumerateAllKeys, loop=SaverLoop(SaveWithOffset(I2)), state=X1⟧);
+ 55: X1 ← TState.fillStackEntry(X0, null, X4, ⟨x0:*[]@xxxx⟩, mMemo_10@xxxx, null);
+ 56: X1 ← TState.fillStackEntry(X0, X1, ⟦MatrixCore.ConcatUpdate.afterSizes⟧, ⟨x0:*[]@xxxx⟩, mMemo_12@xxxx, null);
+ 57: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:279_15 mag = concatUpdate(mag, [carry])⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 74
+-58: X2 ← newStackEntry(⟦pidigits.r8t+3:278_13 _t0 = equal(carry, 0) ∥ mag=X1, carry=U32(I3)⟧);
+ 59: X1 ← TState.fillStackEntry(X0, null, X2, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 74
+-60: X4 ← newStackEntry(⟦pidigits.r8t+3:275_9 _t0 = at(t1, "high") ∥ mag=X1, t1={high: U32(I3), low: U32(I9)}, t2={high: 0x0, low: U32(I7)}⟧);
+ 61: X1 ← TState.fillStackEntry(X0, null, X4, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩, loop@xxx⸨k=U32(i0)⸩, RangeIterator(b0, b0, None)⟩, mMemo_14@xxxx, null);
+ 62: X3 ← newStackEntry(⟦LoopCore.Iterate.nextState ∥ loop=loop@xxx⸨k=U32(I2)⸩, it=RangeIterator(I6, I5, None)⟧);
+ 63: X1 ← TState.fillStackEntry(X0, X1, X3, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_18@xxxx, null); → 66
+-64: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨carry=U32(I3), mag=X1⸩, loop=loop@xxx⸨k=U32(I2)⸩, it=RangeIterator(I4, I5, None)⟧);
+ 65: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨carry=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_18@xxxx, null);
+-66: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:271_10 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨k=k⸩, loop@xxx_state⸨carry=carry, mag=mag⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 74
+-67: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨prev=U32(I2), mag=X1⸩, loop=loop@xxx⸨n=I3⸩, it=RangeIterator(I4, I5, None)⟧);
+ 68: X1 ← TState.fillStackEntry(X0, null, X6, ⟨loop@xxx_state⸨prev=U32(i0), mag=x0:*[]@xxxx⸩⟩, LmMemo_11@xxxx, null);
+ 69: X2 ← newStackEntry(⟦pidigits.r8t+3:291_12 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨n=n⸩, loop@xxx_state⸨prev=prev, mag=mag⸩) ∥ n=I3⟧);
+ 70: X1 ← TState.fillStackEntry(X0, X1, X2, ⟨U32(b0), x0:*[]@xxxx⟩, mMemo_21@xxxx, null);
+ 71: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:268_4 carry, mag = shiftMagLeft(mag, _t0)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 74
+-72: X3 ← newStackEntry(⟦pidigits.r8t+3:267_0 _t0 = bitCount(k) ∥ mag=X1, k=U32(I2)⟧);
+ 73: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
+-74: TState.setStackRest(X0, X1);
+ 75: TState.setUnwoundFrom(X0, target:multiplyMagByU32_x5);
+ 76: return
 
 subtractMags_x6(x1:*[]@xxxx, x2:*[]@xxxx):
   1: CodeGenTarget.incrementCallCount(target:subtractMags_x6);
-  2: test X1 is *[]U32(i0)@xxxx; F:→ 57
-  3: I3 ← 1;
-  4: I4 ← Frame1i2x.i0(X1);
-  5: I5 ← 0;
-= 6: test I4 < I3; T:→ 28
-  7: I6 ← Math.addExact(I3, 1); ArithmeticException:→ 54
-  8: test X2 is *[]U32(i0)@xxxx; F:→ 54
-  9: test Frame1i2x.i0(X2) < I3; T:→ 15
- 10: test I3 < 1; T:→ 54
- 11: test Frame1i2x.i0(X2) < I3; T:→ 54
- 12: L7 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X2), iShl(iSub(I3, 1), 2))), Integer.toUnsignedLong(I5));
- 13: test toInt(lShr(L7, 32)) == 0; F:→ 54
+  2: test X1 is *[]U32(i0)@xxxx; F:→ 64
+  3: I3 ← 0;
+  4: I4 ← 1;
+  5: I5 ← Frame1i2x.i0(X1);
+= 6: test I5 < I4; T:→ 27
+  7: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 61
+  8: test X2 is *[]U32(i0)@xxxx; F:→ 61
+  9: test Frame1i2x.i0(X2) < I4; T:→ 15
+ 10: test I4 < 1; T:→ 61
+ 11: test Frame1i2x.i0(X2) < I4; T:→ 61
+ 12: L7 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X2), iShl(iSub(I4, 1), 2))), Integer.toUnsignedLong(I3));
+ 13: test toInt(lShr(L7, 32)) == 0; F:→ 61
  14: I7 ← toInt(L7); → 17
--15: test Integer.toUnsignedLong(I5) == 0; T:→ 27
- 16: I7 ← I5;
--17: test Frame1i2x.i0(X1) < I3; T:→ 54
- 18: test Frame1i2x.i0(X1) < I3; T:→ 54
- 19: L7 ← lSub(Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I3, 1), 2))), Integer.toUnsignedLong(I7));
- 20: I5 ← toInt(L7);
+-15: test Integer.toUnsignedLong(I3) == 0; T:→ 28
+ 16: I7 ← I3;
+-17: test Frame1i2x.i0(X1) < I4; T:→ 61
+ 18: test Frame1i2x.i0(X1) < I4; T:→ 61
+ 19: L7 ← lSub(Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I4, 1), 2))), Integer.toUnsignedLong(I7));
+ 20: I3 ← toInt(L7);
  21: I7 ← toInt(lShr(L7, 32));
- 22: I3 ← iSub(I3, 1);
+ 22: I4 ← iSub(I4, 1);
  23: X1 ← FrameLayout.ensureUnshared(*[]U32(i0)@xxxx, X0, X1);
- 24: setInt[](Frame1i2x.x0(X1), iShl(I3, 2), I5);
- 25: I3 ← I6;
- 26: I5 ← toInt(lSub(0, Integer.toUnsignedLong(I7))); → 6
--27: test I5 == 0; T:→ 29, F:→ 54
--28: test I5 == 0; F:→ 54
+ 24: setInt[](Frame1i2x.x0(X1), iShl(I4, 2), I3);
+ 25: I3 ← toInt(lSub(0, Integer.toUnsignedLong(I7)));
+ 26: I4 ← I6; → 6
+-27: test I3 == 0; T:→ 29, F:→ 61
+-28: test I3 == 0; F:→ 61
 -29: dropRef{X2};
  30: I3 ← Frame1i2x.i0(X1);
- 31: I2 ← I3;
-=32: test I2 < 1; T:→ 49
- 33: I4 ← Math.subtractExact(I2, 1); ArithmeticException:→ 49
- 34: test Frame1i2x.i0(X1) < I2; T:→ 49
- 35: test Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I2, 1), 2))) == 0; F:→ 37
- 36: I2 ← I4; → 32
--37: test I2 < I3; F:→ 46
- 38: I4 ← Math.addExact(I2, 1); ArithmeticException:→ 49
- 39: test 0 < I4; F:→ 49
- 40: I4 ← iSub(I4, 1);
- 41: I5 ← Frame1i2x.i0(X1);
- 42: test I5 < I4; T:→ 49
- 43: I2 ← iSub(I5, I4);
- 44: test I2 == 0; T:→ 46
- 45: X1 ← removeRange*[]U32(i0)@xxxx(X0, X1, I4, I2, 0);
--46: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
- 47: setObject[](TState.fnResults(X0, 1), 0, X1);
- 48: return
--49: addRef(X1); X4 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=ReversedRangeIterator(I2, 1, None), loop=loop@xxx⸨mag=X1⸩, state=Absent⟧);
- 50: X2 ← TState.fillStackEntry(X0, null, X4, ⟨LoopExit(loop@xxx_break@xxx⸨i=b0⸩)⟩, LmMemo_9@xxxx, null);
- 51: X4 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X1, end=I3⟧);
- 52: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, mMemo_24@xxxx, null);
- 53: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:248_15 _t0 = dropLeadingZeros(x)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 59
--54: X6 ← newStackEntry(⟦LoopCore.Iterate.afterIterator ∥ it=RangeIterator(I3, I4, None), loop=loop@xxx⸨y=X2⸩, state=loop@xxx_state⸨borrow=U32(I5), x=X1⸩⟧);
- 55: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨LoopExit(loop@xxx_break⸨borrow=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨borrow=U32(0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_23@xxxx, null);
- 56: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:234_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨borrow=borrow, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 59
--57: X3 ← newStackEntry(⟦pidigits.r8t+3:233_0 borrow = u32(0) ∥ x=X1, y=X2⟧);
- 58: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
--59: TState.setStackRest(X0, X1);
- 60: TState.setUnwoundFrom(X0, target:subtractMags_x6);
- 61: return
+ 31: I4 ← 0;
+ 32: I2 ← 0;
+ 33: I5 ← I3;
+=34: test I5 < 1; T:→ 56
+ 35: I6 ← Math.subtractExact(I5, 1); ArithmeticException:→ 56
+ 36: test Frame1i2x.i0(X1) < I5; T:→ 56
+ 37: test Integer.toUnsignedLong(int[](Frame1i2x.x0(X1), iShl(iSub(I5, 1), 2))) == 0; F:→ 41
+ 38: I2 ← 0;
+ 39: I4 ← 0;
+ 40: I5 ← I6; → 34
+-41: test I5 < I3; F:→ 53
+ 42: I4 ← I5;
+ 43: I2 ← 1;
+ 44: I5 ← I6;
+ 45: I6 ← Math.addExact(I4, 1); ArithmeticException:→ 56
+ 46: test 0 < I6; F:→ 56
+ 47: I6 ← iSub(I6, 1);
+ 48: I7 ← Frame1i2x.i0(X1);
+ 49: test I7 < I6; T:→ 56
+ 50: I2 ← iSub(I7, I6);
+ 51: test I2 == 0; T:→ 53
+ 52: X1 ← removeRange*[]U32(i0)@xxxx(X0, X1, I6, I2, 0);
+-53: TState.setResultTemplates(X0, [x0:*[]@xxxx]);
+ 54: setObject[](TState.fnResults(X0, 1), 0, X1);
+ 55: return
+-56: addRef(X1); X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=I2⸨0:Absent; 1:LoopExit(loop@xxx_break@xxx⸨i=I4⸩)⸩, loop=loop@xxx⸨mag=X1⸩, it=ReversedRangeIterator(I5, 1, None)⟧);
+ 57: X2 ← TState.fillStackEntry(X0, null, X6, ⟨LoopExit(loop@xxx_break@xxx⸨i=b0⸩)⟩, LmMemo_9@xxxx, null);
+ 58: X4 ← newStackEntry(⟦pidigits.r8t+3:253_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨mag=mag⸩, Absent) ∥ mag=X1, end=I3⟧);
+ 59: X1 ← TState.fillStackEntry(X0, X2, X4, ⟨x0:*[]@xxxx⟩, mMemo_26@xxxx, null);
+ 60: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:248_15 _t0 = dropLeadingZeros(x)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 66
+-61: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@xxx_state⸨borrow=U32(I3), x=X1⸩, loop=loop@xxx⸨y=X2⸩, it=RangeIterator(I4, I5, None)⟧);
+ 62: X1 ← TState.fillStackEntry(X0, null, X6, ⟨⸨LoopExit(loop@xxx_break⸨borrow=U32(0), x=x0:*[]@xxxx⸩); loop@xxx_state⸨borrow=U32(0), x=x0:*[]@xxxx⸩⸩⟩, LmMemo_24@xxxx, null);
+ 63: X1 ← TState.fillStackEntry(X0, X1, ⟦pidigits.r8t+3:234_3 _t0 = iterate(_t0, EnumerateValues, loop@xxx⸨y=y⸩, loop@xxx_state⸨borrow=borrow, x=x⸩)⟧, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null); → 66
+-64: X3 ← newStackEntry(⟦pidigits.r8t+3:233_0 borrow = u32(0) ∥ x=X1, y=X2⟧);
+ 65: X1 ← TState.fillStackEntry(X0, null, X3, ⟨x0:*[]@xxxx⟩, mMemo_x@xxxx, null);
+-66: TState.setStackRest(X0, X1);
+ 67: TState.setUnwoundFrom(X0, target:subtractMags_x6);
+ 68: return
 ---
-allocated=23126920/69911, peak=12693
+allocated=23126920/69911, peak=17849
 */

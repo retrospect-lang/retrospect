@@ -14,7 +14,7 @@ for sequential pos, input {
 return result
 
 /* RUN () CODEGEN(3) RETURNS
-  2
+2
 ---
 ?0-----1+?∘0-1+∘0-1+++2bs[⊝0-s[⊝-⊝-]]-
   0: x (top level)
@@ -98,7 +98,7 @@ function sum(start, end, p10) {
 }
 
 /* RUN () CODEGEN(3) RETURNS
-  495074547
+495074547
 ---
 ?0-----1++?0----2+++3bs[⊝0-]?--?-1∘?0-1+⊝0-s[⊝-]-1++4bsr3s[⊕]0---4sr3s[⊚?5-0-]?5-0-5-0--
   0: x (top level)

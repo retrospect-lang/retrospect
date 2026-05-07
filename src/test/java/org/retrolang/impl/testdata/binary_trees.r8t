@@ -34,16 +34,9 @@ function check(TreeNode tree) {
 }
 
 /* RUN (n=10) CODEGEN(5) RETURNS
-  {longLivedCheck: 2047,
-   results:
-      [{check: 31744, depth: 4, iterations: 1024},
-       {check: 32512, depth: 6, iterations: 256},
-       {check: 32704, depth: 8, iterations: 64},
-       {check: 32752, depth: 10, iterations: 16}],
-   stretchCheck: 4095,
-   stretchDepth: 11}
+{longLivedCheck: 2047, results: [{check: 31744, depth: 4, iterations: 1024}, {check: 32512, depth: 6, iterations: 256}, {check: 32704, depth: 8, iterations: 64}, {check: 32752, depth: 10, iterations: 16}], stretchCheck: 4095, stretchDepth: 11}
 ---
-0--1-?-++++?∘++++++++++2bsr**?⊝s(2:14)[⊕]?⊚s(2:15)[⊕][s(2:14)[⊕]?⊚]s(2:16)[⊕][s(2:14)[⊕]⊕][s(2:15)[⊕][s(2:14)[⊕]⊕]⊕]s(2:17)[⊕][s(2:14)[⊕]⊕3b]2[3s(3:30)r*]2[3s(3:62)r*]s(3:254)rs(3:510)rs(3:1022)rs(3:2046)r0--4-?-++++++?∘++++++++++5bsr**s(5:14)rs(5:30)rs(5:62)rs(5:126)rs(5:254)r?⊝s(5:510)r?⊝s(5:1022)rs(5:2046)r?0-3s(3:2046)r----s(3:30)r-5s(5:30)r---3s(3:30)r5s(5:30)r-3s(3:30)r5s(5:30)r-3s(3:30)r5s(5:30)r6+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+7bs(3:31496,5:31496)[?⊝0-⊝-]?-⊝-⊝-⊝-3s(3:126)r5s(5:126)r7⊝-3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊚-3s(3:126)r5s(5:126)r7⊝-3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕8bs(3:31369,5:31369)r-s(3:32704,5:32704)r-s(3:32752,5:32752)r9+?∘0-?-5s(5:2046)r-
+0--1-?-++?∘++++++++++2bsr**?⊝s(2:14)[⊕]?⊚s(2:15)[⊕][s(2:14)[⊕]?⊚]s(2:16)[⊕][s(2:14)[⊕]⊕][s(2:15)[⊕][s(2:14)[⊕]⊕]⊕]s(2:17)[⊕][s(2:14)[⊕]⊕3b]2[3s(3:30)r*]2[3s(3:62)r*]s(3:254)rs(3:510)rs(3:1022)rs(3:2046)r0--4-?-++++?∘++++++++++5bsr**s(5:14)rs(5:30)rs(5:62)rs(5:126)rs(5:254)r?⊝s(5:510)r?⊝s(5:1022)rs(5:2046)r?0-3s(3:2046)r---s(3:30)r-5s(5:30)r--3s(3:30)r5s(5:30)r-3s(3:30)r5s(5:30)r-3s(3:30)r5s(5:30)r6+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+3s(3:30)r5s(5:30)r+7bs(3:31496,5:31496)[⊝0-]?-⊝-⊝-3s(3:126)r5s(5:126)r7⊝-3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊚-⊝-3s(3:126)r5s(5:126)r7⊝-3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕3s(3:126)r5s(5:126)r7⊕8bs(3:31369,5:31369)[⊝-]-s(3:32704,5:32704)[⊕]-s(3:32752,5:32752)[⊕]9+?∘0-?-5s(5:2046)r-
   0: x (top level)
   1: x binary_trees.r8t+3:25
   2: createTree_x0 (1)
@@ -55,7 +48,7 @@ function check(TreeNode tree) {
   8: iterate_r4 (6)
   9: r LoopCore.IterateUnbounded // binary_trees.r8t+3:8_10 _t0 = iterateUnbounded(loop@8⸨results_ro=results_ro, maxDepth=maxDepth, minDepth=minDepth⸩, loop@8_state⸨results_rw=_t0, depth=depth⸩)
 ---
-allocated=8164712/205104, peak=130576
+allocated=8164640/205097, peak=130576
 $0 = *[b0⸨0:None; 1:TreeNode(x0:$0)⸩, b1⸨0:None; 1:TreeNode(x1:$0)⸩]
 $1 = *[]{check: i0, depth: b1, iterations: i2}
 */

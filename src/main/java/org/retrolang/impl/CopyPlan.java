@@ -603,10 +603,14 @@ class CopyPlan {
   /**
    * Returns a CopyPlan to transfer values described by {@code src} to values described by {@code
    * dst}.
+   *
+   * <p>If {@code skipToBeSet} is true, instances of ToBeSet in {@code src} will not be copied; the
+   * destination may left unchanged or set to arbitrary values; this is only used when the
+   * destination is a frame (where the layout templates exclude ToBeSet values).
    */
-  static CopyPlan create(Template src, Template dst) {
+  static CopyPlan create(Template src, Template dst, boolean skipToBeSet) {
     ImmutableList.Builder<Step> builder = ImmutableList.builder();
-    if (!create(src, dst, builder)) {
+    if (!create(src, dst, skipToBeSet, builder)) {
       return FAIL;
     }
     ImmutableList<Step> steps = builder.build();
@@ -618,35 +622,82 @@ class CopyPlan {
    * steps}, and returns true. If such a copy would always fail, returns false ({@code steps} will
    * be ignored if this method returns false).
    */
-  private static boolean create(Template src, Template dst, ImmutableList.Builder<Step> steps) {
-    if (src == Template.EMPTY) {
-      // Constant.of(TO_BE_SET) returns Template.EMPTY, and storing TO_BE_SET should do nothing
+  private static boolean create(
+      Template src, Template dst, boolean skipToBeSet, ImmutableList.Builder<Step> steps) {
+    // If skipToBeSet is true, dst should never be a union with a ToBeSet choice
+    assert !(skipToBeSet && dst instanceof Union uDst && uDst.hasToBeSet());
+    if (src == Template.EMPTY || (skipToBeSet && src == Core.TO_BE_SET.asTemplate)) {
       return true;
     } else if (dst == Template.EMPTY) {
-      // An empty template has never had anything stored in it *except* possibly an empty pointer
-      if (src instanceof Union uSrc) {
-        src = uSrc.untagged;
-      }
-      if (src instanceof RefVar) {
-        steps.add(new Basic(StepType.VERIFY_REF, src, null));
-        return true;
-      }
-      return false;
-    } else if (src instanceof Union uSrc) {
-      if (dst instanceof Union uDst) {
-        return createSwitch(uSrc, uDst, steps);
+      // An empty template has never had anything stored in it *except* possibly a ToBeSet
+      if (skipToBeSet) {
+        dst = Core.TO_BE_SET.asTemplate;
       } else {
-        // Union to non-union; at most one of the src branches can possibly succeed, so verify that
-        // that's the one we've got before continuing.
-        int i = uSrc.indexOf(dst.baseType().sortOrder);
-        if (i < 0) {
-          // None of the source branches could succeed
+        return false;
+      }
+    }
+    if (src instanceof Union uSrc) {
+      // Does uSrc have a ToBeSet option that we should drop?
+      boolean dropToBeSet = skipToBeSet && uSrc.hasToBeSet();
+      int numSrcChoices = uSrc.numChoices() - (dropToBeSet ? 1 : 0);
+      if (numSrcChoices == 1) {
+        // Since we can ignore the ToBeSet branch, this isn't really a union.
+        src = uSrc.choice(0);
+      } else if (dst instanceof Union uDst) {
+        // If both unions are tagged and all of the src choices are constants and the
+        // corresponding-length prefix of dst's choices are identical to src's, we can just copy the
+        // tag (this is common with unions of singletons, such as Boolean).
+        if (uSrc.tag != null
+            && uDst.tag != null
+            && hasMatchingConstants(uSrc, uDst, numSrcChoices)) {
+          steps.add(new Basic(StepType.COPY_NUM, uSrc.tag, uDst.tag));
+          return true;
+        }
+        // If both unions are untagged and dst has cases to match all of src's, we can just copy the
+        // refvar.
+        if (uSrc.tag == null && uDst.tag == null && hasAllOrders(uSrc, uDst, numSrcChoices)) {
+          steps.add(new Basic(StepType.COPY_REF, uSrc.untagged, uDst.untagged));
+          return true;
+        }
+        // We're gonna need a Switch
+        return createSwitch(uSrc, uDst, skipToBeSet, steps);
+      } else {
+        // Union to non-union; at most one of the src choices can possibly succeed (other than
+        // perhaps a ToBeSet).
+        int i;
+        if (dropToBeSet && dst == Core.TO_BE_SET.asTemplate) {
+          // We're already discarding the ToBeSet choice.
+          i = -1;
+        } else {
+          i = uSrc.indexOf(dst.baseType().sortOrder);
+        }
+        if (i >= 0 && dropToBeSet) {
+          // Both look possible, so we probably need a Switch.
+          CopyPlan plan = create(uSrc.choice(i), dst, skipToBeSet);
+          if (plan.isFail()) {
+            // Never mind
+            i = -1;
+          } else {
+            CopyPlan[] plans = new CopyPlan[uSrc.numChoices()];
+            Arrays.fill(plans, FAIL);
+            plans[i] = plan;
+            plans[plans.length - 1] = EMPTY;
+            steps.add(new Switch(uSrc, plans));
+            return true;
+          }
+        }
+        if (i >= 0) {
+          steps.add(requireChoice(uSrc, i));
+          src = uSrc.choice(i);
+        } else if (dropToBeSet) {
+          steps.add(requireChoice(uSrc, uSrc.numChoices() - 1));
+          return true;
+        } else {
           return false;
         }
-        steps.add(requireChoice(uSrc, i));
-        src = uSrc.choice(i);
       }
-    } else if (dst instanceof Union uDst) {
+    }
+    if (dst instanceof Union uDst) {
       // Non-union to union
       int i = uDst.indexOf(src.baseType().sortOrder);
       if (i < 0) {
@@ -671,29 +722,33 @@ class CopyPlan {
     // Now neither src nor dst is a Union
     if (src instanceof Constant cSrc) {
       Value v = cSrc.value;
-      if (dst instanceof Constant cDst) {
-        return cDst.value.equals(v);
-      } else if (dst instanceof NumVar nvDst) {
-        if (!nvDst.couldCast(v)) {
-          // e.g. set(3.1, b0) would always fail
-          return false;
+      return switch (dst) {
+        case Constant cDst -> cDst.value.equals(v);
+        case NumVar nvDst -> {
+          if (!nvDst.couldCast(v)) {
+            // e.g. set(3.1, b0) would always fail
+            yield false;
+          }
+          steps.add(new Basic(StepType.SET_NUM, v, nvDst));
+          yield true;
         }
-        steps.add(new Basic(StepType.SET_NUM, v, nvDst));
-        return true;
-      } else if (dst instanceof RefVar rvDst) {
-        if (!rvDst.couldCast(v)) {
-          return false;
-        } else if (v instanceof CompoundValue) {
-          steps.add(new FrameVsCompound(StepType.COMPOUND_TO_FRAME, cSrc, rvDst));
-        } else {
-          steps.add(new Basic(StepType.SET_REF, v, dst));
+        case RefVar rvDst -> {
+          if (!rvDst.couldCast(v)) {
+            yield false;
+          } else if (v instanceof CompoundValue) {
+            steps.add(new FrameVsCompound(StepType.COMPOUND_TO_FRAME, cSrc, rvDst));
+          } else {
+            steps.add(new Basic(StepType.SET_REF, v, dst));
+          }
+          yield true;
         }
-        return true;
-      } else {
-        // Copying Constant to Compound
-        BaseType baseType = ((Compound) dst).baseType;
-        return (baseType == v.baseType()) && copyElements(baseType.size(), src, dst, steps);
-      }
+        default -> {
+          // Copying Constant to Compound
+          BaseType baseType = ((Compound) dst).baseType;
+          yield (baseType == v.baseType())
+              && copyElements(baseType.size(), src, dst, skipToBeSet, steps);
+        }
+      };
     } else if (dst instanceof Constant cDst) {
       Value v = cDst.value;
       if (src instanceof NumVar nvSrc) {
@@ -711,7 +766,8 @@ class CopyPlan {
       } else {
         // Copying Compound to Constant
         BaseType baseType = ((Compound) src).baseType;
-        return (baseType == v.baseType()) && copyElements(baseType.size(), src, dst, steps);
+        return (baseType == v.baseType())
+            && copyElements(baseType.size(), src, dst, skipToBeSet, steps);
       }
     } else if (src instanceof NumVar) {
       if (!(dst instanceof NumVar)) {
@@ -732,7 +788,8 @@ class CopyPlan {
     } else {
       BaseType baseType = ((Compound) src).baseType;
       if (dst instanceof Compound cDst) {
-        return cDst.baseType == baseType && copyElements(baseType.size(), src, cDst, steps);
+        return cDst.baseType == baseType
+            && copyElements(baseType.size(), src, cDst, skipToBeSet, steps);
       } else if (dst instanceof RefVar rvDst && rvDst.sortOrder() == baseType.sortOrder) {
         steps.add(new FrameVsCompound(StepType.COMPOUND_TO_FRAME, src, rvDst));
         return true;
@@ -746,8 +803,13 @@ class CopyPlan {
    * with the given size, so we can just copy element-by-element.
    */
   private static boolean copyElements(
-      int size, Template src, Template dst, ImmutableList.Builder<Step> steps) {
-    return IntStream.range(0, size).allMatch(i -> create(src.element(i), dst.element(i), steps));
+      int size,
+      Template src,
+      Template dst,
+      boolean skipToBeSet,
+      ImmutableList.Builder<Step> steps) {
+    return IntStream.range(0, size)
+        .allMatch(i -> create(src.element(i), dst.element(i), skipToBeSet, steps));
   }
 
   /** Returns a step that verifies the specified branch of the source Union applies. */
@@ -761,21 +823,8 @@ class CopyPlan {
   }
 
   /** Implements {@link #create} when both {@code src} and {@code dst} are Unions. */
-  private static boolean createSwitch(Union src, Union dst, ImmutableList.Builder<Step> steps) {
-    // If both unions are tagged and all of the src choices are constants and the
-    // corresponding-length prefix of dst's choices are identical to src's, we can just copy the tag
-    // (this is common with unions of singletons, such as Boolean).
-    if (src.tag != null && dst.tag != null && hasMatchingConstants(src, dst)) {
-      steps.add(new Basic(StepType.COPY_NUM, src.tag, dst.tag));
-      return true;
-    }
-    // If both unions are untagged and dst has cases to match all of src's, we can just copy the
-    // refvar.
-    if (src.tag == null && dst.tag == null && hasAllOrders(src, dst)) {
-      steps.add(new Basic(StepType.COPY_REF, src.untagged, dst.untagged));
-      return true;
-    }
-    // Otherwise we'll probably need a Switch
+  private static boolean createSwitch(
+      Union src, Union dst, boolean skipToBeSet, ImmutableList.Builder<Step> steps) {
     CopyPlan[] choices = new CopyPlan[src.numChoices()];
     int numFail = 0;
     int lastNonFail = -1;
@@ -783,13 +832,13 @@ class CopyPlan {
     // until we've checked all the branches.
     boolean canCopyTag = (src.tag != null) && (dst.tag != null);
     for (int i = 0; i < choices.length; i++) {
-      CopyPlan plan = create(src.choice(i), dst);
+      CopyPlan plan = create(src.choice(i), dst, skipToBeSet);
       choices[i] = plan;
       if (plan.isFail()) {
         ++numFail;
       } else {
         lastNonFail = i;
-        if (canCopyTag) {
+        if (canCopyTag && !plan.steps.isEmpty()) {
           // We can only get here if dst is tagged; if it's tagged, and the create() didn't fail,
           // the first step of the plan will be to set the tag value.
           Basic setTag = (Basic) plan.steps.get(0);
@@ -811,7 +860,7 @@ class CopyPlan {
       // Drop the steps we previously generated to set the destination tag.
       for (int i = 0; i < choices.length; i++) {
         CopyPlan plan = choices[i];
-        if (plan != FAIL) {
+        if (plan != FAIL && !plan.steps.isEmpty()) {
           choices[i] =
               (plan.steps.size() == 1)
                   ? EMPTY
@@ -830,11 +879,11 @@ class CopyPlan {
   }
 
   /** True if all of src's choices are Constants and match the corresponding choices in dst. */
-  private static boolean hasMatchingConstants(Union src, Union dst) {
-    if (src.numChoices() > dst.numChoices()) {
+  private static boolean hasMatchingConstants(Union src, Union dst, int numSrcChoices) {
+    if (numSrcChoices > dst.numChoices()) {
       return false;
     }
-    for (int i = 0; i < src.numChoices(); i++) {
+    for (int i = 0; i < numSrcChoices; i++) {
       Template choice = src.choice(i);
       if (!(choice instanceof Constant && choice.equals(dst.choice(i)))) {
         return false;
@@ -847,15 +896,15 @@ class CopyPlan {
    * True if each of src's choices has a corresponding choice in dst (i.e. one with the same
    * sortOrder).
    */
-  private static boolean hasAllOrders(Union src, Union dst) {
-    int numExtra = dst.numChoices() - src.numChoices();
+  private static boolean hasAllOrders(Union src, Union dst, int numSrcChoices) {
+    int numExtra = dst.numChoices() - numSrcChoices;
     if (numExtra < 0) {
       return false;
     }
     // The choice of dst that will be compared with the next choice of src.
     int nextDst = 0;
     // Since both union's choices are sorted this is O(sum of lengths).
-    for (int i = 0; i < src.numChoices(); i++) {
+    for (int i = 0; i < numSrcChoices; i++) {
       long srcOrder = src.choice(i).baseType().sortOrder;
       for (; ; ) {
         long dstOrder = dst.choice(nextDst++).baseType().sortOrder;
@@ -990,7 +1039,7 @@ class CopyPlan {
      */
     static CompoundToFrame create(Template compound, FrameLayout layout) {
       if (layout instanceof RecordLayout rLayout) {
-        CopyPlan plan = CopyPlan.create(compound, rLayout.template);
+        CopyPlan plan = CopyPlan.create(compound, rLayout.template, true);
         return new CompoundToFrame(compound, layout) {
           @Override
           boolean initialize(TState tstate, VarSource src, Frame dst) {
@@ -1003,7 +1052,8 @@ class CopyPlan {
         assert compound.baseType().isArray();
         VArrayLayout vArrayLayout = (VArrayLayout) layout;
         CopyPlan[] plans = new CopyPlan[compound.baseType().size()];
-        Arrays.setAll(plans, i -> CopyPlan.create(compound.element(i), vArrayLayout.template));
+        Arrays.setAll(
+            plans, i -> CopyPlan.create(compound.element(i), vArrayLayout.template, true));
         return new CompoundToFrame(compound, layout) {
           @Override
           boolean initialize(TState tstate, VarSource src, Frame dst) {
@@ -1055,7 +1105,7 @@ class CopyPlan {
      */
     static FrameToCompound create(Template compound, FrameLayout layout) {
       if (layout instanceof RecordLayout rLayout) {
-        CopyPlan plan = CopyPlan.create(rLayout.template, compound);
+        CopyPlan plan = CopyPlan.create(rLayout.template, compound, false);
         return new FrameToCompound(layout) {
           @Override
           boolean extract(TState tstate, Frame src, VarSink dst) {
@@ -1065,7 +1115,8 @@ class CopyPlan {
       } else {
         VArrayLayout vArrayLayout = (VArrayLayout) layout;
         CopyPlan[] plans = new CopyPlan[compound.baseType().size()];
-        Arrays.setAll(plans, i -> CopyPlan.create(vArrayLayout.template, compound.element(i)));
+        Arrays.setAll(
+            plans, i -> CopyPlan.create(vArrayLayout.template, compound.element(i), false));
         return new FrameToCompound(layout) {
           @Override
           boolean extract(TState tstate, Frame src, VarSink dst) {

@@ -181,7 +181,7 @@ class Destination implements ResultsInfo {
   CopyPlan createCopyPlan(CodeGen codeGen, int i, Template src) {
     Full full = getFull(this, codeGen);
     Template dst = full.templates[i];
-    CopyPlan plan = CopyPlan.create(src, dst);
+    CopyPlan plan = CopyPlan.create(src, dst, false);
     return CopyOptimizer.toRegisters(plan, full.registerStart[i], full.registerStart[i + 1], dst);
   }
 

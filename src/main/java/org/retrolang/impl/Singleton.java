@@ -24,12 +24,12 @@ import org.retrolang.Vm;
  */
 public final class Singleton extends VmExpr.Constant implements Value, Vm.Singleton {
   final BaseType baseType;
-  final Template asTemplate;
+  final Template.Constant asTemplate;
 
-  Singleton(BaseType baseType, boolean isToBeSet) {
+  Singleton(BaseType baseType) {
     assert baseType.isSingleton();
     this.baseType = baseType;
-    this.asTemplate = isToBeSet ? Template.EMPTY : Template.Constant.forSingletonConstructor(this);
+    this.asTemplate = Template.Constant.forSingletonConstructor(this);
   }
 
   @Override

@@ -126,16 +126,19 @@ arguments:
 `iterate` has only one method, which looks like this:
 
 ```
-method iterate(collection, eKind, loop, state) {
+method iterate(Collection collection, EnumerationKind eKind, Loop loop, state) {
   if state is LoopExit { return state }
-  it = iterator(collection, eKind)
+  it = iterator(collection, eKind, loop=, state=)
   for sequential state, it {
+    if state is LoopExit {
+      break { return state }
+    }
     element = next(it=)
-    if element is Absent { break }
+    if element is Absent {
+      break { return finalState(loop, state) }
+    }
     state = nextState(loop, state, element)
-    if state is LoopExit { break }
   }
-  return state
 }
 ```
 
@@ -150,38 +153,38 @@ sequential loops into calls to `iterate`). Instead it is implemented using four
 static Java methods and three associated static `Caller` objects:
 
 ```
-static final Caller iterator = new Caller("iterator:2", "afterIterator");
+static final Caller iterator = new Caller("iterator:4", "afterIterator");
 static final Caller next = new Caller("next:1", "afterNext");
 static final Caller nextState = new Caller("nextState:3", "afterNextState");
 
-@Core.Method("iterate(_, EnumerationKind, _, _)")
-static void begin(
-    TState tstate, Value collection, Value eKind, Value loop, Value state) {
+@Core.Method("iterate(Collection, EnumerationKind, Loop, _)")
+static void begin(TState tstate,
+    Value collection, Value eKind, Value loop, Value state) {
   state.isa(Core.LOOP_EXIT).test(
-      () -> tstate.setResult(state),
-      () -> tstate.startCall(iterator, collection, eKind).saving(loop, state));
+          () -> tstate.setResult(state),
+          () -> tstate.startCall(iterator, collection, eKind, loop, state));
 }
 
-@LoopContinuation
-static void afterIterator(
-    TState tstate, Value it, @Saved Value loop, Value state) {
-  tstate.startCall(next, it).saving(loop, state);
+@Continuation
+static void afterIterator(TState tstate, Value it, Value loop, Value state) {
+  tstate.jump("afterNextState", state, loop, it);
 }
 
-@Continuation(order = 2)
-static void afterNext(
-    TState tstate, Value element, Value it, @Saved Value loop, Value state) {
-  element.is(Core.ABSENT).test(
-      () -> tstate.setResult(state),
-      () -> tstate.startCall(nextState, loop, state, element).saving(loop, it));
+@LoopContinuation(order=2)
+static void afterNextState(TState tstate,
+    Value state, @Saved Value loop, Value it) {
+  state.isa(Core.LOOP_EXIT).test(
+          () -> tstate.setResult(state),
+          () -> tstate.startCall(next, it).saving(loop, state));
 }
 
 @Continuation(order = 3)
-static void afterNextState(
-    TState tstate, Value state, @Saved Value loop, Value it) {
-  state.isa(Core.LOOP_EXIT).test(
-      () -> tstate.setResult(state),
-      () -> tstate.jump("afterIterator", it, loop, state));
+static void afterNext(TState tstate,
+    Value element, Value it, @Saved Value loop, Value state,
+    @Fn("finalState:2") Caller finalState) {
+  element.is(Core.ABSENT).test(
+          () -> tstate.startCall(finalState, loop, state),
+          () -> tstate.startCall(nextState, loop, state, element).saving(loop, it));
 }
 ```
 
@@ -191,11 +194,12 @@ the `iterate` method:
 
 *   `begin` is executed first. Its annotation (`@Core.Method`) indicates that it
     implements the Retrospect function `iterate` with 4 arguments and is only
-    applicable when the second argument is an `EnumerationKind`.
-*   `afterIterator` corresponds to the beginning of the `for` loop.
-*   `afterNext` corresponds to the `if element is Absent ...` test
+    applicable when the first three arguments have types `Collection`,
+    `EnumerationKind`, and `Loop`.
+*   `afterIterator` corresponds to just before the start of the `for` loop.
 *   `afterNextState` corresponds to the `if state is LoopExit ...` test at the
-    end of the loop.
+    beginning of the loop body.
+*   `afterNext` corresponds to the `if element is Absent ...` test
 
 As the names suggest, each of the methods other than `begin` is used as the
 *continuation* for a call to another function (i.e. the code that will be
@@ -217,48 +221,67 @@ result in a sequence of blocks that looks like this:
 //   loop = Sum(0)
 //   state = 0):
 
-i3 ← 0;
+TODO call to
+   iterator(
+       TransformedCollection(x1, Lambda42),
+       EnumerateValues,
+       Sum(0),
+       0)
+storing results as
+   SimpleRangeIterator(-1, i2)
+   TransformedLoop(ArrayAccessor(x3, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+   0
 
-TODO call to iterator(TransformedCollection(x1, Lambda42), EnumerateValues)
-storing result as
-   TransformedIterator(ArrayIterator(x4, EnumerateValues, i2), EnumerateValues, Lambda42)
+// afterIterator(
+//   it = SimpleRangeIterator(-1, i2)
+//   loop = TransformedLoop(ArrayAccessor(x3, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+//   state = 0:
+
+i4 ← 0;
+x5 ← x3;
+i6 ← -1;
+i7 ← i2;
 
 start_loop:
 
-// afterIterator(
-//   it = TransformedIterator(ArrayIterator(x4, EnumerateValues, i2), EnumerateValues, Lambda42)
-//   loop = Sum(0)
-//   state = i3):
+// afterNextState(
+//   state = i4
+//   loop = TransformedLoop(ArrayAccessor(x5, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+//   it = SimpleRangeIterator(i6, i7):
 
-TODO call to next(TransformedIterator(ArrayIterator(x4, EnumerateValues, i2), EnumerateValues, Lambda42))
+TODO call to next(SimpleRangeIterator(i6, i7))
 storing results as
-   i5⸨0:i6; 1:Absent⸩
-   TransformedIterator(ArrayIterator(x7, EnumerateValues, i8), EnumerateValues, Lambda42)
+   i8⸨0:i9; 1:Absent⸩
+   SimpleRangeIterator(i10, i11)
 
 // afterNext(
-//   element = i5⸨0:i6; 1:Absent⸩
-//   it = TransformedIterator(ArrayIterator(x7, EnumerateValues, i8), EnumerateValues, Lambda42)
-//   loop = Sum(0)
-//   state = i3):
+//   element = i8⸨0:i9; 1:Absent⸩
+//   it = SimpleRangeIterator(i10, i11)
+//   loop = TransformedLoop(ArrayAccessor(x5, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+//   state = i4):
 
-test i5 == 1;  T:→ loop_done
+test i8 == 1;  T:→ loop_done
 
-TODO call to nextState(Sum(0), i3, i6)
+TODO call to
+   nextState(
+       TransformedLoop(ArrayAccessor(x5, EnumerateValues), TransformedLoop(Lambda42, Sum(0))),
+       i4,
+       i9)
 storing result as
-   i9
+   i12
 
-// afterNextState(
-//   state = i9
-//   loop = Sum(0)
-//   it = TransformedIterator(ArrayIterator(x7, EnumerateValues, i8), EnumerateValues, Lambda42)):
-
-x4 ← x7
-i2 ← i8
-i3 ← i9
+i4 ← i12;
+i6 ← i10;
+i7 ← i11;
 back → start_loop
 
 loop_done:
-// result is i3
+
+TODO call to finalState(TransformedLoop(ArrayAccessor(x5, EnumerateValues), TransformedLoop(Lambda42, Sum(0))), i4)
+storing result as
+   i10
+
+// result is i10
 ```
 
 The blocks emitted by each step are preceded by a comment with both the step
@@ -267,152 +290,182 @@ emitted for the nested function calls are still missing (with a TODO for each of
 them), but note that in addition to RValues for their arguments we have created
 RValues for their results (allocating new registers as necessary). We do this
 based on the information stored in the MethodMemo; e.g. for the call to
-`iterator()`, all previous calls at this site have returned a value of the form
-`TransformedIterator(ArrayIterator(<x>, EnumerateValues, <i>), EnumerateValues,
-Lambda42)` where `<x>` is a Frame with the varray-of-int32 layout and `<i>` is
-an integer, so code generation allocates two new registers (`x4` and `i2`) and
-commits to using the given RValue for the result.
+`iterator()`, all previous calls at this site have returned a iterator of the form
+`SimpleRangeIterator(-1, <i>)`, an updated `loop` of the form
+`TransformedLoop(ArrayAccessor(<x>, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))`,
+and an updated `state` of 0,
+where `<i>` is an integer and `<x>` is a Frame with the varray-of-int32 layout,
+so code generation allocates two new registers (`i2` and `x3`) and
+commits to using the given RValues for the results.
 
 Note also that the two `isa(Core.LOOP_EXIT)` tests are dropped by the code
-generator, since in each case it can determine that the RValue (`i3` in the
-first case, `i9` in the second) cannot possibly represent a LoopExit value.
+generator, since in each case it can determine that the RValue (`0` in the
+first case, `i4` in the second) cannot possibly represent a LoopExit value.
 
 On the other hand, the `element.is(Core.ABSENT)` test could be true, since the
-representation of `element` is a tagged union that includes Absent: `i5⸨0:i6;
-1:Absent⸩`, so the code generator emits `test i5 == 1` to implement it.
+representation of `element` is a tagged union that includes Absent:
+`i8⸨0:i9; 1:Absent⸩`, so the code generator emits `test i8 == 1` to implement it.
 
-The `tstate.jump` at the end of the loop (to return to the `afterIterator` step)
-is implemented by assigning register contents so that the RValues at the
-beginning of `afterIterator` match the corresponding values at the `jump`, and
-then adding a BackRef block.
+The arguments to the LoopContinuation (`afterNextState`) are represented by a new
+group of RValues, again derived from the MethodMemo's record of previously-seen values
+but using a fresh set of registers (`i4`, `x5`, `i6`, and `i7`).
+Entering the loop or returning to its beginning (after the call to `nextState`)
+involves setting each of those registers so that the RValues match the
+corresponding arguments (in one case from the `jump` arguments, in the other from the
+function results and saved values).
 
 ## Filling in the rest
 
-What remains is to fill in the code emitted for the three nested function calls
-(to `iterator`, `next`, and `nextState`). The relevant `iterator` methods are:
-
-```
-method iterator(TransformedCollection tc, eKind) = TransformedIterator_({
-        it: iterator(tc_.base, eKind),
-        eKind,
-        lambda: tc_.lambda})
-
-method iterator(Array array, EnumerationKind eKind) =
-    ArrayIterator_({array, eKind, prevIndex: 0})
-```
-
-When applied to the RValues `TransformedCollection(x1, Lambda42)` and
-`EnumerateValues` these return
+What remains is to fill in the code emitted for the four nested function calls
+(to `iterator`, `nextState`, `next`, and `finalState`). The relevant `iterator` methods are:
 
 ```none
-TransformedIterator(ArrayIterator(x1, EnumerateValues, 0), EnumerateValues, Lambda42)
+method iterator(TransformedCollection tc, eKind, loop=, initialState=) {
+  addLoopStep(tc_.lambda, eKind, loop=, initialState=)
+  return iterator(tc_.base, eKind, loop=, initialState=)
+}
+
+method iterator(Array array, eKind, loop=, initialState=) {
+  loop = transformLoop(ArrayAccessor_({array, eKind}), loop)
+  return SimpleRangeIterator(-1, size(array))
+}
+
+method addLoopStep(Lambda lambda, eKind, loop=, initialState=) {
+  lambda = applyToValues(lambda, eKind)
+  loop = transformLoop(lambda, loop)
+}
 ```
 
-Comparing this with our desired result:
+When applied to the RValues `TransformedCollection(x1, Lambda42)`,
+`EnumerateValues`, `Sum(0)`, and `0`, these emit an instruction to set
+a new register `i13` to the size of `x1`:
 
 ```none
-TransformedIterator(ArrayIterator(x4, EnumerateValues, i2), EnumerateValues, Lambda42)
+i13 ← Frame1i2x.i0(x1);
+```
+
+(`Frame1i2x.i0` is just a field accessors for the Frame1i2x Java class).
+
+They then return results (including the new values for `loop` and
+`initialState`) as RValues:
+
+```none
+SimpleRangeIterator(-1, i13)
+TransformedLoop(ArrayAccessor(x1, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+0
+```
+
+Comparing these with our desired results:
+
+```none
+SimpleRangeIterator(-1, i2)
+TransformedLoop(ArrayAccessor(x3, EnumerateValues), TransformedLoop(Lambda42, Sum(0)))
+0
 ```
 
 we need only emit two register assignments:
 
 ```none
-x4 ← x1
-i2 ← 0
+x3 ← x1
+i2 ← i13
 ```
 
-The `next` method on a TransformedIterator has some complexity to handle cases
-that will not arise in this example, such as handling the keys when `eKind` is a
-value other than EnumerateValues and handling an Absent returned from the
-lambda. With that complexity removed it is simply:
-
-```
-method next(TransformedIterator it=) {
-  item = next(it_.it=)
-  return (item is Absent) ? Absent : at(it_.lambda, item)
-}
-```
-
-i.e. call `next` on the wrapped iterator and then call `at` to apply the lambda
-value to its result (unless the wrapped iterator returns Absent, indicating that
-the iterator is exhausted).
-
-Here's the corresponding generated code, again with missing pieces for the
-nested function calls:
-
-```none {highlight="content:TODO(?s:.)*?\n\n"}
-TODO call to next(ArrayIterator(x4, EnumerateValues, i2))
-storing results as
-   i10⸨0:i11; 1:Absent⸩
-   ArrayIterator(x7, EnumerateValues, i8)
-
-  test i10 == 1;  F:→ not_absent
-  i5 ← 1; → done_next_transformed
-not_absent:
-
-TODO call to at(Lambda42, i11)
-storing results as
-    i6
-
-  i5 ← 0;
-done_next_transformed:
-```
-
-The `next` method on an ArrayIterator again has some complexity that does not
-apply to this example; without that it looks like
-
-```
-method next(ArrayIterator it=) {
-  index = it_.prevIndex
-  if index >= size(it_.array) {
-    return Absent
-  }
-  index += 1
-  it_.prevIndex = index
-  return it_.array[index]
-}
-```
-
-i.e. check whether the iterator is exhausted, and if not advance it and return
-the next array element.
-
-The corresponding generated code:
+The methods for `nextState` applied to a TransformedLoop is:
 
 ```none
-  test i2 < Frame1i2x.i0(x4); T:→ not_done
-  i10 ← 1;
-  i8 ← i2; → done_next_array
-not_done:
-  i8 ← iAdd(i2, 1);
-  i11 ← int[](Frame1i2x.x0(x4), i2);
-  i10 ← 0;
-done_next_array:
-  x7 ← x4;
+ method nextState(TransformedLoop transformed, state, item) {
+   item = at(transformed_.lambda, item)
+   return (item is Absent)
+       ? state : nextState(transformed_.loop, state, item)
+ }
 ```
 
-(`Frame1i2x.i0` and `Frame1i2x.x0` are just field accessors for the Frame1i2x
-Java class; note that since we are implementing 1-based Retrospect arrays with
-0-based Java arrays we use the `prevIndex` value as an index rather than the
-incremented value.)
-
-Then we have the code generated for calling `at(Lambda42, i11)`, which is simply
+These in turn call the method for `at(ArrayAccessor(x5, EnumerateValues), i9)`,
+which emits
 
 ```none
-  i6 ← Math.multiplyExact(i11, i11); ArithmeticException:→ escape
+i15 ← int[](Frame1i2x.x0(x5), i9);
 ```
 
-The final piece is the call to `nextState(Sum(0), i3, i6)`; the relevant method
-is simple:
+and returns `i15` as its result, and then the method for `at(Lambda42, i15)`, which
+emits
 
+```none
+i16 ← Math.multiplyExact(i15, i15); ArithmeticException:→ escape
 ```
+
+and returns `i16` as its result.  (In both cases the `item is Absent`
+test is elided, since neither `i15` nor `i16` could be Absent.)
+
+When the `nextState` method for the inner `TransformedLoop` calls
+`nextState(Sum(0), i4, i16)` we end up at 
+
+```none
 method nextState(Sum, state, value) = state + value
 ```
 
-... as is the corresponding generated code:
+which emits
 
 ```none
-  i9 ← Math.addExact(i3, i6); ArithmeticException:→ escape
+i17 ← Math.addExact(i4, i16); ArithmeticException:→ escape
 ```
+
+and returns `i17`.  That is the result of the original call to `nextState`,
+which we wanted in `i12`, so we emit
+
+```none
+i12 ← i17;
+```
+
+Moving along, the `next` method on a SimpleRangeIterator is:
+
+```none
+method next(SimpleRangeIterator it=) {
+  { previous, limit } = it_
+  next = previous + 1
+  if next >= limit {
+    return Absent
+  }
+  it_.previous = next
+  return next
+}
+```
+
+The code generated for a call with argument
+`SimpleRangeIterator(i6, i7)` emits
+
+```none
+  i14 ← iAdd(i6, 1);
+  test i14 < i7; T:→ L1
+  i8 ← 1;
+  i9 ← 0;
+  i10 ← i6;
+  i11 ← i7; → L2
+L1:
+  i8 ← 0;
+  i9 ← i14;
+  i10 ← i14;
+  i11 ← i7;
+L2:
+```
+
+and returns
+
+```none
+i8⸨0:i9; 1:Absent⸩
+SimpleRangeIterator(i10, i11)
+```
+
+The final function call is to `finalState`; the relevant methods are
+
+```none
+method finalState(TransformedLoop transformed, state) =
+    finalState(transformed_.loop, state) 
+
+default method finalState(Loop, state) = state
+```
+
+so it just returns `i4`.
 
 ## The finished code
 

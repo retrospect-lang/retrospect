@@ -172,7 +172,7 @@ method splitState(loop, state) _0 is loop@2 {
     z_ro, _t1, _t2 = loopHelper(z_ro, _t0, EnumerateValues, True)
     _t0 = enumerate(_t0, _t2, loop@1(z_ro, _eKind: _t2), loop@1_state(z_rw: _t1))
     z = unloop@1_state(_t0)
-    z = finalResultHelper(z_ro, z)
+    z = finalStateHelper(z_ro, z)
     return z  // 8:0
 */
 
@@ -221,7 +221,7 @@ method nextState(_loop, _state, _element) _0 is loop@2 {
     z_ro, _t1, _t2 = loopHelper(z_ro, _t0, EnumerateValues, False)
     _t0 = iterate(_t0, _t2, loop@1(z_ro, _eKind: _t2), loop@1_state(z_rw: _t1))
     z = unloop@1_state(_t0)
-    z = finalResultHelper(z_ro, z)
+    z = finalStateHelper(z_ro, z)
     return z  // 8:0
 */
 
@@ -260,7 +260,7 @@ method at(_loop, _state) _0 is loop@2 {
     _t0 = iterateUnbounded(loop@2(z_ro), loop@2_state(z_rw: _t0, x))
     _t0 = loopExitState(_t0)
     y, z = unloop@2_break@6(_t0)
-    z = finalResultHelper(z_ro, z)
+    z = finalStateHelper(z_ro, z)
     _t0 = sum()  // 6:22
     _t0 = pipe(z, _t0)
     z = add(_t0, y)
@@ -446,6 +446,6 @@ method splitState(loop, state) _0 is loop@9 {
     s_ro, _t1, _t2 = loopHelper(s_ro, _t0, EnumerateValues, True)
     _t0 = enumerate(_t0, _t2, loop@1(s_ro, _eKind: _t2), loop@1_state(s_rw: _t1))
     s = unloop@1_state(_t0)
-    s = finalResultHelper(s_ro, s)
+    s = finalStateHelper(s_ro, s)
     return s  // 6:0
 */

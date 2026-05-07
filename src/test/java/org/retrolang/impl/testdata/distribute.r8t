@@ -8,11 +8,9 @@ both = a ^*^ a | save
 return { both, left, right }
 
 /* RUN () RETURNS
-  {both: [1, 4, 9],
-   left: [0.25, 0.5, 0.75],
-   right: [5, 6, 7]}
+{both: [1, 4, 9], left: [0.25, 0.5, 0.75], right: [5, 6, 7]}
 ---
-allocated=8280/310, peak=296
+allocated=8256/307, peak=296
 */
 
 a = 0..2
@@ -24,12 +22,9 @@ ne = a ^!=^ (-^a) | save
 return [lt, le, le2, ne]
 
 /* RUN () RETURNS
-  [[True, True, False],
-   [True, True, True],
-   [False, False, True],
-   [False, True, True]]
+[[True, True, False], [True, True, True], [False, False, True], [False, True, True]]
 ---
-allocated=12968/488, peak=280
+allocated=12896/483, peak=280
 */
 
 a = 1..3
@@ -40,12 +35,9 @@ array4 = [6, ^a, ^a] | save
 return { array1, array2, array3, array4 }
 
 /* RUN () RETURNS
-  {array1: [[1], [2], [3]],
-   array2: [[1, 5], [2, 5], [3, 5]],
-   array3: [[1, 1], [2, 2], [3, 3]],
-   array4: [[6, 1, 1], [6, 2, 2], [6, 3, 3]]}
+{array1: [[1], [2], [3]], array2: [[1, 5], [2, 5], [3, 5]], array3: [[1, 1], [2, 2], [3, 3]], array4: [[6, 1, 1], [6, 2, 2], [6, 3, 3]]}
 ---
-allocated=11128/416, peak=880
+allocated=11096/412, peak=880
 */
 
 a = 1..3
@@ -55,11 +47,9 @@ struct3 = {a: ^a, b: ^a} | save
 return { struct1, struct2, struct3 }
 
 /* RUN () RETURNS
-  {struct1: [{a: 1}, {a: 2}, {a: 3}],
-   struct2: [{a: 7, b: 1}, {a: 7, b: 2}, {a: 7, b: 3}],
-   struct3: [{a: 1, b: 1}, {a: 2, b: 2}, {a: 3, b: 3}]}
+{struct1: [{a: 1}, {a: 2}, {a: 3}], struct2: [{a: 7, b: 1}, {a: 7, b: 2}, {a: 7, b: 3}], struct3: [{a: 1, b: 1}, {a: 2, b: 2}, {a: 3, b: 3}]}
 ---
-allocated=8352/313, peak=656
+allocated=8328/310, peak=656
 */
 
 a = [1, 2, 3]
@@ -72,13 +62,9 @@ fn5 = replaceElement(a, ^[^a], ^2 **^ a) | save
 return { fn1, fn2, fn3, fn4, fn5 }
 
 /* RUN () RETURNS
-  {fn1: [1, 2, 3],
-   fn2: [0, 1, 1],
-   fn3: [2, 1, 0],
-   fn4: [1, 1, 1],
-   fn5: [[2, 2, 3], [1, 4, 3], [1, 2, 8]]}
+{fn1: [1, 2, 3], fn2: [0, 1, 1], fn3: [2, 1, 0], fn4: [1, 1, 1], fn5: [[2, 2, 3], [1, 4, 3], [1, 2, 8]]}
 ---
-allocated=17592/664, peak=512
+allocated=18960/709, peak=512
 */
 
 a = [[0, 1], [2, 3], [4, 5, 6]]
@@ -89,11 +75,9 @@ test2 = [1, 3, "5"] ^is not Number | anyTrue
 return { pipe, test1, test2 }
 
 /* RUN () RETURNS
-  {pipe: [1, 5, 15],
-   test1: False,
-   test2: True}
+{pipe: [1, 5, 15], test1: False, test2: True}
 ---
-allocated=10736/399, peak=112
+allocated=11792/434, peak=112
 $0 = *[]b0
 */
 
@@ -105,11 +89,9 @@ r3 = a ^..^ (a ^+ 1) | save
 return { r1, r2, r3 }
 
 /* RUN () RETURNS
-  {r1: [Range(2, 1), Range(2, 2), Range(2, 3)],
-   r2: [Range(1, 2), Range(2, 3), Range(3, 4)],
-   r3: [Range(1, 2), Range(2, 3), Range(3, 4)]}
+{r1: [Range(2, 1), Range(2, 2), Range(2, 3)], r2: [Range(1, 2), Range(2, 3), Range(3, 4)], r3: [Range(1, 2), Range(2, 3), Range(3, 4)]}
 ---
-allocated=10312/390, peak=656
+allocated=10248/386, peak=656
 */
 
 a = matrix([2, 3], 4..9)
@@ -119,9 +101,9 @@ c = a[^1..2, ^2..3] | save   // [5, 9]
 return [b, c]
 
 /* RUN () RETURNS
-  [[7, 8], [5, 9]]
+[[7, 8], [5, 9]]
 ---
-allocated=7368/283, peak=144
+allocated=7360/282, peak=144
 */
 
 a = [4, 6, 5, 4]
@@ -139,31 +121,39 @@ function find(x, array) {
 }
 
 /* RUN () RETURNS
-  [1, 2, 3, 1]
+[1, 2, 3, 1]
 ---
             ⟦StackBase⟧
-            ⟦distribute.r8t+126:2_3 _t0 = pipe(_t0, _t1)⟧
-            ⟦LoopCore.PipeCollectionCollector.enumerate ∥ loop=SaverLoop(SaveElements)⟧
+            ⟦distribute.r8t+108:2_3 _t0 = pipe(_t0, _t1)⟧
+            ⟦LoopCore.PipeCollectionCollector.enumerate⟧
         (1) ⟦LoopCore.enumerateDefault⟧
-            ⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[ToBeSet, ToBeSet, ToBeSet, ToBeSet]⟧
-            ⟦CollectionCore.NextTransformedIterator.at ∥ key=[1], innerIt=ArrayIterator([4, 6, 5, 4], EnumerateAllKeys, 1), it=TransformedIterator(ToBeSet, EnumerateAllKeys, iLambda@2:7⸨a=[4, 6, 5, 4]⸩)⟧
-            ⟦distribute.r8t+126:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+126:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
+            ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(0, 4)⟧
+            ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+            ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[ToBeSet, ToBeSet, ToBeSet, ToBeSet]⟧
+            ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[1]⟧
+            ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
+0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
             ... (1) ...
-            ⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
-            ⟦CollectionCore.NextTransformedIterator.at ∥ key=[2], innerIt=ArrayIterator([4, 6, 5, 4], EnumerateAllKeys, 2), it=TransformedIterator(ToBeSet, EnumerateAllKeys, iLambda@2:7⸨a=[4, 6, 5, 4]⸩)⟧
-            ⟦distribute.r8t+126:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+126:6_0 trace ∥ x=6, array=[4, 6, 5, 4]⟧
+            ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(1, 4)⟧
+            ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+            ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
+            ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[2]⟧
+            ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
+0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=6, array=[4, 6, 5, 4]⟧
             ... (1) ...
-            ⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[1, 2, ToBeSet, ToBeSet]⟧
-            ⟦CollectionCore.NextTransformedIterator.at ∥ key=[3], innerIt=ArrayIterator([4, 6, 5, 4], EnumerateAllKeys, 3), it=TransformedIterator(ToBeSet, EnumerateAllKeys, iLambda@2:7⸨a=[4, 6, 5, 4]⸩)⟧
-            ⟦distribute.r8t+126:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+126:6_0 trace ∥ x=5, array=[4, 6, 5, 4]⟧
+            ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(2, 4)⟧
+            ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+            ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, 2, ToBeSet, ToBeSet]⟧
+            ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[3]⟧
+            ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
+0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=5, array=[4, 6, 5, 4]⟧
             ... (1) ...
-            ⟦LoopCore.Iterate.next ∥ loop=SaverLoop(SaveElements), state=[1, 2, 3, ToBeSet]⟧
-            ⟦CollectionCore.NextTransformedIterator.at ∥ key=[4], innerIt=ArrayIterator([4, 6, 5, 4], EnumerateAllKeys, 4), it=TransformedIterator(ToBeSet, EnumerateAllKeys, iLambda@2:7⸨a=[4, 6, 5, 4]⸩)⟧
-            ⟦distribute.r8t+126:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+126:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
+            ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(3, 4)⟧
+            ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+            ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, 2, 3, ToBeSet]⟧
+            ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[4]⟧
+            ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
+0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
 ---
-allocated=10264/377, peak=2384
+allocated=11560/424, peak=2688
 */

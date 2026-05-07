@@ -373,7 +373,10 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     assert numElements > 0;
     FrameLayout layout = initialLayout;
     if (initialLayout == null) {
-      TemplateBuilder element = TemplateBuilder.newBuilder(initialValue);
+      TemplateBuilder element =
+          (initialValue == Core.TO_BE_SET)
+              ? Template.EMPTY
+              : TemplateBuilder.newBuilder(initialValue);
       layout = VArrayLayout.newFromBuilder(tstate.scope(), element);
     } else if (initialLayout instanceof RecordLayout rLayout
         && rLayout.template.baseType.size() != numElements) {

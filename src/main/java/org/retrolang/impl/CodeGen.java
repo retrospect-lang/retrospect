@@ -223,8 +223,9 @@ public class CodeGen {
    * method has been emitted (but before any blocks added by previous calls to {@code addAtEnd()}).
    * The returned FutureBlock should be used to branch to the blocks that will be added.
    */
-  FutureBlock addAtEnd(Runnable addBlocks) {
-    FutureBlock link = new FutureBlock();
+  FutureBlock addAtEnd(Runnable addBlocks, boolean isEscape) {
+    // Tagging escapes makes it easier to stop in the debugger when a branch to them is created
+    FutureBlock link = new FutureBlock(isEscape ? true : null);
     atEnd.add(
         () -> {
           if (link.hasInLink()) {
@@ -363,7 +364,7 @@ public class CodeGen {
   void emitSaveResults(Value[] results) {
     CopyEmitter saveResult = new ToFnResults(this, target);
     for (int i = 0; i < target.results.size(); i++) {
-      CopyPlan plan = CopyPlan.create(RValue.toTemplate(results[i]), target.results.get(i));
+      CopyPlan plan = CopyPlan.create(RValue.toTemplate(results[i]), target.results.get(i), false);
       plan = CopyOptimizer.toFnResult(plan, target.resultObjSize, target.resultByteSize);
       saveResult.emit(this, plan, escape);
     }
@@ -543,7 +544,7 @@ public class CodeGen {
       this.callSite = callSite;
       this.done = done;
       this.resultsInfo = resultsInfo;
-      this.continueUnwinding = addAtEnd(() -> continueUnwinding.accept(stackRest));
+      this.continueUnwinding = addAtEnd(() -> continueUnwinding.accept(stackRest), false);
     }
 
     /**
@@ -764,7 +765,7 @@ public class CodeGen {
 
   /** Defines an escape handler that will be emitted by the given Runnable. */
   void setNewEscape(Runnable addBlocks) {
-    escape = addAtEnd(addBlocks);
+    escape = addAtEnd(addBlocks, true);
     preferNewEscape = false;
   }
 
@@ -927,7 +928,7 @@ public class CodeGen {
    * will have branched to the current escape handler.
    */
   void emitStore(Template src, Template dst, int registerStart, int registerEnd) {
-    CopyPlan plan = CopyPlan.create(src, dst);
+    CopyPlan plan = CopyPlan.create(src, dst, false);
     plan = CopyOptimizer.toRegisters(plan, registerStart, registerEnd, dst);
     CopyEmitter.REGISTER_TO_REGISTER.emit(this, plan, escape);
   }

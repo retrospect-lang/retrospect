@@ -419,7 +419,7 @@ static class IterateUnbounded extends BuiltinMethod {
 One more example: piping a collection into a collector. In Retrospect:
 
 ```
-method pipe(Collection collection, Collector collector) {
+default method pipe(Collection collection, Collector collector) {
   { eKind, initialState, loop, canParallel } = collectorSetup(collector, collection)
   if initialState is LoopExit {
     state = initialState
@@ -428,7 +428,7 @@ method pipe(Collection collection, Collector collector) {
   } else {
     state = iterate(collection, eKind, loop, initialState)
   }
-  return finalResult(loop, state)
+  return loopExitState(state)
 }
 ```
 
@@ -440,37 +440,37 @@ static class PipeCollectionCollector extends BuiltinMethod {
   static final Caller enumerate = new Caller("enumerate:4", "done");
   static final Caller iterate = new Caller("iterate:4", "done");
 
-  @Core.Method("pipe(Collection, Collector)")
+  @Core.Method("pipe(Collection, Collector) default")
   static void begin(TState tstate, @RC.In Value collection, @RC.In Value collector) {
     tstate.startCall(collectorSetup, collector, addRef(collection)).saving(collection);
   }
 
   @Continuation
-  static void afterCollectorSetup(TState tstate, Value csResult, @Saved Value collection)
+  static void afterCollectorSetup(TState tstate, Value csResult, @Saved @RC.In Value collection)
       throws BuiltinException {
     // "collectorSetup() should return a {canParallel, eKind, initialState, loop} struct"
     Err.COLLECTOR_SETUP_RESULT.unless(SETUP_KEYS.matches(csResult));
     Value canParallel = csResult.peekElement(0);
     Value eKind = csResult.peekElement(1);
     Err.COLLECTOR_SETUP_RESULT.unless(
-          canParallel.isa(Core.BOOLEAN) && eKind.isa(ENUMERATION_KIND));
+        canParallel.isa(Core.BOOLEAN).and(eKind.isa(ENUMERATION_KIND)));
     Value initialState = csResult.element(2);
     Value loop = csResult.element(3);
-    if (initialState.isa(Core.LOOP_EXIT)) {
-      tstate.jump("done", initialState, loop);
-    } else if (canParallel.is(Core.TRUE)) {
-      tstate.startCall(enumerate, addRef(collection), eKind, addRef(loop), initialState)
-            .saving(loop);
-    } else {
-      tstate.startCall(iterate, addRef(collection), eKind, addRef(loop), initialState)
-            .saving(loop);
-    }
+    initialState.isa(Core.LOOP_EXIT).test(
+        () -> {
+          tstate.dropValue(collection);
+          tstate.jump("done", initialState);
+        },
+        () -> canParallel.is(Core.TRUE).test(
+                  () -> tstate.startCall(
+                            enumerate, collection, eKind, loop, initialState),
+                  () -> tstate.startCall(
+                            iterate, collection, eKind, loop, initialState)));
   }
 
   @Continuation(order = 2)
-  static void done(TState tstate, @RC.In Value state, @RC.In Value loop,
-                   @Fn("finalResult:2") Caller finalResult) {
-    tstate.startCall(finalResult, loop, state);
+  static Value done(Value state) {
+    return loopExitState(state);
   }
 }
 ```

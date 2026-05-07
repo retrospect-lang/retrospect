@@ -16,39 +16,37 @@ function sumSqDistance([x, y], pts) = pts | [px, py] -> (x - px) ** 2 + (y - py)
 ---
 sumSqDistance_x0([d1, d2], [i3⸨0:[-1, -1]; 1:Absent⸩, i4⸨0:[-1, 0]; 1:Absent⸩, [-1, 1], i5⸨0:[1, -1]; 1:Absent⸩, i6⸨0:[1, 0]; 1:Absent⸩, [1, 1]]):
   1: CodeGenTarget.incrementCallCount(target:sumSqDistance_x0);
-  2: D10 ← 0;
-  3: I9 ← 0; → 5
-= 4: test I9 < 6; F:→ 32
-- 5: I12 ← iAdd(I9, 1);
-  6: test I9 == 0; F:→ 10
+  2: D9 ← 0;
+  3: I11 ← -1;
+= 4: I11 ← iAdd(I11, 1);
+  5: test I11 < 6; F:→ 30
+  6: test I11 == 0; F:→ 10
   7: I13 ← -1;
   8: I14 ← -1;
-  9: I9 ← I5; → 23
--10: test I9 == 1; F:→ 14
+  9: I12 ← I5; → 24
+-10: test I11 == 1; F:→ 14
  11: I13 ← -1;
  12: I14 ← 0;
- 13: I9 ← I6; → 23
--14: test I9 == 2; T:→ 25
- 15: test I9 == 3; F:→ 19
- 16: I13 ← 1;
- 17: I14 ← -1;
- 18: I9 ← I7; → 23
--19: test I9 == 4; F:→ 26
- 20: I13 ← 1;
- 21: I14 ← 0;
- 22: I9 ← I8;
--23: test I9 1 (< 2); F:→ 28
- 24: I9 ← I12; → 4
--25: I13 ← -1; → 27
--26: I13 ← 1;
--27: I14 ← 1;
--28: D15 ← dSub(D1, I13);
- 29: D13 ← dSub(D3, I14);
- 30: I9 ← I12;
- 31: D10 ← dAdd(D10, dAdd(dMul(D15, D15), dMul(D13, D13))); → 4
--32: TState.setResultTemplates(X0, [d0]);
- 33: setDouble[](TState.fnResultBytes(X0, 8), 0, D10);
- 34: return
+ 13: I12 ← I6; → 24
+-14: test I11 == 2; F:→ 16
+ 15: I13 ← -1; → 26
+-16: test I11 == 3; F:→ 20
+ 17: I13 ← 1;
+ 18: I14 ← -1;
+ 19: I12 ← I7; → 24
+-20: test I11 == 4; F:→ 25
+ 21: I13 ← 1;
+ 22: I14 ← 0;
+ 23: I12 ← I8;
+-24: test I12 1 (< 2); T:→ 4, F:→ 27
+-25: I13 ← 1;
+-26: I14 ← 1;
+-27: D12 ← dSub(D1, I13);
+ 28: D14 ← dSub(D3, I14);
+ 29: D9 ← dAdd(D9, dAdd(dMul(D12, D12), dMul(D14, D14))); → 4
+-30: TState.setResultTemplates(X0, [d0]);
+ 31: setDouble[](TState.fnResultBytes(X0, 8), 0, D9);
+ 32: return
 ---
-allocated=11480/430, peak=96
+allocated=12264/454, peak=96
 */

@@ -191,7 +191,7 @@ public class CopyOptimizerTest {
   @Test
   public void basic() {
     RegisterAllocator allocator = new RegisterAllocator();
-    CopyPlan initial = CopyPlan.create(src1, dst1.toBuilder().build(allocator));
+    CopyPlan initial = CopyPlan.create(src1, dst1.toBuilder().build(allocator), false);
     assertThat(cleanString(initial))
         .isEqualTo(
             """
@@ -217,7 +217,7 @@ public class CopyOptimizerTest {
   public void toRegisters() {
     RegisterAllocator allocator = new RegisterAllocator();
     Template dst = dst1.toBuilder().build(allocator);
-    CopyPlan initial = CopyPlan.create(src1, dst);
+    CopyPlan initial = CopyPlan.create(src1, dst, false);
     assertThat(cleanString(CopyOptimizer.toRegisters(initial, 0, allocator.numAllocated(), dst)))
         .isEqualTo(
             """
@@ -241,7 +241,7 @@ public class CopyOptimizerTest {
     src = src.toBuilder().build(allocator);
     int dstStart = allocator.numAllocated();
     Template dst = dst1.toBuilder().build(allocator);
-    CopyPlan initial = CopyPlan.create(src, dst);
+    CopyPlan initial = CopyPlan.create(src, dst, false);
     assertThat(
             cleanString(
                 CopyOptimizer.toRegisters(initial, dstStart, allocator.numAllocated(), dst)))
@@ -258,7 +258,7 @@ public class CopyOptimizerTest {
   @Test
   public void equalsRegisters() {
     RegisterAllocator allocator = new RegisterAllocator();
-    CopyPlan initial = CopyPlan.create(src1, dst1.toBuilder().build(allocator));
+    CopyPlan initial = CopyPlan.create(src1, dst1.toBuilder().build(allocator), false);
     assertThat(cleanString(CopyOptimizer.equalsRegisters(initial, 0, allocator.numAllocated())))
         .isEqualTo(
             """
@@ -273,7 +273,7 @@ public class CopyOptimizerTest {
   @Test
   public void toRecord() {
     RecordLayout layout = RecordLayout.newFromBuilder(scope, dst1.toBuilder());
-    CopyPlan initial = CopyPlan.create(src1, layout.template);
+    CopyPlan initial = CopyPlan.create(src1, layout.template, true);
     assertThat(cleanString(initial))
         .isEqualTo(
             """
@@ -312,7 +312,7 @@ public class CopyOptimizerTest {
                 Core.STRING.asRefVar.withIndex(1)));
     RegisterAllocator allocator = new RegisterAllocator();
     dst = dst.toBuilder().build(allocator);
-    CopyPlan initial = CopyPlan.create(src, dst);
+    CopyPlan initial = CopyPlan.create(src, dst, false);
     assertThat(cleanString(initial))
         .isEqualTo(
             """
@@ -343,7 +343,7 @@ public class CopyOptimizerTest {
             loopExit(Core.STRING.asRefVar));
     RegisterAllocator allocator = new RegisterAllocator();
     dst = dst.toBuilder().build(allocator);
-    CopyPlan initial = CopyPlan.create(src, dst);
+    CopyPlan initial = CopyPlan.create(src, dst, false);
     assertThat(cleanString(initial))
         .isEqualTo("copy(b0, b0), b0⸨0:set([], x1), copy(x0, x2); 1:copy(x0, x1)⸩");
     assertThat(cleanString(CopyOptimizer.toRegisters(initial, 0, allocator.numAllocated(), dst)))

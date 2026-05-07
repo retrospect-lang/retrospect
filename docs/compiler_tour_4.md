@@ -44,8 +44,8 @@ anomalies_ro = saveUnordered()
 anomalies_ro, _t2, _t1 = loopHelper(anomalies_ro, nums, _t1, True)
 _t0 = enumerate(nums, _t1, loop@1(vSum_ro, anomalies_ro), loop@1_state(vSum_rw: _t0, anomalies_rw: _t2))
 vSum_rw, anomalies_rw = unloop@1_state(_t0)
-vSum = finalResultHelper(vSum_ro, vSum_rw)
-anomalies = finalResultHelper(anomalies_ro, anomalies_rw)
+vSum = finalStateHelper(vSum_ro, vSum_rw)
+anomalies = finalStateHelper(anomalies_ro, anomalies_rw)
 return {anomalies: anomalies, vSum: vSum}
 ```
 
@@ -81,7 +81,7 @@ functions:
 *   `loopHelper(collector, collection, maxEKind=, isParallel)` returns the `_ro`
     value for the given collector, the initial `_rw` value, and the "enumeration
     kind" that the collector requires.
-*   `finalResultHelper(ro, rw)` determines the collected variable's final value,
+*   `finalStateHelper(ro, rw)` determines the collected variable's final value,
     given the final state.
 
 (See the [Enumeration and Collectors API](loops.md) for the full details of

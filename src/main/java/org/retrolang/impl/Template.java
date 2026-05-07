@@ -348,11 +348,7 @@ public sealed interface Template {
       this.value = value;
     }
 
-    /**
-     * Returns a Constant with the given value, which must not be refcounted.
-     *
-     * <p>Note that {@code Constant.of(TO_BE_SET)} returns EMPTY.
-     */
+    /** Returns a Constant with the given value, which must not be refcounted. */
     public static Template of(Value value) {
       if (value instanceof Singleton v) {
         return v.asTemplate;
@@ -638,7 +634,7 @@ public sealed interface Template {
         return false;
       } else if (encoding == NumEncoding.FLOAT64) {
         return true;
-      } else if (encoding == NumEncoding.INT32 || option.upgradeSubInts) {
+      } else if (encoding == NumEncoding.INT32 || option.upgradeSubInts()) {
         return NumValue.isInt(v);
       } else {
         return NumValue.isUint8(v);
@@ -649,7 +645,7 @@ public sealed interface Template {
     boolean isSubsetOfImpl(TemplateBuilder other, TestOption option) {
       if (!(other instanceof NumVar nv)) {
         return false;
-      } else if (!option.upgradeSubInts) {
+      } else if (!option.upgradeSubInts()) {
         return nv.encoding.compareTo(encoding) >= 0;
       } else {
         // All ints are equivalent for this test, so the only way it fails is if this is a double
@@ -796,7 +792,7 @@ public sealed interface Template {
     boolean couldCastImpl(Value v, TestOption option) {
       if (v.baseType().sortOrder != sortOrder()) {
         return false;
-      } else if (frameLayout == null || option.evolutionAllowed) {
+      } else if (frameLayout == null || option.evolutionAllowed()) {
         // As long as the sortOrder matches, cast() will expand the FrameLayout to contain v
         return true;
       }
@@ -811,7 +807,7 @@ public sealed interface Template {
       Template template = layout.template();
       for (int i = 0; i < n; i++) {
         Template element = (layout instanceof VArrayLayout) ? template : template.element(i);
-        if (!element.toBuilder().couldCast(v.element(i), TestOption.NO_EVOLUTION)) {
+        if (!element.toBuilder().couldCast(v.element(i), TestOption.DROP_TO_BE_SET)) {
           return false;
         }
       }
@@ -1284,26 +1280,31 @@ public sealed interface Template {
 
     @Override
     Template build(VarAllocator allocator) {
+      int nChoices = numChoices() - (allocator.dropToBeSetFromUnions() && hasToBeSet() ? 1 : 0);
+      if (nChoices == 1) {
+        return choiceBuilder(0).build(allocator);
+      }
       NumVar newTag = (tag == null) ? null : tag.build(allocator);
       // If we're lucky, each of our choices will be unchanged by building and we can reuse
       // our choices array.
-      Template[] newChoices = null;
+      Template[] newChoices =
+          (choices.length == nChoices) ? null : Arrays.copyOf(choices, nChoices);
       RefVar newUntagged = null;
       // It's not unusual for all our choices to be constant (e.g. when they're singletons), in
       // which case we can skip all the mucking around with duplicated VarAllocators.
-      if (!Arrays.stream(choices).allMatch(c -> c instanceof Constant)) {
+      if (!Arrays.stream(choices, 0, nChoices).allMatch(c -> c instanceof Constant)) {
         // We need to reset the VarAllocator before building each choice,
         // and union the resulting VarAllocator states.
         VarAllocator initial = allocator.duplicate();
         VarAllocator scratch = allocator.duplicate();
-        for (int i = 0; i < choices.length; i++) {
+        for (int i = 0; i < nChoices; i++) {
           Template c = choices[i];
           if (!(c instanceof Constant)) {
             scratch.resetTo(initial);
             Template c2 = c.toBuilder().build(scratch);
             if (c2 != c) {
               if (newChoices == null) {
-                newChoices = Arrays.copyOf(choices, choices.length);
+                newChoices = Arrays.copyOf(choices, nChoices);
               }
               newChoices[i] = c2;
             }
@@ -1315,7 +1316,7 @@ public sealed interface Template {
           }
         }
       }
-      if (newTag == tag && newUntagged == untagged && newChoices == null) {
+      if (Objects.equals(newTag, tag) && newUntagged == untagged && newChoices == null) {
         return this;
       } else {
         return new Union(newTag, newUntagged, newChoices == null ? choices : newChoices);

@@ -462,9 +462,9 @@ class PassThree extends VisitorBase<Void> {
     return null;
   }
 
-  /** Emits finalResultHelper calls for all live collected vars. */
+  /** Emits finalStateHelper calls for all live collected vars. */
   private void getFinalResults(Loop loop, Bits live, Local[] allRo) {
-    Vm.Function helper = vmCore().lookupFunction("finalResultHelper", 2);
+    Vm.Function helper = vmCore().lookupFunction("finalStateHelper", 2);
     for (CollectedVar cv : loop.collectedVars) {
       if (cv.expression != null && live.test(cv.output.index)) {
         blockCompiler.ib.emitCall(cv.output.local, helper, allRo[cv.index], cv.output.local);

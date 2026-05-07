@@ -187,7 +187,7 @@ method splitState(loop, state) _0 is loop@1 {
     anomalies_ro, _t2, _t1 = loopHelper(anomalies_ro, nums, _t1, True)
     _t0 = enumerate(nums, _t1, loop@1(vSum_ro, anomalies_ro), loop@1_state(vSum_rw: _t0, anomalies_rw: _t2))
     vSum, anomalies = unloop@1_state(_t0)
-    vSum = finalResultHelper(vSum_ro, vSum)
-    anomalies = finalResultHelper(anomalies_ro, anomalies)
+    vSum = finalStateHelper(vSum_ro, vSum)
+    anomalies = finalStateHelper(anomalies_ro, anomalies)
     return {anomalies: anomalies, vSum: vSum}  // 11:0
 */

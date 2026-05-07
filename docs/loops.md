@@ -11,7 +11,7 @@ implement this kind of processing.
 
 Note that most Retrospect code doesn't use these relatively low-level APIs;
 `for` statements or pipes are usually the clearest way to express computations
-over collections. These APIs may be needed
+over collections. The APIs described here may be needed
 
 *   when defining a new collection type, or
 *   when implementing some algorithms over collections whose flow of control
@@ -21,8 +21,8 @@ First, some terminology:
 
 *   *Enumerating* a collection executes some operation once for each element of
     the collection to produce a final result;
-*   *Iterating* is sequential enumeration, where the result of processing the
-    previous elements is provided as input when processing the next element.
+*   *Iterating* is sequential enumeration, where the processing of each element
+    may depend on the results of processing previous elements in the collection.
 
 Iteration is fundamentally sequential (we can only process an element after the
 processing of the previous element is complete) and hence depends on the
@@ -52,31 +52,115 @@ a = ["a", Absent, "b"]
 When enumerating we can choose among three options, each identified by a
 singleton:
 
-*   `EnumerateValues`: enumeration will return the value of each (key, value)
-    pair, excluding those whose value is `Absent`. For the example above,
-    enumeration would return `"a"` and `"b"`.
-*   `EnumerateWithKeys`: enumeration will return (key, value) pairs, excluding
-    those whose value is `Absent`. For the example above, enumeration would
-    return `[[1], "a"]` and `[[3], "b"]`.
-*   `EnumerateAllKeys`: enumeration will return all (key, value) pairs,
-    including those whose value is `Absent`. For the example above, enumeration
-    would return `[[1], "a"]`, `[[2], Absent]` and `[[3], "b"]`.
+*   `EnumerateValues`: enumeration will process only the value of each (key, value)
+    pair, excluding those where the value is `Absent`. For the example above,
+    enumeration would process `"a"` and `"b"`.
+*   `EnumerateWithKeys`: enumeration will process (key, value) pairs, excluding
+    those where the value is `Absent`. For the example above, enumeration would
+    process `[[1], "a"]` and `[[3], "b"]`.
+*   `EnumerateAllKeys`: enumeration will process all (key, value) pairs,
+    including those where the value is `Absent`. For the example above, enumeration
+    would process `[[1], "a"]`, `[[2], Absent]` and `[[3], "b"]`.
 
 The type `EnumerationKind` contains these three singletons (and nothing else).
 
-## Sequential Loops
+## Loops are state machines
 
-Sequential loops are based on an iteration API, similar to that in many other
-languages:
+The enumeration APIs represent the processing to be done for each element as a
+state machine, comprising
 
-*   an `iterator()` function returns a sequential iterator for a collection; and
-*   a `next()` function that returns the next element from an iterator.
+* an initial state, and
+* a function `nextState()` that takes the current state and an element of the
+  collection and returns the new state.
+
+We use values of type `Loop` to represent the state transitions:
+
+```
+open type Loop
+
+// Returns the next state; item is a value (for EnumerateValues) or
+// a [key, value] pair (for EnumerateWithKeys or EnumerateAllKeys)
+open function nextState(loop, state, item)
+```
+
+For example, a simple state machine whose state is the maximum value it has
+encountered so far (or Absent, if no elements have been processed) could be
+written this way:
+
+```
+singleton MaxLoop is Loop
+
+method nextState(MaxLoop, state, value) =
+    (state is Absent or state < value) ? value : state
+```
+
+The function `iterate` sequentially processes the elements of a collection
+using a state machine:
+
+```
+// Calls nextState with each element of the collection, returning the final
+// state.
+function iterate(collection, eKind, loop, initialState)
+```
+
+so e.g. `iterate([-1, 300, 7], EnumerateValues, MaxLoop, Absent)` returns `300`.
+
+`iterate` also provides a means to stop the iteration before all elements have
+been processed: if `nextState` returns a value of type `LoopExit`, `iterate`
+will just return that state as its result without any further iteration.
+
+```
+compound LoopExit
+// Returns a LoopExit wrapping the given value
+function loopExit(finalState) = LoopExit_(finalState)
+// Returns the value that was passed to loopExit()
+function loopExitState(LoopExit exit) = exit_
+```
+
+For example, we could write a loop that determines whether any element of a
+collection is equal to a given value, and if so returns the corresponding key:
+
+```
+compound SearchLoop is Loop
+// Called with [key, value] pairs; returns loopExit(k) if this is the
+// value we're looking for, otherwise returns state unchanged.
+method nextState(SearchLoop loop, state, [k, v]) =
+	(v == loop_) ? loopExit(k) : state
+
+// If x is in collection, returns the corresponding key, otherwise Absent
+function contains(collection, x) {
+  // The initialState we provide here (None) doesn't matter -- anything other
+  // than a LoopExit would work equally well.
+  finalState = iterate(collection, EnumerateWithKeys, SearchLoop_(x), None)
+  return (finalState is LoopExit) ? loopExitState(finalState) : Absent 
+}
+```
+
+## Transforming Loops
+
+Loops can be manipulated to create other Loops; one of the most useful
+operations is to transform each incoming value:
+
+```
+compound TransformedLoop
+// Transforms each incoming value with the given lambda.
+function transformLoop(Lambda lambda, Loop loop) =
+    TransformedLoop_({lambda, loop})
+
+method nextState(TransformedLoop transformed, state, item) {
+  item = transformed_.lambda @ item
+  // If item transformed to Absent, skip the rest of the loop by returning state unchanged
+  return (item is Absent) ? state : nextState(transformed_.loop, state, item) 
+}
+```
+
+## Iterators
+
+`iterate` is implemented using an *iterator*, which can produce the
+elements of a collection as needed:
 
 ```
 open type Iterator
-
-// eKind must be one of EnumerateValues, EnumerateWithKeys, or EnumerateAllKeys
-open function iterator(collection, eKind)
 
 // Either returns the next element of the iteration (a value or a [key, value]
 // pair, depending on the eKind used to construct the iterator) and updates
@@ -88,143 +172,181 @@ open function next(iterator=)
 function emptyIterator() = TrivialIterator_(Absent)
 function oneElementIterator(x) = TrivialIterator_(x)
 
-// pipe() can be used to apply a lambda to each element returned by an iterator.
-// elements transforming to Absent are dropped.
-method pipe(Iterator it, Lambda lambda) =
-    TransformedIterator_({it, eKind: EnumerateValues, lambda})
-
 private compound TrivialIterator is Iterator
 method next(TrivialIterator it=) {
   result = it_
   it = emptyIterator()
   return result
 }
-
-private compound TransformedIterator is Iterator
-method next(TransformedIterator it=) {
-  for sequential it {
-    result = next(it_.it=)
-    if result is not Absent {
-      result = transformElement(result, it_.lambda, it_.eKind)
-      if result is Absent {
-        continue
-      }
-    }
-    break { return result }
-  }
-}
-
-private function transformElement(element, lambda, eKind) {
-  if eKind is EnumerateValues {
-    return lambda @ element
-  }
-  [key, value] = element
-  if value is not Absent {
-    value = lambda @ value
-    if value is Absent and eKind is not EnumerateAllKeys {
-      return Absent
-    }
-  }
-  return [key, value]
-}
 ```
 
-For example:
+Each collection type defines an `iterator` method, which returns an appropriate
+iterator for the given collection.  To provide additional flexibility, the
+`iterator` function is passed the collection, the Loop that will process each element,
+and the initial state for that loop:
 
 ```
-// Returns the key of the largest element in the given collection, or None if
-// the collection is empty.
-function keyOfMax(collection) {
-  it = iterator(collection, EnumerateWithKeys)
-  first = next(it=)
-  if first is Absent {
-    return None
-  }
-  [maxKey, max] = first
-  for sequential it, max, maxKey {
-    element = next(it=)
-    if element is Absent {
-      break
-    } else if element[2] > max {
-      [maxKey, max] = element
-    }
-  }
-  return maxKey
-}
+// eKind must be one of EnumerateValues, EnumerateWithKeys, or EnumerateAllKeys
+// In addition to returning an Iterator, this function may transform the given
+// Loop and/or initial state; the returned Iterator should only be used with the
+// returned Loop and state. 
+open function iterator(collection, eKind, loop=, initialState=)
 ```
 
-Again, note that this example is intended as an illustration of how to use the
-low-level iterator API; usually we would write such a function using
-higher-level APIs, e.g.
+We now have all the pieces necessary to define `iterate`:
 
 ```
-function keyOfMax(collection) {
-  maxKV = withKeys(collection) | maxAt([2])
-  return maxKV is Absent ? None : maxKV[1]
-}
-```
-
-## Processing Each Element of a Collection Sequentially
-
-While Retrospect programs can use `iterator()` and `next()` directly, often it
-is more convenient to express iteration as a state machine: given
-
-*   an initial state, and
-*   a function `nextState()` that takes the current state and the next element
-    and returns the new state,
-
-the function `iterate()` iterates over all elements in a collection by
-repeatedly applying the `nextState()` function to each element and carrying
-forward the resulting state; the result of the iteration is the final state. We
-use values of type `Loop` to represent these state machines.
-
-```
-open type Loop
-
-// Returns the next state
-open function nextState(loop, state, element)
-
-// Calls nextState with each element of the collection, returning the final
-// state.
-function iterate(collection, eKind, loop, initialState)
-```
-
-The `loop` argument determines the behavior of `nextState`; for example, we
-could rewrite `keyOfMax` this way:
-
-```
-private singleton KeyOfMaxLoop is Loop
-
-// state is Absent if this is the first element, otherwise [maxKey, maxValue]
-method nextState(KeyOfMaxLoop, state, element) =
-    (state is Absent or element[2] > state[2]) ? element : state
-
-function keyOfMax(collection) {
-  result = iterate(collection, EnumerateWithKeys, KeyOfMaxLoop, Absent)
-  return (result is Absent) ? None : result[1]
-}
-```
-
-`iterate` also provides a means to stop the iteration before all elements have
-been processed: if `nextState` returns a state of type `LoopExit`, `iterate`
-will just return that state as its result without any further iteration. In
-other words, the implementation of `iterate` is equivalent to:
-
-```
-compound LoopExit
-function loopExit(finalState) = LoopExit_(finalState)
-function loopExitState(LoopExit exit) = exit_
-
 function iterate(collection, eKind, loop, state) {
-  it = iterator(collection, eKind)
+  it = iterator(collection, eKind, loop=, state=)
   for sequential state, it {
     if state is LoopExit { break }
     element = next(it=)
-    if element is Absent { break }
+    if element is Absent {
+      state = finalState(loop, state)
+      break
+    }
     state = nextState(loop, state, element)
   }
   return state
 }
+```
+
+As an example, here is the implementation of `iterator()` for a Range:
+
+```
+compound RangeIterator
+
+method iterator(Range r, EnumerationKind eKind, loop=, state=) {
+  min = min(r)
+  assert min is not None
+  // If keyOffset is not None, we will add it to the value to get the
+  // corresponding key.
+  // The first value (i.e. min) has key [1] (since Range is a type of Matrix).
+  keyOffset = (eKind is EnumerateValues) ? None : 1 - min
+  return RangeIterator_({next: min, max: max(r), keyOffset})
+}
+
+method next(RangeIterator it=) {
+  { next, max, keyOffset } = it_
+  if max is not None and next > max {
+    return Absent
+  }
+  it_.next = next + 1
+  return keyOffset is None ? next : [ [next + keyOffset], next ]
+}
+```
+
+In this case the `iterator()` method always leaves the Loop and state arguments
+unchanged.
+On the other hand, to iterate over arrays we can just iterate over the range of
+valid indices and transform each index to the corresponding array element:
+
+```
+method iterator(Array a, EnumerationKind eKind, loop=, initialState=) {
+  lambda = applyToValues(i -> a[i], eKind)
+  loop = transformLoop(lambda, loop)
+  return iterator(1..size(a), eKind, loop=, initialState=)
+}
+```
+
+While it would be possible to implement an ArrayIterator without transforming
+the loop, doing it this way saves us the complexity of handling different
+EnumerationKinds and skipping Absent when appropriate.
+
+Note that when `iterate` reaches the end of the iterator it calls a `finalState`
+method to give the Loop one last chance to update the state.  The default
+method for that function leaves the state unchanged.
+
+```
+// Called once after all of the elements of a collection have been processed,
+// if state is not a LoopExit
+function finalState(loop, state)
+
+default method finalState(Loop loop, state) = state
+
+method finalState(TransformedLoop transformed, state) = finalState(transformed_.loop, state)
+```
+
+## Parallel Loops
+
+Enabling parallel enumeration requires some additions to the Loop API. Since we may
+now be processing subsets of the collection independently, we must be able to
+
+* *fork* the state, so that each subset can update its own copy of the state;
+  and
+* *combine* multiple separately-updated states to get a final state.
+
+In order to give the implementation maximum flexibility, parallel loops
+implement two alternatives for forking state:
+
+* creating a new "empty" state; or
+* splitting an existing state into two states.
+
+The default implementation of splitting just returns an empty state along with
+the state it was given, but in some cases there may be efficiency benefits to
+providing a specialized split method for a loop's state.
+
+```
+// Returns an empty state for the given loop.
+open function emptyState(loop)
+
+// Returns a new state and updates the given state; the result of combining
+// those two states should be equivalent to the original state.
+open function splitState(loop, state=)
+
+// Combines two states.
+// Will not be called with either state Absent or a LoopExit.
+open function combineStates(loop, state1, state2)
+
+// The default implementation just returns Absent; if that's not a suitable
+// state for your loop you must override this method.
+method emptyState(loop) default = Absent
+
+// The default implementation just returns the result of emptyState(),
+// leaving the given state unchanged.  It is not necessary to override this
+// method, but for some loops there may be an efficiency benefit to doing so.
+method splitState(loop, state=) default = emptyState(loop)
+```
+
+Given a parallelizable Loop (i.e. one that has appropriate methods for
+`emptyState()`, `splitState()`, and `combineStates()`), the `enumerate()`
+function is used to run it for each element of a collection.
+
+```
+// Calls nextState with each element of the collection, returning the final
+// state.
+open function enumerate(collection, eKind, loop, initialState)
+
+// The default implementation falls back on sequential execution.
+method enumerate(collection, eKind, loop, initialState) default =
+    iterate(collection, eKind, loop, initialState)
+```
+
+Returning to our previous example, with one small addition we can make
+`MaxLoop` parallelizable:
+
+```
+function combineStates(MaxLoop, state1, state2) =
+    (state1 > state2) ? state1 : state2
+```
+
+`SearchLoop` is even simpler: since `nextState` only returns a LoopExit or the
+original state, no `combineStates` method is needed, and `contains` can be made
+parallelizable by simply replacing the call to `iterate` with a call to
+`enumerate`.
+
+(Note that doing so may change the behavior of `contains()`: while the
+sequential version would always return the key of the first occurrence of `x`,
+the version using `enumerate()` is only guaranteed to return the key of *some*
+occurrence of `x`.)
+
+A TransformedLoop is parallelizable if the inner loop is:
+
+```
+method emptyState(TransformedLoop transformed) = emptyState(transformed_.loop)
+method splitState(TransformedLoop transformed, state=) = splitState(transformed_.loop, state=)
+method combineStates(TransformedLoop transformed, state1, state2) =
+    combineStates(transformed_.loop, state1, state2)
 ```
 
 ## Sequential loops without a collection
@@ -256,85 +378,14 @@ function iterateUnbounded(lambda, state) {
 }
 ```
 
-## Parallel Loops
-
-Enabling parallel enumeration requires a somewhat more complex API. Since we may
-now be processing subsets of the collection independently, we must be able to
-
-*   *fork* the state, so that each subset can update its own copy of the state;
-    and
-*   *combine* multiple separately-updated states to get a final state.
-
-In order to give the implementation maximum flexibility, parallel loops
-implement two alternatives for forking state:
-
-*   creating a new "empty" state; or
-*   splitting an existing state into two states.
-
-The default implementation of splitting just returns an empty state along with
-the state it was given, but in some cases there may be efficiency benefits to
-providing a specialized split method for a loop's state.
-
-```
-// Returns an empty state for the given loop.
-open function emptyState(loop)
-
-// Returns a new state and updates the given state; the result of combining
-// those two states should be equivalent to the original state.
-open function splitState(loop, state=)
-
-// Combines two states.
-// Will not be called with either state Absent or a LoopExit.
-open function combineStates(loop, state1, state2)
-
-// The default implementation just returns Absent; if that's not a suitable
-// state for your loop you must override this method.
-method emptyState(loop) default = Absent
-
-// The default implementation just returns the result of emptyState(),
-// leaving the given state unchanged.  It is not necessary to override this
-// method, but for some loops there may be an efficiency benefit to doing so.
-method splitState(loop, state=) default = emptyState(loop)
-```
-
-Given a parallelizable Loop (i.e. one that has appropriate methods for
-`emptyState()`, `splitState()`, and `combineStates()`), the `enumerate()`
-function is used to run it for each element of a collection. Unlike iteration,
-there is no shared implementation of parallel enumeration; each collection type
-must provide an appropriate method in order to support parallel enumeration (the
-default method just falls back on iteration).
-
-```
-// Calls nextState with each element of the collection, returning the final
-// state.
-// Collections that support parallel enumeration must provide a method for
-// this function.
-// The default implementation falls back on sequential execution.
-open function enumerate(collection, eKind, loop, initialState)
-
-method enumerate(collection, eKind, loop, initialState) default =
-    iterate(collection, eKind, loop, initialState)
-```
-
-Returning to our previous example, with one small addition we can make
-`keyOfMax` parallelizable:
-
-```
-function combineStates(KeyOfMaxLoop, state1, state2) =
-    (state1[2] > state2[2]) ? state1 : state2
-
-function keyOfMax(collection) {
-  result = enumerate(collection, EnumerateWithKeys, KeyOfMaxLoop, Absent)
-  return (result is Absent) ? None : result[1]
-}
-```
+There is no parallel equivalent to `iterateUnbounded`.
 
 ## Collectors
 
 Most pipelines connect a source collection to a Collector such as `sum` or
-`save`. Collectors describe how to process the elements of a given collection to
-produce a final result, in a way that enables them to be composed and
-manipulated.
+`save`. Collectors combine all the information needed to process the elements
+of a given collection and produce a final result, in a way that enables them to
+be composed and manipulated.
 
 ```
 open type Collector
@@ -350,19 +401,9 @@ method pipe(Collection collection, Collector collector) {
   } else {
     state = iterate(collection, eKind, loop, initialState)
   }
-  return finalResult(loop, state)
+  // The pipe result is the final state, unwrapped if it's a LoopExit
+  return loopExitState(state)
 }
-```
-
-This uses an additional optional method on Loops, to convert the final state to
-a returned value. The default implementation just unwraps LoopExit states and
-returns other states unchanged:
-
-```
-open function finalResult(loop, finalState)
-
-method finalResult(loop, finalState) default =
-    finalState is LoopExit ? loopExitState(finalState) : finalState
 ```
 
 ## Reducers
@@ -409,9 +450,9 @@ function allFalse() = BooleanReducer_({initial: True, exitOn: True})
 // We don't need a combineStates method since our state is only ever
 // Absent or LoopExit
 method nextState(BooleanReducer br, Absent, Boolean value) =
-  (value == br_.exitOn) ? loopExit(not bc_.initial) : Absent
-method finalResult(BooleanReducer br, state) =
-  state is Absent ? br_.initial : loopExitState(state)
+    (value == br_.exitOn) ? loopExit(not br_.initial) : Absent
+method finalState(BooleanReducer br, state) =
+    state is Absent ? br_.initial : state
 ```
 
 One more example:
@@ -441,30 +482,20 @@ collects the results, discarding any that transform to `Absent` unless the
 collector's eKind is EnumerateAllKeys.
 
 The implementation is straightforward; note that to avoid conflicting with the
-previous method for `pipe` we must explicitly exclude Collections, which are
-also Lambdas:
+previous method for `pipe` we must explicitly exclude Collections, which may
+also be Lambdas:
 
 ```
 method pipe(Lambda lambda, Collector collector) (lambda is not Collection) default =
     TransformedCollector_({lambda, collector})
 
 private compound TransformedCollector is Collector
-private compound TransformedLoop is Loop
 
 method collectorSetup(TransformedCollector tc, collection) {
   result = collectorSetup(tc_.collector, collection)
-  result.loop = TransformedLoop_({lambda: tc_.lambda, eKind: result.eKind, loop: result.loop})
+  lambda = applyToValues(tc_.lambda, result.eKind)
+  result.loop = transformLoop(lambda, result.loop)
   return result
-}
-
-method emptyState(TransformedLoop loop) = emptyState(loop_.loop)
-method splitState(TransformedLoop loop, state=) = splitState(loop_.loop, state=)
-method combineStates(TransformedLoop loop, state1, state2) = combineStates(loop_.loop, state1, state2)
-method finalResult(TransformedLoop loop, state) = finalResult(loop_.loop, state)
-
-method nextState(TransformedLoop loop, state, element) {
-  element = transformElement(element, loop_.lambda, loop_.eKind)
-  return element is Absent ? state : nextState(loop_.loop, state, element)
 }
 ```
 
@@ -515,7 +546,7 @@ method collectorSetup(SequentialCollector sc, collection) {
 ## Savers
 
 Not all Collectors are as readily parallelizable as Reducers. The `save`
-collector stores its inputs into a new collection, which in most cases requiries
+collector stores its inputs into a new collection, which in most cases requires
 serializing the updates to a single value. For example,
 
 ```
@@ -623,9 +654,9 @@ method combineStates(SaverLoop loop, state1, state2) {
   return state1
 }
 
-method finalResult(SaverLoop loop, finalState) {
-  assert finalState is not SaverUpdates
-  return finalResult(loop_, finalState)
+method finalState(SaverLoop loop, state) {
+  assert state is not SaverUpdates
+  return finalState(loop_, state)
 }
 ```
 
@@ -665,14 +696,9 @@ function flatten(collections) {
 private compound Flattened_
 
 method at(Flattened f, key) {
-  if key is Array and size(key) == 2 {
-    [k0, k1] = key
-    c = f_ @ k0
-    if c is not Absent {
-      return c @ k1
-    }
-  }
-  return Absent
+  [k0, k1] = key
+  c = f_ @ k0
+  return c is Absent ? Absent : c @ k1
 }
 
 method size(Flattened f) = f | -> size(#) | sum
@@ -682,57 +708,30 @@ method size(Flattened f) = f | -> size(#) | sum
 // on each subcollection and save the results now, rather than doing it lazily;
 // that ensures that the result of keys() won't keep all the values around.
 method keys(Flattened f) =
-    flatten(withKeys(f_) | [k0, c] -> [k0, ^keys(c)] | save)
+    flatten(withAllKeys(f_)
+              | [k0, c] -> (c is Absent) ? Absent : [k0, ^keys(c)]
+              | save)
 
 method new(Flattened f) = flatten(f_ | -> new(keys(#)) | save)
 
-method iterator(Flattened f, eKind) {
-  outerEKind = (eKind is EnumerateValues) ? EnumerateValues : EnumerateWithKeys
-  return FlattenedIterator_({
-            first: emptyIterator(),
-            rest: iterator(f_, outerEKind),
-            eKind
-          })
+// A Loop that iterates over each inner collection
+compound FlattenLoop
+
+method iterator(Flattened f, eKind, loop=, initialState=) {
+  loop = FlattenLoop_({eKind, loop})
+  return iterator(f_, eKind, loop=, initialState=)
 }
 
-private compound FlattenedIterator is Iterator
-
-method next(FlattenedIterator it=) {
-  for sequential it {
-    result = next(it_.first=)
-    if result is not Absent {
-      break { return result }
+method nextState(FlattenLoop flatten, state, value) {
+  {eKind, loop} = flatten_
+  if eKind is not EnumerateValues {
+    [k1, value] = value
+    if value is Absent {
+      return nextState(loop, state, [[k1, Absent], Absent])
     }
-    next = next(it_.rest=)
-    if next is Absent {
-      break { return Absent }
-    }
-    if it_.eKind is EnumerateValues {
-      it_.first = iterator(next, EnumerateValues)
-    } else {
-      [k0, inner] = next
-      it_.first = iterator(inner, it_.eKind) | [k1, v] -> [[k0, k1], v]
-    }
+    loop = transformLoop([k2, v] -> [[k1, k2], v], loop)
   }
-}
-
-method enumerate(Flattened f, eKind, loop, initialState) {
-  asCollector = asCollector(EnumerateValues, loop, initialState)
-  if eKind is EnumerateValues {
-    for c in f_ {
-      result <<^ c
-    } collect {
-      result =| asCollector
-    }
-  } else {
-    for k0: c in f_ {
-      c = (eKind is EnumerateWithKeys) ? withKeys(c) : withAllKeys(c)
-      result <<^ c | [k1, v] -> [[k0, k1], v]
-    } collect {
-      result =| asCollector
-    }
-  }
-  return result
+  return iterate(value, eKind, loop, state)
 }
 
 // You can update a flattened collection if both the inner and outer collections
@@ -816,8 +815,8 @@ The code generated for the sequential version of this loop looks like
     // compiled code for "break" body
   } else {
     {out1_rw, out2_rw, q1, q2} = state_
-    out1 = finalResultHelper(out1_ro, out1_rw)
-    out2 = finalResultHelper(out2_ro, out2_rw)
+    out1 = finalStateHelper(out1_ro, out1_rw)
+    out2 = finalStateHelper(out2_ro, out2_rw)
   }
 ```
 
@@ -891,19 +890,19 @@ procedure verifyEV(ro) {
   assert ro_.eKind is EnumerateValues, "Can't inherit a keyed collector"
 }
 
-function finalResultHelper(ro, rw) {
-  return finalResult(ro_.loop, toState(rw))
+function finalStateHelper(ro, rw) {
+  return finalState(ro_.loop, toState(rw))
 }
 
-// For use in a break; combines emitKey and finalResultHelper
-function finalResultHelper(ro, rw, key) {
+// For use in a break; combines emitKey and finalStateHelper
+function finalStateHelper(ro, rw, key) {
   {pendingValue, state} = rw_
   if ro_.eKind is not EnumerateValues {
     if state is not LoopExit and (pendingValue is not Absent or ro_.eKind is EnumerateAllKeys) {
       state = nextState(ro_.loop, state, [key, pendingValue])
     }
   }
-  return finalResult(ro_.loop, state)
+  return finalState(ro_.loop, state)
 }
 
 procedure emitValue(ro, rw=, v) {
@@ -960,8 +959,8 @@ The code generated for the parallel version is similar:
     // compiled code for "break" body
   } else {
     {out1_rw, out2_rw} = state_
-    out1 = finalResultHelper(out1_ro, out1_rw)
-    out2 = finalResultHelper(out2_ro, out2_rw)
+    out1 = finalStateHelper(out1_ro, out1_rw)
+    out2 = finalStateHelper(out2_ro, out2_rw)
   }
 ```
 

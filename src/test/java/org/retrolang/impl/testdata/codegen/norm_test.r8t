@@ -1,0 +1,96 @@
+if prep {
+  _ = normTest(1)
+  return normTest(2)
+}
+return normTest(3)
+
+function normTest(n) {
+  x = (-5..n) + n
+  r1 = norm(x)
+  r2 = norm(x | save)
+  r3 = norm([n / 10, 0.4])
+  return [r1, r2, r3]
+}
+
+function norm(v) = sqrt(v | x -> x ** 2 | sequentially(sum))
+
+/* CODEGEN normTest RETURNS
+[9.797958971132712, 9.797958971132712, 0.5]
+---
+normTest_x0(i1):
+  1: CodeGenTarget.incrementCallCount(target:normTest_x0);
+  2: test I1 < -6; T:→ 69
+  3: I2 ← 0;
+  4: I3 ← -5;
+= 5: test I1 < I3; T:→ 12
+  6: I4 ← Math.addExact(I3, 1); ArithmeticException:→ 63
+  7: I5 ← Math.addExact(I3, I1); ArithmeticException:→ 63
+  8: I5 ← Math.multiplyExact(I5, I5); ArithmeticException:→ 63
+  9: I5 ← Math.addExact(I2, I5); ArithmeticException:→ 63
+ 10: I2 ← I5;
+ 11: I3 ← I4; → 5
+-12: D4 ← Math.sqrt(I2);
+ 13: test Double.isNaN(D4) == 0; F:→ 63
+ 14: I6 ← Math.addExact(Math.subtractExact(I1, -5), 1); ArithmeticException:→ 63
+ 15: test I6 < 0; T:→ 63
+ 16: test I6 == 0; T:→ 63
+ 17: test TState.reserveForChange(X0, *[]i0@xxxx, null, I6) == 0; T:→ 63
+ 18: X2 ← alloc*[]i0@xxxx(X0, I6);
+ 19: I3 ← -5;
+=20: test I1 < I3; T:→ 28
+ 21: I6 ← Math.addExact(I3, 1); ArithmeticException:→ 57
+ 22: I7 ← Math.addExact(6, I3); ArithmeticException:→ 57
+ 23: I8 ← Math.addExact(I3, I1); ArithmeticException:→ 57
+ 24: test I7 < 1; T:→ 57
+ 25: test Frame1i2x.i0(X2) < I7; T:→ 57
+ 26: setInt[](Frame1i2x.x0(X2), iShl(iSub(I7, 1), 2), I8);
+ 27: I3 ← I6; → 20
+-28: I3 ← 0;
+ 29: I6 ← -1;
+ 30: I7 ← Frame1i2x.i0(X2);
+=31: I8 ← iAdd(I6, 1);
+ 32: test I8 < I7; F:→ 38
+ 33: I9 ← int[](Frame1i2x.x0(X2), iShl(I8, 2));
+ 34: I9 ← Math.multiplyExact(I9, I9); ArithmeticException:→ 51
+ 35: I9 ← Math.addExact(I3, I9); ArithmeticException:→ 51
+ 36: I3 ← I9;
+ 37: I6 ← I8; → 31
+-38: D8 ← Math.sqrt(I3);
+ 39: test Double.isNaN(D8) == 0; F:→ 51
+ 40: D10 ← dDiv(I1, 10);
+ 41: test Double.isNaN(D10) == 0; F:→ 51
+ 42: D10 ← Math.sqrt(dAdd(dMul(D10, D10), 0.16000000000000003));
+ 43: test Double.isNaN(D10) == 0; F:→ 51
+ 44: dropRef{X2};
+ 45: TState.setResultTemplates(X0, [[d0, d8, d16]]);
+ 46: X1 ← TState.fnResultBytes(X0, 24);
+ 47: setDouble[](X1, 0, D4);
+ 48: setDouble[](X1, 8, D8);
+ 49: setDouble[](X1, 16, D10);
+ 50: return
+-51: X8 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=I3, loop=TransformedLoop(ArrayAccessor(X2, EnumerateValues), TransformedLoop(lambda@15:30, Sum(0))), it=SimpleRangeIterator(I6, I7)⟧);
+ 52: X2 ← TState.fillStackEntry(X0, null, X8, ⟨b0⟩, LmMemo_17@xxxx, null);
+ 53: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.PipeCollectionCollector.iterate⟧, ⟨b0⟩, mMemo_21@xxxx, null);
+ 54: X2 ← TState.fillStackEntry(X0, X2, ⟦norm_test.r8t+0:15_3 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_28@xxxx, null);
+ 55: X3 ← newStackEntry(⟦norm_test.r8t+0:10_5 r2 = norm(_t0) ∥ n=I1, r1=D4⟧);
+ 56: X1 ← TState.fillStackEntry(X0, X2, X3, ⟨[d0, d0, d0]⟩, mMemo_x@xxxx, null); → 71
+-57: X6 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=X2, loop=TransformedLoop(KeyValueLambda(`add:2:#.`(I1), False), SaverLoop(SaveElements)), it=RangeIterator(I3, I1, 6)⟧);
+ 58: X2 ← TState.fillStackEntry(X0, null, X6, ⟨x0:*[]@xxxx⟩, LmMemo_14@xxxx, null);
+ 59: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.enumerateDefault⟧, ⟨x0:*[]@xxxx⟩, mMemo_15@xxxx, null);
+ 60: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.PipeCollectionCollector.enumerate⟧, ⟨x0:*[]@xxxx⟩, mMemo_21@xxxx, null);
+ 61: X3 ← newStackEntry(⟦norm_test.r8t+0:10_4 _t0 = pipe(x, _t0) ∥ n=I1, r1=D4⟧);
+ 62: X1 ← TState.fillStackEntry(X0, X2, X3, ⟨[d0, d0, d0]⟩, mMemo_x@xxxx, null); → 71
+-63: X4 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=I2, loop=TransformedLoop(TransformedLambda(`add:2:#.`(I1), lambda@15:30), Sum(0)), it=RangeIterator(I3, I1, None)⟧);
+ 64: X2 ← TState.fillStackEntry(X0, null, X4, ⟨b0⟩, LmMemo_17@xxxx, null);
+ 65: X2 ← TState.fillStackEntry(X0, X2, ⟦LoopCore.PipeCollectionCollector.iterate⟧, ⟨b0⟩, mMemo_21@xxxx, null);
+ 66: X2 ← TState.fillStackEntry(X0, X2, ⟦norm_test.r8t+0:15_3 _t0 = pipe(_t0, _t1)⟧, ⟨d0⟩, mMemo_28@xxxx, null);
+ 67: X3 ← newStackEntry(⟦norm_test.r8t+0:9_2 r1 = norm(x) ∥ n=I1, x=TransformedMatrix(Range(-5, I1), `add:2:#.`(I1))⟧);
+ 68: X1 ← TState.fillStackEntry(X0, X2, X3, ⟨[d0, d0, d0]⟩, mMemo_x@xxxx, null); → 71
+-69: X2 ← newStackEntry(⟦norm_test.r8t+0:8_0 _t0 = range(-5, n) ∥ n=I1⟧);
+ 70: X1 ← TState.fillStackEntry(X0, null, X2, ⟨[d0, d0, d0]⟩, mMemo_x@xxxx, null);
+-71: TState.setStackRest(X0, X1);
+ 72: TState.setUnwoundFrom(X0, target:normTest_x0);
+ 73: return
+---
+allocated=288/10, peak=128
+*/

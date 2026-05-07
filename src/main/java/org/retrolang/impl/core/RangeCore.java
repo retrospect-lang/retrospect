@@ -16,6 +16,8 @@
 
 package org.retrolang.impl.core;
 
+import static org.retrolang.impl.Value.addRef;
+
 import org.retrolang.code.CodeBuilder;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
@@ -50,6 +52,15 @@ public class RangeCore {
    */
   @Core.Private
   static final BaseType.Named REVERSED_RANGE = Core.newBaseType("ReversedRange", 2, Core.MATRIX);
+
+  /**
+   * {@code private compound SimpleRangeIterator is Iterator}
+   *
+   * <p>Elements are {@code previous}, {@code limit}. A simplified version of RangeIterator.
+   */
+  @Core.Private
+  static final BaseType.Named SIMPLE_RANGE_ITERATOR =
+      Core.newBaseType("SimpleRangeIterator", 2, LoopCore.ITERATOR);
 
   /**
    * {@code private compound RangeIterator is Iterator}
@@ -366,7 +377,37 @@ public class RangeCore {
 
   /**
    * <pre>
-   * method iterator(Range r, EnumerationKind eKind) {
+   * method next(SimpleRangeIterator it=) {
+   *   { previous, limit } = it_
+   *   next = previous + 1
+   *   if next &gt;= limit {
+   *     return Absent
+   *   }
+   *   it_.previous = next
+   *   return next
+   * }
+   * </pre>
+   */
+  @Core.Method("next(SimpleRangeIterator)")
+  static void nextSimpleRangeIterator(TState tstate, @RC.In Value it) {
+    Value previous = it.peekElement(0);
+    Value limit = it.peekElement(1);
+    Value next = ValueUtil.addInts(tstate, previous, NumValue.ONE);
+    Condition.numericLessThan(next, limit)
+        .test(
+            () -> {
+              Value updated = it.replaceElement(tstate, 0, addRef(next));
+              tstate.setResults(next, updated);
+            },
+            () -> {
+              tstate.dropValue(next);
+              tstate.setResults(Core.ABSENT, it);
+            });
+  }
+
+  /**
+   * <pre>
+   * method iterator(Range r, EnumerationKind eKind, Loop loop=, initialState=) {
    *   { min, max } = r_
    *   assert min is not None
    *   keyOffset = (eKind is EnumerateValues) ? None : 1 - min
@@ -374,18 +415,23 @@ public class RangeCore {
    * }
    * </pre>
    */
-  @Core.Method("iterator(Range, EnumerationKind)")
-  static Value iteratorRange(TState tstate, Value range, @RC.Singleton Value eKind)
+  @Core.Method("iterator(Range, EnumerationKind, Loop, _)")
+  static void iteratorRange(
+      TState tstate,
+      Value range,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState)
       throws BuiltinException {
     Value min = range.element(0);
     Err.RANGE_HAS_NO_LOWER_BOUND.when(min.is(Core.NONE));
     Value max = range.element(1);
-    return iteratorHelper(tstate, min, max, eKind, false);
+    tstate.setResults(iteratorHelper(tstate, min, max, eKind, false), loop, initialState);
   }
 
   /**
    * <pre>
-   * method iterator(ReversedRange r, EnumerationKind eKind) {
+   * method iterator(ReversedRange r, EnumerationKind eKind, Loop loop=, initialState=) {
    *   { min, max } = r_
    *   assert max is not None
    *   keyOffset = (eKind is EnumerateValues) ? None : max + 1
@@ -393,13 +439,18 @@ public class RangeCore {
    * }
    * </pre>
    */
-  @Core.Method("iterator(ReversedRange, EnumerationKind)")
-  static Value iteratorReversedRange(TState tstate, Value range, @RC.Singleton Value eKind)
+  @Core.Method("iterator(ReversedRange, EnumerationKind, Loop, _)")
+  static void iteratorReversedRange(
+      TState tstate,
+      Value range,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState)
       throws BuiltinException {
     Value max = range.element(1);
     Err.RANGE_HAS_NO_UPPER_BOUND.when(max.is(Core.NONE));
     Value min = range.element(0);
-    return iteratorHelper(tstate, max, min, eKind, true);
+    tstate.setResults(iteratorHelper(tstate, max, min, eKind, true), loop, initialState);
   }
 
   private static Value iteratorHelper(

@@ -48,7 +48,7 @@ public final class SaveCore {
 
   /** {@code private singleton SaveElements is Loop} */
   @Core.Private
-  public static final Singleton SAVE_ELEMENTS = Core.newSingleton("SaveElements", Core.LOOP);
+  public static final Singleton SAVE_ELEMENTS = Core.newSingleton("SaveElements", LoopCore.LOOP);
 
   /**
    * {@code private compound SaveWithOffset is Loop}
@@ -58,14 +58,15 @@ public final class SaveCore {
    */
   @Core.Private
   public static final BaseType.Named SAVE_WITH_OFFSET =
-      Core.newBaseType("SaveWithOffset", 1, Core.LOOP);
+      Core.newBaseType("SaveWithOffset", 1, LoopCore.LOOP);
 
   /**
-   * {@code private compound SaverLoop}
+   * {@code private compound SaverLoop is Loop}
    *
    * <p>Element is sequential loop.
    */
-  @Core.Private static final BaseType.Named SAVER_LOOP = Core.newBaseType("SaverLoop", 1);
+  @Core.Private
+  static final BaseType.Named SAVER_LOOP = Core.newBaseType("SaverLoop", 1, LoopCore.LOOP);
 
   /**
    * {@code private compound SaverUpdates}
@@ -179,7 +180,7 @@ public final class SaveCore {
       Value keyValue,
       @Fn("replaceElement:3") Caller replaceElement)
       throws BuiltinException {
-    Err.INVALID_ARGUMENT.unless(keyValue.isArrayOfLength(2));
+    Err.NOT_PAIR.unless(keyValue.isArrayOfLength(2));
     Value key = keyValue.element(0);
     Value value = keyValue.element(1);
     tstate.startCall(replaceElement, state, key, value);
@@ -194,7 +195,7 @@ public final class SaveCore {
   @Core.Method("nextState(SaveWithOffset, Array, _)")
   static Value nextStateSaveWithOffset(TState tstate, Value swo, @RC.In Value state, Value keyValue)
       throws BuiltinException {
-    Err.INVALID_ARGUMENT.unless(keyValue.isArrayOfLength(2));
+    Err.NOT_PAIR.unless(keyValue.isArrayOfLength(2));
     Value key = keyValue.peekElement(0);
     Err.INVALID_ARGUMENT.unless(key.isArrayOfLength(1));
     Value index = key.peekElement(0).verifyInt(Err.INVALID_ARGUMENT);

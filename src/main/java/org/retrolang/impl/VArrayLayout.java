@@ -820,7 +820,7 @@ public class VArrayLayout extends FrameLayout {
       copyRangeOp(true).block(dst, dstStart, src, srcStart, count).addTo(codeGen.cb);
       return;
     }
-    CopyPlan plan = CopyPlan.create(srcLayout.template, template);
+    CopyPlan plan = CopyPlan.create(srcLayout.template, template, false);
     if (plan.steps == null) {
       codeGen.escape();
       return;
@@ -1069,7 +1069,7 @@ public class VArrayLayout extends FrameLayout {
             setCodeValue(codeGen, t, f, pos, v);
           }
         };
-    CopyPlan plan = CopyPlan.create(newElement, template);
+    CopyPlan plan = CopyPlan.create(newElement, template, true);
     plan = CopyOptimizer.optimize(plan, this, CopyOptimizer.Policy.NO_CONFLICTS);
     emitter.emit(codeGen, plan, onFail);
   }
@@ -1159,7 +1159,7 @@ public class VArrayLayout extends FrameLayout {
             op.block(elementArray(f, t), start, end, v).addTo(codeGen.cb);
           }
         };
-    CopyPlan plan = CopyPlan.create(newElement, template);
+    CopyPlan plan = CopyPlan.create(newElement, template, true);
     plan = CopyOptimizer.optimize(plan, this, CopyOptimizer.Policy.UNANIMOUS_PROMOTION_ONLY);
     emitter.emit(codeGen, plan, codeGen.escapeLink());
   }
@@ -1354,6 +1354,11 @@ public class VArrayLayout extends FrameLayout {
     /** Returns the minimum nPtrs required for a Frame to hold these vars. */
     int ptrSize() {
       return nextX + shared.nvEncodings.size();
+    }
+
+    @Override
+    public boolean dropToBeSetFromUnions() {
+      return true;
     }
 
     @Override

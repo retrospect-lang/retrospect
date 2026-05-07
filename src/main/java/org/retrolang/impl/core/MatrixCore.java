@@ -132,6 +132,14 @@ public final class MatrixCore {
       Core.newBaseType("BaseIterator", 3, LoopCore.ITERATOR);
 
   /**
+   * {@code private compound OffsetKey is Lambda}
+   *
+   * <p>Element is {@code offset}. Equivalent to {@code [[i], v] -> [[i + offset], v]}.
+   */
+  @Core.Private
+  static final BaseType.Named OFFSET_KEY = Core.newBaseType("OffsetKey", 1, Core.LAMBDA);
+
+  /**
    * {@code private compound Reshaped is Matrix}
    *
    * <p>Elements are {@code sizes}, {@code elements}.
@@ -149,13 +157,12 @@ public final class MatrixCore {
   static final BaseType.Named RESHAPED_ARRAY = Core.newBaseType("ReshapedArray", 2, Core.MATRIX);
 
   /**
-   * {@code private compound ReshapedIterator is Iterator}
+   * {@code private compound KeyConverter is Lambda}
    *
-   * <p>Elements are {@code it}, {@code inSizes}, {@code outSizes}.
+   * <p>Elements are {@code inSizes}, {@code outSizes}.
    */
   @Core.Private
-  static final BaseType.Named RESHAPED_ITERATOR =
-      Core.newBaseType("ReshapedIterator", 3, LoopCore.ITERATOR);
+  static final BaseType.Named KEY_CONVERTER = Core.newBaseType("KeyConverter", 2, Core.LAMBDA);
 
   /**
    * {@code private compound ConcatVector is Matrix}
@@ -168,15 +175,11 @@ public final class MatrixCore {
   /**
    * {@code private compound ConcatIterator is Iterator}
    *
-   * <p>Elements are {@code it1}, {@code it2}, {@code size1}.
-   *
-   * <p>If {@code it1} is not None, we are still iterating through the first vector. If {@code
-   * size1} is None, {@code eKind} was ENUMERATE_VALUES; otherwise {@code size1} is the size of the
-   * first vector, and will be added to the keys when enumerating {@code it2}.
+   * <p>Elements are {@code it1}, {@code loop1}, {@code it2}, {@code loop2}.
    */
   @Core.Private
   static final BaseType.Named CONCAT_ITERATOR =
-      Core.newBaseType("ConcatIterator", 3, LoopCore.ITERATOR);
+      Core.newBaseType("ConcatIterator", 4, LoopCore.ITERATOR);
 
   /**
    * {@code private compound MatrixUpdater is Lambda}
@@ -195,7 +198,7 @@ public final class MatrixCore {
    */
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_SCALAR =
-      Core.newBaseType("BinaryUpdateWithScalar", 2, Core.LOOP);
+      Core.newBaseType("BinaryUpdateWithScalar", 2, LoopCore.LOOP);
 
   /**
    * {@code private compound BinaryUpdateWithCollection is Loop}
@@ -206,7 +209,7 @@ public final class MatrixCore {
    */
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_COLLECTION =
-      Core.newBaseType("BinaryUpdateWithCollection", 1, Core.LOOP);
+      Core.newBaseType("BinaryUpdateWithCollection", 1, LoopCore.LOOP);
 
   /**
    * <pre>
@@ -826,97 +829,84 @@ public final class MatrixCore {
 
   /**
    * <pre>
-   * method iterator(m, EnumerationKind eKind) (m is Reshaped or m is ReshapedArray) {
-   *   it = iterator(m_.elements, eKind)
-   *   if eKind is EnumerateValues {
-   *     return it
+   * method iterator(m, EnumerationKind eKind, loop=, initialState=) (m is Reshaped or m is ReshapedArray) {
+   *   if eKind is not EnumerateValues {
+   *     inSizes = sizes(m_.elements)
+   *     outSizes = m_.sizes
+   *     loop = transformLoop([k, v] -&gt; [convertKey(k, inSizes, outSizes), v], loop)
    *   }
-   *   inSizes = sizes(m_.elements)
-   *   outSizes = m_.sizes
-   *   return ReshapedIterator_({it, inSizes, outSizes})
-   *   // equivalent to:   it | [k, v] -&gt; [convertKey(k, inSizes, outSizes), v]
+   *   return iterator(m_.elements, eKind, loop=, initialState=)
    * }
    * </pre>
    */
   static class IteratorReshaped extends BuiltinMethod {
-    static final Caller iterator = new Caller("iterator:2", "afterIterator");
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
-    @Core.Method("iterator(Reshaped|ReshapedArray, EnumerationKind)")
-    static void begin(TState tstate, Value m, @RC.Singleton Value eKind) {
-      tstate
-          .startCall(iterator, m.element(1), eKind)
-          .saving(eKind.is(LoopCore.ENUMERATE_VALUES).choose(() -> Core.NONE, () -> addRef(m)));
+    @Core.Method("iterator(Reshaped|ReshapedArray, EnumerationKind, Loop, _)")
+    static void begin(
+        TState tstate,
+        Value m,
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState,
+        @Fn("iterator:4") Caller iterator) {
+      Value elements = m.element(1);
+      eKind
+          .is(LoopCore.ENUMERATE_VALUES)
+          .test(
+              () -> tstate.startCall(iterator, elements, eKind, loop, initialState),
+              () -> tstate.startCall(sizes, elements).saving(addRef(m), eKind, loop, initialState));
     }
 
     @Continuation
-    static void afterIterator(TState tstate, @RC.In Value it, @Saved Value m) {
-      m.is(Core.NONE)
-          .test(
-              () -> tstate.setResult(it),
-              () -> tstate.startCall(sizes, m.element(1)).saving(it, m.element(0)));
-    }
-
-    @Continuation(order = 2)
-    static Value afterSizes(
-        TState tstate, @RC.In Value inSizes, @Saved @RC.In Value it, @RC.In Value outSizes)
+    static void afterSizes(
+        TState tstate,
+        @RC.In Value inSizes,
+        @Saved Value m,
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState,
+        @Fn("iterator:4") Caller iterator)
         throws BuiltinException {
       ValueUtil.checkSizes(inSizes, Err.INVALID_SIZES);
-      return tstate.compound(RESHAPED_ITERATOR, it, inSizes, outSizes);
+      Value outSizes = m.element(0);
+      Value elements = m.element(1);
+      Value lambda = tstate.compound(KEY_CONVERTER, inSizes, outSizes);
+      loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+      tstate.startCall(iterator, elements, eKind, loop, initialState);
     }
+  }
+
+  /** {@code method at(OffsetKey ok, [[i], v]) = [[i + ok_], v]} */
+  @Core.Method("at(OffsetKey, Array)")
+  static Value atKeyConverter(TState tstate, Value ok, Value pair) throws BuiltinException {
+    if (!(ok instanceof RValue) && ok.elementAsIntOrMinusOne(0) == 0) {
+      return addRef(pair);
+    }
+    Err.NOT_PAIR.unless(pair.isArrayOfLength(2));
+    Value k = pair.peekElement(0);
+    Err.INVALID_ARGUMENT.unless(k.isArrayOfLength(1));
+    Value i = k.peekElement(0).verifyInt(Err.INVALID_ARGUMENT);
+    Value sum = ValueUtil.addInts(tstate, i, ok.element(0));
+    return tstate.arrayValue(tstate.arrayValue(sum), pair.element(1));
   }
 
   private static final TProperty<Object> ARRAY_LAYOUT_OR_BASETYPE_IN_PAIR =
       TProperty.ARRAY_LAYOUT_OR_BASE_TYPE.elementOf(Core.FixedArrayType.withSize(2), 0);
 
-  /**
-   * <pre>
-   * method next(ReshapedIterator it=) {
-   *   x = next(it_.it=)
-   *   if x is Absent {
-   *     return Absent
-   *   } else {
-   *     [k, v] = x
-   *     return [convertKey(k, it_.inSizes, it_.outSizes), v]
-   *   }
-   * }
-   * </pre>
-   */
-  static class NextReshapedIterator extends BuiltinMethod {
-    static final Caller next = new Caller("next:1", "afterNext");
-
-    @Core.Method("next(ReshapedIterator)")
-    static void begin(TState tstate, @RC.In Value it) {
-      // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
-      Value innerIt = it.element(0);
-      it = it.replaceElement(tstate, 0, Core.TO_BE_SET);
-      tstate.startCall(next, innerIt).saving(it);
-    }
-
-    @Continuation
-    static void afterNext(
-        TState tstate, ResultsInfo results, Value x, @RC.In Value innerIt, @Saved @RC.In Value it)
-        throws BuiltinException {
-      Value result =
-          x.is(Core.ABSENT)
-              .chooseExcept(
-                  () -> Core.ABSENT,
-                  () -> {
-                    Err.NOT_PAIR.unless(x.isArrayOfLength(2));
-                    Value k = x.peekElement(0);
-                    Value inSizes = it.peekElement(1);
-                    Value outSizes = it.peekElement(2);
-                    Value index = ValueUtil.keyToIndex(tstate, k, inSizes);
-                    Value convertedKey =
-                        ValueUtil.indexToKey(
-                            tstate,
-                            index,
-                            outSizes,
-                            () -> results.result(ARRAY_LAYOUT_OR_BASETYPE_IN_PAIR));
-                    return tstate.arrayValue(convertedKey, x.element(1));
-                  });
-      tstate.setResults(result, it.replaceElement(tstate, 0, innerIt));
-    }
+  /** {@code method at(KeyConverter kc, [k, v]) = [convertKey(k, kc_.inSizes, kc_.outSizes), v]} */
+  @Core.Method("at(KeyConverter, Array)")
+  static Value atKeyConverter(TState tstate, ResultsInfo results, Value kc, Value pair)
+      throws BuiltinException {
+    Err.NOT_PAIR.unless(pair.isArrayOfLength(2));
+    Value k = pair.peekElement(0);
+    Value inSizes = kc.peekElement(0);
+    Value outSizes = kc.peekElement(1);
+    Value index = ValueUtil.keyToIndex(tstate, k, inSizes);
+    Value convertedKey =
+        ValueUtil.indexToKey(
+            tstate, index, outSizes, () -> results.result(ARRAY_LAYOUT_OR_BASETYPE_IN_PAIR));
+    return tstate.arrayValue(convertedKey, pair.element(1));
   }
 
   /**
@@ -969,20 +959,28 @@ public final class MatrixCore {
 
   /**
    * <pre>
-   * method iterator(SubMatrix m, EnumerationKind eKind) =
-   *     iterator(matrix(m_.sizes), eKind) | -&gt; element(m, #)
+   * method iterator(SubMatrix m, EnumerationKind eKind, Loop loop=, initialState=) {
+   *   lambda = applyToValues(k -> element(m, k), eKind)
+   *   loop = transformLoop(lambda, loop)
+   *   return iterator(matrix(m_.sizes), eKind, loop=, initialState=)
+   * }
    * </pre>
    */
-  @Core.Method("iterator(SubMatrix, EnumerationKind)")
-  static Value iteratorSubMatrix(
-      TState tstate, ResultsInfo results, @RC.In Value m, @RC.Singleton Value eKind) {
+  @Core.Method("iterator(SubMatrix, EnumerationKind, Loop, _)")
+  static void iteratorSubMatrix(
+      TState tstate,
+      ResultsInfo results,
+      @RC.In Value m,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState) {
+    Value lambda = tstate.compound(BinaryOp.ELEMENT.partialLeft, m);
+    lambda = LoopCore.applyToValues(tstate, lambda, eKind);
+    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
     Value sizes = m.element(3);
-    Object layoutOrBaseType = results.result(TRANSFORMED_BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE);
-    return tstate.compound(
-        CollectionCore.TRANSFORMED_ITERATOR,
-        iteratorForBaseMatrixWithSizes(tstate, sizes, eKind, layoutOrBaseType),
-        eKind,
-        tstate.compound(BinaryOp.ELEMENT.partialLeft, m));
+    Object layoutOrBaseType = results.result(BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE);
+    tstate.setResults(
+        iteratorForBaseMatrixWithSizes(tstate, sizes, eKind, layoutOrBaseType), loop, initialState);
   }
 
   // Trivial results results returned by iterator(emptyMatrix
@@ -994,7 +992,7 @@ public final class MatrixCore {
 
   /**
    * <pre>
-   * method iterator(BaseMatrix m, EnumerationKind eKind) {
+   * method iterator(BaseMatrix m, EnumerationKind eKind, loop=, initialState=) {
    *   sizes = m_
    *   if size(sizes) == 0 {
    *     return oneElementIterator(eKind is EnumerateValues ? [] : [[], []])
@@ -1007,31 +1005,33 @@ public final class MatrixCore {
    * }
    * </pre>
    */
-  @Core.Method("iterator(BaseMatrix, EnumerationKind)")
+  @Core.Method("iterator(BaseMatrix, EnumerationKind, Loop, _)")
   static void iteratorBaseMatrix(
-      TState tstate, ResultsInfo results, Value m, @RC.Singleton Value eKind) {
+      TState tstate,
+      ResultsInfo results,
+      Value m,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState) {
     Value sizes = m.element(0);
     sizes
         .isArrayOfLength(0)
         .test(
             () -> {
               tstate.dropValue(sizes);
-              tstate.setResult(
-                  eKind.is(LoopCore.ENUMERATE_VALUES).choose(EMPTY_ARRAY_ONLY, EMPTY_PAIR_ONLY));
+              tstate.setResults(
+                  eKind.is(LoopCore.ENUMERATE_VALUES).choose(EMPTY_ARRAY_ONLY, EMPTY_PAIR_ONLY),
+                  loop,
+                  initialState);
             },
             () -> {
               Object layoutOrBaseType = results.result(BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE);
-              tstate.setResult(
-                  iteratorForBaseMatrixWithSizes(tstate, sizes, eKind, layoutOrBaseType));
+              tstate.setResults(
+                  iteratorForBaseMatrixWithSizes(tstate, sizes, eKind, layoutOrBaseType),
+                  loop,
+                  initialState);
             });
   }
-
-  /**
-   * A TProperty for the layout or base type of the prev element of a BaseIterator result embedded
-   * in a TransformedIterator.
-   */
-  private static final TProperty<Object> TRANSFORMED_BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE =
-      TProperty.ARRAY_LAYOUT_OR_BASE_TYPE.elementOf(CollectionCore.TRANSFORMED_ITERATOR, 0);
 
   @RC.Out
   private static Value iteratorForBaseMatrixWithSizes(
@@ -1310,143 +1310,204 @@ public final class MatrixCore {
 
   /**
    * <pre>
-   * method iterator(ConcatVector cv, EnumerationKind eKind) {
-   *   size1 = eKind is EnumerateValues ? None : size(cv_.v1)
-   *   it1 = iterator(cv_.v1, eKind)
-   *   it2 = iterator(cv_.v2, eKind)
-   *   return ConcatIterator_({it1, it2, size1})
+   * method iterator(ConcatVector cv, EnumerationKind eKind, Loop loop=) {
+   *   loop1 = SimpleLoop
+   *   initialState1 = Absent
+   *   it1 = iterator(cv_.v1, eKind, loop1=, initialState1=)
+   *   assert initialState1 is Absent and isOnlyTransforms(loop1)
+   *   loop2 = SimpleLoop
+   *   if eKind is not EnumerateValues {
+   *     size1 = size(cv_.v1)
+   *     loop2 = transformLoop([[i], v] -> [[i + size1], v], loop2)
+   *   }
+   *   initialState2 = Absent
+   *   it2 = iterator(cv_.v2, eKind, loop2=, initialState2=)
+   *   assert initialState2 is Absent and isOnlyTransforms(loop2)
+   *   return ConcatIterator_({it1, loop1, it2, loop2})
+   * }
    * </pre>
    */
   static class IteratorConcat extends BuiltinMethod {
+    static final Caller iterator1 = new Caller("iterator:4", "afterIterator1");
     static final Caller size = new Caller("size:1", "afterSize");
-    static final Caller iterator1 = new Caller("iterator:2", "afterIterator1");
-    static final Caller iterator2 = new Caller("iterator:2", "afterIterator2");
+    static final Caller iterator2 = new Caller("iterator:4", "afterIterator2");
 
-    @Core.Method("iterator(ConcatVector, EnumerationKind)")
-    static void begin(TState tstate, @RC.In Value cv, @RC.Singleton Value eKind) {
-      eKind
-          .is(LoopCore.ENUMERATE_VALUES)
-          .test(
-              () -> tstate.jump("afterSize", Core.NONE, cv, eKind),
-              () -> tstate.startCall(size, cv.element(1)).saving(cv, eKind));
+    @Core.Method("iterator(ConcatVector, EnumerationKind, Loop, _)")
+    static void begin(
+        TState tstate,
+        @RC.In Value cv,
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState) {
+      Value v1 = cv.element(1);
+      tstate
+          .startCall(iterator1, v1, eKind, LoopCore.SIMPLE_LOOP, Core.ABSENT)
+          .saving(cv, eKind, loop, initialState);
     }
 
     @Continuation
-    static void afterSize(
-        TState tstate, @RC.In Value size1, @Saved Value cv, @RC.Singleton Value eKind) {
-      Value v1 = cv.element(1);
-      Value v2 = cv.element(2);
-      tstate.startCall(iterator1, v1, eKind).saving(size1, v2, eKind);
-    }
-
-    @Continuation(order = 2)
     static void afterIterator1(
         TState tstate,
         @RC.In Value it1,
-        @Saved @RC.In Value size1,
+        @RC.In Value loop1,
+        @RC.In Value initialState1,
+        @Saved Value cv,
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState)
+        throws BuiltinException {
+      Err.INVALID_ARGUMENT.unless(initialState1.is(Core.ABSENT));
+      Err.INVALID_ARGUMENT.unless(isOnlyTransforms(loop1));
+      Value v2 = cv.element(2);
+      eKind
+          .is(LoopCore.ENUMERATE_VALUES)
+          .test(
+              () -> tstate.jump("afterSize", Core.UNDEF, it1, loop1, v2, eKind, loop, initialState),
+              () -> {
+                Value v1 = cv.element(1);
+                tstate.startCall(size, v1).saving(it1, loop1, v2, eKind, loop, initialState);
+              });
+    }
+
+    @Continuation(order = 2)
+    static void afterSize(
+        TState tstate,
+        @RC.In Value size1,
+        @Saved @RC.In Value it1,
+        @RC.In Value loop1,
         @RC.In Value v2,
-        @RC.Singleton Value eKind) {
-      tstate.startCall(iterator2, v2, eKind).saving(size1, it1);
+        @RC.Singleton Value eKind,
+        @RC.In Value loop,
+        @RC.In Value initialState) {
+      Value loop2 =
+          eKind
+              .is(LoopCore.ENUMERATE_VALUES)
+              .choose(
+                  () -> LoopCore.SIMPLE_LOOP,
+                  () ->
+                      tstate.compound(
+                          LoopCore.TRANSFORMED_LOOP,
+                          tstate.compound(OFFSET_KEY, size1),
+                          LoopCore.SIMPLE_LOOP));
+      tstate
+          .startCall(iterator2, v2, eKind, loop2, Core.ABSENT)
+          .saving(it1, loop1, loop, initialState);
     }
 
     @Continuation(order = 3)
-    static Value afterIterator2(
-        TState tstate, @RC.In Value it2, @Saved @RC.In Value size1, @RC.In Value it1) {
-      return tstate.compound(CONCAT_ITERATOR, it1, it2, size1);
+    static void afterIterator2(
+        TState tstate,
+        @RC.In Value it2,
+        @RC.In Value loop2,
+        @RC.In Value initialState2,
+        @Saved @RC.In Value it1,
+        @RC.In Value loop1,
+        @RC.In Value loop,
+        @RC.In Value initialState)
+        throws BuiltinException {
+      Err.INVALID_ARGUMENT.unless(initialState2.is(Core.ABSENT));
+      Err.INVALID_ARGUMENT.unless(isOnlyTransforms(loop2));
+      tstate.setResults(
+          tstate.compound(CONCAT_ITERATOR, it1, loop1, it2, loop2), loop, initialState);
     }
+  }
+
+  private static Condition isOnlyTransforms(Value value) {
+    return value
+        .is(LoopCore.SIMPLE_LOOP)
+        .or(
+            () ->
+                value
+                    .isa(LoopCore.TRANSFORMED_LOOP)
+                    .and(() -> isOnlyTransforms(value.peekElement(1))));
   }
 
   /**
    * <pre>
    * method next(ConcatIterator it=) {
-   *   if it_.it1 is not None {
-   *     x = next(it_.it1=)
+   *   for sequential it {
+   *     if it_.it1 is not Absent {
+   *       x = next(it_.it1=)
+   *       if x is Absent {
+   *         it_.it1 = Absent
+   *         continue
+   *       }
+   *       x = nextState(loop1, Absent, x)
+   *     } else {
+   *       x = next(it_.it2=)
+   *       if x is Absent {
+   *         return Absent
+   *       }
+   *       x = nextState(loop2, Absent, x)
+   *     }
    *     if x is not Absent {
    *       return x
-   *     } else if it_.size1 is None {
-   *       it = it_.it2
-   *       return next(it=)
    *     }
-   *     it_.it1 = None
    *   }
-   *   // it1 is None (we're on it2) and size1 is not None (it's a keyed enumeration)
-   *   x = next(it_.it2=)
-   *   if x is not Absent {
-   *     [[index], v] = x
-   *     x = [[index + it_.size1], v]
-   *   }
-   *   return x
    * }
    * </pre>
    */
   static class NextConcatIterator extends BuiltinMethod {
     static final Caller next1 = new Caller("next:1", "afterNext1");
+    static final Caller nextState1 = new Caller("nextState:3", "afterNextState");
     static final Caller next2 = new Caller("next:1", "afterNext2");
+    static final Caller nextState2 = new Caller("nextState:3", "afterNextState");
 
     @Core.Method("next(ConcatIterator)")
     static void begin(TState tstate, @RC.In Value it) {
-      Value it1 = it.element(0);
-      it1.is(Core.NONE)
-          .test(
-              () -> tstate.jump("callNext2", it),
-              () ->
-                  // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
-                  tstate
-                      .startCall(next1, it1)
-                      .saving(it.replaceElement(tstate, 0, Core.TO_BE_SET)));
+      tstate.jump("loop", it);
     }
 
-    @Continuation
+    @LoopContinuation
+    static void loop(TState tstate, @RC.In Value it) {
+      Value it1 = it.element(0);
+      it1.is(Core.ABSENT)
+          .not()
+          .test(
+              () -> {
+                Value updated = it.replaceElement(tstate, 0, Core.TO_BE_SET);
+                tstate.startCall(next1, it1).saving(updated);
+              },
+              () -> {
+                Value it2 = it.element(2);
+                Value updated = it.replaceElement(tstate, 2, Core.TO_BE_SET);
+                tstate.startCall(next2, it2).saving(updated);
+              });
+    }
+
+    @Continuation(order = 2)
     static void afterNext1(
-        TState tstate,
-        @RC.In Value x,
-        @RC.In Value it1,
-        @Saved @RC.In Value it,
-        @Fn("next:1") Caller next) {
+        TState tstate, @RC.In Value x, @RC.In Value it1, @Saved @RC.In Value it) {
       x.is(Core.ABSENT)
           .test(
               () -> {
                 tstate.dropValue(it1);
-                Value size1 = it.peekElement(2);
-                size1
-                    .is(Core.NONE)
-                    .test(
-                        () -> {
-                          Value it2 = it.element(1);
-                          tstate.dropValue(it);
-                          tstate.startCall(next, it2);
-                        },
-                        () -> tstate.jump("callNext2", it.replaceElement(tstate, 0, Core.NONE)));
+                Value updated = it.replaceElement(tstate, 0, Core.ABSENT);
+                tstate.jump("loop", updated);
               },
-              () -> tstate.setResults(x, it.replaceElement(tstate, 0, it1)));
-    }
-
-    @Continuation(order = 2)
-    static void callNext2(TState tstate, @RC.In Value it) {
-      Value it2 = it.element(1);
-      it = it.replaceElement(tstate, 1, Core.TO_BE_SET);
-      tstate.startCall(next2, it2).saving(it);
+              () -> {
+                Value updated = it.replaceElement(tstate, 0, it1);
+                Value loop1 = updated.element(1);
+                tstate.startCall(nextState1, loop1, Core.ABSENT, x).saving(updated);
+              });
     }
 
     @Continuation(order = 3)
-    static void afterNext2(TState tstate, @RC.In Value x, @RC.In Value it2, @Saved @RC.In Value it)
-        throws BuiltinException {
-      Value newX =
-          x.is(Core.ABSENT)
-              .chooseExcept(
-                  () -> x,
-                  () -> {
-                    Err.NOT_PAIR.unless(x.isArrayOfLength(2));
-                    Value key = x.peekElement(0);
-                    Err.INVALID_ARGUMENT.unless(key.isArrayOfLength(1));
-                    Value k = key.peekElement(0).verifyInt(Err.INVALID_ARGUMENT);
-                    Err.INVALID_ARGUMENT.when(Condition.numericLessThan(k, NumValue.ZERO));
-                    Value index = ValueUtil.addInts(tstate, k, it.peekElement(2));
-                    tstate.dropOnThrow(index);
-                    Err.INVALID_ARGUMENT.when(Condition.numericLessThan(index, NumValue.ZERO));
-                    return x.replaceElement(tstate, 0, tstate.arrayValue(index));
-                  });
-      tstate.setResults(newX, it.replaceElement(tstate, 1, it2));
+    static void afterNext2(
+        TState tstate, @RC.In Value x, @RC.In Value it2, @Saved @RC.In Value it) {
+      Value updated = it.replaceElement(tstate, 2, it2);
+      x.is(Core.ABSENT)
+          .test(
+              () -> tstate.setResults(Core.ABSENT, updated),
+              () -> {
+                Value loop2 = updated.element(3);
+                tstate.startCall(nextState2, loop2, Core.ABSENT, x).saving(updated);
+              });
+    }
+
+    @Continuation(order = 4)
+    static void afterNextState(TState tstate, @RC.In Value x, @Saved @RC.In Value it) {
+      x.is(Core.ABSENT).test(() -> tstate.jump("loop", it), () -> tstate.setResults(x, it));
     }
   }
 

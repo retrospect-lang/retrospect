@@ -142,7 +142,7 @@ public class MethodMemo {
   // How high can currentWeight get before a MethodMemo is considered heavy?
   // It's a little more than a simple threshold (see weightOverThreshold()), but
   // it's somewhere between LOW_EXLINE_THRESHOLD and HIGH_EXLINE_THRESHOLD (inclusive).
-  private static final int LOW_EXLINE_THRESHOLD = 32;
+  private static final int LOW_EXLINE_THRESHOLD = 36;
   private static final int MINIMUM_ADD_TO_CHILD = 5;
   private static final int HIGH_EXLINE_THRESHOLD = LOW_EXLINE_THRESHOLD + MINIMUM_ADD_TO_CHILD;
 
@@ -908,8 +908,8 @@ public class MethodMemo {
     /**
      * A link that will generate code for the loop part of this method, i.e. starting at the
      * LoopContinuation. Lazily created the first time we encounter a back branch to the
-     * LoopContinuation. (Many loops, such as those in {@code next(Iterator)} methods to skip over
-     * Absent values, never loop, so lazily allocating the CodeGenLink saves some time and memory.)
+     * LoopContinuation. (Some loops may never loop (does this still happen after the iterator
+     * refactoring?), so lazily allocating the CodeGenLink may save some time and memory.)
      */
     private CodeGenLink loopCodeGen;
 

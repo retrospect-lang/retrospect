@@ -167,8 +167,8 @@ public class Core {
   public static final Singleton TO_BE_SET =
       new BaseType.Named(CORE, "ToBeSet", 0, BaseType.SORT_ORDER_TO_BE_SET).asValue();
 
-  @Public public static final VmType.Union LAMBDA = newOpenUnion("Lambda");
-  @Public public static final VmType.Union LOOP = newOpenUnion("Loop");
+  @Public public static final VmType.Union PIPELINE_STEP = newOpenUnion("PipelineStep");
+  @Public public static final VmType.Union LAMBDA = newOpenUnion("Lambda", PIPELINE_STEP);
   @Public public static final VmType.Union COLLECTION = newOpenUnion("Collection", LAMBDA);
   @Public public static final VmType.Union MATRIX = newOpenUnion("Matrix", COLLECTION);
 

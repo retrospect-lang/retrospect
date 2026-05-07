@@ -40,9 +40,10 @@ import org.retrolang.impl.VmType;
 
 /** Core Reducer implementations. */
 public final class ReducerCore {
-  /** {@code open type Reducer is Collector} */
+  /** {@code open type Reducer is Collector, Loop} */
   @Core.Public
-  public static final VmType.Union REDUCER = Core.newOpenUnion("Reducer", LoopCore.COLLECTOR);
+  public static final VmType.Union REDUCER =
+      Core.newOpenUnion("Reducer", LoopCore.COLLECTOR, LoopCore.LOOP);
 
   /** {@code private singleton Count is Reducer} */
   @Core.Private public static final Singleton COUNT = Core.newSingleton("Count", REDUCER);
@@ -197,20 +198,16 @@ public final class ReducerCore {
 
   /**
    * <pre>
-   * method finalResult(BooleanReducer br, state) =
-   *   state is Absent ? br_.initial : loopExitState(state)
+   * method finalState(BooleanReducer br, state) {
+   *   assert state is Absent
+   *   return br_.initial
+   * }
    * </pre>
    */
-  @Core.Method("finalResult(BooleanReducer, _)")
-  static Value finalResultBooleanReducer(Value reducer, Value state) throws BuiltinException {
-    return state
-        .is(Core.ABSENT)
-        .chooseExcept(
-            () -> reducer.element(0),
-            () -> {
-              Err.INVALID_ARGUMENT.unless(state.isa(Core.LOOP_EXIT));
-              return state.element(0);
-            });
+  @Core.Method("finalState(BooleanReducer, _)")
+  static Value finalStateBooleanReducer(Value reducer, Value state) throws BuiltinException {
+    Err.INVALID_ARGUMENT.unless(state.is(Core.ABSENT));
+    return reducer.element(0);
   }
 
   /**

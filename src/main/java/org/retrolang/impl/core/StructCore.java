@@ -22,7 +22,6 @@ import java.util.Arrays;
 import org.retrolang.code.CodeValue;
 import org.retrolang.impl.Allocator;
 import org.retrolang.impl.BaseType;
-import org.retrolang.impl.BuiltinMethod;
 import org.retrolang.impl.CodeGen;
 import org.retrolang.impl.Condition;
 import org.retrolang.impl.Core;
@@ -41,13 +40,13 @@ import org.retrolang.impl.ValueUtil;
 /** Core methods on Structs. */
 public class StructCore {
   /**
-   * {@code private compound StructIterator is Iterator}
+   * {@code private compound StructAccessor is Lambda}
    *
-   * <p>Elements are {@code struct}, {@code eKind}, {@code prevIndex}.
+   * <p>Elements {@code struct}, {@code eKind}. The {@code at()} method does not check the validity
+   * of its argument! Intended only for internal use; should not be generally accessible.
    */
   @Core.Private
-  static final BaseType.Named STRUCT_ITERATOR =
-      Core.newBaseType("StructIterator", 3, LoopCore.ITERATOR);
+  static final BaseType.Named STRUCT_ACCESSOR = Core.newBaseType("StructAccessor", 2, Core.LAMBDA);
 
   /**
    * {@code private compound StructUpdater is Lambda}
@@ -97,81 +96,60 @@ public class StructCore {
 
   /**
    * <pre>
-   * method iterator(Struct struct, EnumerationKind eKind) {
-   *   return StructIterator_({struct, eKind, prevIndex: 0}})
+   * method iterator(Struct struct, EnumerationKind eKind, Loop loop=, initialState=) {
+   *   lambda = StructAccessor_({struct, eKind})
+   *   loop = transformLoop(lambda, loop)
+   *   return SimpleRangeIterator(size(struct))
    * }
    * </pre>
    */
-  @Core.Method("iterator(Struct|StructKeys, EnumerationKind)")
-  static Value iteratorStruct(TState tstate, Value struct, @RC.Singleton Value eKind) {
-    return tstate.compound(STRUCT_ITERATOR, struct, eKind, NumValue.ZERO);
+  @Core.Method("iterator(Struct|StructKeys, EnumerationKind, Loop, _)")
+  static void iteratorStruct(
+      TState tstate,
+      @RC.In Value struct,
+      @RC.Singleton Value eKind,
+      @RC.In Value loop,
+      @RC.In Value initialState) {
+    Value lambda = tstate.compound(STRUCT_ACCESSOR, struct, eKind);
+    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    StructType structType = StructType.from(struct.baseType());
+    Value size = NumValue.of(structType.size(), tstate);
+    Value iterator = tstate.compound(RangeCore.SIMPLE_RANGE_ITERATOR, NumValue.NEGATIVE_ONE, size);
+    tstate.setResults(iterator, loop, initialState);
   }
 
   /**
    * <pre>
-   * method next(StructIterator it=) {
-   *   index = it_.prevIndex
-   *   for sequential index {
-   *     if index &gt;= size(it_.struct_) {
-   *       break { return Absent }
-   *     }
-   *     index += 1
-   *     v = it_.struct_[index]
-   *     if v is Absent and it_.eKind is not EnumerateAllKeys {
-   *       continue
-   *     }
-   *     it_.prevIndex = index
-   *     break {
-   *       return it_.eKind is EnumerateValues ? v : [it_.struct_.keys[index], v]
-   *     }
+   * method at(StructAccessor accessor, i) {
+   *   v = accessor_.struct @ i
+   *   if accessor_.eKind is EnumerateValues
+   *       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
+   *     return v
+   *   } else {
+   *     return [keys @ i, v]
    *   }
    * </pre>
    */
-  static class NextStructIterator extends BuiltinMethod {
-    @Core.Method("next(StructIterator)")
-    static void begin(TState tstate, @RC.In Value it) {
-      tstate.jump("startLoop", it.element(2), it);
-    }
-
-    @LoopContinuation
-    static void startLoop(TState tstate, Value index, @RC.In Value it) {
-      Value struct = it.peekElement(0);
-      BaseType baseType = struct.baseType();
-      StructType structType = StructType.from(baseType);
-      Condition.numericLessThan(index, NumValue.of(structType.size(), Allocator.TRANSIENT))
-          .test(
-              () -> {
-                Value newIndex = ValueUtil.addInts(tstate, index, NumValue.ONE);
-                Value v;
-                if (structType == baseType) {
-                  v = ValueUtil.element(tstate, struct, index, 0);
-                } else {
-                  v = indexToKey(tstate, structType, index);
-                }
-                Value eKind = it.peekElement(1);
-                v.is(Core.ABSENT)
-                    .and(eKind.is(LoopCore.ENUMERATE_ALL_KEYS).not())
-                    .test(
-                        () -> tstate.jump("startLoop", newIndex, it),
-                        () -> {
-                          Value newIt = it.replaceElement(tstate, 2, newIndex);
-                          Value result =
-                              eKind
-                                  .is(LoopCore.ENUMERATE_VALUES)
-                                  .choose(
-                                      () -> v,
-                                      () -> {
-                                        Value key =
-                                            (structType == baseType)
-                                                ? indexToKey(tstate, structType, index)
-                                                : v;
-                                        return tstate.arrayValue(key, v);
-                                      });
-                          tstate.setResults(result, newIt);
-                        });
-              },
-              () -> tstate.setResults(Core.ABSENT, it));
-    }
+  @Core.Method("at(StructAccessor, _)")
+  static Value atStructAccessor(TState tstate, Value accessor, Value index)
+      throws BuiltinException {
+    Value struct = accessor.peekElement(0);
+    Value eKind = accessor.peekElement(1);
+    BaseType baseType = struct.baseType();
+    StructType structType = StructType.from(baseType);
+    Value v =
+        (structType == baseType)
+            ? ValueUtil.element(tstate, struct, index, 0)
+            : indexToKey(tstate, structType, index);
+    return eKind
+        .is(LoopCore.ENUMERATE_VALUES)
+        .or(v.is(Core.ABSENT).and(eKind.is(LoopCore.ENUMERATE_WITH_KEYS)))
+        .choose(
+            () -> v,
+            () -> {
+              Value key = (structType == baseType) ? indexToKey(tstate, structType, index) : v;
+              return tstate.arrayValue(key, v);
+            });
   }
 
   /** {@code method replaceElement(Struct struct, String key, v) = ...} */

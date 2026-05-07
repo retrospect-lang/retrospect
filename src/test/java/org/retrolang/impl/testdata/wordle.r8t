@@ -134,7 +134,7 @@ function numFor(score) {
 /* RUN () RETURNS
 ["Guess", 1, "crate", "Response:", "----y", "Answers left:", "model", "feign", "helix", "unfed", "whelp", "linen", "flesh", "belly", "seedy", "bleed", "golem", "spend", "dozen", "Guess", 2, "bleed", "Response:", "-yg--", "Answers left:", "whelp", "Guess", 3, "whelp", "Response:", "ggggg"]
 ---
-allocated=1745663640/66004179, peak=520
+allocated=1741915208/65880226, peak=520
 $0 = *[]b0
 $1 = *[]b0
 $2 = *[]b0⸨0:b1; 1:x0:String⸩

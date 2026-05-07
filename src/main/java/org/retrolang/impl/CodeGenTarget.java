@@ -508,7 +508,7 @@ class CodeGenTarget {
         // Create a plan for copying the old arg registers to the new ones, and emit it
         Template src = this.args.get(i);
         Template dst = latest.args.get(i);
-        CopyPlan plan = CopyPlan.create(src, dst);
+        CopyPlan plan = CopyPlan.create(src, dst, false);
         plan = CopyOptimizer.toRegisters(plan, 1, latest.numJavaArgs, dst);
         // Failing should be impossible (args only expand), so don't provide an onFail handler
         emitter.emit(codeGen, plan, null);
@@ -518,7 +518,7 @@ class CodeGenTarget {
     latest.op.block(argsForLatest).addTo(codeGen.cb);
 
     // Eventually we'll return, but we may need to do some fixups first
-    FutureBlock exit = codeGen.addAtEnd(() -> new ReturnBlock(null).addTo(codeGen.cb));
+    FutureBlock exit = codeGen.addAtEnd(() -> new ReturnBlock(null).addTo(codeGen.cb), false);
 
     if (this.results == latest.results) {
       // No result fixups needed
@@ -543,7 +543,7 @@ class CodeGenTarget {
     for (int i = 0; i < resultPlans.length; i++) {
       Template src = latest.results.get(i);
       Template dst = this.results.get(i);
-      CopyPlan plan = CopyPlan.create(src, dst);
+      CopyPlan plan = CopyPlan.create(src, dst, false);
       plan = CopyOptimizer.toFnResult(plan, resultObjSize, resultByteSize);
       resultPlans[i] = plan;
     }
@@ -592,7 +592,7 @@ class CodeGenTarget {
     // Even though the testEmitter call above should have caught any possible failures, this plan
     // may repeat some of those tests.  They can't fail, but we still need to tell the JVM what
     // to do if they did; `throw new AssertionError()` seems appropriate.
-    FutureBlock unreachable = codeGen.addAtEnd(codeGen::emitAssertionFailed);
+    FutureBlock unreachable = codeGen.addAtEnd(codeGen::emitAssertionFailed, true);
     for (CopyPlan plan : resultPlans) {
       saveEmitter.emit(codeGen, plan, unreachable);
     }

@@ -43,10 +43,7 @@ function findRootInternal(f, x0, x1, eps) {
 }
 
 /* RUN () RETURNS
-  {discontinuous: None,
-   outOfBounds: None,
-   root1: 1.4142136573791504,
-   root2: -1.4142136573791504}
+{discontinuous: None, outOfBounds: None, root1: 1.4142136573791504, root2: -1.4142136573791504}
 ---
 allocated=55088/2105, peak=104
 */
@@ -95,10 +92,7 @@ function findRoot(f, xMin, xMax, eps) {
 }
 
 /* RUN () RETURNS
-  {discontinuous: None,
-   outOfBounds: None,
-   root1: 1.4142136573791504,
-   root2: -1.4142136573791504}
+{discontinuous: None, outOfBounds: None, root1: 1.4142136573791504, root2: -1.4142136573791504}
 ---
 allocated=67600/2625, peak=104
 */

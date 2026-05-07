@@ -544,7 +544,8 @@ public class CodeGen {
       this.callSite = callSite;
       this.done = done;
       this.resultsInfo = resultsInfo;
-      this.continueUnwinding = addAtEnd(() -> continueUnwinding.accept(stackRest), false);
+      this.continueUnwinding =
+          addAtEnd(() -> continueUnwinding.accept(stackRest), /* isEscape= */ false);
     }
 
     /**
@@ -765,7 +766,7 @@ public class CodeGen {
 
   /** Defines an escape handler that will be emitted by the given Runnable. */
   void setNewEscape(Runnable addBlocks) {
-    escape = addAtEnd(addBlocks, true);
+    escape = addAtEnd(addBlocks, /* isEscape= */ true);
     preferNewEscape = false;
   }
 

@@ -392,6 +392,7 @@ public class RangeCore {
   static void nextSimpleRangeIterator(TState tstate, @RC.In Value it) {
     Value previous = it.peekElement(0);
     Value limit = it.peekElement(1);
+    // previous is always less than limit, so this add cannot overflow
     Value next = ValueUtil.addInts(tstate, previous, NumValue.ONE);
     Condition.numericLessThan(next, limit)
         .test(

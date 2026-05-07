@@ -892,7 +892,10 @@ procedure verifyEV(ro) {
 
 function finalStateHelper(ro, rw) {
   state = toState(rw)
-  return (state is LoopExit) ? state : finalState(ro_.loop, state)
+  if state is not LoopExit {
+    state = finalState(ro_.loop, state)
+  }
+  return loopExitState(state)
 }
 
 // For use in a break; combines emitKey and finalStateHelper
@@ -903,7 +906,10 @@ function finalStateHelper(ro, rw, key) {
       state = nextState(ro_.loop, state, [key, pendingValue])
     }
   }
-  return (state is LoopExit) ? state : finalState(ro_.loop, state)
+  if state is not LoopExit {
+    state = finalState(ro_.loop, state)
+  }
+  return loopExitState(state)
 }
 
 procedure emitValue(ro, rw=, v) {

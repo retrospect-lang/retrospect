@@ -588,6 +588,7 @@ public final class LoopCore {
   @Core.Method("limit(_)")
   static Value limit(TState tstate, Value limit) throws BuiltinException {
     limit = limit.verifyInt(Err.INVALID_ARGUMENT);
+    Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, limit));
     return tstate.compound(LIMIT_STEP, limit.makeStorable(tstate));
   }
 

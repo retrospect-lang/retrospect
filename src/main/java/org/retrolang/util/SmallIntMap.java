@@ -53,8 +53,18 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
   }
 
   /** The argument to {@link #forEachEntry}. */
-  public interface EntryVisitor<E> {
+  public interface EntryVisitor<E> extends EntryPredicate<E> {
     void visit(int key, E value);
+
+    default boolean test(int key, E value) {
+      visit(key, value);
+      return true;
+    }
+  }
+
+  /** The argument to {@link #allMatch}. */
+  public interface EntryPredicate<E> {
+    boolean test(int key, E value);
   }
 
   /** The argument to {@link Builder#updateEntries}. */
@@ -150,13 +160,7 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       long keyElement = keys[keyIndex];
       long bit = 1L << (key % Long.SIZE);
       int valuePos = Long.bitCount(keyElement & (bit - 1)) + countKeys(0, keyIndex);
-      if (value == null) {
-        long newKeyElement = keyElement & ~bit;
-        if (newKeyElement != keyElement) {
-          keys[keyIndex] = newKeyElement;
-          deleteValue(valuePos);
-        }
-      } else {
+      if (value != null) {
         long newKeyElement = keyElement | bit;
         if (newKeyElement != keyElement) {
           keys[keyIndex] = newKeyElement;
@@ -174,7 +178,16 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
           E prev = (E) values[valuePos];
           value = combiner.apply(prev, value);
         }
-        values[valuePos] = value;
+        if (value != null) {
+          values[valuePos] = value;
+          return;
+        }
+      }
+      // value is null; remove the element
+      long newKeyElement = keyElement & ~bit;
+      if (newKeyElement != keyElement) {
+        keys[keyIndex] = newKeyElement;
+        deleteValue(valuePos);
       }
     }
 

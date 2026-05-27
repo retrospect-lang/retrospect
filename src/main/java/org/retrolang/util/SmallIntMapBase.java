@@ -71,6 +71,35 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
   }
 
   /**
+   * Returns the smallest key for which {@link #get} would return a non-null value.
+   *
+   * <p>{@code isEmpty()} must be false.
+   */
+  public int minKey() {
+    for (int i = 0; ; i++) {
+      long keyElement = keys[i];
+      if (keyElement != 0) {
+        return Long.numberOfTrailingZeros(keyElement) + Long.SIZE * i;
+      }
+    }
+  }
+
+  /**
+   * Returns the largest key for which {@link #get} would return a non-null value.
+   *
+   * <p>{@code isEmpty()} must be false.
+   */
+  public int maxKey() {
+    for (int i = keys.length - 1; ; i--) {
+      long keyElement = keys[i];
+      if (keyElement != 0) {
+        int topZeros = Long.numberOfLeadingZeros(keyElement);
+        return Long.SIZE * i + 63 - topZeros;
+      }
+    }
+  }
+
+  /**
    * Returns the value corresponding to the given key, which must be non-negative. Returns null if
    * the given key is not present.
    */
@@ -108,13 +137,28 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     visitEntries(visitor, null);
   }
 
+  /** Returns true if {@code predicate.test()} returns true for each key/value pair in this map. */
+  public boolean allMatch(SmallIntMap.EntryPredicate<E> predicate) {
+    return visitEntries(predicate, null);
+  }
+
   @Override
   public int hashCode() {
-    // It's a little tedious to do this properly (i.e. consistently with equals()), and I don't
-    // anticipate needing it.
-    // (Why isn't there an Arrays.hashCode(long[], start, end) and
-    // Arrays.deepHashCode(Object[], start, end)?)
-    throw new UnsupportedOperationException();
+    // This would be easier if java.util.Arrays provided hashCode(long[], start, end) and
+    // hashCode(Object[], start, end) methods.
+    int result = 1;
+    boolean sawNonZero = false;
+    for (int i = keys.length - 1; i >= 0; i--) {
+      long k = keys[i];
+      if (k != 0 || sawNonZero) {
+        result = 31 * result + Long.hashCode(k);
+        sawNonZero = true;
+      }
+    }
+    for (int i = 0; i < numValues; i++) {
+      result = 31 * result + values[i].hashCode();
+    }
+    return result;
   }
 
   @Override
@@ -230,20 +274,23 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
   }
 
   /**
-   * The shared implementation of {@link #forEachEntry} and {@link
-   * SmallIntMap.Builder#updateEntries}. Exactly one of {@code visitor} or {@code updater} must be
+   * The shared implementation of {@link #forEachEntry}, {@link #allMatch}, and {@link
+   * SmallIntMap.Builder#updateEntries}. Exactly one of {@code predicate} or {@code updater} must be
    * non-null.
    */
-  void visitEntries(SmallIntMap.EntryVisitor<E> visitor, SmallIntMap.EntryUpdater<E> updater) {
-    assert (visitor == null) != (updater == null);
+  boolean visitEntries(
+      SmallIntMap.EntryPredicate<E> predicate, SmallIntMap.EntryUpdater<E> updater) {
+    assert (predicate == null) != (updater == null);
     int valuePos = 0;
     for (int i = 0; i < keys.length; i++) {
       for (long keyElement = keys[i]; keyElement != 0; keyElement &= (keyElement - 1)) {
         int k = (i * Long.SIZE) + Long.numberOfTrailingZeros(keyElement);
         @SuppressWarnings("unchecked")
         E v = (E) values[valuePos];
-        if (visitor != null) {
-          visitor.visit(k, v);
+        if (predicate != null) {
+          if (!predicate.test(k, v)) {
+            return false;
+          }
         } else {
           v = updater.apply(k, v);
           if (v == null) {
@@ -257,6 +304,7 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
       }
     }
     assert valuePos == numValues;
+    return true;
   }
 
   /**

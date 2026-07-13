@@ -708,7 +708,9 @@ public final class Loop {
         assert cb.binaryOps.containsAll(next.info.register(r), info);
         next.info.updateInfo(r, info);
       }
-      cb.setForwardPropNeeded(next.targetBlock());
+      if (next.target() instanceof Block b) {
+        cb.setForwardPropNeeded(b);
+      }
     }
 
     @Override

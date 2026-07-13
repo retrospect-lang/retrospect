@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.PriorityQueue;
 import java.util.function.IntPredicate;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 import java.util.stream.IntStream;
 import org.objectweb.asm.Opcodes;
 import org.retrolang.code.Block.Initial;
@@ -56,6 +57,7 @@ import org.retrolang.util.Bits;
 public class CodeBuilder {
 
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
+  private static final Level chatterLevel = Level.FINE;
 
   public final DebugInfo debugInfo = new DebugInfo();
 
@@ -998,7 +1000,7 @@ public class CodeBuilder {
   }
 
   private void logChanges(String where) {
-    logger.atFine().log(
+    logger.at(chatterLevel).log(
         "%s: %s skipped, %s dropped, %s moved, %s outOfLoop, %s duplicated",
         where, numSkipped, numDropped, numMoved, numOutOfLoop, numDuped);
   }
@@ -1110,12 +1112,12 @@ public class CodeBuilder {
     int numLocals = assigner.assignJavaLocalNumbers();
     Sequencer sequencer = new Sequencer(blocks, true);
     debugInfo.blocks = printBlocks(sequencer, false);
-    logger.atFine().log("Final blocks:\n%s", debugInfo.blocks);
+    logger.at(chatterLevel).log("Final blocks:\n%s", debugInfo.blocks);
     Emitter emitter = new Emitter(this, returnType, numLocals, sequencer);
     try {
       return emitter.emit(methodName, sourceFileName, lookup);
     } finally {
-      logger.atFine().log(
+      logger.at(chatterLevel).log(
           "Generated code:\n%s",
           lazy(
               () ->

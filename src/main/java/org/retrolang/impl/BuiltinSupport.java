@@ -122,10 +122,7 @@ class BuiltinSupport {
             void resume(TState tstate, @RC.In Value entry, ResultsInfo results, MethodMemo mMemo) {
               // If this stackEntry is resumed we just rerun the Java method.
               assert entry.baseType() == this;
-              Object[] args = tstate.allocObjectArray(size());
-              for (int i = 0; i < size(); i++) {
-                args[i] = entry.element(i);
-              }
+              Object[] args = entry.getElements(tstate);
               tstate.dropValue(entry);
               execute(tstate, results, mMemo, args);
               tstate.finishBuiltin(results, mMemo, impl);

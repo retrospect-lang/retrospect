@@ -274,9 +274,7 @@ public abstract class BuiltinMethod {
         values[i] = tstate.takeResult(i);
       }
       tstate.clearResults();
-      for (int i = 0; i < size(); i++) {
-        values[numResults + i] = entry.element(i);
-      }
+      entry.getElements(size(), values, numResults);
       tstate.dropValue(entry);
       tstate.resumeBuiltin(caller.continuation, values, results, mMemo);
     }

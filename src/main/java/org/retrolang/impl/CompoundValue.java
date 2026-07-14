@@ -161,9 +161,7 @@ public final class CompoundValue extends RefCounted implements Value {
       } else if (e2 != e) {
         newElements = tstate.allocObjectArray(baseType.size());
         newElements[i] = e2;
-        for (int j = 0; j < i; j++) {
-          newElements[j] = element(j);
-        }
+        getElements(i, newElements, 0);
       } else {
         tstate.dropValue(e2);
       }

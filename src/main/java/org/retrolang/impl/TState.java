@@ -908,10 +908,8 @@ public final class TState extends MemoryHelper {
   public void setResultsFromElements(int size, Value v) {
     assert hasCodeGen() || fnResultTemplates == null;
     Value[] results = hasCodeGen() ? new Value[size] : fnResults(size);
-    for (int i = 0; i < size; i++) {
-      results[i] = v.element(i);
-      assert RefCounted.isValidForStore(results[i]);
-    }
+    v.getElements(size, results, 0);
+    assert Arrays.stream(results).allMatch(RefCounted::isValidForStore);
     if (hasCodeGen()) {
       codeGen.setResults(results);
     }

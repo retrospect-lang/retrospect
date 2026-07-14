@@ -43,9 +43,7 @@ public class Lambdas {
       if (numArgs == 1) {
         args[0] = arg;
       } else {
-        for (int i = 0; i < numArgs; i++) {
-          args[i] = arg.element(i);
-        }
+        arg.getElements(numArgs, args, 0);
         tstate.dropValue(arg);
       }
       tstate.startCall(caller, function, this, args);

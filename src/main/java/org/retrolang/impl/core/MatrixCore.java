@@ -446,7 +446,7 @@ public final class MatrixCore {
         Value innerBaseKey = m.peekElement(1);
         baseDims = innerBaseKey.numElements();
         assert baseDims >= nDims;
-        baseKey = copyArray(tstate, innerBaseKey);
+        baseKey = innerBaseKey.getElements(tstate);
       } else {
         baseDims = nDims;
         baseKey = tstate.allocObjectArray(nDims);
@@ -530,17 +530,6 @@ public final class MatrixCore {
                                   tstate.asArrayValue(axes, numRanges),
                                   tstate.asArrayValue(newSizes, numRanges)))));
     }
-  }
-
-  /** Copies the elements of a Retrospect array into a Java array. */
-  @RC.Out
-  private static Object[] copyArray(TState tstate, Value array) {
-    int size = array.numElements();
-    Object[] result = tstate.allocObjectArray(size);
-    for (int i = 0; i < size; i++) {
-      result[i] = array.element(i);
-    }
-    return result;
   }
 
   /** {@code method sizes(BaseMatrix base) = base_} */

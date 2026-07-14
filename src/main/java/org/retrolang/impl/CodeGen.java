@@ -670,8 +670,7 @@ public class CodeGen {
       cb.mergeNext(afterPush);
       // Continue on to the original Destination, adding in @Saved values from the stackEntry if
       // needed
-      child.branchToParent(
-          CodeGen.this, (callSite.numResultsKept() == done.size()) ? null : stackEntry);
+      child.branchToParent(CodeGen.this, (caller != null ? stackEntry : Core.NONE));
     }
     // We're done emitting the function call; restore the previous currentCall and make our
     // stackRest local available for reuse.

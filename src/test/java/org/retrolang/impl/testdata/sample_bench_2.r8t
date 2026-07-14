@@ -89,7 +89,7 @@ function dist(pt, centroid) = (centroid - pt) ** 2 | sum
 /* RUN (size=200, keep=800) CODEGEN(10) RETURNS
 {count: 50, last: {b0: 0.19868774362729588, b1: 0.2576687013636895, b2: 0.1890531704608046, b3: 39200, class: 10, distance0: 0.14161108039143833, distance1: 0.2631857880386832, distance10: 0.0194616767556045, distance2: 0.19240863875501088, distance3: 0.2747472758384728, distance4: 0.33916050339446935, distance5: 0.03906850239504415, distance6: 0.06651471475619812, distance7: 0.04292233166164067, distance8: 0.046907889116758465, distance9: 0.04305405985016195, filter: 0}}
 ---
-?0---------1-?0-1+..+?0---?---.?---2-?-..?0--2-?-..?0--2-?-..?0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-----3+?∘0-3-0-3++++?0--1+..++..++..+..0-2+...++...++...+4bsrsrsrsrsrsrsrsr3++++++5bs[⊕]0-1+..++..++..+..0-4srsrsrsrsrsrsrsrsrsrsr5s[⊕]-1+..++..++..+..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]0-6bsrsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]?7-0-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]7+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5s[⊕8b]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]+9bs(4:946,6:258)[8⊚?9⊝0-?⊝-?⊝-?⊝-?⊝-?⊝-s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕10bs(4:979,6:267)[⊝-6srsrsr..10⊝-4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊝-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr8s[⊕11b]10⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr11s[⊕]10⊕12bs(4:437679,6:119367)[⊝-]]]]]]]]]]]]]-
+?0---------1-?0-1+..+?0---?---.?---2-?-..?0--2-?-..?0--2-?-..?0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-2+...+0-----3+?∘0-3-0-3++++?0--1+..++..++..+..0-2+...++...++...+4bsrsrsrsrsrsrsrsr3++++++5bsr0-1+..++..++..+..0-4srsrsrsrsrsrsrsrsrsrsr5sr-1+..++..++..+..4srsrsrsrsrsrsrsrsrsrsr5sr0-6bsrsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr?7-0-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr7+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr+8bs(4:946,6:258)[5⊝?8⊝0-?⊝-?⊝-?⊝-?⊝-?⊝-s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕s(4:11,6:3)[⊕9bs(4:979,6:267)[⊝-6srsrsr..9⊝-4srsrsrsrsrsrsrsrsrsrsr5sr9⊝-6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕6srsrsr..4srsrsrsrsrsrsrsrsrsrsr5sr9⊕10bs(4:437679,6:119367)[⊝-]]]]]]]]]]]]]-
   0: x (top level)
   1: x sample_bench_2.r8t+2:37
   2: x sample_bench_2.r8t+2:85
@@ -98,13 +98,11 @@ function dist(pt, centroid) = (centroid - pt) ** 2 | sum
   5: iterate_r1 (3)
   6: at_x2 (1)
   7: r LoopCore.Iterate // LoopCore.PipeCollectionCollector.iterate // sample_bench_2.r8t+2:18_20 filtered = pipe(_t0, _t1)
-  8: iterate_r3 (3)
+  8: iterate_r3 (7)
   9: iterate_r4 (7)
  10: iterate_r5 (7)
- 11: iterate_r6 (3)
- 12: iterate_r7 (7)
 ---
-allocated=7095984/93746, peak=9600
+allocated=7061584/92496, peak=9600
 $0 = *[]x0:$1
 $1 = *{b0: d4, b1: d12, b2: d20, b3: i0, class: b28, distance0: d36, distance1: d44, distance10: d52, distance2: d60, distance3: d68, distance4: d76, distance5: d84, distance6: d92, distance7: d100, distance8: d108, distance9: d116, filter: i32}
 */

@@ -917,9 +917,17 @@ public final class TState extends MemoryHelper {
 
   /** Called after setting results, to harmonize them with {@link MethodMemo#resultsMemo}. */
   void harmonizeResults(MethodMemo memo) {
-    assert fnResultTemplates == null && !hasCodeGen();
-    assert memo.perMethod == null
-        || Value.containsValues(fnResults, memo.method().function.numResults);
+    assert !hasCodeGen();
+    assert memo.perMethod == null || resultsStateMatches(memo.method().function);
+    if (memo.resultsMemo == null) {
+      return;
+    } else if (fnResultTemplates != null) {
+      // A tail call returned templated results, but we can't harmonize those.
+      Value[] scratch = new Value[fnResultTemplates.size()];
+      Arrays.setAll(scratch, this::takeResult);
+      clearResults();
+      setResults(scratch);
+    }
     memo.harmonizeResults(this, fnResults);
   }
 
@@ -967,16 +975,17 @@ public final class TState extends MemoryHelper {
   @SuppressWarnings("ReferenceEquality")
   boolean checkExlinedResult(ImmutableList<Template> expectedTemplates) {
     // The generated code should have saved its identity only if it unwound
+    assert !hasCodeGen();
     assert unwindStarted() == (unwoundFrom != null);
     boolean escaped = false;
     while (unwindStarted()) {
       BaseType baseType = stackHead.first().baseType();
       if (baseType instanceof Err || baseType instanceof BaseType.BlockingEntryType) {
         // That was a non-escape exit.
-        unwoundFrom = null;
         if (escaped && codeGenDebugging != null) {
-          codeGenDebugging.append("]");
+          codeGenDebugging.append(unwoundFrom, "]");
         }
+        unwoundFrom = null;
         return false;
       }
       // We were interrupted by an escape from generated code; resume execution from that point
@@ -1003,7 +1012,7 @@ public final class TState extends MemoryHelper {
     }
     // We've successfully completed the call
     if (escaped && codeGenDebugging != null) {
-      codeGenDebugging.append("]");
+      codeGenDebugging.append(unwoundFrom, "]");
     }
     unwoundFrom = null;
     if (expectedTemplates == null || fnResultTemplates == expectedTemplates) {
@@ -1012,7 +1021,13 @@ public final class TState extends MemoryHelper {
     // We've got results, but not in the expected representation.
     // If we can coerce them to the expected representation, we can avoid causing our caller to
     // escape.
-    return new ResultsFixer().tryFix(expectedTemplates);
+    if (new ResultsFixer().tryFix(expectedTemplates)) {
+      return true;
+    }
+    // That didn't work, so we need to escape.  Push a return-in-progress stack entry to save
+    // the values we were trying to return.
+    pushUnwind(Core.RETURN.asValue());
+    return false;
   }
 
   /**
@@ -1199,7 +1214,7 @@ public final class TState extends MemoryHelper {
       if (builtinCall == null && builtinContinuation == null) {
         assert builtinCallArgs == null && builtinContinuationArgs == null;
         // done or unwinding
-        if (!unwindStarted() && fnResultTemplates == null) {
+        if (!unwindStarted()) {
           harmonizeResults(mMemo);
         }
         return;
@@ -1259,6 +1274,7 @@ public final class TState extends MemoryHelper {
         }
         if (isTailCall) {
           // Just return these results as our own.
+          harmonizeResults(mMemo);
           return;
         } else if (continuationArgs == null) {
           // Since there were no saved values we haven't yet allocated the args array for the
@@ -1374,7 +1390,7 @@ public final class TState extends MemoryHelper {
       dropReference(stack);
       // Call resume() on the popped entry
       StackEntryType entryType = (StackEntryType) first.baseType();
-      assert resultsStateMatches(entryType.called());
+      assert entryType == Core.RETURN || resultsStateMatches(entryType.called());
       entryType.resume(this, first, results, methodMemo);
 
       // When it completes the stack tail should be unchanged

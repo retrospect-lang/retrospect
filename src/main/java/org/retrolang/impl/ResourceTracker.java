@@ -53,7 +53,7 @@ import org.retrolang.util.SizeOf;
  * Each {@link Instruction.Trace} can have an associated {@link SavedTraces} object, which saves the
  * snapshots created by executing that instruction.
  */
-class ResourceTracker implements Allocator, Vm.ResourceTracker {
+public class ResourceTracker implements Allocator, Vm.ResourceTracker {
 
   final Scope scope;
 

@@ -137,13 +137,7 @@ public final class VmValue implements Vm.Value {
     if (value == null) {
       return "*closed*";
     } else {
-      TState tstate = TState.getOrCreate();
-      ResourceTracker prev = tstate.bindTo(tracker);
-      try {
-        return value.toString();
-      } finally {
-        tstate.bindTo(prev);
-      }
+      return TState.withTracker(tracker, tstate -> value.toString());
     }
   }
 }

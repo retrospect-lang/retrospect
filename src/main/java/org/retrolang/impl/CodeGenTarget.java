@@ -376,8 +376,8 @@ class CodeGenTarget {
     if (debug != null && !tstate.unwindStarted()) {
       debug.append(this, "r");
     }
-    // We don't care about the representation of results, but this also handles escapes.
-    var unused = tstate.checkExlinedResult(results);
+    // If that code escaped, finish the call.
+    var unused = tstate.checkExlinedResult(null);
     tstate.unwoundFrom = savedUnwoundFrom;
   }
 

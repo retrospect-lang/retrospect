@@ -516,6 +516,18 @@ public class Core {
   }
 
   /**
+   * A special Singleton StackEntryType that expects to resume with results (like a call site) and
+   * just returns them. Used when a computation is interrupted during function return.
+   */
+  static final BaseType.StackEntryType RETURN =
+      new BaseType.SimpleStackEntryType("return") {
+        @Override
+        void resume(TState tstate, @RC.In Value entry, ResultsInfo unused, MethodMemo unused2) {
+          assert entry.baseType() == this;
+        }
+      };
+
+  /**
    * See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom for why this is in a
    * nested class.
    */

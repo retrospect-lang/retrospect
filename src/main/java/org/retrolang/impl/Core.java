@@ -199,7 +199,7 @@ public class Core {
   public static final BaseType.Named U32 =
       new BaseType.Named(CORE, "U32", 1) {
         @Override
-        String toString(IntFunction<Object> elements) {
+        public String toString(IntFunction<Object> elements) {
           Object element = elements.apply(0);
           if (element instanceof NumValue.I nv) {
             return "0x" + Integer.toHexString(nv.value);
@@ -259,7 +259,7 @@ public class Core {
     }
 
     @Override
-    String toString(IntFunction<Object> elements) {
+    public String toString(IntFunction<Object> elements) {
       //  "[a, b, c]" looks better than "array3(a, b, c)"
       return StringUtil.joinElements("[", "]", size(), elements);
     }

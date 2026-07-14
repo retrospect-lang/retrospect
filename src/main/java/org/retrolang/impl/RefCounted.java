@@ -91,7 +91,7 @@ public abstract class RefCounted {
    * The total size of the fields declared in this class; for use by subclass, when calculating
    * their total size.
    */
-  static final long BASE_SIZE = SizeOf.INT;
+  protected static final long BASE_SIZE = SizeOf.INT;
 
   /**
    * Calls {@code visitor.visit()} on each RefCounted, byte[], or Object[] held by this object, and
@@ -100,7 +100,7 @@ public abstract class RefCounted {
    * <p>Usually called with a MemoryHelper as the visitor when this object's reference count has
    * gone to zero, but may also be called with other visitors for debugging purposes.
    */
-  abstract long visitRefs(RefVisitor visitor);
+  protected abstract long visitRefs(RefVisitor visitor);
 
   /**
    * If {@code isRefCounted(x)} is true, increments its reference count.

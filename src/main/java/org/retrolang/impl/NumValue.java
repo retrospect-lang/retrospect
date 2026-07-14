@@ -275,7 +275,7 @@ public abstract class NumValue extends RefCounted implements Value {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     return (this instanceof I) ? I.OBJ_SIZE : D.OBJ_SIZE;
   }
 

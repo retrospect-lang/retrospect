@@ -20,7 +20,7 @@ package org.retrolang.impl;
  * A RefVisitor is passed to {@link RefCounted#visitRefs}, which should call the visitor with each
  * RefCounted, byte[], or Object[] that the RefCounted has a counted reference to.
  */
-interface RefVisitor {
+public interface RefVisitor {
   /** Called with a RefCounted that is directly reachable from the RefCounted being visited. */
   void visitRefCounted(RefCounted obj);
 

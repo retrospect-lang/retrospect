@@ -75,7 +75,7 @@ public class MemoryHelperTest {
     }
 
     @Override
-    long visitRefs(RefVisitor visitor) {
+    protected long visitRefs(RefVisitor visitor) {
       visitor.visit(left);
       visitor.visit(right);
       visitor.visit(data);

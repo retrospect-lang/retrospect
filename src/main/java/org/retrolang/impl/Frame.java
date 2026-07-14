@@ -197,7 +197,7 @@ public abstract class Frame extends RefCounted implements Value {
   // RefCounted methods
 
   @Override
-  final long visitRefs(RefVisitor visitor) {
+  protected final long visitRefs(RefVisitor visitor) {
     return layoutOrReplacement.visitRefs(this, visitor);
   }
 

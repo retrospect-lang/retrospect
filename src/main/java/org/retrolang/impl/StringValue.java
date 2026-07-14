@@ -64,7 +64,7 @@ public class StringValue extends RefCounted implements Value {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     return OBJ_SIZE + SizeOf.string(value);
   }
 

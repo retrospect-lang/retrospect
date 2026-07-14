@@ -152,7 +152,7 @@ class TStack extends RefCounted {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     visitor.visit(first);
     visitor.visitRefCounted(rest);
     return OBJ_SIZE;
@@ -199,7 +199,7 @@ class TStack extends RefCounted {
     }
 
     @Override
-    long visitRefs(RefVisitor visitor) {
+    protected long visitRefs(RefVisitor visitor) {
       // We have the same counted fields as our superclass, but we're a little bigger.
       var unused = super.visitRefs(visitor);
       return OBJ_SIZE;

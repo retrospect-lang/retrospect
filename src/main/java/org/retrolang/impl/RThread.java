@@ -200,7 +200,7 @@ class RThread extends RefCounted {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     if (MemoryHelper.isReleaser(visitor)) {
       // Like
       //     this.waiter = null;

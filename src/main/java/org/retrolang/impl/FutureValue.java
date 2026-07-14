@@ -280,7 +280,7 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     visitor.visitRefCounted(lambdaThread);
     Value result;
     synchronized (this) {

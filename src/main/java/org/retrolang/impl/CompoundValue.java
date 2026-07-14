@@ -195,7 +195,7 @@ public final class CompoundValue extends RefCounted implements Value {
   }
 
   @Override
-  long visitRefs(RefVisitor visitor) {
+  protected long visitRefs(RefVisitor visitor) {
     visitor.visitObjArray(elements);
     return OBJ_SIZE;
   }

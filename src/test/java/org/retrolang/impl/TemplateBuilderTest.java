@@ -131,7 +131,7 @@ public class TemplateBuilderTest {
     }
 
     @Override
-    long visitRefs(RefVisitor visitor) {
+    protected long visitRefs(RefVisitor visitor) {
       visitor.visit(v);
       return OBJ_SIZE;
     }

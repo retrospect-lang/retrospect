@@ -502,18 +502,21 @@ class Destination implements ResultsInfo {
 
     void branchToParent(CodeGen codeGen, Value extras) {
       int parentSize = parent.size();
-      if (prefixSize != parentSize) {
-        // We should have been passed an appropriate number of extra values
-        assert extras.baseType().size() == parentSize - prefixSize;
+      // We should have been passed an appropriate number of extra values
+      int extraSize = extras.baseType().size();
+      assert extraSize == parentSize - prefixSize;
+      if (extraSize != 0) {
+        // Append to any already-saved values
         if (savedValues != null) {
           // Just append them to the savedValues
-          savedValues = getElements(extras, savedValues);
+          savedValues = Arrays.copyOf(savedValues, parentSize);
+          extras.getElements(extraSize, savedValues, prefixSize);
         } else {
           // Store them in the appropriate registers
-          getFull(parent, codeGen).setValues(codeGen, prefixSize, getElements(extras, null));
+          Value[] values = new Value[extraSize];
+          extras.getElements(extraSize, values, 0);
+          getFull(parent, codeGen).setValues(codeGen, prefixSize, values);
         }
-      } else {
-        assert extras == null;
       }
       if (savedValues != null) {
         Object prevSrc = codeGen.cb.nextSrc();
@@ -529,27 +532,6 @@ class Destination implements ResultsInfo {
         }
         parent.addBranch(codeGen);
       }
-    }
-
-    /**
-     * Copy the elements of {@code extras} into a {@code Value[]}. If {@code appendTo} is non-null,
-     * precede them with the Values in {@code appendTo}.
-     */
-    private static Value[] getElements(Value extras, Value[] appendTo) {
-      int size = extras.baseType().size();
-      int start;
-      Value[] result;
-      if (appendTo == null) {
-        start = 0;
-        result = new Value[size];
-      } else {
-        start = appendTo.length;
-        result = Arrays.copyOf(appendTo, start + size);
-      }
-      for (int i = 0; i < size; i++) {
-        result[start + i] = extras.element(i);
-      }
-      return result;
     }
 
     @Override

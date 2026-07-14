@@ -180,6 +180,23 @@ public interface Value {
   }
 
   /**
+   * Copies the first {@code n} elements of this Value into consecutive elements of the given array.
+   */
+  default void getElements(int n, Object[] dest, int offset) {
+    for (int i = 0; i < n; i++) {
+      dest[i + offset] = element(i);
+    }
+  }
+
+  /** Allocates an Object[] and populates it with the elements of this Value. */
+  default @RC.Out Object[] getElements(TState tstate) {
+    int n = numElements();
+    Object[] result = tstate.allocObjectArray(n);
+    getElements(n, result, 0);
+    return result;
+  }
+
+  /**
    * Returns true if the first {@code numElements} elements of {@code v1} and {@code v2} are equals.
    */
   static boolean equalElements(Value v1, Value v2, int numElements) {

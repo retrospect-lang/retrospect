@@ -656,10 +656,7 @@ public class ValueUtil {
       int newSize = size + newElements.length;
       if (size == 0 || newSize <= 5) {
         Object[] newArray = tstate.allocObjectArray(newSize);
-        int offset = atEnd ? 0 : newElements.length;
-        for (int i = 0; i < size; i++) {
-          newArray[i + offset] = array.element(i);
-        }
+        array.getElements(size, newArray, atEnd ? 0 : newElements.length);
         tstate.dropValue(array);
         System.arraycopy(newElements, 0, newArray, atEnd ? size : 0, newElements.length);
         return tstate.asArrayValue(newArray, newSize);
@@ -731,7 +728,7 @@ public class ValueUtil {
       return array;
     }
     Value[] elements = new Value[n];
-    Arrays.setAll(elements, array2::element);
+    array2.getElements(n, elements, 0);
     tstate.dropValue(array2);
     return insertElements(tstate, array, atEnd, resultLayout, elements);
   }

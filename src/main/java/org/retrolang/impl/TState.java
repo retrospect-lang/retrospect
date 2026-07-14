@@ -25,6 +25,7 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodType;
 import java.util.Arrays;
+import java.util.function.Function;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
 import org.retrolang.impl.BaseType.StackEntryType;
@@ -141,6 +142,23 @@ public final class TState extends MemoryHelper {
   }
 
   /**
+   * Bind this thread's TState (creating one, if needed) to the given ResourceTracker and apply
+   * {@code fn} to it, then restore any previous binding.
+   */
+  public static <T> T withTracker(ResourceTracker tracker, Function<TState, T> fn) {
+    assert tracker != null;
+    TState tstate = getOrCreate();
+    ResourceTracker prev = (tstate.tracker() == tracker) ? tracker : tstate.bindTo(tracker);
+    try {
+      return fn.apply(tstate);
+    } finally {
+      if (prev != tracker) {
+        tstate.bindTo(prev);
+      }
+    }
+  }
+
+  /**
    * Discards any TState that was previously associated with this Thread, and creates a new one.
    *
    * <p>Intended only for tests, which want to ensure that they are not affected by any
@@ -156,19 +174,16 @@ public final class TState extends MemoryHelper {
   /**
    * Drops a reference to the given RefCounted, which was allocated by the given ResourceTracker.
    *
-   * <p>This entry point is only used by methods like Vm.Value.close() which are invoked from
-   * outside the VM; during normal operation the TState is already bound to the appropriate
-   * ResourceTracker.
+   * <p>This entry point is used by methods like Vm.Value.close() that are invoked from outside the
+   * VM; during normal operation the TState is already bound to the appropriate ResourceTracker.
    */
   static void dropReferenceWithTracker(ResourceTracker tracker, @RC.In RefCounted obj) {
-    assert tracker != null;
-    TState tstate = getOrCreate();
-    ResourceTracker prev = tstate.bindTo(tracker);
-    try {
-      tstate.dropReference(obj);
-    } finally {
-      tstate.bindTo(prev);
-    }
+    withTracker(
+        tracker,
+        tstate -> {
+          tstate.dropReference(obj);
+          return null;
+        });
   }
 
   @CanIgnoreReturnValue

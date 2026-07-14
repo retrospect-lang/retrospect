@@ -703,36 +703,18 @@ public sealed interface Template {
   }
 
   /**
-   * A RefVar represents a Value with a specified layout or non-compositional BaseType, provided as
-   * one of the template's inputs.
+   * A RefVar represents a Value instance provided as one of the template's inputs. Instances of the
+   * base RefVar class represent Values with a specified non-compositional BaseType; instances of
+   * the {@link ForFrame} subclass represent Frames with a specified layout.
    */
-  static final class RefVar extends TemplateBuilder implements Template {
-
-    /**
-     * If true and this RefVar has a FrameLayout, {@link #frameLayout()} will change if the layout
-     * evolves; otherwise {@link #frameLayout()} will always return the original layout.
-     *
-     * <p>We use RefVars with {@code tracksLayoutEvolution == false} in RValues, where we want a
-     * consistent view of the RValue's layout.
-     */
-    final boolean tracksLayoutEvolution;
-
+  static sealed class RefVar extends TemplateBuilder implements Template {
     final int index;
     final BaseType baseType;
-    private FrameLayout frameLayout;
 
-    static final VarHandle FRAME_LAYOUT =
-        Handle.forVar(MethodHandles.lookup(), RefVar.class, "frameLayout", FrameLayout.class);
-
-    RefVar(int index, BaseType baseType, FrameLayout frameLayout, boolean tracksLayoutEvolution) {
+    RefVar(int index, BaseType baseType) {
       super((short) 0, (short) 1);
-      assert !baseType.isSingleton();
-      assert (frameLayout != null) == baseType.usesFrames();
-      assert !(frameLayout == null && tracksLayoutEvolution);
       this.index = index;
-      this.tracksLayoutEvolution = tracksLayoutEvolution;
       this.baseType = baseType;
-      this.frameLayout = frameLayout;
     }
 
     /**
@@ -768,64 +750,30 @@ public sealed interface Template {
 
     @Override
     public BaseType baseType() {
-      // Note that if frameLayout has evolved this may be out-of-date, but it will still have the
-      // same sortOrder which is good enough; see comment on TemplateBuilder.baseType()
+      // Note that if this is a ForFrame and the frameLayout has evolved this may be out-of-date,
+      // but it will still have the same sortOrder which is good enough; see comment on
+      // TemplateBuilder.baseType()
       return baseType;
+    }
+
+    private boolean checkCast(Value v) {
+      return v.baseType() == baseType;
     }
 
     @Override
     @RC.Out
     @Nullable Value castImpl(TState tstate, Value v) {
-      if (v.baseType().sortOrder != sortOrder()) {
-        return null;
-      } else if (frameLayout == null) {
-        return v.makeStorable(tstate);
-      }
-      FrameLayout vLayout = v.layout();
-      if (vLayout == frameLayout) {
-        return v.makeStorable(tstate);
-      }
-      return frameLayout().cast(tstate, v);
+      return checkCast(v) ? v.makeStorable(tstate) : null;
     }
 
     @Override
     boolean couldCastImpl(Value v, TestOption option) {
-      if (v.baseType().sortOrder != sortOrder()) {
-        return false;
-      } else if (frameLayout == null || option.evolutionAllowed()) {
-        // As long as the sortOrder matches, cast() will expand the FrameLayout to contain v
-        return true;
-      }
-      FrameLayout layout = frameLayout();
-      FrameLayout vLayout = v.layout();
-      if (vLayout != null) {
-        // If we made it to here then option.evolutionAllowed is false, so the layouts are required
-        // to be identical.
-        return vLayout == layout;
-      }
-      int n = v.baseType().size();
-      Template template = layout.template();
-      for (int i = 0; i < n; i++) {
-        Template element = (layout instanceof VArrayLayout) ? template : template.element(i);
-        if (!element.toBuilder().couldCast(v.element(i), TestOption.DROP_TO_BE_SET)) {
-          return false;
-        }
-      }
-      return true;
+      return checkCast(v);
     }
 
     @Override
     boolean isSubsetOfImpl(TemplateBuilder other, TestOption option) {
-      if (other instanceof RefVar rv) {
-        if (frameLayout == null) {
-          return rv.baseType == baseType;
-        } else if (rv.frameLayout != null) {
-          // Even if one of the refvars isn't tracking evolution, we want to compare the most recent
-          // versions of the layouts.
-          return latestLayout() == rv.latestLayout();
-        }
-      }
-      return false;
+      return other instanceof RefVar rv && rv.baseType == baseType;
     }
 
     @Override
@@ -833,151 +781,34 @@ public sealed interface Template {
       return t2.baseType().sortOrder == sortOrder();
     }
 
-    /**
-     * Returns the latest version of this RefVar's layout, whether or not we are tracking layout
-     * evolution.
-     */
-    private FrameLayout latestLayout() {
-      return tracksLayoutEvolution ? frameLayout() : frameLayout.latest();
-    }
-
-    public FrameLayout frameLayout() {
-      if (!tracksLayoutEvolution) {
-        assert frameLayout != null;
-        return frameLayout;
-      }
-      // Use getAcquire() because another thread may asynchronously update the frameLayout field.
-      FrameLayout layout = (FrameLayout) FRAME_LAYOUT.getAcquire(this);
-      return updateFrameLayout(layout, layout.latest());
-    }
-
-    /**
-     * If {@code latest} is different from {@code current} (the value we read from our {@link
-     * #frameLayout} field), update the field.
-     */
-    @CanIgnoreReturnValue
-    private FrameLayout updateFrameLayout(FrameLayout current, FrameLayout latest) {
-      assert tracksLayoutEvolution;
-      if (latest != current) {
-        assert current.scope.evolver.evolvedTo(current, latest);
-        // We don't bother checking the return value because if it isn't what we expect that would
-        // just mean that there was a race and someone else updated it before us, which is fine.
-        FRAME_LAYOUT.compareAndExchangeRelease(this, current, latest);
-      }
-      return latest;
-    }
-
     @Override
-    TemplateBuilder addImpl(Value v) {
-      if (frameLayout == null) {
-        assert v.baseType() == baseType;
-        return this;
-      }
-      assert tracksLayoutEvolution;
-      FrameLayout layout = frameLayout();
-      updateFrameLayout(layout, layout.addValue(v));
+    RefVar addImpl(Value v) {
+      assert v.baseType() == baseType;
       return this;
     }
 
     @Override
     TemplateBuilder mergeImpl(TemplateBuilder other) {
-      if (other == this) {
-        return this;
-      } else if (frameLayout == null) {
-        assert other instanceof RefVar && other.baseType() == baseType;
-        return this;
-      }
-      assert tracksLayoutEvolution;
-      FrameLayout layout = frameLayout();
-      FrameLayout newLayout;
-      if (other instanceof RefVar rv) {
-        FrameLayout otherLayout = rv.frameLayout();
-        if (otherLayout == layout) {
-          return this;
-        }
-        newLayout = layout.scope.evolver.merge(layout, otherLayout);
-      } else {
-        newLayout = layout.merge((CompoundBase) other);
-      }
-      updateFrameLayout(layout, newLayout);
+      assert ((RefVar) other).baseType == baseType;
       return this;
     }
 
     /** Returns a RefVar with the same layout as this and the given index. */
     RefVar withIndex(int newIndex) {
-      return withIndex(newIndex, tracksLayoutEvolution);
-    }
-
-    /** Returns a RefVar with the same layout as this and the given index. */
-    RefVar withIndex(int newIndex, boolean newTracksLayoutEvolution) {
-      if (frameLayout == null) {
-        return (index == newIndex) ? this : new RefVar(newIndex, baseType, null, false);
-      }
-      // Get the current version of frameLayout and the corresponding baseType
-      FrameLayout newLayout = latestLayout();
-      BaseType newBaseType = newLayout.baseType();
-      if (index == newIndex
-          && this.baseType == newBaseType
-          && this.tracksLayoutEvolution == newTracksLayoutEvolution) {
-        if (newTracksLayoutEvolution || this.frameLayout == newLayout) {
-          return this;
-        }
-      }
-      return new RefVar(newIndex, newBaseType, newLayout, newTracksLayoutEvolution);
+      return (index == newIndex) ? this : new RefVar(newIndex, baseType);
     }
 
     @Override
     Template build(VarAllocator allocator) {
-      return withIndex(allocator.allocRefVar(), allocator.refVarsTrackLayoutEvolution());
-    }
-
-    @Override
-    TemplateBuilder builderForElement(BaseType compositionalType, int elementIndex) {
-      FrameLayout frameLayout = this.frameLayout;
-      if (frameLayout == null) {
-        return EMPTY;
-      } else if (frameLayout instanceof RecordLayout layout) {
-        Template.Compound record = layout.template;
-        if (record.baseType == baseType) {
-          return record.elementBuilder(elementIndex);
-        } else if (record.baseType.sortOrder != BaseType.SORT_ORDER_ARRAY) {
-          return EMPTY;
-        }
-      }
-      if (compositionalType.sortOrder != BaseType.SORT_ORDER_ARRAY) {
-        return EMPTY;
-      } else if (frameLayout instanceof VArrayLayout layout) {
-        return layout.template.toBuilder();
-      } else {
-        // If you return an array of a different length than this one, we'll end up creating a
-        // vArray that can hold this array's elements.
-        return ((RecordLayout) frameLayout).template.mergeElementsInto(EMPTY);
-      }
-    }
-
-    @Override
-    @Nullable FrameLayout layout(long sortOrder) {
-      return frameLayout != null && frameLayout.baseType().sortOrder == sortOrder
-          ? frameLayout()
-          : null;
+      return withIndex(allocator.allocRefVar());
     }
 
     @Override
     public boolean equals(Object obj) {
       if (obj == this) {
         return true;
-      } else if (obj instanceof RefVar rv) {
-        if (rv.index != index) {
-          return false;
-        } else if (frameLayout == null) {
-          return rv.baseType == baseType;
-        } else {
-          return rv.frameLayout != null
-              && tracksLayoutEvolution == rv.tracksLayoutEvolution
-              && frameLayout() == rv.frameLayout();
-        }
       }
-      return false;
+      return (obj instanceof RefVar rv) && rv.index == index && rv.baseType == baseType;
     }
 
     /** Returns true if obj is a RefVar with the same index as this one. */
@@ -1000,9 +831,204 @@ public sealed interface Template {
 
     @Override
     public String toString() {
-      String info =
-          (frameLayout == null) ? baseType.toString() : frameLayout().toStringNoTemplate();
-      return String.format("x%d:%s", index, info);
+      return String.format("x%d:%s", index, baseType.toString());
+    }
+
+    public static final class ForFrame extends RefVar {
+      private FrameLayout frameLayout;
+
+      static final VarHandle FRAME_LAYOUT =
+          Handle.forVar(MethodHandles.lookup(), ForFrame.class, "frameLayout", FrameLayout.class);
+
+      /**
+       * If true, {@link #frameLayout()} will change if the layout evolves; otherwise {@link
+       * #frameLayout()} will always return the original layout.
+       *
+       * <p>We use RefVars with {@code tracksLayoutEvolution == false} in RValues, where we want a
+       * consistent view of the RValue's layout.
+       */
+      final boolean tracksLayoutEvolution;
+
+      ForFrame(
+          int index, BaseType baseType, FrameLayout frameLayout, boolean tracksLayoutEvolution) {
+        super(index, baseType);
+        assert frameLayout != null;
+        this.frameLayout = frameLayout;
+        this.tracksLayoutEvolution = tracksLayoutEvolution;
+      }
+
+      @Override
+      @RC.Out
+      @Nullable Value castImpl(TState tstate, Value v) {
+        if (v.baseType().sortOrder != sortOrder()) {
+          return null;
+        }
+        FrameLayout vLayout = v.layout();
+        if (vLayout == frameLayout) {
+          return v.makeStorable(tstate);
+        }
+        return frameLayout().cast(tstate, v);
+      }
+
+      @Override
+      boolean couldCastImpl(Value v, TestOption option) {
+        if (v.baseType().sortOrder != sortOrder()) {
+          return false;
+        } else if (option.evolutionAllowed()) {
+          // As long as the sortOrder matches, cast() will expand the FrameLayout to contain v
+          return true;
+        }
+        FrameLayout layout = frameLayout();
+        FrameLayout vLayout = v.layout();
+        if (vLayout != null) {
+          // If we made it to here then option.evolutionAllowed is false, so the layouts are
+          // required to be identical.
+          return vLayout == layout;
+        }
+        int n = v.baseType().size();
+        Template template = layout.template();
+        for (int i = 0; i < n; i++) {
+          Template element = (layout instanceof VArrayLayout) ? template : template.element(i);
+          if (!element.toBuilder().couldCast(v.element(i), TestOption.DROP_TO_BE_SET)) {
+            return false;
+          }
+        }
+        return true;
+      }
+
+      @Override
+      boolean isSubsetOfImpl(TemplateBuilder other, TestOption option) {
+        // Even if one of the refvars isn't tracking evolution, we want to compare the most recent
+        // versions of the layouts.
+        return (other instanceof ForFrame rv) && (latestLayout() == rv.latestLayout());
+      }
+
+      /**
+       * Returns the latest version of this RefVar's layout, whether or not we are tracking layout
+       * evolution.
+       */
+      private FrameLayout latestLayout() {
+        return tracksLayoutEvolution ? frameLayout() : frameLayout.latest();
+      }
+
+      public FrameLayout frameLayout() {
+        if (!tracksLayoutEvolution) {
+          return frameLayout;
+        }
+        // Use getAcquire() because another thread may asynchronously update the frameLayout field.
+        FrameLayout layout = (FrameLayout) FRAME_LAYOUT.getAcquire(this);
+        return updateFrameLayout(layout, layout.latest());
+      }
+
+      /**
+       * If {@code latest} is different from {@code current} (the value we read from our {@link
+       * #frameLayout} field), update the field.
+       */
+      @CanIgnoreReturnValue
+      private FrameLayout updateFrameLayout(FrameLayout current, FrameLayout latest) {
+        assert tracksLayoutEvolution;
+        if (latest != current) {
+          assert current.scope.evolver.evolvedTo(current, latest);
+          // We don't bother checking the return value because if it isn't what we expect that would
+          // just mean that there was a race and someone else updated it before us, which is fine.
+          FRAME_LAYOUT.compareAndExchangeRelease(this, current, latest);
+        }
+        return latest;
+      }
+
+      @Override
+      RefVar addImpl(Value v) {
+        assert tracksLayoutEvolution;
+        FrameLayout layout = frameLayout();
+        updateFrameLayout(layout, layout.addValue(v));
+        return this;
+      }
+
+      @Override
+      TemplateBuilder mergeImpl(TemplateBuilder other) {
+        if (other == this) {
+          return this;
+        }
+        assert tracksLayoutEvolution;
+        FrameLayout layout = frameLayout();
+        FrameLayout newLayout;
+        if (other instanceof ForFrame rv) {
+          FrameLayout otherLayout = rv.frameLayout();
+          if (otherLayout == layout) {
+            return this;
+          }
+          newLayout = layout.scope.evolver.merge(layout, otherLayout);
+        } else {
+          newLayout = layout.merge((CompoundBase) other);
+        }
+        updateFrameLayout(layout, newLayout);
+        return this;
+      }
+
+      @Override
+      RefVar withIndex(int newIndex) {
+        return withIndex(newIndex, tracksLayoutEvolution);
+      }
+
+      /** Returns a RefVar with the same layout as this and the given index. */
+      RefVar withIndex(int newIndex, boolean newTracksLayoutEvolution) {
+        // Get the current version of frameLayout and the corresponding baseType
+        FrameLayout newLayout = latestLayout();
+        BaseType newBaseType = newLayout.baseType();
+        if (index == newIndex
+            && this.baseType == newBaseType
+            && this.tracksLayoutEvolution == newTracksLayoutEvolution) {
+          if (newTracksLayoutEvolution || this.frameLayout == newLayout) {
+            return this;
+          }
+        }
+        return new ForFrame(newIndex, newBaseType, newLayout, newTracksLayoutEvolution);
+      }
+
+      @Override
+      TemplateBuilder builderForElement(BaseType compositionalType, int elementIndex) {
+        if (compositionalType.sortOrder != baseType.sortOrder) {
+          return EMPTY;
+        }
+        FrameLayout frameLayout = frameLayout();
+        if (frameLayout instanceof VArrayLayout layout) {
+          assert compositionalType instanceof Core.FixedArrayType;
+          return layout.template.toBuilder();
+        }
+        Template.Compound record = ((RecordLayout) frameLayout).template;
+        if (record.baseType == compositionalType) {
+          return record.elementBuilder(elementIndex);
+        } else {
+          // The only way different compositional baseTypes could have the same sort order is if
+          // they're different length arrays.
+          assert record.baseType instanceof Core.FixedArrayType
+              && compositionalType instanceof Core.FixedArrayType;
+          // If you store an array of a different length in this template we'll end up converting
+          // this to a vArray template.
+          return record.mergeElementsInto(EMPTY);
+        }
+      }
+
+      @Override
+      @Nullable FrameLayout layout(long sortOrder) {
+        return baseType.sortOrder == sortOrder ? frameLayout() : null;
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        if (obj == this) {
+          return true;
+        }
+        return (obj instanceof ForFrame rv)
+            && rv.index == index
+            && rv.tracksLayoutEvolution == tracksLayoutEvolution
+            && rv.frameLayout() == frameLayout();
+      }
+
+      @Override
+      public String toString() {
+        return String.format("x%d:%s", index, frameLayout().toStringNoTemplate());
+      }
     }
   }
 

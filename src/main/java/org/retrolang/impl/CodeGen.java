@@ -958,17 +958,16 @@ public class CodeGen {
    */
   public static Value asValue(Register register, FrameLayout layout) {
     int resultIndex = register.index;
-    return RValue.fromTemplate(new RefVar(resultIndex, layout.baseType(), layout, false));
+    return RValue.fromTemplate(new RefVar.ForFrame(resultIndex, layout.baseType(), layout, false));
   }
 
   /** Returns a CodeValue for the length of the given varray. */
   CodeValue vArrayLength(Value array) {
-    RefVar refVar = (RefVar) ((RValue) array).template;
-    return vArrayLength(refVar);
+    return vArrayLength((RefVar.ForFrame) ((RValue) array).template);
   }
 
   /** Returns a CodeValue for the length of the given varray. */
-  CodeValue vArrayLength(RefVar refVar) {
+  CodeValue vArrayLength(RefVar.ForFrame refVar) {
     VArrayLayout layout = (VArrayLayout) refVar.frameLayout();
     Register vArray = register(refVar);
     ensureLayout(vArray, layout);

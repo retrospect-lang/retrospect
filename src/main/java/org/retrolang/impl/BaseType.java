@@ -304,7 +304,7 @@ public abstract class BaseType implements PtrInfo {
           ? javaType == null
           : Value.class.isAssignableFrom(javaType);
       this.javaType = javaType;
-      asRefVar = (sortOrder == SORT_ORDER_ARRAY) ? null : new Template.RefVar(0, this, null, false);
+      asRefVar = (sortOrder == SORT_ORDER_ARRAY) ? null : new Template.RefVar(0, this);
     }
 
     public NonCompositional(

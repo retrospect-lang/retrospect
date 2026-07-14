@@ -161,8 +161,8 @@ public class TemplateBuilderTest {
           assertEquiv((Template) u1.choiceBuilder(i), (Template) u2.choiceBuilder(i));
         }
       } else {
-        RefVar v1 = (RefVar) t1;
-        RefVar v2 = (RefVar) t2;
+        RefVar.ForFrame v1 = (RefVar.ForFrame) t1;
+        RefVar.ForFrame v2 = (RefVar.ForFrame) t2;
         assertThat(v1.index).isEqualTo(v2.index);
         assertThat(v1.baseType).isSameInstanceAs(v2.baseType);
         if (v1.frameLayout() instanceof RecordLayout) {
@@ -314,7 +314,8 @@ public class TemplateBuilderTest {
     // The result is a reference to a variable-length array, each element of which is a tagged union
     // of 0, None, or a String
     Template arrayElement = runTest(v1, v2, v3, "x0:*[]", "x0:*[]");
-    assertTemplateMatches(((RefVar) arrayElement).frameLayout(), "*[]b0⸨0:0; 1:None; 2:x0:String⸩");
+    assertTemplateMatches(
+        ((RefVar.ForFrame) arrayElement).frameLayout(), "*[]b0⸨0:0; 1:None; 2:x0:String⸩");
     dropAndCheckAllReleased(v1, v2, v3);
   }
 
@@ -322,7 +323,7 @@ public class TemplateBuilderTest {
   public void arrays() {
     Template t = arrayOf(NumVar.UINT8, NumVar.UINT8);
     // A reference to a record containing a pair of uint8s
-    RefVar refvar = RecordLayout.newFromBuilder(tracker.scope, t.toBuilder()).asRefVar;
+    RefVar.ForFrame refvar = RecordLayout.newFromBuilder(tracker.scope, t.toBuilder()).asRefVar;
     assertTemplateMatches(refvar.frameLayout(), "*[b0, b1]");
 
     // Our values are
@@ -340,7 +341,7 @@ public class TemplateBuilderTest {
 
     // Adding [0, 4000] (which doesn't fit in its layout) to refvar changes its layout to a record
     // containing a pair of a uint8 and an int32
-    RefVar b2 = (RefVar) refvar.toBuilder().add(v2);
+    RefVar.ForFrame b2 = (RefVar.ForFrame) refvar.toBuilder().add(v2);
     assertTemplateMatches(b2.frameLayout(), "*[b0, i4]");
 
     // Allocate a (fake) instance of this new RecordLayout, with contents [0, 1]
@@ -354,7 +355,7 @@ public class TemplateBuilderTest {
     // Combining v1, v2, and v3 results in a variable-length array, each element of which
     // is a tagged union of an int32 or None.
     Template arrayElement = runTest(v1, v2, v3, "x0:*[]", "x0:*[]");
-    assertTemplateMatches(((RefVar) arrayElement).frameLayout(), "*[]b0⸨0:i1; 1:None⸩");
+    assertTemplateMatches(((RefVar.ForFrame) arrayElement).frameLayout(), "*[]b0⸨0:i1; 1:None⸩");
     dropAndCheckAllReleased(v1, v2, v3, fakeV1);
   }
 
@@ -428,7 +429,7 @@ public class TemplateBuilderTest {
         c3, "[d0, d0, ⸨x0:*[]; LoopExit([⸨None; x0:String⸩, x0:String, ⸨Absent; x0:String⸩])⸩]");
     // The varray's template is a tagged union of int or one of the two singletons
     assertTemplateMatches(
-        ((RefVar) u.choiceBuilder(0)).frameLayout(), "*[]b0⸨0:i1; 1:None; 2:Absent⸩");
+        ((RefVar.ForFrame) u.choiceBuilder(0)).frameLayout(), "*[]b0⸨0:i1; 1:None; 2:Absent⸩");
     // Replacing that subexpression with a pointer reduces c3's size to 8
     assertThat(c3.totalWeight()).isEqualTo(8);
     // We should be able to do it again
@@ -438,7 +439,7 @@ public class TemplateBuilderTest {
     // ... with a record (because it was a relatively short array) containing 3 pointers (two of
     // which are untagged unions)
     assertTemplateMatches(
-        ((RefVar) c2a.elementBuilder(0)).frameLayout(), "*[]⸨None; Absent; x0:String⸩");
+        ((RefVar.ForFrame) c2a.elementBuilder(0)).frameLayout(), "*[]⸨None; Absent; x0:String⸩");
     // Now c3's weight is down to 4 (2 doubles and pointers)
     assertThat(c3.totalWeight()).isEqualTo(4);
     // Getting a summary of all active frame layouts returns the same two layouts

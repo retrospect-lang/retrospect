@@ -121,13 +121,12 @@ class CopyEmitter {
                 } else {
                   src = NumValue.asInt(v);
                 }
-              } else if (v == Core.EMPTY_ARRAY) {
-                RefVar refVar = (RefVar) basic.dst;
-                if (refVar.baseType() == Core.VARRAY) {
+              } else if (v == Core.EMPTY_ARRAY && basic.dst instanceof RefVar.ForFrame refVar) {
+                FrameLayout layout = refVar.frameLayout();
+                if (layout instanceof VArrayLayout vArray) {
                   // Setting a vArray refVar to the empty array singleton means setting it to the
                   // empty varray
-                  VArrayLayout layout = (VArrayLayout) refVar.frameLayout();
-                  src = layout.empty;
+                  src = vArray.empty;
                 }
               }
               setDstVar(codeGen, (Template) basic.dst, CodeValue.of(src));
@@ -159,7 +158,7 @@ class CopyEmitter {
                     .addTo(codeGen.cb);
               } else {
                 new PtrInfo.TestClass(src, null).setBranch(false, onFail).addTo(codeGen.cb);
-                CodeGen.checkLayout(src, srcVar.frameLayout())
+                CodeGen.checkLayout(src, ((RefVar.ForFrame) srcVar).frameLayout())
                     .setBranch(false, onFail)
                     .addTo(codeGen.cb);
               }
@@ -167,7 +166,7 @@ class CopyEmitter {
             case COMPOUND_TO_FRAME -> {
               Template src = (Template) basic.src;
               BaseType srcBaseType = src.baseType();
-              RefVar dstVar = (RefVar) basic.dst;
+              RefVar.ForFrame dstVar = (RefVar.ForFrame) basic.dst;
               Register tmpRegister = codeGen.cb.newRegister(Frame.class);
               FrameLayout frameLayout = dstVar.frameLayout();
               ObjIntConsumer<Template> setElement;

@@ -392,7 +392,7 @@ public interface PtrInfo extends ValueInfo {
         Register layoutRegister = codeGen.cb.newRegister(FrameLayout.class);
         codeGen.emitSet(layoutRegister, Frame.GET_LAYOUT_OR_REPLACEMENT.result(register));
         for (int i : frameCheck) {
-          FrameLayout layout = ((Template.RefVar) union.choice(i)).frameLayout();
+          FrameLayout layout = ((Template.RefVar.ForFrame) union.choice(i)).frameLayout();
           new PtrInfo.TestLayout(register, layoutRegister, layout)
               .setBranch(true, pass)
               .addTo(codeGen.cb);

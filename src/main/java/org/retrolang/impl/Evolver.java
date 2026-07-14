@@ -254,7 +254,7 @@ class Evolver {
     // Copy all the still-active layouts into a list and sort by index.
     List<Map.Entry<FrameLayout, Integer>> actives = new ArrayList<>(activeLayouts.entrySet());
     Collections.sort(actives, Map.Entry.comparingByValue());
-    // Each active layout will be identfied as "$" followed by its position in the sorted list.
+    // Each active layout will be identified as "$" followed by its position in the sorted list.
     IdentityHashMap<FrameLayout, String> ids = new IdentityHashMap<>();
     for (int i = 0; i < actives.size(); i++) {
       ids.put(actives.get(i).getKey(), "$" + i);
@@ -263,10 +263,10 @@ class Evolver {
         new Template.Printer() {
           @Override
           public String toString(Template.RefVar rv) {
-            if (!rv.baseType.usesFrames()) {
-              return super.toString(rv);
+            if (rv instanceof Template.RefVar.ForFrame ff) {
+              return String.format("x%d:%s", rv.index, ids.get(ff.frameLayout()));
             }
-            return String.format("x%d:%s", rv.index, ids.get(rv.frameLayout()));
+            return super.toString(rv);
           }
         };
     // Return "$0 = ...\n$1 = ..." etc.

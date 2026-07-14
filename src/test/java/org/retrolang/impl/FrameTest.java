@@ -240,7 +240,7 @@ public class FrameTest {
     Value v1 = tstate.compound(Core.FixedArrayType.withSize(2), NumValue.ONE, NumValue.ZERO);
     Value v2 = tstate.compound(Core.FixedArrayType.withSize(1), NumValue.NEGATIVE_ONE);
     VArrayLayout layout1 =
-        (VArrayLayout) ((Template.RefVar) Template.EMPTY.add(v1).add(v2)).frameLayout();
+        (VArrayLayout) ((Template.RefVar.ForFrame) Template.EMPTY.add(v1).add(v2)).frameLayout();
     assertLayoutMatches(layout1, "*[]i0");
     // Create and initialize an instance
     Frame f1 = layout1.alloc(tstate, 3);

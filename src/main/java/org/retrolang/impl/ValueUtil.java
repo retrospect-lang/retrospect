@@ -46,7 +46,7 @@ public class ValueUtil {
         if (baseType.isCompositional()) {
           return NumValue.of(baseType.size(), Allocator.UNCOUNTED);
         } else {
-          return codeGen.intToValue(codeGen.vArrayLength((Template.RefVar) t));
+          return codeGen.intToValue(codeGen.vArrayLength((Template.RefVar.ForFrame) t));
         }
       }
     }

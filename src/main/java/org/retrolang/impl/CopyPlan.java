@@ -397,12 +397,12 @@ class CopyPlan {
                       && rvSrc.couldCast(vDst)));
       case VERIFY_REF_TYPE -> src instanceof RefVar && dst instanceof BaseType;
       case FRAME_TO_COMPOUND ->
-          src instanceof RefVar rvSrc
+          src instanceof RefVar.ForFrame rvSrc
               && dst instanceof Compound cDst
               && rvSrc.sortOrder() == cDst.baseType.sortOrder;
       case COMPOUND_TO_FRAME ->
           (src instanceof Compound || src instanceof Constant)
-              && dst instanceof RefVar rvDst
+              && dst instanceof RefVar.ForFrame rvDst
               && ((Template) src).baseType().sortOrder == rvDst.sortOrder();
     };
   }
@@ -432,7 +432,7 @@ class CopyPlan {
      */
     Cached getCached(BiFunction<Template, FrameLayout, Object> producer) {
       // For FRAME_TO_COMPOUND, src is a RefVar; for COMPOUND_TO_FRAME, dst is a RefVar
-      RefVar refVar = (RefVar) (src instanceof RefVar ? src : dst);
+      RefVar.ForFrame refVar = (src instanceof RefVar.ForFrame rv) ? rv : (RefVar.ForFrame) dst;
       FrameLayout layout = refVar.frameLayout();
       Cached cached = (Cached) CACHED.getAcquire(this);
       if (cached != null && cached.layout == layout) {
@@ -736,6 +736,7 @@ class CopyPlan {
           if (!rvDst.couldCast(v)) {
             yield false;
           } else if (v instanceof CompoundValue) {
+            assert rvDst instanceof RefVar.ForFrame;
             steps.add(new FrameVsCompound(StepType.COMPOUND_TO_FRAME, cSrc, rvDst));
           } else {
             steps.add(new Basic(StepType.SET_REF, v, dst));
@@ -781,7 +782,7 @@ class CopyPlan {
       } else if (dst instanceof RefVar) {
         steps.add(new Basic(StepType.COPY_REF, rvSrc, dst));
       } else {
-        assert dst instanceof Compound;
+        assert rvSrc instanceof RefVar.ForFrame && dst instanceof Compound;
         steps.add(new FrameVsCompound(StepType.FRAME_TO_COMPOUND, rvSrc, dst));
       }
       return true;
@@ -790,7 +791,7 @@ class CopyPlan {
       if (dst instanceof Compound cDst) {
         return cDst.baseType == baseType
             && copyElements(baseType.size(), src, cDst, skipToBeSet, steps);
-      } else if (dst instanceof RefVar rvDst && rvDst.sortOrder() == baseType.sortOrder) {
+      } else if (dst instanceof RefVar.ForFrame rvDst && rvDst.sortOrder() == baseType.sortOrder) {
         steps.add(new FrameVsCompound(StepType.COMPOUND_TO_FRAME, src, rvDst));
         return true;
       }

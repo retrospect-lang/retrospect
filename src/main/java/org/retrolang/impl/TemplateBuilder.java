@@ -379,7 +379,9 @@ public abstract class TemplateBuilder {
    * TemplateBuilder that describes the specified element of those values; otherwise returns EMPTY.
    */
   TemplateBuilder builderForElement(BaseType compositionalType, int elementIndex) {
-    assert this instanceof Empty || this instanceof NumVar;
+    assert this instanceof Empty
+        || this instanceof NumVar
+        || (this instanceof RefVar && !(this instanceof RefVar.ForFrame));
     return Template.EMPTY;
   }
 
@@ -388,7 +390,10 @@ public abstract class TemplateBuilder {
    * been chosen.
    */
   @Nullable FrameLayout layout(long sortOrder) {
-    assert this instanceof Empty || this instanceof NumVar || this instanceof CompoundBase;
+    assert this instanceof Empty
+        || this instanceof NumVar
+        || this instanceof CompoundBase
+        || (this instanceof RefVar && !(this instanceof RefVar.ForFrame));
     return null;
   }
 
@@ -467,8 +472,8 @@ public abstract class TemplateBuilder {
     BaseType baseType = v.baseType();
     if (baseType == Core.NUMBER) {
       return NumVar.forNumber((NumValue) v);
-    } else if (!baseType.isCompositional() && baseType != Core.VARRAY) {
-      return ((BaseType.NonCompositional) baseType).asRefVar;
+    } else if (baseType instanceof BaseType.NonCompositional ncb && baseType != Core.VARRAY) {
+      return ncb.asRefVar.addImpl(v);
     }
     FrameLayout layout = v.layout();
     if (layout != null) {
@@ -545,7 +550,7 @@ public abstract class TemplateBuilder {
     boolean isSubsetOfImpl(TemplateBuilder other, TestOption option) {
       TemplateBuilder recursiveTemplate;
       TestOption recursiveOption;
-      if (other instanceof RefVar rv) {
+      if (other instanceof RefVar.ForFrame rv) {
         FrameLayout layout = rv.frameLayout();
         recursiveTemplate = layout.template().toBuilder();
         // We're going to compare against the layout's template, not the original template,

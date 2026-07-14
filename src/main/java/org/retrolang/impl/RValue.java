@@ -286,7 +286,7 @@ public class RValue implements Value {
   @Override
   public Value peekElement(int index) {
     Template template = resolveUnion(this.template);
-    if (!(template instanceof RefVar refVar)) {
+    if (!(template instanceof RefVar.ForFrame refVar)) {
       return fromTemplate(resolveUnion(template.element(index)));
     }
     FrameLayout layout = refVar.frameLayout();
@@ -309,13 +309,13 @@ public class RValue implements Value {
   @Override
   public FrameLayout layout() {
     Template template = resolveUnion(this.template);
-    return (template instanceof RefVar rv) ? rv.frameLayout() : null;
+    return (template instanceof RefVar.ForFrame rv) ? rv.frameLayout() : null;
   }
 
   @Override
   public Value replaceElement(TState tstate, int index, Value newElement) {
     Template template = resolveUnion(this.template);
-    if (!(template instanceof RefVar rv)) {
+    if (!(template instanceof RefVar.ForFrame rv)) {
       BaseType baseType = template.baseType();
       Template[] newElements = new Template[baseType.size()];
       Arrays.setAll(newElements, i -> (i == index) ? toTemplate(newElement) : template.element(i));
@@ -337,7 +337,7 @@ public class RValue implements Value {
     /** Returns a SafeExplorer for an RValue with the given Template. */
     static SafeExplorer exploreTemplate(Template t) {
       // If t is RefVar with a RecordLayout, we want the template of that RecordLayout instead
-      if (t instanceof Template.RefVar rv
+      if (t instanceof RefVar.ForFrame rv
           && rv.baseType().isCompositional()
           && rv.frameLayout() instanceof RecordLayout layout) {
         t = layout.template;
@@ -365,7 +365,7 @@ public class RValue implements Value {
     public Value peekElement(int index) {
       if (template == null) {
         return UNKNOWN;
-      } else if (template instanceof RefVar rv) {
+      } else if (template instanceof RefVar.ForFrame rv) {
         VArrayLayout layout = (VArrayLayout) rv.frameLayout();
         return exploreTemplate(layout.template);
       }

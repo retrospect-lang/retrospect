@@ -50,7 +50,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
   final int nPtrs;
 
   /** A RefVar template with this FrameLayout. */
-  final Template.RefVar asRefVar;
+  final Template.RefVar.ForFrame asRefVar;
 
   /**
    * If non-null, this FrameLayout has evolved; the updated FrameLayout should be preferred.
@@ -82,7 +82,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     this.scope = scope;
     this.frameClass = frameClass;
     this.nPtrs = nPtrs;
-    this.asRefVar = new Template.RefVar(0, baseType, this, true);
+    this.asRefVar = new Template.RefVar.ForFrame(0, baseType, this, true);
     this.notSharedInfo = new PtrInfo.IsNotShared(this);
   }
 

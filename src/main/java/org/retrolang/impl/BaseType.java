@@ -154,7 +154,7 @@ public abstract class BaseType implements PtrInfo {
    *
    * <p>Should only be called when {@link #size} is positive.
    */
-  String toString(IntFunction<Object> elements) {
+  public String toString(IntFunction<Object> elements) {
     return StringUtil.joinElements(this + "(", ")", size, elements);
   }
 
@@ -353,7 +353,7 @@ public abstract class BaseType implements PtrInfo {
     }
 
     @Override
-    String toString(IntFunction<Object> elements) {
+    public String toString(IntFunction<Object> elements) {
       if (isSingleton()) {
         return "⟦" + this + "⟧";
       }

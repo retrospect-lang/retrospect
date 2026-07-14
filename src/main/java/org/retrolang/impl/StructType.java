@@ -94,7 +94,7 @@ public class StructType extends BaseType {
   }
 
   @Override
-  String toString(IntFunction<Object> elements) {
+  public String toString(IntFunction<Object> elements) {
     return IntStream.range(0, size())
         .mapToObj(i -> keys.get(i) + ": " + elements.apply(i))
         .collect(Collectors.joining(", ", "{", "}"));

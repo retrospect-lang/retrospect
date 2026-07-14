@@ -254,7 +254,7 @@ class ModuleBuilder implements Vm.ModuleBuilder {
     }
 
     @Override
-    String toString(IntFunction<Object> elements) {
+    public String toString(IntFunction<Object> elements) {
       if (isSimple()) {
         return super.toString(elements);
       } else {

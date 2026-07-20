@@ -30,6 +30,7 @@ import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.InstructionBlock.EmitState;
 import org.retrolang.impl.InstructionBlock.TargetInfo;
 import org.retrolang.util.Bits;
+import org.retrolang.util.StringUtil;
 
 /**
  * A VM instruction. There are nine subclasses: {@link Set}, {@link Call}, {@link Return}, {@link
@@ -124,6 +125,15 @@ abstract class Instruction {
 
   /** Generates code for this instruction. */
   abstract void emit(CodeGen codeGen, EmitState emitState);
+
+  /**
+   * If {@code memo} is null, returns the same result as {@code toString()}; if {@code memo} is
+   * non-null may show incorporate information from it.
+   */
+  String toString(MethodMemo memo) {
+    // Most Instruction subclasses don't use the memo
+    return toString();
+  }
 
   /** Returns the result of {@code toString()}, prefixed with source, line number, and location. */
   final String describe() {
@@ -459,6 +469,14 @@ abstract class Instruction {
     }
 
     @Override
+    String toString(MethodMemo memo) {
+      String label = toString();
+      return (memo != null && harmonizer instanceof Harmonizer h)
+          ? label + h.toString(ib(), memo)
+          : label;
+    }
+
+    @Override
     public String toString() {
       return "b_" + index;
     }
@@ -556,6 +574,19 @@ abstract class Instruction {
           } else {
             locals[localIndex] = vMemo.harmonize(tstate, i, v);
           }
+        }
+      }
+
+      String toString(InstructionBlock ib, MethodMemo memo) {
+        if (this == NONE) {
+          return "";
+        }
+        IntFunction<String> prefix = i -> ib.getLocal(indices[i]).name + ":";
+        ValueMemo vMemo = memo.valueMemo(valueMemoIndex);
+        if (vMemo != null) {
+          return vMemo.toString(prefix);
+        } else {
+          return StringUtil.joinElements("⟨", "⟩", indices.length, prefix);
         }
       }
     }
@@ -762,19 +793,29 @@ abstract class Instruction {
     }
 
     @Override
-    public String toString() {
+    String toString(MethodMemo memo) {
       String lhs;
       if (outputs.length == 0) {
         lhs = "";
       } else {
-        lhs =
-            Arrays.stream(outputs)
-                .map(x -> toString(x))
-                .collect(Collectors.joining(", ", "", " = "));
+        ValueMemo valueMemo = (memo == null) ? null : memo.valueMemo(callSite.vIndex);
+        if (valueMemo == null) {
+          lhs =
+              Arrays.stream(outputs)
+                  .map(x -> toString(x))
+                  .collect(Collectors.joining(", ", "", " = "));
+        } else {
+          lhs = valueMemo.toString(i -> toString(outputs[i]) + ":") + " = ";
+        }
       }
       String args =
           Arrays.stream(inputs).map(Object::toString).collect(Collectors.joining(", ", "(", ")"));
       return lhs + fn.name + args;
+    }
+
+    @Override
+    public String toString() {
+      return toString((MethodMemo) null);
     }
   }
 
@@ -817,9 +858,19 @@ abstract class Instruction {
     }
 
     @Override
+    String toString(MethodMemo memo) {
+      ValueMemo valueMemo = (memo == null) ? null : memo.resultsMemo;
+      if (valueMemo == null) {
+        return "return "
+            + Arrays.stream(results).map(Object::toString).collect(Collectors.joining(", "));
+      } else {
+        return "return " + valueMemo.toString(i -> results[i] + ":");
+      }
+    }
+
+    @Override
     public String toString() {
-      return "return "
-          + Arrays.stream(results).map(Object::toString).collect(Collectors.joining(", "));
+      return toString((MethodMemo) null);
     }
   }
 

@@ -381,11 +381,19 @@ class InstructionBlock implements MethodImpl {
    * debugging.
    */
   String printInstructions() {
+    return printInstructions(null);
+  }
+
+  /**
+   * Returns a readable representation of the instructions in this block; currently only used for
+   * debugging.
+   */
+  String printInstructions(MethodMemo memo) {
     return IntStream.range(0, instructions.size())
         .mapToObj(
             i -> {
               Instruction inst = instructions.get(i);
-              String s = inst.toString();
+              String s = inst.toString(memo);
               if (inst instanceof BranchTarget) {
                 s = s + ":";
               } else {

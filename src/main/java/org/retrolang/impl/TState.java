@@ -159,6 +159,17 @@ public final class TState extends MemoryHelper {
   }
 
   /**
+   * Discards any TState that was previously associated with this Thread.
+   *
+   * <p>Intended only for tests, which want to ensure that they are not affected by any
+   * previously-interrupted tests that used the same thread.
+   */
+  @VisibleForTesting
+  static void reset() {
+    savedTState.remove();
+  }
+
+  /**
    * Discards any TState that was previously associated with this Thread, and creates a new one.
    *
    * <p>Intended only for tests, which want to ensure that they are not affected by any

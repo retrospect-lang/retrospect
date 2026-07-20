@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -94,6 +95,11 @@ public class VirtualMachineTest {
           """);
 
   @Rule public final Expect expect = Expect.create();
+
+  @Before
+  public void setup() {
+    TState.reset();
+  }
 
   @Test
   public void runOne(

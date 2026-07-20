@@ -184,7 +184,7 @@ public abstract class Frame extends RefCounted implements Value {
 
   @Override
   public final Value peekElement(int i) {
-    return layout().peekElement(this, i);
+    return layout().peekElement(this, i, false);
   }
 
   @Override

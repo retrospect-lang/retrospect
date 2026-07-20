@@ -490,12 +490,12 @@ public class RecordLayout extends FrameLayout {
   @Override
   @RC.Out
   Value element(Frame f, int i) {
-    return template.element(i).getValue(TState.get(), asVarSource(f));
+    return template.element(i).getValue(TState.get(), asVarSource(f, false));
   }
 
   @Override
-  Value peekElement(Frame f, int i) {
-    return template.element(i).peekValue(asVarSource(f));
+  Value peekElement(Frame f, int i, boolean mayBeUninitialized) {
+    return template.element(i).peekValue(asVarSource(f, mayBeUninitialized));
   }
 
   /** Copy the specified range of pointers from one instance of this RecordLayout to another. */
@@ -574,10 +574,10 @@ public class RecordLayout extends FrameLayout {
 
   @Override
   String toString(Frame f) {
-    return String.valueOf(template.peekValue(asVarSource(f)));
+    return String.valueOf(template.peekValue(asVarSource(f, true)));
   }
 
-  Template.VarSource asVarSource(Frame f) {
+  Template.VarSource asVarSource(Frame f, boolean mayBeUninitialized) {
     assert f.layout() == this;
     return new Template.VarSource() {
       @Override
@@ -622,6 +622,11 @@ public class RecordLayout extends FrameLayout {
           Object[] ptrOverflow = (Object[]) frameClass.getX(f, ptrOverflowIndex());
           return Value.fromArray(ptrOverflow, index - frameClass.nPtrs);
         }
+      }
+
+      @Override
+      public boolean numVarsMayBeUninitialized() {
+        return mayBeUninitialized;
       }
     };
   }

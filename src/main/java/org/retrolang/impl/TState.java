@@ -848,6 +848,11 @@ public final class TState extends MemoryHelper {
         public Value getValue(int index) {
           return fnResults[index];
         }
+
+        @Override
+        public boolean numVarsMayBeUninitialized() {
+          return false;
+        }
       };
 
   /** Sets the result for the current function call. */

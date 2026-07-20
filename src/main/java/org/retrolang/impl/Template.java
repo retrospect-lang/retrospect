@@ -172,6 +172,13 @@ public sealed interface Template {
      * <p>May return null, which should be treated as {@link Core#TO_BE_SET}.
      */
     Value getValue(int index);
+
+    /**
+     * Determines the desired behavior if a Union tag is out-of-range. If false an error should be
+     * thrown; if true the call to {@link #getValue} or {@link #peekValue} should return {@link
+     * Core#TO_BE_SET}.
+     */
+    boolean numVarsMayBeUninitialized();
   }
 
   /** A VarSink is used by {@link #setValue} to set the values of NumVars and RefVars. */
@@ -734,7 +741,12 @@ public sealed interface Template {
     @Override
     public Value peekValue(VarSource vars) {
       Value v = vars.getValue(index);
-      return (v == null) ? Core.TO_BE_SET : v;
+      if (v != null) {
+        return v;
+      } else {
+        assert vars.numVarsMayBeUninitialized();
+        return Core.TO_BE_SET;
+      }
     }
 
     @Override
@@ -1238,9 +1250,12 @@ public sealed interface Template {
         return untagged;
       } else {
         int index = tag.toInt(vars);
-        // If index is out of range there's a bug somewhere, and an ArrayIndexOutOfBoundsException
-        // seems as good a way to signal that as anything else.
-        return choices[index];
+        if (index >= 0 && index < choices.length) {
+          return choices[index];
+        } else {
+          assert vars.numVarsMayBeUninitialized();
+          return EMPTY;
+        }
       }
     }
 

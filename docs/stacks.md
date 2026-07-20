@@ -116,5 +116,5 @@ infrastructure as other Retrospect values.
 (TStates, on the other hand, are not shared between threads and not referenced
 from other objects, so there is no reason to reference count them.)
 
-[`TStack`]: src/main/org/retrolang/impl/TStack.java
-[`TState`]: src/main/org/retrolang/impl/TState.java
+[`TStack`]: ../src/main/org/retrolang/impl/TStack.java
+[`TState`]: ../src/main/org/retrolang/impl/TState.java

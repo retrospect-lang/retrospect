@@ -459,6 +459,15 @@ public class MethodMemo {
   }
 
   /**
+   * Returns the ValueMemo to use for the specified call site or continuation, or null if none has
+   * been created yet.
+   */
+  ValueMemo valueMemo(int index) {
+    ValueMemo[] valueMemos = this.valueMemos;
+    return (valueMemos == null) ? null : valueMemos[index];
+  }
+
+  /**
    * Returns the ValueMemo to use for the specified call site or continuation; if this is the first
    * request for that ValueMemo, constructs one of the specified size.
    *
@@ -466,13 +475,9 @@ public class MethodMemo {
    * case {@link TState#get} will be used (with a small performance cost).
    */
   ValueMemo valueMemo(TState tstate, int index, int size) {
-    // First try to find an existing memo without acquiring the scope lock.
-    ValueMemo[] valueMemos = this.valueMemos;
-    if (valueMemos != null) {
-      ValueMemo result = valueMemos[index];
-      if (result != null) {
-        return result;
-      }
+    ValueMemo result = valueMemo(index);
+    if (result != null) {
+      return result;
     }
     // We need to create a new ValueMemo, or this memo has been forwarded, or maybe we raced against
     // someone creating the ValueMemo we need; lock the MemoMerger and try again.

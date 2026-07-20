@@ -19,6 +19,7 @@ package org.retrolang.impl;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.util.Arrays;
+import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import org.retrolang.util.StringUtil;
 
@@ -77,6 +78,19 @@ public abstract class ValueMemo implements ResultsInfo {
   @GuardedBy("this")
   abstract void setBuilder(int i, TemplateBuilder templateBuilder);
 
+  synchronized String toString(IntFunction<String> prefix) {
+    if (forwardedTo != null) {
+      return "(forwarded)";
+    }
+    return StringUtil.joinElements(
+        "⟨", "⟩", size(), i -> (prefix == null ? "" : prefix.apply(i)) + getBuilder(i));
+  }
+
+  @Override
+  public String toString() {
+    return toString(null);
+  }
+
   /** Returns a new ValueMemo for the specified number of values. */
   static ValueMemo withSize(int size) {
     if (size == 0) {
@@ -115,11 +129,6 @@ public abstract class ValueMemo implements ResultsInfo {
       assert i == 0;
       contents = templateBuilder;
     }
-
-    @Override
-    public synchronized String toString() {
-      return forwardedTo != null ? "(forwarded)" : "⟨" + contents + "⟩";
-    }
   }
 
   /** A subclass of ValueMemo used when size != 1. */
@@ -148,13 +157,6 @@ public abstract class ValueMemo implements ResultsInfo {
     @GuardedBy("this")
     void setBuilder(int i, TemplateBuilder templateBuilder) {
       contents[i] = templateBuilder;
-    }
-
-    @Override
-    public synchronized String toString() {
-      return forwardedTo != null
-          ? "(forwarded)"
-          : StringUtil.joinElements("⟨", "⟩", contents.length, i -> contents[i]);
     }
   }
 

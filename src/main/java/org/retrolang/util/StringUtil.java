@@ -34,7 +34,7 @@ public class StringUtil {
    * given prefix and suffix.
    */
   public static String joinElements(
-      String prefix, String suffix, int size, IntFunction<Object> elements) {
+      String prefix, String suffix, int size, IntFunction<?> elements) {
     assert size >= 0;
     return IntStream.range(0, size)
         .mapToObj(i -> String.valueOf(elements.apply(i)))

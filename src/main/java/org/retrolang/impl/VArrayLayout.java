@@ -1231,12 +1231,12 @@ public class VArrayLayout extends FrameLayout {
   @Override
   @RC.Out
   Value element(Frame f, int i) {
-    return template.getValue(TState.get(), asVarSource(f, i));
+    return template.getValue(TState.get(), asVarSource(f, i, false));
   }
 
   @Override
-  Value peekElement(Frame f, int i) {
-    return template.peekValue(asVarSource(f, i));
+  Value peekElement(Frame f, int i, boolean mayBeUninitialized) {
+    return template.peekValue(asVarSource(f, i, mayBeUninitialized));
   }
 
   /**
@@ -1263,10 +1263,10 @@ public class VArrayLayout extends FrameLayout {
 
   @Override
   String toString(Frame f) {
-    return StringUtil.joinElements("[", "]", numElements(f), i -> peekElement(f, i));
+    return StringUtil.joinElements("[", "]", numElements(f), i -> peekElement(f, i, true));
   }
 
-  Template.VarSource asVarSource(Frame f, int pos) {
+  Template.VarSource asVarSource(Frame f, int pos, boolean mayBeUninitialized) {
     assert f.layout() == this;
     return new Template.VarSource() {
       @Override
@@ -1291,6 +1291,11 @@ public class VArrayLayout extends FrameLayout {
       public Value getValue(int index) {
         Object[] array = (Object[]) getElementArray(f, index + numVarIndexLimit());
         return Value.fromArray(array, pos);
+      }
+
+      @Override
+      public boolean numVarsMayBeUninitialized() {
+        return mayBeUninitialized;
       }
     };
   }

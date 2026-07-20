@@ -178,7 +178,8 @@ class VArrayReplacer implements Evolver.FrameReplacer {
     if (perRowPlan != EMPTY) {
       for (int i = 0; i < numElements; i++) {
         boolean ok =
-            perRowPlan.execute(tstate, srcLayout.asVarSource(src, i), dstLayout.asVarSink(dst, i));
+            perRowPlan.execute(
+                tstate, srcLayout.asVarSource(src, i, true), dstLayout.asVarSink(dst, i));
         assert ok;
       }
     }

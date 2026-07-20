@@ -305,8 +305,16 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
   @RC.Out
   abstract Value element(Frame f, int i);
 
-  /** Implements {@link Value#peekElement} for a Frame that uses this FrameLayout. */
-  abstract Value peekElement(Frame f, int i);
+  /** Implements {@link Value#peekElement} for a Frame that uses this FrameLayout.
+   *
+   * <p>If {@code mayBeUninitialized} is true, some conditions that normally would be an error
+   * return TO_BE_SET instead:
+   * <ul>
+   *   <li>a tagged union has an invalid tag value; or
+   *   <li>a reference value is null.
+   * </ul>
+   */
+  abstract Value peekElement(Frame f, int i, boolean mayBeUninitialized);
 
   /** Nulls any pointers associated with the specified element. */
   abstract void clearElement(TState tstate, Frame f, int index);
@@ -352,7 +360,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     for (int i = 0; i < numElements; i++) {
       // Note that setElement() is responsible for incrementing the refCount of any references it
       // stores.
-      boolean ok = newLayout.setElement(tstate, dst, i, peekElement(src, i));
+      boolean ok = newLayout.setElement(tstate, dst, i, peekElement(src, i, true));
       // Since the newLayout is an evolution of this layout, it should be impossible for that
       // setElement() to fail.
       assert ok;

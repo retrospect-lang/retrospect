@@ -1110,7 +1110,7 @@ class CopyPlan {
         return new FrameToCompound(layout) {
           @Override
           boolean extract(TState tstate, Frame src, VarSink dst) {
-            return plan.execute(tstate, rLayout.asVarSource(src), dst);
+            return plan.execute(tstate, rLayout.asVarSource(src, false), dst);
           }
         };
       } else {
@@ -1122,7 +1122,8 @@ class CopyPlan {
           @Override
           boolean extract(TState tstate, Frame src, VarSink dst) {
             return IntStream.range(0, plans.length)
-                .allMatch(i -> plans[i].execute(tstate, vArrayLayout.asVarSource(src, i), dst));
+                .allMatch(
+                    i -> plans[i].execute(tstate, vArrayLayout.asVarSource(src, i, false), dst));
           }
         };
       }

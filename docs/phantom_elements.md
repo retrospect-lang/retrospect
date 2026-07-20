@@ -5,11 +5,12 @@
 ## Unspecified elements
 
 Some operations on frames can leave one or more of their elements in an
-unspecified and possibly invalid state: * All of the elements of a
-newly-allocated Frame (returned by [`FrameLayout.alloc`][FrameLayout]) are
-unspecified. * Calling `clearElement` (or storing `TO_BE_SET` in an element)
-leaves that element unspecified. * Calling `removeRange` may add one or more
-unspecified elements.
+unspecified and possibly invalid state:
+
+* All of the elements of a newly-allocated Frame (returned by [`FrameLayout.alloc`][FrameLayout])
+are unspecified.
+* Calling `clearElement` (or storing `TO_BE_SET` in an element) leaves that element unspecified.
+* Calling `removeRange` may add one or more unspecified elements.
 
 The caller of these operations is responsible for using `setElement` or
 `setElements` to ensure that each unspecified element's value is set (to
@@ -21,7 +22,7 @@ Each of a frame's elements are represented by a combination of bytes
 element's bytes may have arbitrary values, but all of its pointers are expected
 to be null.
 
-[FrameLayout]: src/main/org/retrolang/impl/FrameLayout.java
+[FrameLayout]: ../src/main/org/retrolang/impl/FrameLayout.java
 
 ## Frame Replacement
 

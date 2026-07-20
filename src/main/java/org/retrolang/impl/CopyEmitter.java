@@ -16,7 +16,6 @@
 
 package org.retrolang.impl;
 
-import java.util.function.ObjIntConsumer;
 import java.util.function.Predicate;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeValue;
@@ -169,23 +168,21 @@ class CopyEmitter {
               RefVar.ForFrame dstVar = (RefVar.ForFrame) basic.dst;
               Register tmpRegister = codeGen.cb.newRegister(Frame.class);
               FrameLayout frameLayout = dstVar.frameLayout();
-              ObjIntConsumer<Template> setElement;
               if (frameLayout instanceof RecordLayout layout) {
                 assert layout.template.baseType == srcBaseType;
                 codeGen.emitSet(tmpRegister, layout.emitAlloc(codeGen));
-                setElement = layout.emitSetElement(codeGen, tmpRegister, onFail);
+                layout
+                    .copyTo(tmpRegister)
+                    .emit(codeGen, layout.storePlan(src, layout.template), onFail);
               } else {
                 assert srcBaseType.isArray();
                 VArrayLayout layout = (VArrayLayout) frameLayout;
                 codeGen.emitSet(
                     tmpRegister, layout.emitAlloc(codeGen, CodeValue.of(srcBaseType.size())));
-                setElement =
-                    (template, i) ->
-                        layout.emitSetElement(
-                            codeGen, tmpRegister, CodeValue.of(i), template, onFail);
-              }
-              for (int i = 0; i < srcBaseType.size(); i++) {
-                setElement.accept(src.element(i), i);
+                for (int i = 0; i < srcBaseType.size(); i++) {
+                  layout.emitSetElement(
+                      codeGen, tmpRegister, CodeValue.of(i), src.element(i), onFail);
+                }
               }
               setDstVar(codeGen, dstVar, tmpRegister);
             }

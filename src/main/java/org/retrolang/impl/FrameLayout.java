@@ -58,7 +58,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
    * <p>Can only be changed from null to non-null by the Evolver, while {@code scope.evolver} is
    * locked. Once non-null can be swapped (to track further evolutions) without locking (details in
    * {@link #evolution()}). Always read and written with getAcquire/setRelease (or
-   * compareAndExchange, which is strongly stronger) to ensure cross-thread sanity.
+   * compareAndExchange, which is stronger) to ensure cross-thread sanity.
    */
   @Keep private Evolution evolution;
 
@@ -305,10 +305,12 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
   @RC.Out
   abstract Value element(Frame f, int i);
 
-  /** Implements {@link Value#peekElement} for a Frame that uses this FrameLayout.
+  /**
+   * Implements {@link Value#peekElement} for a Frame that uses this FrameLayout.
    *
    * <p>If {@code mayBeUninitialized} is true, some conditions that normally would be an error
    * return TO_BE_SET instead:
+   *
    * <ul>
    *   <li>a tagged union has an invalid tag value; or
    *   <li>a reference value is null.

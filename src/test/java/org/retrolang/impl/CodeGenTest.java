@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.antlr.v4.runtime.CharStreams;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -105,6 +106,11 @@ public class CodeGenTest {
   private final Vm.Value trueValue = lookupCoreSingleton("True");
 
   private ResourceTracker tracker;
+
+  @Before
+  public void setup() {
+    TState.reset();
+  }
 
   private ResourceTracker newTracker() {
     tracker = new ResourceTracker(vm.scope, MEMORY_LIMIT, false);

@@ -19,7 +19,6 @@ package org.retrolang.impl;
 import static org.retrolang.impl.Value.addRef;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.util.function.ObjIntConsumer;
 import org.retrolang.code.Block;
 import org.retrolang.code.CodeBuilder;
 import org.retrolang.code.CodeValue;
@@ -385,43 +384,22 @@ public class RecordLayout extends FrameLayout {
 
   @Override
   void emitSetElement(CodeGen codeGen, CodeValue f, CodeValue index, Template newElement) {
+    CopyEmitter emitter = copyTo(f);
     if (index instanceof CodeValue.Const) {
-      // Can we end up here?  if so, we should do the simple thing
-      throw new UnsupportedOperationException();
+      emitter.emit(
+          codeGen, storePlan(newElement, template.element(index.iValue())), codeGen.escapeLink());
+      return;
     }
-    ObjIntConsumer<Template> emitElement = emitSetElement(codeGen, f, codeGen.escapeLink());
     FutureBlock done = new FutureBlock();
     codeGen.emitSwitch(
         index,
         0,
         baseType().size() - 1,
         i -> {
-          emitElement.accept(newElement, i);
+          emitter.emit(codeGen, storePlan(newElement, template.element(i)), codeGen.escapeLink());
           codeGen.cb.branchTo(done);
         });
     codeGen.cb.setNext(done);
-  }
-
-  /**
-   * Returns a consumer that given an index and newElement template, emits blocks to set that
-   * element in the given Frame. Lets us reuse the CopyEmitter, but is that really worth the extra
-   * level of indirection?
-   */
-  ObjIntConsumer<Template> emitSetElement(CodeGen codeGen, CodeValue f, FutureBlock onFail) {
-    CopyEmitter emitter =
-        new CopyEmitter() {
-          @Override
-          void setDstVar(CodeGen codeGen, Template t, CodeValue v) {
-            setCodeValue(t, f, v).addTo(codeGen.cb);
-          }
-        };
-    return (Template newElement, int i) -> {
-      CopyPlan plan = CopyPlan.create(newElement, template.element(i), true);
-      plan =
-          CopyOptimizer.optimize(
-              plan, RecordLayout.this, CopyOptimizer.Policy.NUM_VARS_ARE_BYTE_OFFSETS);
-      emitter.emit(codeGen, plan, onFail);
-    };
   }
 
   @Override
@@ -445,6 +423,25 @@ public class RecordLayout extends FrameLayout {
         return codeValue(t, frame);
       }
     };
+  }
+
+  /** Returns a CopyEmitter that sets fields in a frame with this layout. */
+  CopyEmitter copyTo(CodeValue f) {
+    return new CopyEmitter() {
+      @Override
+      void setDstVar(CodeGen codeGen, Template t, CodeValue v) {
+        setCodeValue(t, f, v).addTo(codeGen.cb);
+      }
+    };
+  }
+
+  /**
+   * Returns an optimized {@link CopyPlan} that sets the fields referred to by {@code dst} from the
+   * registers referred to by {@code src}.
+   */
+  CopyPlan storePlan(Template src, Template dst) {
+    CopyPlan plan = CopyPlan.create(src, dst, true);
+    return CopyOptimizer.optimize(plan, this, CopyOptimizer.Policy.NUM_VARS_ARE_BYTE_OFFSETS);
   }
 
   /**

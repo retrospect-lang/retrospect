@@ -239,9 +239,9 @@ createTree_x1(i1):
 -26: I3 ← 1;
  27: X12 ← RecordLayout.alloc(*[b0⸨0:None; 1:TreeNode(x0:*@xxxx)⸩, b1⸨0:None; 1:TreeNode(x1:*@xxxx)⸩]@xxxx, X0, 0);
  28: Frame1i2x.x0.set(X12, addRef(X4));
- 29: test I7 isUint8; F:→ 63
- 30: Frame1i2x.b0.set(X12, I7);
- 31: Frame1i2x.x1.set(X12, addRef(X5));
+ 29: Frame1i2x.x1.set(X12, addRef(X5));
+ 30: test I7 isUint8; F:→ 63
+ 31: Frame1i2x.b0.set(X12, I7);
  32: test I8 isUint8; F:→ 63
  33: dropRef{X4, X5};
  34: Frame1i2x.b1.set(X12, I8); → 41
@@ -260,9 +260,9 @@ createTree_x1(i1):
  47: test I3 == 1; F:→ 57
  48: X3 ← RecordLayout.alloc(*[b0⸨0:None; 1:TreeNode(x0:*@xxxx)⸩, b1⸨0:None; 1:TreeNode(x1:*@xxxx)⸩]@xxxx, X0, 0);
  49: Frame1i2x.x0.set(X3, addRef(X1));
- 50: test I10 isUint8; F:→ 60
- 51: Frame1i2x.b0.set(X3, I10);
- 52: Frame1i2x.x1.set(X3, addRef(X9));
+ 50: Frame1i2x.x1.set(X3, addRef(X9));
+ 51: test I10 isUint8; F:→ 60
+ 52: Frame1i2x.b0.set(X3, I10);
  53: test I11 isUint8; F:→ 60
  54: dropRef{X1, X9, X12};
  55: Frame1i2x.b1.set(X3, I11);

@@ -22,7 +22,9 @@ function aRecip(i, j) = (i+j-2) * (i+j-1) / 2 + i
 // Evaluates the given lambda with each int from 1 to size (in parallel)
 // and returns an array of the results.
 function parallelEval(size, lambda) {
-  futures = 1..size | i -> future(-> lambda @ i) | save
+  delayStart = testFuture
+  futures = 1..size | i -> future(-> waitFor(delayStart) @ i) | save
+  setTestFuture(delayStart, lambda)
   return waitFor(^futures) | save
 }
 
@@ -41,9 +43,8 @@ function multiply_A_At(v) = multiply_At(multiply_A(v))
 /* RUN (n=100) RETURNS
 1.2742199912349306
 ---
-allocated=520000000‥600000000/20200000‥21000000, peak=14720‥20840
+allocated=520000000‥600000000/20200000‥21000000, peak=14720‥32000
 $0 = *[]d0
 $1 = *[]x0:Future
 $2 = *[]d0
-$3 = *[]x0:Future
 */

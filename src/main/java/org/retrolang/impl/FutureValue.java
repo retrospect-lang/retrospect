@@ -16,10 +16,12 @@
 
 package org.retrolang.impl;
 
+import com.google.common.flogger.FluentLogger;
+import com.google.common.flogger.StackSize;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.ForkJoinPool;
+import java.util.function.Consumer;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
@@ -33,6 +35,8 @@ import org.retrolang.util.StringUtil;
  * off at that point. (This assumes that the lambda will often complete quickly or block.)
  */
 public class FutureValue extends RefCounted implements Value, RThread.Waiter {
+
+  private static final FluentLogger logger = FluentLogger.forEnclosingClass();
 
   @Core.Public static final VmFunctionBuilder future1 = VmFunctionBuilder.create("future", 1);
 
@@ -63,38 +67,122 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
         }
       };
 
+  /**
+   * Creates a FutureValue that will be set by a non-Retrospect thread started on the first call to
+   * {@link #waitFor}. {@code producer} will be called exactly once, but if the future is dropped
+   * before {@link #waitFor} is called its argument will be null.
+   */
+  @RC.Out
+  public static FutureValue newLazy(Allocator allocator, Consumer<Consumer<Value>> producer) {
+    assert producer != null;
+    return new FutureValue(allocator, Core.TO_BE_SET, producer);
+  }
+
+  /** Creates a FutureValue whose result is already known. */
+  @RC.Out
+  public static FutureValue newCompleted(Allocator allocator, @RC.In Value result) {
+    assert result != Core.TO_BE_SET && !(result.baseType() instanceof Err);
+    return new FutureValue(allocator, result, null);
+  }
+
+  /** Creates a FutureValue whose result will be set by a call to {@link #setTestFuture}. */
+  @RC.Out
+  public static FutureValue newForTest(Allocator allocator) {
+    return new FutureValue(allocator, Core.TO_BE_SET, null);
+  }
+
+  /** Converts a TStack into an "Error while computing future" error. */
+  @RC.Out
+  static Value stackAsValue(TState tstate, @RC.In TStack errorStack) {
+    assert errorStack.hasErr();
+    int size = (int) errorStack.stream().count() - 1;
+    Object[] entries = tstate.allocObjectArray(size);
+    int i = 0;
+    for (TStack entry = errorStack; entry != TStack.BASE; entry = entry.rest()) {
+      entries[i++] = Value.addRef(entry.first());
+    }
+    assert i == size;
+    tstate.dropReference(errorStack);
+    return tstate.compound(Err.FUTURE_ERROR, tstate.asArrayValue(entries, size));
+  }
+
+  @RC.Out
+  static FutureValue newWithError(TState tstate, @RC.In TStack errorStack) {
+    return new FutureValue(tstate, stackAsValue(tstate, errorStack), null);
+  }
+
   static class FutureMethod extends BuiltinMethod {
-    /** This ValueMemo will be used for the result of the future's call to {@code at()}. */
-    static final ExtraValueMemo atResultsMemo = new ExtraValueMemo(1);
+    static final Caller at = new Caller("at:2", "afterAt").detach();
+    static final ExtraValueMemo resultMemo = new ExtraValueMemo(1);
 
     @Core.Method("future(Lambda)")
-    static Value begin(TState tstate, MethodMemo mm, @RC.In Value lambda, @Fn("at:2") Caller at) {
-      // This isn't ready for code generation!
-      assert !tstate.hasCodeGen();
-      // Note that we don't do the usual thing of starting a call with our Caller in this thread;
-      // we instead pass the Caller to another thread and just return the newly-created FutureValue
-      // from this method.
-      FutureValue fv = new FutureValue(tstate, true);
-      ResourceTracker tracker = tstate.tracker();
-      ForkJoinPool.commonPool()
-          .execute(() -> fv.lambdaThread.run(tracker, t -> fv.run(t, mm, lambda, at)));
-      return fv;
+    static void begin(TState tstate, @RC.In Value lambda) {
+      tstate.startCall(at, lambda, Core.EMPTY_ARRAY);
+    }
+
+    @DetachedContinuation
+    static Value afterAt(TState tstate, MethodMemo mMemo, @RC.In Value result) {
+      if (!tstate.unwindStarted()) {
+        assert result != null;
+        if (result == Core.TO_BE_SET) {
+          // Probably not possible, but just in case...
+          result = Core.ABSENT;
+        }
+        if (!tstate.hasCodeGen()) {
+          return newCompleted(tstate, result); // harmonizeResult(tstate, mMemo, result));
+        } else {
+          throw new UnsupportedOperationException();
+        }
+      }
+      assert result == null;
+      if (!tstate.hasCodeGen()) {
+        return afterUnwind(tstate);
+      } else {
+        throw new UnsupportedOperationException();
+      }
+    }
+
+    static FutureValue afterUnwind(TState tstate) {
+      TStack tstack = tstate.takeUnwind();
+      if (tstack.hasErr()) {
+        return newWithError(tstate, tstack);
+      } else {
+        FutureValue fv = new FutureValue(tstate);
+        fv.lambdaThread.setSuspended(tstate, tstack);
+        return fv;
+      }
     }
   }
 
   @Core.Method("testFuture()")
   static Value testFuture(TState tstate) {
-    return new FutureValue(tstate, false);
+    if (!tstate.hasCodeGen()) {
+      return newForTest(tstate);
+    } else {
+      throw new UnsupportedOperationException();
+    }
   }
 
   @Core.Method("waitFor(Future)")
-  static Value waitFor(TState tstate, Value fv) {
-    return ((FutureValue) fv).doWaitFor(tstate);
+  static void waitFor(TState tstate, ResultsInfo results, Value future) {
+    if (future instanceof FutureValue fv) {
+      Value result = fv.doWaitFor(tstate);
+      if (result != null) {
+        tstate.setResult(Value.addRef(result));
+      }
+    } else {
+      throw new UnsupportedOperationException();
+    }
   }
 
   @Core.Method("setTestFuture(Future, _)")
-  static void setFuture(TState tstate, Value fv, @RC.In Value result) throws BuiltinException {
-    ((FutureValue) fv).setResult(tstate, result, true);
+  static void setTestFuture(TState tstate, Value future, @RC.In Value result)
+      throws BuiltinException {
+    if (future instanceof FutureValue fv) {
+      Err.INVALID_ARGUMENT.unless(fv.setTest(tstate, result));
+    } else {
+      throw new UnsupportedOperationException();
+    }
   }
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + 3 * SizeOf.PTR);
@@ -106,13 +194,21 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
    * the value to be returned by {@link #waitFor}.
    */
   @GuardedBy("this")
-  private Value result = Core.TO_BE_SET;
+  private Value result;
 
   /**
    * If non-null this FutureValue has a lambda. If null this FutureValue's value will be set by a
-   * call to {@link #setFuture}.
+   * call to {@link #setResult}.
    */
   final RThread lambdaThread;
+
+  /**
+   * If non-null this FutureValue will be set by an asynchronous process that will be started on the
+   * first call to {@link #waitFor}. The producer may never be called, and must not have any counted
+   * references.
+   */
+  @GuardedBy("this")
+  private Consumer<Consumer<Value>> producer;
 
   /**
    * If non-null, {@link #result} must be TO_BE_SET and these threads are waiting for the future's
@@ -121,67 +217,63 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   @GuardedBy("this")
   private List<RThread> pending;
 
-  private FutureValue(TState tstate, boolean hasLambda) {
-    this.lambdaThread = hasLambda ? new RThread(tstate, this) : null;
-    tstate.recordAlloc(this, OBJ_SIZE);
+  /** Creates a FutureValue with an associated lambda. */
+  private FutureValue(Allocator allocator) {
+    result = Core.TO_BE_SET;
+    this.lambdaThread = new RThread(allocator, this);
+    allocator.recordAlloc(this, OBJ_SIZE);
   }
 
   /**
-   * Called in a separate thread on a newly-created FutureValue. {@code mMemo} is the MethodMemo for
-   * the {@code future()} call, and {@code caller} is a Caller for {@code at()}.
+   * Creates a FutureValue without a lambda.
+   *
+   * <p>If {@code result} is TO_BE_SET and {@code producer} is null, the result will be set by a
+   * call to {@link #setTestFuture}.
+   *
+   * <p>If {@code result} is TO_BE_SET and {@code producer} is non-null, {@code producer.accept()}
+   * will be called on the first call to {@link #waitFor} and is responsible for (asynchronously)
+   * calling back with the result. (If the FutureValue is dropped without a call to {@link
+   * #waitFor}, {@code producer.accept()} will be called with null and is only responsible for
+   * cleaning up state of its own.)
+   *
+   * <p>If {@code result} is anything other than TO_BE_SET, {@code producer} must be null and this
+   * is an already-completed FutureValue.
    */
-  private void run(
-      TState tstate, MethodMemo mMemo, @RC.In Value lambda, BuiltinMethod.Caller caller) {
-    boolean done = false;
-    try {
-      tstate.setStackRest(TStack.BASE);
-      tstate.startCall(caller, lambda, Core.EMPTY_ARRAY);
-      // We're no longer running in the context of a builtin method, so we need to explicitly
-      // make the call that is usually provided by BuiltinSupport.
-      tstate.finishBuiltin(FutureMethod.atResultsMemo.valueMemo(tstate, mMemo), mMemo, null);
-      done = true;
-    } finally {
-      // Try to ensure that even if something completely unexpected goes wrong we won't leave the
-      // rest of the computation waiting for us.
-      if (!done) {
-        try {
-          setResult(tstate, MYSTERY_FAILURE, false);
-        } catch (BuiltinException e) {
-          // Can't happen, and if it did there's no one left to tell about it
-          e.printStackTrace();
-        }
-      }
-    }
+  private FutureValue(
+      Allocator allocator, @RC.In Value result, Consumer<Consumer<Value>> producer) {
+    assert result == Core.TO_BE_SET || producer == null;
+    this.lambdaThread = null;
+    this.producer = producer;
+    this.result = result;
+    allocator.recordAlloc(this, OBJ_SIZE);
   }
 
-  private static final Value MYSTERY_FAILURE =
-      Err.INTERNAL_ERROR.uncountedOf(StringValue.uncounted("Unexpected error in FutureValue"));
+  boolean setTest(TState tstate, @RC.In Value result) {
+    return lambdaThread == null && setResult(tstate, result);
+  }
 
   /**
-   * Called when the RThread completes (for FutureValues with a lambda) or from {@code
-   * setTestFuture()}.
+   * Called when the RThread completes (for FutureValues with a lambda), the producer calls {@code
+   * accept()} (for FutureValues created by {@link #newLazy}), or from {@code setTestFuture()}.
+   * Returns true unless {@code setResult()} has already been called on this FutureValue.
    */
-  private void setResult(TState tstate, @RC.In Value result, boolean fromSetTestFuture)
-      throws BuiltinException {
+  private boolean setResult(TState tstate, @RC.In Value result) {
     boolean tooLate;
     List<RThread> pending;
     synchronized (this) {
-      if (result == MYSTERY_FAILURE && this.result != Core.TO_BE_SET) {
-        // Never mind; something went wrong, but the future had already been resolved properly
-        return;
-      }
+      assert producer == null;
       pending = this.pending;
       this.pending = null;
       tooLate = (this.result == null);
       if (tooLate) {
         // This FutureValue has already been dropped; silently discard the result.
         // (We tried to cancel the RThread when we were dropped, but a race is possible.)
-        assert !fromSetTestFuture && pending == null;
+        assert pending == null;
       } else {
-        // setResult() should only be called once, and it should not be called from setTestFuture()
-        // if this FutureValue has a lambda
-        Err.INVALID_ARGUMENT.unless(
-            this.result == Core.TO_BE_SET && fromSetTestFuture == (lambdaThread == null));
+        // setResult() should only be called once
+        if (this.result != Core.TO_BE_SET) {
+          return false;
+        }
         if (pending != null) {
           // Once we set this.result we've given up our ownership of result's refCount (an async
           // thread could release it), so first create more references for the calls below.
@@ -200,29 +292,60 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
         rthread.resumeAsync(tstate.tracker(), result);
       }
     }
+    return true;
   }
 
-  @RC.Out
-  private Value doWaitFor(TState tstate) {
+  private static void checkOK(boolean success) {
+    if (!success) {
+      logger.atWarning().withStackTrace(StackSize.MEDIUM).log("FutureValue already has a result");
+    }
+  }
+
+  /**
+   * Returns a non-Err Value if this FutureValue has completed successfully. Returns null and starts
+   * unwinding if the FutureValue failed or has not yet completed.
+   */
+  Value doWaitFor(TState tstate) {
+    Value result;
+    Consumer<Consumer<Value>> producer;
     synchronized (this) {
-      Value result = this.result;
-      if (result != Core.TO_BE_SET) {
-        assert result != null && pending == null;
-        Value.addRef(result);
-        if (result.baseType() instanceof Err) {
-          // This FutureValue has already completed with an error.  Set up the stack as if we
-          // blocked, so that the error stack doesn't depend on who won the race.
-          tstate.pushUnwind(blockingEntry(tstate));
-          tstate.pushUnwind(result);
-          return null;
-        }
+      result = this.result;
+      assert result != null && (result == Core.TO_BE_SET || pending == null);
+      producer = this.producer;
+      this.producer = null;
+    }
+    if (result != Core.TO_BE_SET) {
+      if (producer != null) {
+        assert false;
+        producer.accept(null);
+      }
+      if (!(result.baseType() instanceof Err)) {
         return result;
       }
+      // This FutureValue has already completed with an error.  Set up the stack as if we
+      // blocked, so that the error stack doesn't depend on who won the race.
+      tstate.pushUnwind(blockingEntry(tstate));
+      tstate.pushUnwind(Value.addRef(result));
+      return null;
+    }
+    if (producer != null) {
+      ResourceTracker tracker = tstate.tracker();
+      assert lambdaThread == null;
+      producer.accept(v -> setResultFromOtherThread(tracker, v));
     }
     // This FutureValue hasn't completed yet, so start unwinding; when unwinding is complete we'll
     // be called back (via suspended()) and will add the RThread to pending at that point.
     tstate.startBlock(blockingEntry(tstate), null, null);
     return null;
+  }
+
+  void setResultFromOtherThread(ResourceTracker tracker, Value v) {
+    TState.<Void>withTracker(
+        tracker,
+        tstate -> {
+          checkOK(setResult(tstate, v));
+          return null;
+        });
   }
 
   /** Returns the blocking stack entry that will be used for threads calling waitFor(). */
@@ -267,11 +390,7 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
       tstate.dropReference(errorStack);
       result = tstate.compound(Err.FUTURE_ERROR, tstate.asArrayValue(entries, size));
     }
-    try {
-      setResult(tstate, result, false);
-    } catch (BuiltinException e) {
-      throw new AssertionError(e);
-    }
+    checkOK(setResult(tstate, result));
   }
 
   @Override
@@ -283,16 +402,22 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   protected long visitRefs(RefVisitor visitor) {
     visitor.visitRefCounted(lambdaThread);
     Value result;
+    Consumer<Consumer<Value>> producer = null;
     synchronized (this) {
       result = this.result;
       if (MemoryHelper.isReleaser(visitor)) {
         // Don't let async threads read or write this after we've released it
         this.result = null;
         this.pending = null;
+        producer = this.producer;
+        this.producer = null;
       }
     }
     if (result instanceof RefCounted rc) {
       visitor.visitRefCounted(rc);
+    }
+    if (producer != null) {
+      producer.accept(null);
     }
     return OBJ_SIZE;
   }

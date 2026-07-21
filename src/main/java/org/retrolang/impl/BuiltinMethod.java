@@ -36,8 +36,9 @@ import org.retrolang.impl.Err.BuiltinException;
  */
 public abstract class BuiltinMethod {
   /**
-   * A {@code Continuation} or {@link LoopContinuation} annotation should appear on any method that
-   * will be the continuation argument to a Caller or the target of a call to {@link TState#jump}.
+   * A {@code Continuation}, {@link LoopContinuation}, or {@link DetachedContinuation} annotation
+   * must appear on any method that will be the continuation argument to a Caller or the target of a
+   * call to {@link TState#jump}.
    *
    * <p>A {@code Continuation} method may only be referenced from the builtin's {@code begin} method
    * or from a lower-numbered continuation.
@@ -55,6 +56,28 @@ public abstract class BuiltinMethod {
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface LoopContinuation {
+    int order() default 1;
+  }
+
+  /**
+   * A {@code DetachedContinuation} must be used in place of a {@link Continuation} annotation for
+   * the continuation of a detached Caller ({@link Caller#detach}).
+   *
+   * <p>The first step of a {@code DetachedContinuation} method should usually be to check {@link
+   * TState#unwindStarted}; if it is true
+   *
+   * <ul>
+   *   <li>the function result arguments that have been passed will be null (since the function call
+   *       has not completed successfully);
+   *   <li>any {@code @Saved arguments} will have the values that were saved by the caller;
+   *   <li>the method should call {@link TState#takeUnwind} and do something appropriate with the
+   *       stack before returning; and
+   *   <li>the method must complete without unwinding or tracing.
+   * </ul>
+   */
+  @Target(ElementType.METHOD)
+  @Retention(RetentionPolicy.RUNTIME)
+  public @interface DetachedContinuation {
     int order() default 1;
   }
 
@@ -101,7 +124,7 @@ public abstract class BuiltinMethod {
    * should return the function result as the result of the builtin. Should never be called.
    */
   static final ContinuationMethod TAIL_CALL =
-      new ContinuationMethod(null, "(tail call)", -1, false, null, new String[0]);
+      new ContinuationMethod(null, "(tail call)", -1, false, false, null, new String[0]);
 
   /**
    * Subclasses of BuiltinStatic (such as Caller and ExtraValueMemo) are intended for use as static
@@ -121,6 +144,8 @@ public abstract class BuiltinMethod {
     final String fnKey;
 
     final String continuationName;
+
+    private boolean detached;
 
     /** The function to be called; null if this is an {@link AnyFn} Caller. */
     private VmFunction fn;
@@ -142,6 +167,21 @@ public abstract class BuiltinMethod {
     public Caller(String fnKey, String continuationName) {
       this.fnKey = fnKey;
       this.continuationName = continuationName;
+    }
+
+    /**
+     * Makes this Caller detached. A detached Caller will always call its continuation promptly, but
+     * the function may not have completed when it does.
+     *
+     * <p>If the function has completed, the continuation will be called normally.
+     *
+     * <p>If the function has not completed, the continuation will be called with null as the
+     * function result(s) and with {@link TState#unwindStarted} true.
+     */
+    public Caller detach() {
+      Preconditions.checkState(!detached && callSite == null);
+      detached = true;
+      return this;
     }
 
     /**
@@ -191,6 +231,10 @@ public abstract class BuiltinMethod {
       return duringCall;
     }
 
+    boolean isDetached() {
+      return detached;
+    }
+
     @Override
     void setup(String where, BuiltinImpl impl, Map<String, VmFunction> functions) {
       VmFunction calledFn = functions.get(fnKey);
@@ -200,6 +244,11 @@ public abstract class BuiltinMethod {
       Preconditions.checkArgument(
           continuation.builtinEntry.numArgs() == expectedNumArgs,
           "Continuation doesn't match method (%s)",
+          where);
+      Preconditions.checkArgument(
+          continuation.isDetached == detached,
+          "Continuation %s be detached (%s)",
+          (detached ? "must" : "must not"),
           where);
       setup(where, calledFn, impl, continuation);
     }
@@ -261,6 +310,7 @@ public abstract class BuiltinMethod {
     void resume(TState tstate, @RC.In Value entry, ResultsInfo results, MethodMemo mMemo) {
       // The called function was interrupted and unwound, but now we're able to resume.
       assert entry.baseType() == this;
+      assert !caller.isDetached();
       if (caller.continuation == TAIL_CALL) {
         // A tail caller -- we just return its results as our own.
         tstate.dropValue(entry);

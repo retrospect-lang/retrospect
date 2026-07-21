@@ -102,6 +102,17 @@ class RThread extends RefCounted {
     return (result != null) ? result : DISCARD_RESULTS;
   }
 
+  void setSuspended(TState tstate, @RC.In TStack stack) {
+    assert suspended == null;
+    Value topOfStack = Value.addRef(stack.first());
+    // After storing stack we no longer own its reference count, which is why we needed to
+    // increment the refCount on topOfStack first.
+    SUSPENDED.setRelease(this, stack);
+    BaseType.BlockingEntryType blockingType = (BaseType.BlockingEntryType) topOfStack.baseType();
+    blockingType.suspended(tstate, topOfStack, this);
+    tstate.dropValue(topOfStack);
+  }
+
   /** Returns the suspended stack and atomically sets it to null. */
   private TStack takeSuspended() {
     return (TStack) SUSPENDED.getAndSetAcquire(this, null);
@@ -161,23 +172,10 @@ class RThread extends RefCounted {
         // Just return and let the unbind in our finally clause discard anything left in the TState
       } else if (tstate.unwindStarted()) {
         TStack stack = tstate.takeUnwind();
-        BaseType topOfStackBaseType = stack.first().baseType();
-        if (topOfStackBaseType instanceof BaseType.BlockingEntryType blockingType) {
-          Value topOfStack = Value.addRef(stack.first());
-          // After storing stack we no longer own its reference count, which is why we needed to
-          // increment the refCount on topOfStack first.
-          SUSPENDED.setRelease(this, stack);
-          // We might have raced against cancellation, so check again; we don't want to
-          // leave behind a stack that will never be resumed
-          if (isCancelled()) {
-            tstate.dropReference(takeSuspended());
-          } else {
-            blockingType.suspended(tstate, topOfStack, this);
-          }
-          tstate.dropValue(topOfStack);
-        } else {
-          assert stack.first().baseType() instanceof Err;
+        if (stack.hasErr()) {
           takeWaiter().threadDone(tstate, null, stack);
+        } else {
+          setSuspended(tstate, stack);
         }
       } else {
         assert tstate.stackRestIsBase();
@@ -185,6 +183,13 @@ class RThread extends RefCounted {
         tstate.clearResults();
         takeWaiter().threadDone(tstate, result, null);
       }
+    } catch (RuntimeException | AssertionError e) {
+      // Shouldn't happen, but if it does try to construct a meaningful stack entry to go along
+      // with the "internal error" message.
+      e.printStackTrace();
+      Err.INTERNAL_ERROR.pushUnwind(tstate, e.toString());
+      TStack stack = tstate.takeUnwind();
+      takeWaiter().threadDone(tstate, null, stack);
     } finally {
       tstate.rThread = null;
       tstate.bindTo(prev);

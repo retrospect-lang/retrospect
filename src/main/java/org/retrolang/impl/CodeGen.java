@@ -212,30 +212,59 @@ public class CodeGen {
   }
 
   /**
+   * A DelayedBlocks maintains a stack of Runnables, each of which will add one or more blocks to
+   * the CodeBuilder and each of which has an associated FutureBLock that can be used to branch to
+   * the first of those blocks.  A call to {@link #emit(int)} will check each FutureBlock, see if it
+   * has incoming links, and if so call the Runnable to emit them; this is done in the reverse of
+   * the order the Runnables were added, since the {@code run()} method from a later call to {@link #add}
+   * may refer to a FutureBlock returned by an earlier call.
+   */
+  class DelayedBlocks {
+    /**
+     * Each of these will be run later, in reverse order. Any blocks they emit must either end with
+     * a Terminal or branch to a not-yet emitted FutureBlock.
+     */
+    private final List<Runnable> delayed = new ArrayList<>();
+
+    /**
+     * The given Runnable should emit code that will be executed following a branch to the returned
+     * FutureBlock. If no branches to the FutureBlock are emitted, the Runnable will not be called.
+     */
+    FutureBlock add(Runnable addBlocks, boolean isEscape) {
+      // Tagging escapes makes it easier to stop in the debugger when a branch to them is created
+      FutureBlock link = new FutureBlock(isEscape ? true : null);
+      delayed.add(
+          () -> {
+            if (link.hasInLink()) {
+              cb.setNext(link);
+              addBlocks.run();
+              assert !cb.nextIsReachable();
+            }
+          });
+      return link;
+    }
+
+    int size() {
+      return delayed.size();
+    }
+
+    /**
+     * Emits all the blocks that have been queued by calls to {@link #add} since {@link #size} returned
+     * the given value.
+     */
+    void emit(int savedSize) {
+      List<Runnable> toEmit = delayed.subList(savedSize, delayed.size());
+      toEmit.reversed().forEach(Runnable::run);
+      toEmit.clear();
+    }
+  }
+
+  /**
    * Each of these will be run when the rest of code generation is completed, in reverse order. That
    * means that any blocks they emit must either end with a Terminal or branch to a FutureBlock that
    * will be filled in by a previously-added Runnable.
    */
-  private final List<Runnable> atEnd = new ArrayList<>();
-
-  /**
-   * The given Runnable should add one or more blocks, and will be executed after the body of the
-   * method has been emitted (but before any blocks added by previous calls to {@code addAtEnd()}).
-   * The returned FutureBlock should be used to branch to the blocks that will be added.
-   */
-  FutureBlock addAtEnd(Runnable addBlocks, boolean isEscape) {
-    // Tagging escapes makes it easier to stop in the debugger when a branch to them is created
-    FutureBlock link = new FutureBlock(isEscape ? true : null);
-    atEnd.add(
-        () -> {
-          if (link.hasInLink()) {
-            cb.setNext(link);
-            addBlocks.run();
-            assert !cb.nextIsReachable();
-          }
-        });
-    return link;
-  }
+  final DelayedBlocks atEnd = new DelayedBlocks();
 
   /**
    * If v refers to one or more registers whose values are known (or perhaps even partly known) we
@@ -256,11 +285,8 @@ public class CodeGen {
       addBlocks.run();
       // Emit all the escape handlers
       invalidateEscape();
-      // Add all the blocks that were queued by calls to addAtEnd()
-      for (int i = atEnd.size() - 1; i >= 0; --i) {
-        atEnd.get(i).run();
-      }
-      atEnd.clear();
+      // Add all the blocks that were queued by calls to atEnd.add()
+      atEnd.emit(0);
     } finally {
       this.tstate = null;
       tstate.setCodeGen(null);
@@ -545,7 +571,7 @@ public class CodeGen {
       this.done = done;
       this.resultsInfo = resultsInfo;
       this.continueUnwinding =
-          addAtEnd(() -> continueUnwinding.accept(stackRest), /* isEscape= */ false);
+          atEnd.add(() -> continueUnwinding.accept(stackRest), /* isEscape= */ false);
     }
 
     /**
@@ -765,7 +791,7 @@ public class CodeGen {
 
   /** Defines an escape handler that will be emitted by the given Runnable. */
   void setNewEscape(Runnable addBlocks) {
-    escape = addAtEnd(addBlocks, /* isEscape= */ true);
+    escape = atEnd.add(addBlocks, /* isEscape= */ true);
     preferNewEscape = false;
   }
 
@@ -1053,7 +1079,8 @@ public class CodeGen {
    * Emits a block that throws an AssertionError. Intended for when the next block should be
    * unreachable but the JVM may not realize that.
    */
-  public void emitAssertionFailed() {
+  public void emitAssertionFailed(String source) {
+    cb.setNextSrc(source);
     new ThrowBlock(NEW_ASSERTION_ERROR.result()).addTo(cb);
   }
 

@@ -688,7 +688,7 @@ public final class TState extends MemoryHelper {
    */
   @RC.Out
   TStack beforeCall() {
-    assert !unwindStarted();
+    assert !hasCodeGen() && !unwindStarted();
     TStack result = stackRest;
     stackRest = null;
     return result;
@@ -1123,7 +1123,7 @@ public final class TState extends MemoryHelper {
 
   public void startCall(
       Caller caller, VmFunction fn, StackEntryType duringCall, @RC.In Object[] args) {
-    assert !unwindStarted();
+    assert hasCodeGen() || !unwindStarted();
     assert builtinCall == null && builtinCallArgs == null && builtinContinuationArgs == null;
     assert caller != null && fn != null && duringCall != null && args != null;
     if (hasCodeGen() && duringCall.size() == 0) {
@@ -1137,7 +1137,7 @@ public final class TState extends MemoryHelper {
   }
 
   private void saveForCall(@RC.In Value... values) {
-    assert !unwindStarted();
+    assert hasCodeGen() || !unwindStarted();
     assert builtinContinuationArgs == null && values.length == builtinDuringCall.size();
     if (hasCodeGen()) {
       Caller caller = builtinCall;
@@ -1159,7 +1159,7 @@ public final class TState extends MemoryHelper {
   }
 
   public void jump(String continuationName, @RC.In Value... args) {
-    assert !unwindStarted();
+    assert hasCodeGen() || !unwindStarted();
     assert builtinCall == null && builtinCallArgs == null && builtinContinuationArgs == null;
     assert continuationName != null;
     if (hasCodeGen()) {
@@ -1176,7 +1176,7 @@ public final class TState extends MemoryHelper {
       @RC.In Object[] values,
       ResultsInfo results,
       MethodMemo mMemo) {
-    assert !unwindStarted() && !hasCodeGen();
+    assert !hasCodeGen() && !unwindStarted();
     assert builtinCall == null && builtinCallArgs == null && builtinContinuationArgs == null;
     // Sort of a hack, but just fake a jump() to this continuation
     builtinContinuation = continuation.name;
@@ -1215,6 +1215,7 @@ public final class TState extends MemoryHelper {
    * and each of the others corresponds to a different state in this list.)
    */
   void finishBuiltin(ResultsInfo results, MethodMemo mMemo, BuiltinImpl impl) {
+    assert !hasCodeGen();
     if (mMemo instanceof MethodMemo.LoopMethodMemo lmm) {
       CodeGenLink cgLink = lmm.loopCodeGen();
       if (cgLink != null) {
@@ -1252,12 +1253,11 @@ public final class TState extends MemoryHelper {
         VmFunction fn = builtinCallFn;
         StackEntryType duringCall = builtinDuringCall;
         continuation = caller.continuation();
-        boolean isTailCall = (continuation == BuiltinMethod.TAIL_CALL);
-        // If this isn't a tail call and the continuation isn't a loop, verify that they're
-        // respecting the continuation order.
-        assert isTailCall || continuation.checkCallFrom(previousOrder);
+        // Verify that they're respecting the continuation order.
+        continuation.checkCallFrom(previousOrder);
         TStack prev = beforeCall();
-        ResultsInfo callResults = isTailCall ? results : continuation.valueMemo(this, mMemo);
+        ResultsInfo callResults =
+            continuation.isTailCall() ? results : continuation.valueMemo(this, mMemo);
         fn.doCall(this, callResults, mMemo, caller.callSite(), callArgs);
         // That function call might have indirectly called TState.syncWithCoordinator(), which
         // means any continuation args we've been saving might have been replaced; if so we should
@@ -1288,7 +1288,7 @@ public final class TState extends MemoryHelper {
         } else {
           afterCall(prev);
         }
-        if (isTailCall) {
+        if (continuation.isTailCall()) {
           // Just return these results as our own.
           harmonizeResults(mMemo);
           return;
@@ -1305,7 +1305,7 @@ public final class TState extends MemoryHelper {
         continuation = impl.continuation(continuationName);
         Preconditions.checkArgument(
             continuation != null, "No continuation named \"%s\"", continuationName);
-        assert continuation.checkCallFrom(previousOrder);
+        continuation.checkCallFrom(previousOrder);
       }
       assert continuation.impl == impl;
       // Run the continuation, and then loop back to see what state it left us in.

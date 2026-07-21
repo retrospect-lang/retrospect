@@ -224,8 +224,7 @@ class BuiltinSupport {
     }
 
     int numArgs() {
-      // TAIL_CALL's builtinEntry is null
-      return (builtinEntry == null) ? 0 : builtinEntry.numArgs();
+      return isTailCall() ? 0 : builtinEntry.numArgs();
     }
 
     /**
@@ -242,16 +241,18 @@ class BuiltinSupport {
       return index;
     }
 
+    /** Returns true if this is {@link BuiltinMethod#TAIL_CALL}. */
+    boolean isTailCall() {
+      return (builtinEntry == null);
+    }
+
     /**
-     * Throws an AssertionError if a reference to this continuation from a continuation with the
-     * specified order is invalid; otherwise returns true (throwing an AssertionError rather than
-     * just returning false enables us to provide a more useful message).
+     * Throws an IllegalArgumentException if a reference to this continuation from a continuation
+     * with the specified order is invalid.
      */
-    boolean checkCallFrom(int previousOrder) {
-      if (isLoop || previousOrder < order) {
-        return true;
-      }
-      throw new AssertionError("Out-of-order call to " + builtinEntry);
+    void checkCallFrom(int previousOrder) {
+      Preconditions.checkArgument(
+          isTailCall() || isLoop || previousOrder < order, "Out-of-order call to %s", builtinEntry);
     }
 
     /** Returns the ValueMemo to be used for harmonizing values passed to this continuation. */
@@ -709,7 +710,8 @@ class BuiltinSupport {
    *
    * <ul>
    *   <li>must have a return type of {@code Value} or {@code void};
-   *   <li>may optionally have a first argument of type {@code TState};
+   *   <li>may optionally have up to three argument initial arguments of type {@code TState}, {@code
+   *       ResultsInfo}, and/or {@code MethodMemo};
    *   <li>must have all remaining arguments of type {@code Value}, each optionally annotated
    *       {@code @RC.In} or {@code @RC.Singleton};
    *   <li>may optionally throw {@link Err.BuiltinException}.
@@ -766,9 +768,10 @@ class BuiltinSupport {
       boolean hasTState = false;
       boolean hasResultsInfo = false;
       boolean hasMethodMemo = false;
-      int valueStart = 0;
       int numCallers = 0;
-      int numSaved = 0;
+      int numValues = 0;
+      int valueStart = -1;
+      int savedStart = -1;
       // Arguments marked @RC.In will be removed from the args array before we release it, since the
       // wrapped method is responsible for reducing their root count.
       Bits rcInValues = Bits.EMPTY;
@@ -776,67 +779,63 @@ class BuiltinSupport {
       // and TState.dropReference(Object[]) eventually clears them out.
       Bits rcSingletonValues = Bits.EMPTY;
       for (int i = 0; i < params.length; i++) {
-        Class<?> type = params[i].getType();
-        if (params[i].isAnnotationPresent(Saved.class)) {
+        Parameter param = params[i];
+        Class<?> type = param.getType();
+        if (param.isAnnotationPresent(Saved.class)) {
           Preconditions.checkArgument(
-              numSaved == 0 && type == Value.class, "Bad @Saved (%s)", where);
-          numSaved = params.length - i;
+              savedStart < 0 && type == Value.class, "Bad @Saved (%s)", where);
+          savedStart = i;
         }
         if (type != Caller.class) {
           Preconditions.checkArgument(
-              !params[i].isAnnotationPresent(BuiltinMethod.Fn.class), "Bad @Fn (%s)", where);
+              !param.isAnnotationPresent(BuiltinMethod.Fn.class), "Bad @Fn (%s)", where);
         }
-        boolean isRcIn = params[i].isAnnotationPresent(RC.In.class);
-        boolean isRcSingleton = params[i].isAnnotationPresent(RC.Singleton.class);
+        boolean isRcIn = param.isAnnotationPresent(RC.In.class);
+        boolean isRcSingleton = param.isAnnotationPresent(RC.Singleton.class);
         if (isRcIn || isRcSingleton) {
           Preconditions.checkArgument(
               type == Value.class && !(isRcIn && isRcSingleton),
               "Bad RC parameter annotations (%s)",
               where);
+        }
+        if (type == TState.class) {
+          if (i == 0) {
+            hasTState = true;
+            continue;
+          }
+        } else if (type == ResultsInfo.class) {
+          if (valueStart < 0 && !hasResultsInfo && !hasMethodMemo) {
+            hasResultsInfo = true;
+            continue;
+          }
+        } else if (type == MethodMemo.class) {
+          if (valueStart < 0 && !hasMethodMemo) {
+            hasMethodMemo = true;
+            continue;
+          }
+        } else if (type == Value.class) {
+          if (valueStart < 0) {
+            valueStart = i;
+          }
           if (isRcIn) {
             rcInValues = rcInValues.set(i - valueStart);
           } else {
             rcSingletonValues = rcSingletonValues.set(i - valueStart);
           }
-        }
-        if (type == TState.class) {
-          if (i == 0) {
-            hasTState = true;
-            valueStart = 1;
-            continue;
-          }
-        } else if (type == ResultsInfo.class) {
-          if (i == valueStart && !hasResultsInfo && !hasMethodMemo) {
-            hasResultsInfo = true;
-            valueStart++;
-            continue;
-          }
-        } else if (type == MethodMemo.class) {
-          if (i == valueStart && !hasMethodMemo) {
-            hasMethodMemo = true;
-            valueStart++;
-            continue;
-          }
-        } else if (type == Value.class) {
           // Value arguments must come before any Caller arguments.
           if (numCallers == 0) {
+            ++numValues;
             continue;
           }
         } else if (type == Caller.class) {
-          if (numCallers == 0) {
-            // The first Caller argument; everything after this must be a Caller.
-            numCallers = params.length - i;
-            if (numSaved != 0) {
-              numSaved -= numCallers;
-            }
-          }
+          ++numCallers;
           continue;
         }
         throw new IllegalArgumentException(String.format("Bad method args (%s)", where));
       }
       this.valueStart = valueStart;
-      this.numValues = params.length - valueStart - numCallers;
-      this.numSaved = numSaved;
+      this.numValues = numValues;
+      this.numSaved = (savedStart < 0) ? 0 : (valueStart + numValues - savedStart);
 
       Class<?>[] exceptionTypes = m.getExceptionTypes();
       boolean canThrow = exceptionTypes.length != 0;
@@ -848,6 +847,7 @@ class BuiltinSupport {
       }
       MethodHandle mh = Handle.forMethod(m);
       // Create an appropriate Caller for each Caller argument
+      assert valueStart < 0 || valueStart + numValues + numCallers == params.length;
       for (int i = params.length - numCallers; i < params.length; i++) {
         Parameter callerParam = params[i];
         BuiltinMethod.Fn fnAnnotation = callerParam.getAnnotation(BuiltinMethod.Fn.class);
@@ -908,17 +908,13 @@ class BuiltinSupport {
 
       // A MethodHandle with signature `void <- (TState, Object[])`
       MethodHandle dropArgs = TState.DROP_REFERENCE_OBJ_ARRAY;
-      if (!rcInValues.isEmpty()) {
-        for (int i = 0; i < numValues; i++) {
-          if (rcInValues.test(i)) {
-            // A MethodHandle that nulls out this element of the arg.
-            MethodHandle clearElement = MethodHandles.insertArguments(SET_OBJECT_ARRAY, 1, i, null);
-            // Applies clearElement to the Object[] before passing it to dropArgs.
-            // Note that since clearElement returns void, this doesn't affect the arguments passed
-            // to dropArgs.
-            dropArgs = MethodHandles.foldArguments(dropArgs, 1, clearElement);
-          }
-        }
+      for (int i : rcInValues) {
+        // A MethodHandle that nulls out this element of the arg.
+        MethodHandle clearElement = MethodHandles.insertArguments(SET_OBJECT_ARRAY, 1, i, null);
+        // Applies clearElement to the Object[] before passing it to dropArgs.
+        // Note that since clearElement returns void, this doesn't affect the arguments passed
+        // to dropArgs.
+        dropArgs = MethodHandles.foldArguments(dropArgs, 1, clearElement);
       }
       // Skip dropArgs if we're generating code
       dropArgs =

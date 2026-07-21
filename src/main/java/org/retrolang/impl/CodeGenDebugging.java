@@ -81,7 +81,7 @@ class CodeGenDebugging {
     if (s.equals("s")) {
       // Starting a target always increments its call count, so we don't need to report that call
       // on the next append()
-      incrementTracker(target);
+      incrementTrackerStarts(target);
     }
   }
 
@@ -91,6 +91,7 @@ class CodeGenDebugging {
    * the previously-assigned id.
    */
   private <T> void appendId(T obj, Function<T, String> format) {
+    assert Thread.holdsLock(this);
     int nextId = refMap.size();
     int id =
         refMap.computeIfAbsent(
@@ -137,6 +138,7 @@ class CodeGenDebugging {
    * number of calls.
    */
   private void checkTrackers() {
+    assert Thread.holdsLock(this);
     boolean first = true;
     for (CallTracker tracker : callTrackers) {
       int newCalls = tracker.update();
@@ -150,13 +152,13 @@ class CodeGenDebugging {
     }
   }
 
-  /** Increment the expected call count of the tracker for the given target. */
-  private void incrementTracker(CodeGenTarget target) {
+  /** Increment the start count of the tracker for the given target. */
+  private void incrementTrackerStarts(CodeGenTarget target) {
     // Linear search might look bad, but we're already doing a full scan of the trackers before
     // writing each record.  We're only doing this for debugging and testing.
     for (CallTracker tracker : callTrackers) {
       if (tracker.target == target) {
-        tracker.last++;
+        tracker.starts++;
         return;
       }
     }
@@ -179,6 +181,7 @@ class CodeGenDebugging {
     final CodeGenTarget target;
     final int id;
     int last;
+    int starts;
 
     CallTracker(CodeGenTarget target, int id, int last) {
       this.target = target;
@@ -193,6 +196,13 @@ class CodeGenDebugging {
     int update() {
       int prev = last;
       last = target.callCount();
+      // If we've reported a start on this target we expect a corresponding increment to its
+      // callCount, and we don't need to report it.
+      int skipStarts = Math.min(starts, last - prev);
+      if (skipStarts > 0) {
+        starts -= skipStarts;
+        prev += skipStarts;
+      }
       return last - prev;
     }
   }

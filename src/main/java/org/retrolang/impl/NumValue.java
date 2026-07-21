@@ -18,6 +18,7 @@ package org.retrolang.impl;
 
 import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
+import org.retrolang.code.Op;
 import org.retrolang.util.SizeOf;
 
 /** Implementations of Value for ints and doubles. */
@@ -47,6 +48,15 @@ public abstract class NumValue extends RefCounted implements Value {
   }
 
   static final MethodHandle AS_DOUBLE = Handle.forMethod(NumValue.class, "asDouble", Value.class);
+
+  static final Op OF_INT_OP =
+      RcOp.forRcMethod(NumValue.class, "of", int.class, Allocator.class).build();
+  static final Op OF_DOUBLE_OP =
+      RcOp.forRcMethod(NumValue.class, "of", double.class, Allocator.class).build();
+  static final Op AS_DOUBLE_OP = RcOp.forRcMethod(NumValue.class, "asDouble", Value.class).build();
+  static final Op IS_INT_OP = RcOp.forRcMethod(NumValue.class, "isInt", Value.class).build();
+  static final Op IS_UINT8_OP = RcOp.forRcMethod(NumValue.class, "isUint8", Value.class).build();
+  static final Op AS_INT_OP = RcOp.forRcMethod(NumValue.class, "asInt", Value.class).build();
 
   /**
    * Returns a NumValue.I for the given int, which must be between MIN_CACHED_INT and MAX_CACHED_INT

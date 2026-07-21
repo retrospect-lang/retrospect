@@ -91,6 +91,8 @@ public class CodeGen {
    */
   private CurrentCall currentCall;
 
+  private Boolean emittingUnwindHandler;
+
   /**
    * TStack-valued registers that were allocated as {@link CurrentCall#stackRest} for a
    * now-completed call. We could just allocate a new one for each call, but we emit a lot of calls
@@ -214,10 +216,10 @@ public class CodeGen {
   /**
    * A DelayedBlocks maintains a stack of Runnables, each of which will add one or more blocks to
    * the CodeBuilder and each of which has an associated FutureBLock that can be used to branch to
-   * the first of those blocks.  A call to {@link #emit(int)} will check each FutureBlock, see if it
+   * the first of those blocks. A call to {@link #emit(int)} will check each FutureBlock, see if it
    * has incoming links, and if so call the Runnable to emit them; this is done in the reverse of
-   * the order the Runnables were added, since the {@code run()} method from a later call to {@link #add}
-   * may refer to a FutureBlock returned by an earlier call.
+   * the order the Runnables were added, since the {@code run()} method from a later call to {@link
+   * #add} may refer to a FutureBlock returned by an earlier call.
    */
   class DelayedBlocks {
     /**
@@ -249,8 +251,8 @@ public class CodeGen {
     }
 
     /**
-     * Emits all the blocks that have been queued by calls to {@link #add} since {@link #size} returned
-     * the given value.
+     * Emits all the blocks that have been queued by calls to {@link #add} since {@link #size}
+     * returned the given value.
      */
     void emit(int savedSize) {
       List<Runnable> toEmit = delayed.subList(savedSize, delayed.size());
@@ -299,16 +301,13 @@ public class CodeGen {
     // This Destination will be passed the method's results, and emit the code to return them
     Destination done = Destination.fromTemplates(target.results);
     // The base of the call stack; this will be temporarily replaced when we emit method calls
-    currentCall =
-        new CurrentCall(
-            null,
-            done,
-            initialMethod.resultsMemo,
-            stackRest -> {
-              TState.SET_STACK_REST_OP.block(tstateRegister(), stackRest).addTo(cb);
-              TState.SET_UNWOUND_FROM_OP.block(tstateRegister(), CodeValue.of(target)).addTo(cb);
-              new ReturnBlock(null).addTo(cb);
-            });
+    currentCall = new CurrentCall(null, done, initialMethod.resultsMemo);
+    currentCall.handleUnwind(
+        stackRest -> {
+          TState.SET_STACK_REST_OP.block(tstateRegister(), stackRest).addTo(cb);
+          TState.SET_UNWOUND_FROM_OP.block(tstateRegister(), CodeValue.of(target)).addTo(cb);
+          new ReturnBlock(null).addTo(cb);
+        });
     currentCall.methodMemo = initialMethod;
     emit(
         () -> {
@@ -532,8 +531,10 @@ public class CodeGen {
      * A TStack-valued register that will be set to null before emitting the function call, and
      * during the call may be set to an empty TStack to indicate that a duringCall stack entry is
      * needed. Used in place of {@link TState#stackRest}, for efficiency.
+     *
+     * <p>Null if this is a call with a {@link BuiltinMethod.DetachedContinuation}.
      */
-    final Register stackRest = allocateStackRest();
+    private Register stackRest;
 
     /** The CallSite of this call. */
     final CallSite callSite;
@@ -551,7 +552,9 @@ public class CodeGen {
      * the current nested call and then branch to the enclosing CurrentCall's continueUnwinding
      * block.
      */
-    final FutureBlock continueUnwinding;
+    private FutureBlock handleUnwind;
+
+    private int atEndLength = -1;
 
     /** The MethodMemo for the method currently being emitted for this call. */
     private MethodMemo methodMemo;
@@ -562,16 +565,36 @@ public class CodeGen {
      */
     private BuiltinSupport.EmitState builtinEmitState;
 
-    CurrentCall(
-        CallSite callSite,
-        Destination done,
-        ValueMemo resultsInfo,
-        Consumer<Register> continueUnwinding) {
+    CurrentCall(CallSite callSite, Destination done, ValueMemo resultsInfo) {
       this.callSite = callSite;
       this.done = done;
       this.resultsInfo = resultsInfo;
-      this.continueUnwinding =
-          atEnd.add(() -> continueUnwinding.accept(stackRest), /* isEscape= */ false);
+    }
+
+    void handleUnwind(Consumer<Register> handleUnwind) {
+      assert this.handleUnwind == null;
+      this.stackRest = allocateStackRest();
+      this.handleUnwind = atEnd.add(() -> handleUnwind.accept(stackRest), /* isEscape= */ false);
+    }
+
+    void catchUnwind() {
+      assert handleUnwind == null;
+      handleUnwind = new FutureBlock();
+      atEndLength = atEnd.size();
+    }
+
+    void emitUnwindHandler() {
+      assert atEndLength >= 0;
+      atEnd.emit(atEndLength);
+      cb.setNext(handleUnwind);
+    }
+
+    Register stackRest() {
+      return stackRest;
+    }
+
+    FutureBlock handleUnwind() {
+      return handleUnwind;
     }
 
     /**
@@ -580,15 +603,16 @@ public class CodeGen {
      * tail.
      */
     void emitFillStackEntry(CodeValue tstack, Value stackEntry, MethodMemo mMemo) {
-      CodeValue entryCv = StackEntryBlock.create(stackEntry, cb);
+      CodeValue entryArg = StackEntryBlock.create(stackEntry, cb);
+      CodeValue restArg = (stackRest != null) ? stackRest : CodeValue.of(TStack.BASE);
       CodeValue[] fillStackArgs =
           new CodeValue[] {
             tstateRegister(),
             tstack,
-            entryCv,
+            entryArg,
             CodeValue.of(resultsInfo),
             CodeValue.of(mMemo),
-            stackRest
+            restArg
           };
       new SetBlock(stackRest, TState.FILL_STACK_ENTRY_OP.result(fillStackArgs)).addTo(cb);
     }
@@ -633,6 +657,8 @@ public class CodeGen {
       CallSite callSite,
       BuiltinMethod.Caller caller,
       Value stackEntry) {
+    // If we're emitting an unwind handler it should have already done its test.
+    assert emittingUnwindStateIsCleared();
     // Prepare a new CurrentCall instance to store information about the new call.
     CurrentCall parent = currentCall;
     ValueMemo resultsMemo;
@@ -648,7 +674,7 @@ public class CodeGen {
         done = Destination.fromValueMemo(resultsMemo);
       } else {
         // Non-tail calls from built-ins get the Destination corresponding to their continuation
-        done = parent.builtinEmitState.getDestination(this, caller.continuation());
+        done = parent.builtinEmitState.getDestination(this, caller.continuation(), false);
       }
     }
     // The Destination size should match the number of results being kept from this call, unless
@@ -660,16 +686,18 @@ public class CodeGen {
     Destination child = done.createChild(callSite.numResultsKept());
     // Now we've got everything we need for a new CurrentCall; create it and make it current.
     MethodMemo parentMemo = parent.methodMemo;
-    CurrentCall nested =
-        new CurrentCall(
-            callSite,
-            child,
-            resultsMemo,
-            stackRest -> {
-              cb.setNextSrc("unwinding");
-              parent.emitFillStackEntry(stackRest, stackEntry, parentMemo);
-              cb.branchTo(parent.continueUnwinding);
-            });
+    CurrentCall nested = new CurrentCall(callSite, child, resultsMemo);
+    boolean isDetached = caller != null && caller.isDetached();
+    if (isDetached) {
+      nested.catchUnwind();
+    } else {
+      nested.handleUnwind(
+          stackRest -> {
+            cb.setNextSrc("unwinding");
+            parent.emitFillStackEntry(stackRest, stackEntry, parentMemo);
+            cb.branchTo(parent.handleUnwind);
+          });
+    }
     currentCall = nested;
     if (caller == null) {
       // Once we've started executing methods only a subset of the caller's locals are still live.
@@ -682,26 +710,41 @@ public class CodeGen {
     child.emit(CodeGen.this);
     if (cb.nextIsReachable()) {
       // If we get here the function call completed with a result.
-      FutureBlock afterPush = new FutureBlock();
-      // If our stackRest is still null there's nothing extra to do.
-      new TestBlock.IsEq(OpCodeType.OBJ, nested.stackRest, CodeValue.NULL)
-          .setBranch(true, afterPush)
-          .addTo(cb);
-      if (cb.nextIsReachable()) {
-        // Our stackRest is non-null, i.e. at some point the called function traced.
-        // Emit blocks to extend an existing stack, with an entry describing this call.
-        cb.setNextSrc("extendTrace");
-        parent.emitFillStackEntry(nested.stackRest, stackEntry, parentMemo);
+      if (!isDetached) {
+        FutureBlock afterPush = new FutureBlock();
+        // If our stackRest is still null there's nothing extra to do.
+        new TestBlock.IsEq(OpCodeType.OBJ, nested.stackRest, CodeValue.NULL)
+            .setBranch(true, afterPush)
+            .addTo(cb);
+        if (cb.nextIsReachable()) {
+          // Our stackRest is non-null, i.e. at some point the called function traced.
+          // Emit blocks to extend an existing stack, with an entry describing this call.
+          cb.setNextSrc("extendTrace");
+          parent.emitFillStackEntry(nested.stackRest, stackEntry, parentMemo);
+        }
+        cb.mergeNext(afterPush);
       }
-      cb.mergeNext(afterPush);
       // Continue on to the original Destination, adding in @Saved values from the stackEntry if
       // needed
       child.branchToParent(CodeGen.this, (caller != null ? stackEntry : Core.NONE));
     }
+    if (isDetached) {
+      nested.emitUnwindHandler();
+      if (cb.nextIsReachable()) {
+        Destination handleDetached =
+            parent.builtinEmitState.getDestination(this, caller.continuation(), true);
+        int numSaved = stackEntry.numElements();
+        Value[] values = new Value[numSaved];
+        stackEntry.getElements(numSaved, values, 0);
+        handleDetached.addBranch(this, values);
+      }
+    }
     // We're done emitting the function call; restore the previous currentCall and make our
     // stackRest local available for reuse.
     assert currentCall == nested;
-    spareStackRests.addFirst(nested.stackRest);
+    if (nested.stackRest != null) {
+      spareStackRests.addFirst(nested.stackRest);
+    }
     currentCall = parent;
     return done;
   }
@@ -805,7 +848,7 @@ public class CodeGen {
         () -> {
           cb.setNextSrc("startUnwind");
           cc.emitFillStackEntry(CodeValue.NULL, stackEntry, mMemo);
-          cb.branchTo(cc.continueUnwinding);
+          cb.branchTo(cc.handleUnwind);
         });
   }
 
@@ -851,6 +894,21 @@ public class CodeGen {
         TState.RESERVE_FOR_CHANGE_OP.result(tstateRegister(), CodeValue.of(layout), array, newSize);
     escapeUnless(Condition.isNonZero(ok));
     return toValue(size);
+  }
+
+  boolean emittingUnwindHandler() {
+    boolean result = emittingUnwindHandler;
+    emittingUnwindHandler = null;
+    return result;
+  }
+
+  boolean emittingUnwindStateIsCleared() {
+    return emittingUnwindHandler == null;
+  }
+
+  void setEmittingUnwindHandler(boolean state) {
+    assert emittingUnwindStateIsCleared();
+    emittingUnwindHandler = state;
   }
 
   /** Emits a return from the current function call. */

@@ -55,7 +55,10 @@ class ExlinedCall extends Block.Split {
   /** The expected representation for the exlined method's results. */
   final ImmutableList<Template> expectedResultsTemplate;
 
-  /** The register in which we will store the result of {@link TState#takeStackRest}. */
+  /**
+   * The register in which we will store the result of {@link TState#takeStackRest}, or null if this
+   * is a detached call.
+   */
   final Register stackRest;
 
   ExlinedCall(
@@ -91,17 +94,21 @@ class ExlinedCall extends Block.Split {
 
   @Override
   public void forEachModifiedRegister(Consumer<Register> consumer) {
-    consumer.accept(stackRest);
+    if (stackRest != null) {
+      consumer.accept(stackRest);
+    }
   }
 
   @Override
   protected PropagationResult updateInfo() {
     simplifyInputs(next.info.registers());
-    // Our only output register (stackRest) could have any value, on either branch.
-    next.info.updateForAssignment(stackRest, ValueInfo.ANY, cb());
-    next.info.modified(stackRest, containingLoop());
-    alternate.info.updateForAssignment(stackRest, ValueInfo.ANY, cb());
-    alternate.info.modified(stackRest, containingLoop());
+    if (stackRest != null) {
+      // Our only output register (stackRest) could have any value, on either branch.
+      next.info.updateForAssignment(stackRest, ValueInfo.ANY, cb());
+      next.info.modified(stackRest, containingLoop());
+      alternate.info.updateForAssignment(stackRest, ValueInfo.ANY, cb());
+      alternate.info.modified(stackRest, containingLoop());
+    }
     return PropagationResult.DONE;
   }
 
@@ -126,17 +133,21 @@ class ExlinedCall extends Block.Split {
         .result(tstate, Const.of(expectedResultsTemplate))
         .push(emitter, int.class);
     // Before we check whether that succeeded, take stackRest from TState and save it
-    TState.TAKE_STACK_REST_OP.result(tstate).push(emitter, Object.class);
-    emitter.store(stackRest);
+    if (stackRest != null) {
+      TState.TAKE_STACK_REST_OP.result(tstate).push(emitter, Object.class);
+      emitter.store(stackRest);
+    }
     // Now take the alternate link if checkExlinedResult() returned false (aka 0)
     return emitter.conditionalBranch(ConditionalBranch.IFEQ, alternate, next);
   }
 
   @Override
   public String toString(CodeBuilder.PrintOptions options) {
-    return String.format(
-        "%s ← %s; %s ← stackRest",
-        expectedResultsTemplate, call.toString(options), stackRest.toString(options));
+    String stackUpdate =
+        (stackRest == null)
+            ? " (detached)"
+            : String.format("; %s ← stackRest", stackRest.toString(options));
+    return String.format("%s ← %s%s", expectedResultsTemplate, call.toString(options), stackUpdate);
   }
 
   @Override
@@ -173,11 +184,19 @@ class ExlinedCall extends Block.Split {
       argRegisters[i] = cb.register(firstArgRegister + i - 1);
     }
     CodeGen.CurrentCall currentCall = codeGen.currentCall();
+    // This is the codegen version of these lines in TState.finishBuiltin():
+    //     if (caller.isDetached()) {
+    //       // If the called code unwinds or traces, its stack ends here.
+    //       setStackRest(TStack.BASE);
+    //     }
+    if (currentCall.stackRest() == null) {
+      TState.SET_STACK_REST_OP.block(codeGen.tstateRegister(), Const.of(TStack.BASE)).addTo(cb);
+    }
     new ExlinedCall(
             (Op.Result) target.op.result(argRegisters),
             target.results,
-            currentCall.stackRest,
-            currentCall.continueUnwinding)
+            currentCall.stackRest(),
+            currentCall.handleUnwind())
         .addTo(cb);
     codeGen.invalidateEscape();
     // If we fall through, the exlined method returned values with the expected template;
@@ -185,7 +204,11 @@ class ExlinedCall extends Block.Split {
     FromFnResults resultEmitter = new FromFnResults(codeGen, target.results);
     for (int i = 0; i < target.results.size(); i++) {
       CopyPlan plan = currentCall.done.createCopyPlan(codeGen, i, target.results.get(i));
-      resultEmitter.emit(codeGen, plan, currentCall.continueUnwinding);
+      resultEmitter.emit(codeGen, plan, currentCall.handleUnwind());
+      if (!codeGen.cb.nextIsReachable()) {
+        // This call has never returned, so we can't generate any of the following code.
+        return;
+      }
     }
     resultEmitter.clearResults(codeGen);
     currentCall.done.addBranch(codeGen);

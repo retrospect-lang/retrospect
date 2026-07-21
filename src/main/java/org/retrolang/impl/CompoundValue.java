@@ -17,6 +17,7 @@
 package org.retrolang.impl;
 
 import java.util.Arrays;
+import org.retrolang.code.Op;
 import org.retrolang.util.ArrayUtil;
 import org.retrolang.util.SizeOf;
 
@@ -33,6 +34,17 @@ public final class CompoundValue extends RefCounted implements Value {
    */
   static long sizeOf(int numElements) {
     return OBJ_SIZE + SizeOf.array(MemoryHelper.chooseCapacityObjects(numElements), SizeOf.PTR);
+  }
+
+  static final Op CREATE =
+      RcOp.forRcMethod(
+              CompoundValue.class, "create", Allocator.class, BaseType.class, Object[].class)
+          .build();
+
+  @RC.Out
+  public static CompoundValue create(
+      Allocator allocator, BaseType baseType, @RC.In Object[] elements) {
+    return new CompoundValue(allocator, baseType, elements);
   }
 
   private BaseType baseType;

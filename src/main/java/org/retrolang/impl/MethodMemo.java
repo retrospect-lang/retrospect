@@ -726,7 +726,7 @@ public class MethodMemo {
     if (argsMemo == null) {
       return ValueMemo.Outcome.NO_CHANGE_REQUIRED;
     }
-    ValueMemo.Outcome result = argsMemo.harmonizeAll(tstate, values, isLocked);
+    ValueMemo.Outcome result = argsMemo.harmonizeAll(tstate, values, 0, isLocked);
     if (result == ValueMemo.Outcome.CHANGED && extra instanceof CodeGenLink cgLink) {
       cgLink.resetStabilityCounter(tstate.codeGenDebugging);
     }
@@ -735,13 +735,11 @@ public class MethodMemo {
 
   /** Harmonizes the results that this method is returning. */
   void harmonizeResults(TState tstate, Value[] results) {
-    if (resultsMemo != null) {
-      ValueMemo.Outcome outcome = resultsMemo.harmonizeAll(tstate, results, false);
-      // Extra locking is only required for some args memos, so we shouldn't ever need it here.
-      assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
-      if (outcome == ValueMemo.Outcome.CHANGED && extra instanceof CodeGenLink cgLink) {
-        cgLink.resetStabilityCounter(tstate.codeGenDebugging);
-      }
+    ValueMemo.Outcome outcome = resultsMemo.harmonizeAll(tstate, results, 0, false);
+    // Extra locking is only required for some args memos, so we shouldn't ever need it here.
+    assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
+    if (outcome == ValueMemo.Outcome.CHANGED && extra instanceof CodeGenLink cgLink) {
+      cgLink.resetStabilityCounter(tstate.codeGenDebugging);
     }
   }
 

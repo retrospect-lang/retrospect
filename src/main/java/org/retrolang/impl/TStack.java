@@ -90,6 +90,14 @@ class TStack extends RefCounted {
   }
 
   /**
+   * Returns true if the top of this stack is an Err. Should only be called when {@link #isSet} is
+   * true.
+   */
+  boolean hasErr() {
+    return first().baseType() instanceof Err;
+  }
+
+  /**
    * Returns the stack entries after the first, or null if this is {@link #BASE}. Should only be
    * called when {@link #isSet} is true.
    */

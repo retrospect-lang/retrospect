@@ -1178,6 +1178,7 @@ public final class TState extends MemoryHelper {
       MethodMemo mMemo) {
     assert !hasCodeGen() && !unwindStarted();
     assert builtinCall == null && builtinCallArgs == null && builtinContinuationArgs == null;
+    assert !continuation.isDetached;
     // Sort of a hack, but just fake a jump() to this continuation
     builtinContinuation = continuation.name;
     builtinContinuationArgs = values;
@@ -1256,6 +1257,10 @@ public final class TState extends MemoryHelper {
         // Verify that they're respecting the continuation order.
         continuation.checkCallFrom(previousOrder);
         TStack prev = beforeCall();
+        if (caller.isDetached()) {
+          // If the called code unwinds or traces, its stack ends here.
+          setStackRest(TStack.BASE);
+        }
         ResultsInfo callResults =
             continuation.isTailCall() ? results : continuation.valueMemo(this, mMemo);
         fn.doCall(this, callResults, mMemo, caller.callSite(), callArgs);
@@ -1272,14 +1277,45 @@ public final class TState extends MemoryHelper {
           // replacements since our last sync, but that's OK.)
           continuationArgs[i] = Value.latest((Value) continuationArgs[i]);
         }
-        if (callEntryNeeded()) {
+        if (caller.isDetached()) {
+          assert stackRestIsBase();
+          if (unwindStarted()) {
+            // Call the continuation, but with an unwind stack instead of function results
+            // (the continuationArgs slots that normally hold the function results are left null).
+            if (continuationArgs == null) {
+              // Since there were no saved values we haven't yet allocated the args array for the
+              // continuation.
+              continuationArgs = allocObjectArray(fn.numResults);
+            } else {
+              ValueMemo.Outcome outcome =
+                  continuation
+                      .valueMemo(this, mMemo)
+                      .harmonizeAll(this, continuationArgs, fn.numResults, false);
+              // Extra locking is only required for some args memos, so we shouldn't ever need it
+              // here.
+              assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
+            }
+            continuation.builtinEntry.execute(this, results, mMemo, continuationArgs);
+            // That must not have unwound or traced!
+            Preconditions.checkState(stackRest == null);
+            setStackRest(prev);
+            previousOrder = continuation.order;
+            continue;
+          }
+          stackRest = prev;
+        } else if (callEntryNeeded()) {
           // Construct a stack entry with the saved values
-          // Just another name for continuationArgs, so that we can refer to it in a lambda
-          Object[] finalCA = continuationArgs;
-          // If there are no saved values, duringCall is a singleton and it's OK that
-          // continuationArgs is null.
-          Value entry =
-              CompoundValue.of(this, duringCall, i -> addRef((Value) finalCA[fn.numResults + i]));
+          Value entry;
+          if (duringCall.isSingleton()) {
+            entry = duringCall.asValue();
+          } else {
+            Object[] savedArgs = allocObjectArray(duringCall.size());
+            for (int i = 0; i < duringCall.size(); i++) {
+              Value savedArg = (Value) continuationArgs[fn.numResults + i];
+              savedArgs[i] = Value.addRef(savedArg);
+            }
+            entry = new CompoundValue(this, duringCall, savedArgs);
+          }
           afterCall(prev, entry, results, mMemo);
           if (unwindStarted()) {
             dropReference(continuationArgs);
@@ -1305,12 +1341,14 @@ public final class TState extends MemoryHelper {
         continuation = impl.continuation(continuationName);
         Preconditions.checkArgument(
             continuation != null, "No continuation named \"%s\"", continuationName);
+        Preconditions.checkArgument(
+            !continuation.isDetached, "Cannot jump to a @DetachedContinuation");
         continuation.checkCallFrom(previousOrder);
       }
       assert continuation.impl == impl;
       // Run the continuation, and then loop back to see what state it left us in.
       ValueMemo.Outcome outcome =
-          continuation.valueMemo(this, mMemo).harmonizeAll(this, continuationArgs, false);
+          continuation.valueMemo(this, mMemo).harmonizeAll(this, continuationArgs, 0, false);
       // Extra locking is only required for some args memos, so we shouldn't ever need it here.
       assert outcome != ValueMemo.Outcome.CHANGE_REQUIRES_EXTRA_LOCK;
       // This is a good place to check for out-of-memory.
@@ -1418,7 +1456,7 @@ public final class TState extends MemoryHelper {
       }
       cgParent = CodeGenParent.INVALID;
       // First check for errors or cancellation: those shouldn't increment the stability counter
-      if (unwindStarted() && stackHead.first().baseType() instanceof Err) {
+      if (unwindStarted() && stackHead.hasErr()) {
         return;
       } else if (rThread != null && rThread.isCancelled()) {
         return;

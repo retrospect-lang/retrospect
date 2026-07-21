@@ -13,11 +13,33 @@ function fn(i) {
 [1, 4, 9, 16, 25]
 ---
             ⟦StackBase⟧
-            ⟦FutureValue.FutureMethod.begin⟧
             ⟦future.r8t+2:1_1 _t0 = fn(i)⟧
 0.0s) ⟦future.r8t+2:6_2 trace ∥ i=2⟧
 ---
-allocated=9480‥11800/355‥436, peak=264‥1584
+allocated=9480‥11800/355‥436, peak=200‥1200
+*/
+
+// Same test, but this time force the futures to run in separate threads
+
+delayStart = testFuture
+x = 1..5 | i -> future(-> fn(i + waitFor(delayStart))) | save
+setTestFuture(delayStart, 0)
+return waitFor(^x) | save
+
+function fn(i) {
+  // Just trace one of the subtasks to avoid non-deterministic ordering of the traces
+  if i == 2 { trace }
+  return i * i
+}
+
+/* RUN () RETURNS
+[1, 4, 9, 16, 25]
+---
+            ⟦StackBase⟧
+            ⟦future.r8t+23:2_3 _t0 = fn(_t0)⟧
+0.0s) ⟦future.r8t+23:8_2 trace ∥ i=2⟧
+---
+allocated=9480‥14000/355‥500, peak=200‥2400
 */
 
 // Verify that we log something reasonable if an error occurs while evaluating
@@ -27,7 +49,7 @@ x = 1..4 | i -> future(-> i * (i != 2 ? i : None)) | save
 return waitFor(^x) | save
 
 /* RUN () ERRORS
-⟦Error while computing future() value ∥ futureStack=[⟦No matching method ∥ function="multiply:2", args=[2, None]⟧, ⟦future.r8t+25:1_8 _t0 = multiply(i, _t0)⟧, ⟦FutureValue.FutureMethod.begin⟧]⟧
+⟦Error while computing future() value ∥ futureStack=[⟦No matching method ∥ function="multiply:2", args=[2, None]⟧, ⟦future.r8t+47:1_8 _t0 = multiply(i, _t0)⟧]⟧
 ⟦WaitFor ∥ fv=⊠xxxx⟧
 ⟦`waitFor:1`⟧
 ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[2]⟧
@@ -36,10 +58,33 @@ return waitFor(^x) | save
 ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([⊡xxxx:1, ⊠xxxx, ⊡xxxx:9, ⊡xxxx:16], EnumerateAllKeys), TransformedLoop(KeyValueLambda(⟦`waitFor:1`⟧, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(1, 4)⟧
 ⟦LoopCore.enumerateDefault⟧
 ⟦LoopCore.PipeCollectionCollector.enumerate⟧
-⟦future.r8t+25:2_6 _t0 = pipe(_t0, _t1)⟧
+⟦future.r8t+47:2_6 _t0 = pipe(_t0, _t1)⟧
 ⟦StackBase⟧
 ---
 allocated=7000‥7800/261‥280, peak=1200‥1680
+*/
+
+// Same test, but this time force the futures to run in separate threads
+
+delayStart = testFuture
+x = 1..4 | i -> future(-> i * (i != waitFor(delayStart) ? i : None)) | save
+setTestFuture(delayStart, 2)
+return waitFor(^x) | save
+
+/* RUN () ERRORS
+⟦Error while computing future() value ∥ futureStack=[⟦No matching method ∥ function="multiply:2", args=[2, None]⟧, ⟦future.r8t+68:2_9 _t0 = multiply(i, _t0)⟧]⟧
+⟦WaitFor ∥ fv=⊠xxxx⟧
+⟦`waitFor:1`⟧
+⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[2]⟧
+⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(⟦`waitFor:1`⟧, False), SaverLoop(SaveElements)), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
+⟦LoopCore.NextStateTransformedLoop.afterAt⟧
+⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([⊡xxxx:1, ⊠xxxx, ⊡xxxx:9, ⊡xxxx:16], EnumerateAllKeys), TransformedLoop(KeyValueLambda(⟦`waitFor:1`⟧, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(1, 4)⟧
+⟦LoopCore.enumerateDefault⟧
+⟦LoopCore.PipeCollectionCollector.enumerate⟧
+⟦future.r8t+68:4_8 _t0 = pipe(_t0, _t1)⟧
+⟦StackBase⟧
+---
+allocated=8000‥12000/280‥400, peak=1200‥2400
 */
 
 // Fibonacci with futures!
@@ -142,7 +187,7 @@ return waitFor(^y) | save
 /* RUN () RETURNS
 [1, "a", True, "b", False, None]
 ---
-allocated=13784‥19976/513‥726, peak=200‥3656
+allocated=13784‥19976/513‥726, peak=30‥1000
 $0 = *[]x0:$1
 $1 = *[]b0⸨0:b1; 1:False; 2:True; 3:None; 4:x0:String⸩
 */

@@ -43,6 +43,7 @@ import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.BuiltinMethod.BuiltinStatic;
 import org.retrolang.impl.BuiltinMethod.Caller;
 import org.retrolang.impl.BuiltinMethod.Continuation;
+import org.retrolang.impl.BuiltinMethod.DetachedContinuation;
 import org.retrolang.impl.BuiltinMethod.LoopContinuation;
 import org.retrolang.impl.BuiltinMethod.Saved;
 import org.retrolang.impl.Err.BuiltinException;
@@ -195,6 +196,9 @@ class BuiltinSupport {
     /** True if this method had a {@link BuiltinMethod.LoopContinuation} annotation. */
     final boolean isLoop;
 
+    /** True if this method had a {@link BuiltinMethod.DetachedContinuation} annotation. */
+    final boolean isDetached;
+
     /**
      * Each ContinuationMethod within a BuiltInMethod will have a distinct index; used as the {@link
      * CallSite#vIndex} for each Caller that uses this continuation.
@@ -212,6 +216,7 @@ class BuiltinSupport {
         String name,
         int order,
         boolean isLoop,
+        boolean isDetached,
         BuiltinEntry builtinEntry,
         String[] savedNames) {
       assert order == (short) order;
@@ -219,6 +224,7 @@ class BuiltinSupport {
       this.name = name;
       this.order = (short) order;
       this.isLoop = isLoop;
+      this.isDetached = isDetached;
       this.builtinEntry = builtinEntry;
       this.savedNames = savedNames;
     }
@@ -282,6 +288,9 @@ class BuiltinSupport {
      */
     private int loopIndex;
 
+    /** True if this method has any detached continuations. */
+    private boolean hasDetached;
+
     private ToIntFunction<Object[]> loopBounder;
 
     private int numExtraValueMemos;
@@ -307,6 +316,7 @@ class BuiltinSupport {
           ImmutableList.sortedCopyOf(Comparator.comparingInt(cm -> cm.order), cMethods);
       // Assign a distinct index to each ContinuationMethod, consistent with their ordering.
       int loopIndex = -1;
+      boolean hasDetached = false;
       for (int i = 0; i < cMethodsInOrder.size(); i++) {
         ContinuationMethod cMethod = cMethodsInOrder.get(i);
         cMethod.setIndex(i);
@@ -314,9 +324,12 @@ class BuiltinSupport {
           Preconditions.checkArgument(
               loopIndex < 0, "At most one @LoopContinuation allowed (%s)", where);
           loopIndex = i;
+        } else if (cMethod.isDetached) {
+          hasDetached = true;
         }
       }
       this.loopIndex = loopIndex;
+      this.hasDetached = hasDetached;
       this.cMethodsByName =
           cMethodsInOrder.stream().collect(ImmutableMap.toImmutableMap(cm -> cm.name, cm -> cm));
     }
@@ -1063,6 +1076,11 @@ class BuiltinSupport {
       String where = cName + "." + mName;
       Continuation annotation = m.getAnnotation(Continuation.class);
       LoopContinuation annotation2 = m.getAnnotation(LoopContinuation.class);
+      DetachedContinuation annotation3 = m.getAnnotation(DetachedContinuation.class);
+      int annotationCount =
+          (annotation == null ? 0 : 1)
+              + (annotation2 == null ? 0 : 1)
+              + (annotation3 == null ? 0 : 1);
       if (mName.equals("loopBound")) {
         Preconditions.checkArgument(
             Modifier.isStatic(m.getModifiers()), "Should be static (%s)", where);
@@ -1073,24 +1091,24 @@ class BuiltinSupport {
             params.length == 1 && params[0].equals(Object[].class),
             "Parameter type should be Object[] (%s)",
             where);
-        Preconditions.checkArgument(
-            annotation == null && annotation2 == null, "Should not be annotated (%s)", where);
+        Preconditions.checkArgument(annotationCount == 0, "Should not be annotated (%s)", where);
         m.setAccessible(true);
         @SuppressWarnings("unchecked")
         ToIntFunction<Object[]> bounder =
             MethodHandleProxies.asInterfaceInstance(ToIntFunction.class, Handle.forMethod(m));
         impl.setLoopBounder(bounder);
       }
-      if (annotation == null && annotation2 == null) {
+      if (annotationCount == 0) {
         continue;
       }
       Preconditions.checkArgument(
           continuationNames.add(mName), "Ambiguous continuation name %s", where);
       Preconditions.checkArgument(
-          annotation == null || annotation2 == null,
-          "@Continuation cannot also be a @LoopContinuation (%s)",
-          where);
-      int order = (annotation != null) ? annotation.order() : annotation2.order();
+          annotationCount == 1, "Multiple continuation annotations (%s)", where);
+      int order =
+          (annotation != null)
+              ? annotation.order()
+              : (annotation2 != null) ? annotation2.order() : annotation3.order();
       Prepared prepared = new Prepared(where, m, functions, impl);
       prepared.checkSignature(where, -1, signature.function.numResults, true);
       continuations.add(
@@ -1099,6 +1117,7 @@ class BuiltinSupport {
               mName,
               order,
               annotation2 != null,
+              annotation3 != null,
               prepared.builtinEntry,
               prepared.savedNames()));
     }

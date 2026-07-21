@@ -257,10 +257,15 @@ public abstract class ValueMemo implements ResultsInfo {
 
   /**
    * Coerces the given values and/or updates this ValueMemo to be consistent. Reads and writes the
-   * first {@link #size} elements of {@code values}.
+   * elements of {@code values} from {@code start} to {@link #size}-1.
    */
   @CanIgnoreReturnValue
-  Outcome harmonizeAll(TState tstate, Object[] values, boolean haveExtraLock) {
+  Outcome harmonizeAll(TState tstate, Object[] values, int start, boolean haveExtraLock) {
+    int size = size();
+    assert values.length >= size && start <= size;
+    if (start == size) {
+      return Outcome.NO_CHANGE_REQUIRED;
+    }
     ValueMemo vMemo = this;
     for (; ; ) {
       synchronized (vMemo) {
@@ -268,10 +273,8 @@ public abstract class ValueMemo implements ResultsInfo {
           vMemo = vMemo.forwardedTo;
           continue;
         }
-        int size = vMemo.size();
-        assert values.length >= size;
         Outcome outcome = Outcome.NO_CHANGE_REQUIRED;
-        for (int i = 0; i < size; i++) {
+        for (int i = start; i < size; i++) {
           Value v = (Value) values[i];
           TemplateBuilder builder = vMemo.getBuilder(i);
           Value harmonized = builder.cast(tstate, v);

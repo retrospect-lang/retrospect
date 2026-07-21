@@ -39,6 +39,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
 import org.retrolang.code.Loop;
+import org.retrolang.code.Register;
 import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.BuiltinMethod.BuiltinStatic;
 import org.retrolang.impl.BuiltinMethod.Caller;
@@ -305,6 +306,10 @@ class BuiltinSupport {
       return result;
     }
 
+    int numContinuations() {
+      return cMethodsInOrder.size();
+    }
+
     void setBuiltinEntry(BuiltinEntry builtinEntry) {
       assert this.builtinEntry == null;
       this.builtinEntry = builtinEntry;
@@ -363,9 +368,7 @@ class BuiltinSupport {
      */
     int extraValueMemoIndex() {
       // ExtraValueMemos are allocated after the ValueMemos that we create for each continuation.
-      int result = cMethodsInOrder.size() + numExtraValueMemos;
-      ++numExtraValueMemos;
-      return result;
+      return numContinuations() + numExtraValueMemos++;
     }
 
     /** Creates a VmMethod from this MethodImpl and adds it to signature.function. */
@@ -373,7 +376,7 @@ class BuiltinSupport {
       int numArgs = signature.function.numArgs;
       int numResults = signature.function.numResults;
       int numCallMemos = numCallers;
-      int numValueMemos = cMethodsInOrder.size() + numExtraValueMemos;
+      int numValueMemos = numContinuations() + numExtraValueMemos;
       MethodMemo.Factory memoFactory;
       if (hasLoop()) {
         memoFactory = new MethodMemo.LoopFactory(numArgs, numResults, numCallMemos, numValueMemos);
@@ -399,7 +402,7 @@ class BuiltinSupport {
     @Override
     public void emit(CodeGen codeGen, ResultsInfo results, MethodMemo mMemo, Object[] args) {
       createStackEntry(codeGen, builtinEntry, args, false);
-      if (cMethodsInOrder.isEmpty()) {
+      if (numContinuations() == 0) {
         builtinEntry.execute(codeGen.tstate(), results, mMemo, args);
       } else {
         emit(false, codeGen, results, mMemo, args);
@@ -426,7 +429,7 @@ class BuiltinSupport {
         next = 0;
       } else {
         ContinuationMethod loop = cMethodsInOrder.get(loopIndex);
-        Destination dest = emitState.getDestination(codeGen, loop);
+        Destination dest = emitState.getDestination(codeGen, loop, false);
         dest.forceFull(codeGen);
         // Value[] initialValues = Arrays.copyOf(args, loop.numArgs(), Value[].class);
         dest.addBranch(codeGen, (Value[]) args);
@@ -439,9 +442,8 @@ class BuiltinSupport {
       // LoopContinuation will be implemented as forward branches to an end-of-loop Destination;
       // this Runnable will emit the blocks needed at that Destination.
       Runnable emitLoopBack = null;
-      int n = cMethodsInOrder.size();
       for (; ; next++) {
-        if (next == n) {
+        if (next == numContinuations()) {
           if (unrolling && emitState.destinations[loopIndex] != null) {
             // We got to the end but we're unrolling a loop so back up and do it again
             if (loopBound > 0) {
@@ -458,15 +460,28 @@ class BuiltinSupport {
           // We should have emitted all the destinations we constructed, except possibly for the one
           // that emitLoopBack will take care of.
           boolean finalUnrolling = unrolling;
-          assert IntStream.range(0, n)
+          assert IntStream.range(0, emitState.destinations.length)
               .allMatch(
                   j -> emitState.destinations[j] == null || (j == loopIndex && !finalUnrolling));
           break;
         }
         ContinuationMethod cMethod = cMethodsInOrder.get(next);
-        Destination destination = emitState.destinations[next];
+        if (cMethod.isDetached) {
+          Destination unwindHandler = emitState.takeDestination(cMethod, true);
+          Value[] saved = (unwindHandler == null) ? null : unwindHandler.emit(codeGen);
+          if (saved != null) {
+            Value[] unwindArgs = new Value[cMethod.numArgs()];
+            System.arraycopy(saved, 0, unwindArgs, unwindArgs.length - saved.length, saved.length);
+            createStackEntry(codeGen, cMethod.builtinEntry, unwindArgs, false);
+            codeGen.setNewEscape(() -> codeGen.emitAssertionFailed("unwind handler"));
+            codeGen.setEmittingUnwindHandler(true);
+            codeGen.setPreferNewEscape();
+            cMethod.builtinEntry.execute(codeGen.tstate(), results, mMemo, unwindArgs);
+            assert codeGen.emittingUnwindStateIsCleared();
+          }
+        }
+        Destination destination = emitState.takeDestination(cMethod, false);
         Value[] destinationArgs = (destination == null) ? null : destination.emit(codeGen);
-        emitState.destinations[next] = null;
         if (destinationArgs == null) {
           // Continuation was never referenced or is unreachable.
           // This doesn't handle the case of a built-in that starts in the
@@ -500,7 +515,10 @@ class BuiltinSupport {
             int lastLoopRegister = destination.lastRegister();
             registers.setToRange(firstLoopRegister, lastLoopRegister);
             // We also have to include the stackRest, since it will be updated by any tracing.
-            registers.set(codeGen.currentCall().stackRest.index);
+            Register stackRest = codeGen.currentCall().stackRest();
+            if (stackRest != null) {
+              registers.set(stackRest.index);
+            }
             Loop loop = codeGen.cb.startLoop(registers.build());
             // Subsequent branches to this LoopContinuation should go to the loopBack code,
             // which we will emit after all the continuations.
@@ -525,7 +543,11 @@ class BuiltinSupport {
         }
         createStackEntry(
             codeGen, cMethod.builtinEntry, destinationArgs, cMethod.isLoop && !unrolling);
+        if (cMethod.isDetached) {
+          codeGen.setEmittingUnwindHandler(false);
+        }
         cMethod.builtinEntry.execute(codeGen.tstate(), results, mMemo, destinationArgs);
+        assert codeGen.emittingUnwindStateIsCleared();
       }
       if (emitLoopBack != null) {
         emitLoopBack.run();
@@ -544,6 +566,13 @@ class BuiltinSupport {
       if (entryType.isSingleton()) {
         stackEntry = entryType.asValue();
       } else {
+        if (args[0] == null) {
+          // Unwind handlers pass nulls, but CompoundValues can't contain nulls.
+          args = Arrays.copyOf(args, entryType.size());
+          for (int i = 0; i < args.length && args[i] == null; i++) {
+            args[i] = Core.UNDEF;
+          }
+        }
         stackEntry = codeGen.tstate().asCompoundValue(entryType, args);
       }
       codeGen.setCurrentBuiltinStep(stackEntry);
@@ -563,31 +592,62 @@ class BuiltinSupport {
     final BuiltinImpl impl;
 
     /** A MethodMemo for {@link #impl}. */
-    final MethodMemo memo;
+    final MethodMemo mMemo;
 
-    /** A (lazily-created) Destination for each of {@link #impl}'s continuations. */
+    /**
+     * A (lazily-created) Destination for each of {@link #impl}'s continuations.
+     *
+     * <p>If {@link #impl} has any detached continuations, we create Destinations for each; the
+     * first (at {@code destinations[cm.index]}) for successful completions and the second (at
+     * {@code destinations[cm.index + impl.numContinuations]}) for calls that unwind.
+     */
     private final Destination[] destinations;
 
-    EmitState(BuiltinImpl impl, MethodMemo memo) {
+    EmitState(BuiltinImpl impl, MethodMemo mMemo) {
       this.impl = impl;
-      this.memo = memo;
-      this.destinations = new Destination[impl.cMethodsInOrder.size()];
+      this.mMemo = mMemo;
+      int numDestinations = impl.numContinuations() << (impl.hasDetached ? 1 : 0);
+      this.destinations = new Destination[numDestinations];
+    }
+
+    /** Returns the index in {@link #destinations} corresponding to the given continuation. */
+    private int index(ContinuationMethod cm, boolean forDetached) {
+      return cm.index() + (forDetached ? impl.numContinuations() : 0);
     }
 
     /** Returns the Destination corresponding to the continuation with the given name. */
     Destination getDestination(CodeGen codeGen, String continuationName) {
-      return getDestination(codeGen, impl.continuation(continuationName));
+      return getDestination(codeGen, impl.continuation(continuationName), false);
     }
 
-    /** Returns the Destination corresponding to the given continuation. */
-    Destination getDestination(CodeGen codeGen, ContinuationMethod cm) {
-      int index = cm.index();
+    /**
+     * Returns the Destination corresponding to the given continuation, creating it if this is the
+     * first reference.
+     */
+    Destination getDestination(CodeGen codeGen, ContinuationMethod cm, boolean forDetached) {
+      int index = index(cm, forDetached);
       Destination result = destinations[index];
       if (result == null) {
-        result = Destination.fromValueMemo(cm.valueMemo(codeGen.tstate(), memo));
+        ValueMemo vMemo = cm.valueMemo(codeGen.tstate(), mMemo);
+        // If this Destination is for a detached continuation unwinding, it won't have values for
+        // the function results, only the @Saved arguments.
+        int start = forDetached ? cm.numArgs() - cm.savedNames.length : 0;
+        result = Destination.fromValueMemo(vMemo, start);
         destinations[index] = result;
       }
       return result;
+    }
+
+    /**
+     * Returns the Destination corresponding to the given continuation, or null if it was never
+     * created. Clears the entry in {@link #destinations} so that it can be reused (which only
+     * happens if we have unwound a loop).
+     */
+    Destination takeDestination(ContinuationMethod cm, boolean forDetached) {
+      int index = index(cm, forDetached);
+      Destination destination = destinations[index];
+      destinations[index] = null;
+      return destination;
     }
   }
 

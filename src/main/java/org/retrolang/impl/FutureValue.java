@@ -19,9 +19,13 @@ package org.retrolang.impl;
 import com.google.common.flogger.FluentLogger;
 import com.google.common.flogger.StackSize;
 import com.google.errorprone.annotations.concurrent.GuardedBy;
+import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import org.retrolang.code.CodeValue;
+import org.retrolang.code.Op;
+import org.retrolang.code.Register;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
@@ -66,6 +70,15 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
           ((FutureValue) entry.peekElement(0)).suspended(tstate, thread);
         }
       };
+
+  private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
+  private static final Op NEW_COMPLETED =
+      RcOp.forRcMethod(lookup, FutureValue.class, "newCompleted", Allocator.class, Value.class)
+          .build();
+
+  private static final Op NEW_FOR_TEST =
+      RcOp.forRcMethod(lookup, FutureValue.class, "newForTest", Allocator.class).build();
 
   /**
    * Creates a FutureValue that will be set by a non-Retrospect thread started on the first call to
@@ -131,16 +144,26 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
         if (!tstate.hasCodeGen()) {
           return newCompleted(tstate, result); // harmonizeResult(tstate, mMemo, result));
         } else {
-          throw new UnsupportedOperationException();
+          CodeGen codeGen = tstate.codeGen();
+          CodeValue fv =
+              NEW_COMPLETED.result(
+                  codeGen.tstateRegister(),
+                  StoreEmitter.toCodeValue(codeGen, RValue.toTemplate(result)));
+          return codeGen.toValue(codeGen.materialize(fv, FutureValue.class), FUTURE_TYPE);
         }
       }
       assert result == null;
       if (!tstate.hasCodeGen()) {
         return afterUnwind(tstate);
       } else {
-        throw new UnsupportedOperationException();
+        CodeGen codeGen = tstate.codeGen();
+        CodeValue fv = AFTER_UNWIND.result(codeGen.tstateRegister());
+        return codeGen.toValue(codeGen.materialize(fv, FutureValue.class), FUTURE_TYPE);
       }
     }
+
+    static final Op AFTER_UNWIND =
+        RcOp.forRcMethod(lookup, FutureMethod.class, "afterUnwind", TState.class).build();
 
     static FutureValue afterUnwind(TState tstate) {
       TStack tstack = tstate.takeUnwind();
@@ -159,7 +182,10 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     if (!tstate.hasCodeGen()) {
       return newForTest(tstate);
     } else {
-      throw new UnsupportedOperationException();
+      CodeGen codeGen = tstate.codeGen();
+      CodeValue result = NEW_FOR_TEST.result(codeGen.tstateRegister());
+      result = codeGen.materialize(result, Value.class);
+      return codeGen.toValue((Register) result, FUTURE_TYPE);
     }
   }
 
@@ -171,7 +197,24 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
         tstate.setResult(Value.addRef(result));
       }
     } else {
-      throw new UnsupportedOperationException();
+      CodeGen codeGen = tstate.codeGen();
+      CodeValue result =
+          codeGen.materialize(
+              DO_WAIT_FOR.result(codeGen.asCodeValue(future), codeGen.tstateRegister()),
+              Value.class);
+      Condition.isNull(result)
+          .test(
+              () -> {
+                CodeGen.CurrentCall call = codeGen.currentCall();
+                codeGen.emitSet(
+                    call.stackRest(), TState.TAKE_STACK_REST_OP.result(codeGen.tstateRegister()));
+                codeGen.cb.branchTo(call.handleUnwind());
+              },
+              () -> {
+                Template dst = results.result(TProperty.build(codeGen.newAllocator()));
+                StoreEmitter.store(codeGen, dst, result, codeGen.escapeLink());
+                tstate.setResult(RValue.fromTemplate(dst));
+              });
     }
   }
 
@@ -181,7 +224,15 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     if (future instanceof FutureValue fv) {
       Err.INVALID_ARGUMENT.unless(fv.setTest(tstate, result));
     } else {
-      throw new UnsupportedOperationException();
+      CodeGen codeGen = tstate.codeGen();
+      CodeValue success =
+          SET_TEST.result(
+              codeGen.asCodeValue(future),
+              codeGen.tstateRegister(),
+              StoreEmitter.toCodeValue(codeGen, RValue.toTemplate(result)));
+      success = codeGen.materialize(success, int.class);
+      codeGen.escapeUnless(Condition.isNonZero(success));
+      tstate.setResults();
     }
   }
 
@@ -248,6 +299,9 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     allocator.recordAlloc(this, OBJ_SIZE);
   }
 
+  static final Op SET_TEST =
+      RcOp.forRcMethod(lookup, FutureValue.class, "setTest", TState.class, Value.class).build();
+
   boolean setTest(TState tstate, @RC.In Value result) {
     return lambdaThread == null && setResult(tstate, result);
   }
@@ -300,6 +354,9 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
       logger.atWarning().withStackTrace(StackSize.MEDIUM).log("FutureValue already has a result");
     }
   }
+
+  static final Op DO_WAIT_FOR =
+      RcOp.forRcMethod(lookup, FutureValue.class, "doWaitFor", TState.class).build();
 
   /**
    * Returns a non-Err Value if this FutureValue has completed successfully. Returns null and starts

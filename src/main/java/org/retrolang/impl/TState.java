@@ -630,7 +630,7 @@ public final class TState extends MemoryHelper {
 
   /** True if the current computation is unwinding its stack. */
   boolean unwindStarted() {
-    return stackHead != null;
+    return hasCodeGen() ? codeGen.emittingUnwindHandler() : stackHead != null;
   }
 
   /**

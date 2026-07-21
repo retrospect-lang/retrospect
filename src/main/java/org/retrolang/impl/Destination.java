@@ -78,7 +78,15 @@ class Destination implements ResultsInfo {
 
   /** Returns a new Destination with one passed value for each element of the given ValueMemo. */
   static Destination fromValueMemo(ValueMemo vMemo) {
-    return new Destination((vMemo.size() == 0) ? TRIVIAL : new FromValueMemo(vMemo));
+    return fromValueMemo(vMemo, 0);
+  }
+
+  /**
+   * Returns a new Destination with one passed value for each element of the given ValueMemo
+   * beginning with {@code start}.
+   */
+  static Destination fromValueMemo(ValueMemo vMemo, int start) {
+    return new Destination((vMemo.size() == start) ? TRIVIAL : new FromValueMemo(vMemo, start));
   }
 
   /** Returns a new Destination with one passed value for each of the given templates. */
@@ -385,19 +393,21 @@ class Destination implements ResultsInfo {
   /** A Simple state for Destinations created by {@link #fromValueMemo}. */
   private static class FromValueMemo extends Simple {
     private final ValueMemo vMemo;
+    final int start;
 
-    FromValueMemo(ValueMemo vMemo) {
+    FromValueMemo(ValueMemo vMemo, int start) {
       this.vMemo = vMemo;
+      this.start = start;
     }
 
     @Override
     int size() {
-      return vMemo.size();
+      return vMemo.size() - start;
     }
 
     @Override
     public <T> T result(int resultNum, TProperty<T> property) {
-      return vMemo.result(resultNum, property);
+      return vMemo.result(resultNum + start, property);
     }
   }
 

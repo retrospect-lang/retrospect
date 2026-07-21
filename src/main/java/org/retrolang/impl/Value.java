@@ -30,6 +30,9 @@ import org.retrolang.util.ArrayUtil;
  * should Values be used as keys in a hashtable.
  */
 public interface Value {
+
+  Op BASE_TYPE = RcOp.forRcMethod(Value.class, "baseType").build();
+
   /**
    * Every Value has a BaseType. If this is a Retrospect-language value it will be a BaseType.Named.
    */
@@ -53,6 +56,8 @@ public interface Value {
   default Value element(int index) {
     throw new AssertionError();
   }
+
+  Op PEEK_ELEMENT = RcOp.forRcMethod(Value.class, "peekElement", int.class).build();
 
   /**
    * Returns the specified component or array element, <i>not</i> reference-counted and possibly
@@ -108,7 +113,7 @@ public interface Value {
   }
 
   @CanIgnoreReturnValue
-  public static Value addRef(Value v) {
+  static Value addRef(Value v) {
     RefCounted.addRef(v);
     return v;
   }
@@ -122,6 +127,8 @@ public interface Value {
     // Actually transient values will override this default.
     return addRef(this);
   }
+
+  Op LAYOUT = RcOp.forRcMethod(Value.class, "layout").build();
 
   /** If this Value is represented by a Frame, returns its layout; otherwise returns null. */
   default FrameLayout layout() {

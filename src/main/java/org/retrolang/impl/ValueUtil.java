@@ -692,7 +692,7 @@ public class ValueUtil {
     if (preChecked) {
       CodeGen codeGen = tstate.codeGen();
       prevEscape = codeGen.escapeState();
-      codeGen.setNewEscape(codeGen::emitAssertionFailed);
+      codeGen.setNewEscape(() -> codeGen.emitAssertionFailed("insertElements"));
     }
     for (int i = 0; i < newElements.length; i++) {
       Value pos = NumValue.of(i, Allocator.TRANSIENT);

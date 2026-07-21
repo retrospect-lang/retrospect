@@ -519,7 +519,7 @@ class CodeGenTarget {
 
     // Eventually we'll return, but we may need to do some fixups first
     FutureBlock exit =
-        codeGen.addAtEnd(() -> new ReturnBlock(null).addTo(codeGen.cb), /* isEscape= */ false);
+        codeGen.atEnd.add(() -> new ReturnBlock(null).addTo(codeGen.cb), /* isEscape= */ false);
 
     if (this.results == latest.results) {
       // No result fixups needed
@@ -593,7 +593,8 @@ class CodeGenTarget {
     // Even though the testEmitter call above should have caught any possible failures, this plan
     // may repeat some of those tests.  They can't fail, but we still need to tell the JVM what
     // to do if they did; `throw new AssertionError()` seems appropriate.
-    FutureBlock unreachable = codeGen.addAtEnd(codeGen::emitAssertionFailed, /* isEscape= */ true);
+    FutureBlock unreachable =
+        codeGen.atEnd.add(() -> codeGen.emitAssertionFailed("emitWrapper"), /* isEscape= */ true);
     for (CopyPlan plan : resultPlans) {
       saveEmitter.emit(codeGen, plan, unreachable);
     }

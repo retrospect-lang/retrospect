@@ -439,7 +439,7 @@ class BuiltinSupport {
             // the meantime we need to emit something here.
             emitState.destinations[loopIndex].emit(codeGen);
             emitState.destinations[loopIndex] = null;
-            codeGen.emitAssertionFailed();
+            codeGen.emitAssertionFailed("loop unrolled");
           }
           // We should have emitted all the destinations we constructed, except possibly for the one
           // that emitLoopBack will take care of.

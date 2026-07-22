@@ -435,17 +435,8 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   @Override
   public void threadDone(TState tstate, @RC.In Value result, @RC.In TStack errorStack) {
     if (errorStack != null) {
-      // Convert the TStack into an "Error while computing future" error
       assert result == null;
-      int size = (int) errorStack.stream().count() - 1;
-      Object[] entries = tstate.allocObjectArray(size);
-      int i = 0;
-      for (TStack entry = errorStack; entry != TStack.BASE; entry = entry.rest()) {
-        entries[i++] = Value.addRef(entry.first());
-      }
-      assert i == size;
-      tstate.dropReference(errorStack);
-      result = tstate.compound(Err.FUTURE_ERROR, tstate.asArrayValue(entries, size));
+      result = stackAsValue(tstate, errorStack);
     }
     checkOK(setResult(tstate, result));
   }

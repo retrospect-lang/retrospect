@@ -231,7 +231,7 @@ return -4..10 | filter(-> # % 3 != 0) | saveSequential
 /* RUN () RETURNS
 [-4, -2, -1, 1, 2, 4, 5, 7, 8, 10]
 ---
-allocated=6960/254, peak=88
+allocated=4904/178, peak=88
 $0 = *[]i0
 */
 
@@ -456,7 +456,7 @@ function test(i, shortResult) {
 /* RUN () RETURNS
 [4, 5]
 ---
-allocated=30760/1214, peak=56
+allocated=25936/906, peak=56
 $0 = *[]b0
 */
 

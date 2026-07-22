@@ -94,6 +94,8 @@ public class VirtualMachineTest {
           \n\
           """);
 
+  static boolean CODEGEN_ALL = true;
+
   @Rule public final Expect expect = Expect.create();
 
   @Before
@@ -141,9 +143,10 @@ public class VirtualMachineTest {
             CharStreams.fromString(testProgram.code()), testProgram.name(), vm, module, argNames);
     module.build();
     TestMonitor monitor = null;
-    if (codeGen.isPresent()) {
+    if (codeGen.isPresent() || CODEGEN_ALL) {
       CodeGenManager codeGenManager = vm.scope.codeGenManager;
-      codeGenManager.setThresholds(2 * codeGen.get(), codeGen.get());
+      int threshold = codeGen.orElse(5);
+      codeGenManager.setThresholds(2 * threshold, threshold);
       codeGenManager.enableCodeGenDebugging();
       monitor = new TestMonitor(true);
       codeGenManager.setMonitor(monitor);
@@ -159,7 +162,7 @@ public class VirtualMachineTest {
     try (Vm.Value result = insts.applyToArgs(tracker, argValues)) {
       waitForThreadCompletion();
       // Executed without errors, so make sure we got what we expected
-      resultOrError = result.toString();
+      resultOrError = cleanValue(result.toString());
       System.out.println("result: " + resultOrError);
       // Save and log any traces now (they can be useful for debugging failed tests), but delay
       // checking them until we've checked the result (since if the result is wrong that's the
@@ -188,9 +191,13 @@ public class VirtualMachineTest {
         .that(cleanLines(traces))
         .isEqualTo(cleanLines(expectedTraces));
     String codeGenLog = null;
-    if (codeGen.isPresent()) {
+    if (codeGen.isPresent() || CODEGEN_ALL) {
       codeGenLog = vm.scope.codeGenDebugging().takeLog();
-      expect.that(codeGenLog).isEqualTo(expectedCodeGen.trim());
+      if (codeGen.isPresent()) {
+        expect.that(codeGenLog).isEqualTo(expectedCodeGen.trim());
+      } else {
+        System.out.println(codeGenLog);
+      }
     }
     // Now everything should have been released
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
@@ -205,7 +212,7 @@ public class VirtualMachineTest {
       if (!traces.isEmpty()) {
         newTest += traces + "---\n";
       }
-      if (codeGenLog != null) {
+      if (codeGen.isPresent()) {
         newTest += codeGenLog + "\n---\n";
       }
       if (NUMERIC_RANGE.matcher(expectedResources).find()) {

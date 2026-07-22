@@ -45,7 +45,7 @@ function findRootInternal(f, x0, x1, eps) {
 /* RUN () RETURNS
 {discontinuous: None, outOfBounds: None, root1: 1.4142136573791504, root2: -1.4142136573791504}
 ---
-allocated=55088/2105, peak=104
+allocated=29120/1031, peak=104
 */
 
 // Find roots by bisection.
@@ -94,5 +94,5 @@ function findRoot(f, xMin, xMax, eps) {
 /* RUN () RETURNS
 {discontinuous: None, outOfBounds: None, root1: 1.4142136573791504, root2: -1.4142136573791504}
 ---
-allocated=67600/2625, peak=104
+allocated=25432/988, peak=104
 */

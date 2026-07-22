@@ -171,7 +171,7 @@ public interface PtrInfo extends ValueInfo {
     } else {
       // We can get here due to unions, or possibly because FrameLayouts are evolving while we
       // generate code.
-      throw new UnsupportedOperationException();
+      return ValueInfo.ANY;
     }
   }
 

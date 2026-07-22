@@ -24,6 +24,6 @@ return counts
 /* RUN (n=0) RETURNS
 []
 ---
-allocated=20000‥320000/900‥16000, peak=0
+allocated=12000‥35000/500‥1300, peak=0
 $0 = *[]b0
 */

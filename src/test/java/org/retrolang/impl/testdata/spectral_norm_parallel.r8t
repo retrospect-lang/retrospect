@@ -43,7 +43,7 @@ function multiply_A_At(v) = multiply_At(multiply_A(v))
 /* RUN (n=100) RETURNS
 1.2742199912349306
 ---
-allocated=520000000‥600000000/20200000‥21000000, peak=14720‥32000
+allocated=7000000‥10000000/260000‥400000, peak=7000‥30000
 $0 = *[]d0
 $1 = *[]x0:Future
 $2 = *[]d0

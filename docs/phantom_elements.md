@@ -22,7 +22,7 @@ Each of a frame's elements are represented by a combination of bytes
 element's bytes may have arbitrary values, but all of its pointers are expected
 to be null.
 
-[FrameLayout]: ../src/main/org/retrolang/impl/FrameLayout.java
+[FrameLayout]: ../src/main/java/org/retrolang/impl/FrameLayout.java
 
 ## Frame Replacement
 

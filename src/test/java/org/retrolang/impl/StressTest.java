@@ -40,11 +40,15 @@ public class StressTest {
    * will force an upgrade to int32 rather than uint8.)
    */
   private static final String CODE =
-      "others = [index, \"a\", True, \"b\", False, None]\n"
-          + "x = newMatrix([8], []); x[1] = [0]\n"
-          + "y = others | z -> future(-> replaceElement(x[1], [1], z))"
-          + " | f -> future(-> waitFor(f)[1]) | save\n"
-          + "return waitFor(^y) | save";
+      """
+      others = [index, "a", True, "b", False, None]
+      x = newMatrix([8], [])
+      x[1] = [0]
+      y = others | z -> future(-> replaceElement(x[1], [1], z))
+                 | f -> future(-> waitFor(f)[1])
+                 | save
+      return waitFor(^y) | save
+      """;
 
   /**
    * The expected result of {@link #CODE}. This is a format string with one parameter, the value of

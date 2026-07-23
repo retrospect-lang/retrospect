@@ -19,6 +19,7 @@ package org.retrolang.impl;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.function.IntFunction;
@@ -805,7 +806,22 @@ abstract class Instruction {
                   .map(x -> toString(x))
                   .collect(Collectors.joining(", ", "", " = "));
         } else {
-          lhs = valueMemo.toString(i -> toString(outputs[i]) + ":") + " = ";
+          List<String> prefixes = new ArrayList<>();
+          int skipped = 0;
+          for (Local output : outputs) {
+            if (output == null) {
+              ++skipped;
+            } else {
+              prefixes.add("_, ".repeat(skipped) + output + ":");
+              skipped = 0;
+            }
+          }
+          StringBuilder sb = new StringBuilder();
+          sb.append(valueMemo.toString(prefixes::get));
+          if (skipped != 0) {
+            sb.insert(sb.length() - 1, ", _".repeat(skipped));
+          }
+          lhs = sb.append(" = ").toString();
         }
       }
       String args =

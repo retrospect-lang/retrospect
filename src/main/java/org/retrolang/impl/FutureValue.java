@@ -126,7 +126,6 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
 
   static class FutureMethod extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt").detach();
-    static final ExtraValueMemo resultMemo = new ExtraValueMemo(1);
 
     @Core.Method("future(Lambda)")
     static void begin(TState tstate, @RC.In Value lambda) {

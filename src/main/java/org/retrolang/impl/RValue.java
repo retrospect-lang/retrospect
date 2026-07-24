@@ -337,9 +337,7 @@ public class RValue implements Value {
     /** Returns a SafeExplorer for an RValue with the given Template. */
     static SafeExplorer exploreTemplate(Template t) {
       // If t is RefVar with a RecordLayout, we want the template of that RecordLayout instead
-      if (t instanceof RefVar.ForFrame rv
-          && rv.baseType().isCompositional()
-          && rv.frameLayout() instanceof RecordLayout layout) {
+      if (t instanceof RefVar.ForFrame rv && rv.frameLayout() instanceof RecordLayout layout) {
         t = layout.template;
       }
       assert !Template.isConstant(t);

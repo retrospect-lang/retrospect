@@ -147,8 +147,8 @@ public interface PtrInfo extends ValueInfo {
       if (v instanceof Frame) {
         return v.layout();
       }
-      assert !(v.baseType().isCompositional() || v.baseType().isArray());
-      return v.baseType();
+      BaseType.NonCompositional baseType = (BaseType.NonCompositional) v.baseType();
+      return baseType.ptrInfo;
     } else {
       assert ptrInfo instanceof FrameLayout;
       return ptrInfo;
@@ -156,11 +156,12 @@ public interface PtrInfo extends ValueInfo {
   }
 
   private static ValueInfo unionSameOrder(ValueInfo info1, ValueInfo info2) {
-    // Const and IsNotShared override equals(), for everything else this is an == check
-    if (info1.equals(info2) || info1 instanceof BaseType) {
+    if (info1.equals(info2)) {
       return info1;
-    } else if (info2 instanceof BaseType) {
-      return info2;
+    } else if (info1 instanceof NonCompositional nc) {
+      return nc.unionSameOrder(info2);
+    } else if (info2 instanceof NonCompositional nc) {
+      return nc.unionSameOrder(info1);
     }
     info1 = widen(info1);
     info2 = widen(info2);
@@ -175,6 +176,41 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
+  /**
+   * A PtrInfo indicating that the pointer is a reference to an instance of a specified {@link
+   * BaseType.NonCompositional}; may optionally identify a subset of those instances.
+   */
+  record NonCompositional(BaseType.NonCompositional baseType) implements PtrInfo {
+
+    @Override
+    public boolean containsValue(Object value) {
+      Value v = (Value) value;
+      if (v == null) {
+        return true;
+      }
+      return v.baseType() == baseType;
+    }
+
+    @Override
+    public ValueInfo unionConst(Const constInfo) {
+      Value v = (Value) constInfo.value;
+      if (v != null && v.baseType() != baseType) {
+        return ValueInfo.ANY;
+      } else {
+        return unionSameOrder(constInfo);
+      }
+    }
+
+    public NonCompositional unionSameOrder(ValueInfo info) {
+      return this;
+    }
+
+    @Override
+    public String toString() {
+      return baseType.toString();
+    }
+  }
+
   /** Returns true if the given ValueInfo implies that the value is unshared. */
   public static boolean isUnshared(ValueInfo info) {
     return info instanceof IsNotShared;
@@ -184,12 +220,7 @@ public interface PtrInfo extends ValueInfo {
    * A PtrInfo indicating that the pointer is a reference to a Frame with the given layout and for
    * which {@link RefCounted#isNotShared()} returns true.
    */
-  class IsNotShared implements PtrInfo {
-    final FrameLayout layout;
-
-    IsNotShared(FrameLayout layout) {
-      this.layout = layout;
-    }
+  record IsNotShared(FrameLayout layout) implements PtrInfo {
 
     @Override
     public BaseType baseType() {
@@ -203,12 +234,9 @@ public interface PtrInfo extends ValueInfo {
     }
 
     @Override
-    public ValueInfo unionConst(CodeValue.Const constInfo) {
+    public ValueInfo unionConst(Const constInfo) {
       return layout.unionConst(constInfo);
     }
-
-    // We create a single canonical IsNotShared instance for each FrameLayout, so we don't need to
-    // implement equals()
 
     @Override
     public String toString() {
@@ -223,7 +251,7 @@ public interface PtrInfo extends ValueInfo {
   static class TestClass extends TestBlock {
     final BaseType.NonCompositional baseType;
 
-    /** If baseType is null, test for Frame; otherwise test for the corresponding java type.. */
+    /** If baseType is null, test for Frame; otherwise test for the corresponding java type. */
     TestClass(CodeValue value, BaseType.NonCompositional baseType) {
       super(value, null);
       assert baseType == null || baseType.javaType != null;
@@ -253,14 +281,14 @@ public interface PtrInfo extends ValueInfo {
       assert info2 == null;
       if (value1 instanceof Register r) {
         if (baseType != null) {
-          next.info.updateInfo(r, baseType);
+          next.info.updateInfo(r, baseType.ptrInfo);
         }
       }
     }
 
     @Override
     public ConditionalBranch emitTest(Emitter emitter) {
-      Class<?> type = (baseType == null) ? Frame.class : baseType.javaType;
+      Class<? extends Value> type = (baseType == null) ? Frame.class : baseType.javaType;
       value1.push(emitter, Object.class);
       emitter.mv.visitTypeInsn(Opcodes.INSTANCEOF, org.objectweb.asm.Type.getInternalName(type));
       return ConditionalBranch.IFNE;

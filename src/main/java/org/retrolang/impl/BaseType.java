@@ -19,8 +19,6 @@ package org.retrolang.impl;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.IntFunction;
 import org.retrolang.Vm;
-import org.retrolang.code.CodeValue;
-import org.retrolang.code.ValueInfo;
 import org.retrolang.util.StringUtil;
 
 /**
@@ -34,7 +32,7 @@ import org.retrolang.util.StringUtil;
  * indicating that it points to a Value with this BaseType (if {@link #usesFrames} is false), or
  * that it points to a Frame whose BaseType has the same sortOrder (if {@link #usesFrames} is true).
  */
-public abstract class BaseType implements PtrInfo {
+public abstract class BaseType {
 
   /**
    * The size of a BaseType is
@@ -217,27 +215,7 @@ public abstract class BaseType implements PtrInfo {
     return CompoundValue.of(Allocator.UNCOUNTED, this, elements);
   }
 
-  // PtrInfo methods
-  @Override
   public BaseType baseType() {
-    return this;
-  }
-
-  @Override
-  public boolean containsValue(Object value) {
-    assert !isSingleton();
-    return value == null || ((Value) value).baseType().sortOrder == sortOrder;
-  }
-
-  @Override
-  public ValueInfo unionConst(CodeValue.Const constInfo) {
-    assert !isSingleton();
-    return PtrInfo.union(this, constInfo);
-  }
-
-  @Override
-  public ValueInfo removeConst(CodeValue.Const constInfo) {
-    assert !isSingleton();
     return this;
   }
 
@@ -286,29 +264,29 @@ public abstract class BaseType implements PtrInfo {
 
   /** A subclass for non-compositional BaseTypes that provide their own Value implementation. */
   public static class NonCompositional extends Named {
-
-    /**
-     * A RefVar template with this base type.
-     *
-     * <p>Null for {@link Core#VARRAY}, since RefVars with that base type must also specify a
-     * FrameLayout.
-     */
+    /** A RefVar template with this base type. */
     final Template.RefVar asRefVar;
 
-    final Class<?> javaType;
+    final Class<? extends Value> javaType;
+
+    /** A PtrInfo indicating that the register's value is an instance of this baseType. */
+    final PtrInfo.NonCompositional ptrInfo;
 
     NonCompositional(
-        VmModule module, String name, Class<?> javaType, long sortOrder, Vm.Type... superTypes) {
+        VmModule module,
+        String name,
+        Class<? extends Value> javaType,
+        long sortOrder,
+        Vm.Type... superTypes) {
       super(module, name, -1, sortOrder, superTypes);
-      assert (sortOrder == SORT_ORDER_ARRAY)
-          ? javaType == null
-          : Value.class.isAssignableFrom(javaType);
+      assert Value.class.isAssignableFrom(javaType);
       this.javaType = javaType;
-      asRefVar = (sortOrder == SORT_ORDER_ARRAY) ? null : new Template.RefVar(0, this);
+      asRefVar = new Template.RefVar(0, this);
+      ptrInfo = new PtrInfo.NonCompositional(this);
     }
 
     public NonCompositional(
-        VmModule module, String name, Class<?> javaType, Vm.Type... superTypes) {
+        VmModule module, String name, Class<? extends Value> javaType, Vm.Type... superTypes) {
       this(module, name, javaType, ALLOC_NEW_SORT_ORDER, superTypes);
     }
   }
@@ -335,9 +313,10 @@ public abstract class BaseType implements PtrInfo {
     }
 
     /**
-     * Should only be called if {@link #called} is non-null, with an {@code entry} whose baseType is
-     * {@code this}. Resumes the in-progress computation using the return values in {@code tstate}.
-     * Returns with either results in tstate or an unwind in progress.
+     * Should only be called on non-Err StackEntryTypes, with an {@code entry} whose baseType is
+     * {@code this}; resumes the in-progress computation. If {@link #called} is non-null, the called
+     * function's return values must be in {@code tstate}. Returns with either results in tstate or
+     * an unwind in progress.
      *
      * <p>{@code results} and {@code mMemo} are the same arguments that were passed to the
      * interrupted {@link MethodImpl#execute} call.

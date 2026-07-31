@@ -237,6 +237,18 @@ public class MethodMemo {
     }
   }
 
+  /** A Factory that creates instances of {@link Extended}. */
+  static class ExtendedFactory extends Factory {
+    ExtendedFactory(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
+      super(numArgs, numResults, numCallMemos, numValueMemos);
+    }
+
+    @Override
+    MethodMemo newMemo(MemoMerger.PerMethod perMethod) {
+      return new Extended(perMethod, this);
+    }
+  }
+
   /** A Factory that creates instances of {@link LoopMethodMemo}. */
   static class LoopFactory extends Factory {
     LoopFactory(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
@@ -834,13 +846,6 @@ public class MethodMemo {
     valueMemos = null;
     callMemos = null;
     extra = null;
-    if (this instanceof LoopMethodMemo lmm) {
-      CodeGenLink link = lmm.loopCodeGen;
-      if (link != null) {
-        link.setForwardedTo(
-            LoopMethodMemo.lockedRequireCodeGenLink(other, merger.scope.codeGenDebugging()));
-      }
-    }
   }
 
   /**
@@ -906,8 +911,64 @@ public class MethodMemo {
     return String.format("%smMemo%s@%s", prefix, suffix, StringUtil.id(this));
   }
 
+  /**
+   * MethodMemo extensions must implement {@code Extension}, enabling values that were set
+   * independently to be combined.
+   */
+  public interface Extension {
+    Extension combine(Extension other);
+  }
+
+  /**
+   * An Extended MethodMemo has an extra field that is available for the method implementation's
+   * use.
+   */
+  public static class Extended extends MethodMemo {
+    private volatile Extension extension;
+
+    Extended(MemoMerger.PerMethod perMethod, Factory factory) {
+      super(perMethod, factory);
+    }
+
+    /** Returns the current value of this memo's extra field. */
+    public Extension getExtension() {
+      return extension;
+    }
+
+    /**
+     * Updates the value of this memo's extra field. If its current value is {@code previous}, it will be
+     * replaced; otherwise (assuming a race with some other thread setting it) the current value
+     * will be combined with the new value.
+     */
+    public void setExtension(TState tstate, Extension updated, Extension previous) {
+      if (updated != previous) {
+        synchronized (tstate.scope().memoMerger) {
+          Extended memo = (Extended) resolve();
+          if (memo.extension == previous || memo.extension == null) {
+            memo.extension = updated;
+          } else {
+            memo.extension = updated.combine(memo.extension);
+          }
+        }
+      }
+    }
+
+    @Override
+    void mergeInto(MethodMemo other, MemoMerger merger) {
+      super.mergeInto(other, merger);
+      if (extension != null) {
+        Extended otherExt = (Extended) other;
+        if (otherExt.extension == null) {
+          otherExt.extension = extension;
+        } else if (otherExt.extension != extension) {
+          otherExt.extension = extension.combine(otherExt.extension);
+        }
+      }
+    }
+  }
+
   /** A subclass of MethodMemo used for built-in methods with a LoopContinuation. */
-  static class LoopMethodMemo extends MethodMemo {
+  static class LoopMethodMemo extends Extended {
     /**
      * A link that will generate code for the loop part of this method, i.e. starting at the
      * LoopContinuation. Lazily created the first time we encounter a back branch to the
@@ -934,7 +995,8 @@ public class MethodMemo {
     void requireLoopCodeGen(TState tstate) {
       if (loopCodeGen == null) {
         synchronized (tstate.scope().memoMerger) {
-          var unused = lockedRequireCodeGenLink(this, tstate.codeGenDebugging);
+          var unused =
+              lockedRequireCodeGenLink((LoopMethodMemo) resolve(), tstate.codeGenDebugging);
         }
       }
     }
@@ -943,8 +1005,8 @@ public class MethodMemo {
      * Returns the CodeGenLink for a LoopMethodMemo, creating it if needed. Should only be called
      * with the MemoMerger locked.
      */
-    private static CodeGenLink lockedRequireCodeGenLink(MethodMemo mm, CodeGenDebugging debugging) {
-      LoopMethodMemo loop = (LoopMethodMemo) mm.resolve();
+    private static CodeGenLink lockedRequireCodeGenLink(
+        LoopMethodMemo loop, CodeGenDebugging debugging) {
       if (loop.loopCodeGen != null) {
         return loop.loopCodeGen;
       }
@@ -957,6 +1019,15 @@ public class MethodMemo {
       CodeGenParent newParentLink = parent.invalidateSelfLink(debugging);
       result.setCgParent(newParentLink);
       return result;
+    }
+
+    @Override
+    void mergeInto(MethodMemo other, MemoMerger merger) {
+      super.mergeInto(other, merger);
+      if (loopCodeGen != null) {
+        loopCodeGen.setForwardedTo(
+            lockedRequireCodeGenLink((LoopMethodMemo) other, merger.scope.codeGenDebugging()));
+      }
     }
   }
 }

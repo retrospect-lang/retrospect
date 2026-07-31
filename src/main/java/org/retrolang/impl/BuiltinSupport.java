@@ -289,6 +289,9 @@ class BuiltinSupport {
      */
     private int loopIndex;
 
+    /** True if any of this method's entries expect a {@link MethodMemo.Extended}. */
+    private boolean needsExtendedMethodMemo;
+
     /** True if this method has any detached continuations. */
     private boolean hasDetached;
 
@@ -362,6 +365,10 @@ class BuiltinSupport {
       return numCallers++;
     }
 
+    void setNeedsExtendedMethodMemo() {
+      needsExtendedMethodMemo = true;
+    }
+
     /**
      * Returns a distinct ExtraValueMemo index each time it is called. Must be called after {@link
      * #setContinuations}.
@@ -380,6 +387,9 @@ class BuiltinSupport {
       MethodMemo.Factory memoFactory;
       if (hasLoop()) {
         memoFactory = new MethodMemo.LoopFactory(numArgs, numResults, numCallMemos, numValueMemos);
+      } else if (needsExtendedMethodMemo) {
+        memoFactory =
+            new MethodMemo.ExtendedFactory(numArgs, numResults, numCallMemos, numValueMemos);
       } else {
         memoFactory = MethodMemo.Factory.create(numArgs, numResults, numCallMemos, numValueMemos);
       }
@@ -841,6 +851,7 @@ class BuiltinSupport {
       boolean hasTState = false;
       boolean hasResultsInfo = false;
       boolean hasMethodMemo = false;
+      boolean needsExtendedMethodMemo = false;
       int numCallers = 0;
       int numValues = 0;
       int valueStart = -1;
@@ -881,9 +892,12 @@ class BuiltinSupport {
             hasResultsInfo = true;
             continue;
           }
-        } else if (type == MethodMemo.class) {
+        } else if (type == MethodMemo.class || type == MethodMemo.Extended.class) {
           if (valueStart < 0 && !hasMethodMemo) {
             hasMethodMemo = true;
+            if (type == MethodMemo.Extended.class) {
+              needsExtendedMethodMemo = true;
+            }
             continue;
           }
         } else if (type == Value.class) {
@@ -969,6 +983,10 @@ class BuiltinSupport {
       // If the method returns its value, add a call to tstate.setResult()
       if (m.getReturnType() == Value.class) {
         mh = sequence(mh, CHECK_FOR_RESULT);
+      }
+      if (needsExtendedMethodMemo) {
+        mh = MethodHandles.explicitCastArguments(mh, EXEC_TYPE);
+        impl.setNeedsExtendedMethodMemo();
       }
       // Now we should have method handle of the right type.
       assert mh.type().equals(EXEC_TYPE);

@@ -209,7 +209,7 @@ class CodeGenTarget {
 
   /** Returns the current value of {@link #callCount}. */
   int callCount() {
-    return (int) CALL_COUNT_VAR.getOpaque(this);
+    return (int) CALL_COUNT_VAR.getVolatile(this);
   }
 
   /** Returns the current value of {@link #entryCount}. */

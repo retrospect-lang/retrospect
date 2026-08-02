@@ -126,10 +126,10 @@ public abstract class Condition {
 
   /** Returns {@code ifTrue} if this Condition is true, {@code ifFalse} if it is not. */
   public Value choose(Value ifTrueValue, Value ifFalseValue) {
-    return new ConditionalValue(this, () -> ifTrueValue, () -> ifFalseValue) {
+    return new ConditionalValue.Simple(this, () -> ifTrueValue, () -> ifFalseValue) {
       @Override
       public Condition isa(VmType type) {
-        // Implementing Value.isa(VmType) enables us to method resolution if one of these is passed
+        // Implementing Value.isa(VmType) enables method resolution if one of these is passed
         // as a function argument.
         return Condition.this.ternary(ifTrueValue.isa(type), ifFalseValue.isa(type));
       }
@@ -138,12 +138,12 @@ public abstract class Condition {
 
   /** Returns {@code ifTrue.get()} if this Condition is true, {@code ifFalse.get()} if it is not. */
   public Value choose(Supplier<Value> ifTrue, Supplier<Value> ifFalse) {
-    return new ConditionalValue(this, ifTrue::get, ifFalse::get);
+    return new ConditionalValue.Simple(this, ifTrue::get, ifFalse::get);
   }
 
   /** Returns {@code ifTrue.get()} if this Condition is true, {@code ifFalse.get()} if it is not. */
   public Value chooseExcept(ValueSupplier ifTrue, ValueSupplier ifFalse) throws BuiltinException {
-    return new ConditionalValue(this, ifTrue, ifFalse);
+    return new ConditionalValue.Simple(this, ifTrue, ifFalse);
   }
 
   /**
@@ -334,6 +334,16 @@ public abstract class Condition {
       return Condition.of(v1.lValue() < v2.lValue());
     }
     return fromTest(() -> new IsLessThan(OpCodeType.LONG, v1, v2));
+  }
+
+  /**
+   * Returns a Condition that is true if {@code v1} and {@code v2} are equal; both must be numeric.
+   */
+  public static Condition doubleEq(CodeValue v1, CodeValue v2) {
+    if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {
+      return Condition.of(v1.dValue() == v2.dValue());
+    }
+    return fromTest(() -> new IsEq(OpCodeType.DOUBLE, v1, v2));
   }
 
   /** Returns a Condition that is true if {@code v} is null. */

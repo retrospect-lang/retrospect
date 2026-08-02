@@ -17,6 +17,8 @@
 package org.retrolang.impl;
 
 import java.util.function.Function;
+import org.retrolang.code.CodeValue;
+import org.retrolang.code.Register;
 import org.retrolang.impl.Condition.ValueSupplier;
 
 /**
@@ -24,22 +26,7 @@ import org.retrolang.impl.Condition.ValueSupplier;
  * ConditionalValue can be used with setResults(), startCall()/saving(), or jump(), but almost
  * nowhere else.
  */
-public class ConditionalValue implements Value {
-
-  final Condition condition;
-  final ValueSupplier ifTrue;
-  final ValueSupplier ifFalse;
-
-  ConditionalValue(Condition condition, ValueSupplier ifTrue, ValueSupplier ifFalse) {
-    this.condition = condition;
-    this.ifTrue = ifTrue;
-    this.ifFalse = ifFalse;
-  }
-
-  @Override
-  public BaseType baseType() {
-    throw new AssertionError();
-  }
+public abstract class ConditionalValue implements Value {
 
   /**
    * Converts a ConditionalValue to an RValue, by allocating registers to match the given template
@@ -65,15 +52,111 @@ public class ConditionalValue implements Value {
    * Emits blocks to set the registers in {@code dst} (whose indices must be in the range {@code
    * registerStart..registerEnd}) from this ConditionalValue.
    */
-  void emitStore(CodeGen codeGen, Template dst, int registerStart, int registerEnd) {
-    condition.test(
-        () ->
-            codeGen
-                .escapeOnErr(ifTrue)
-                .ifPresent(v -> codeGen.emitStore(v, dst, registerStart, registerEnd)),
-        () ->
-            codeGen
-                .escapeOnErr(ifFalse)
-                .ifPresent(v -> codeGen.emitStore(v, dst, registerStart, registerEnd)));
+  abstract void emitStore(CodeGen codeGen, Template dst, int registerStart, int registerEnd);
+
+  static class Simple extends ConditionalValue {
+    private final Condition condition;
+    private final ValueSupplier ifTrue;
+    private final ValueSupplier ifFalse;
+
+    Simple(Condition condition, ValueSupplier ifTrue, ValueSupplier ifFalse) {
+      this.condition = condition;
+      this.ifTrue = ifTrue;
+      this.ifFalse = ifFalse;
+    }
+
+    @Override
+    public BaseType baseType() {
+      throw new AssertionError();
+    }
+
+    @Override
+    void emitStore(CodeGen codeGen, Template dst, int registerStart, int registerEnd) {
+      condition.test(
+          () ->
+              codeGen
+                  .escapeOnErr(ifTrue)
+                  .ifPresent(v -> codeGen.emitStore(v, dst, registerStart, registerEnd)),
+          () ->
+              codeGen
+                  .escapeOnErr(ifFalse)
+                  .ifPresent(v -> codeGen.emitStore(v, dst, registerStart, registerEnd)));
+    }
+  }
+
+  static class Compound extends ConditionalValue {
+    private final BaseType baseType;
+    private final Object[] elements;
+
+    Compound(BaseType baseType, Object[] elements) {
+      this.baseType = baseType;
+      this.elements = elements;
+    }
+
+    @Override
+    public BaseType baseType() {
+      return baseType;
+    }
+
+    @Override
+    void emitStore(CodeGen codeGen, Template dst, int registerStart, int registerEnd) {
+      if (dst instanceof Template.Union uDst) {
+        int i = uDst.indexOf(baseType.sortOrder);
+        if (i < 0) {
+          codeGen.escape();
+          return;
+        }
+        dst = uDst.choice(i);
+        if (uDst.tag != null) {
+          codeGen.emitSet(codeGen.register(uDst.tag), CodeValue.of(i));
+        }
+      } else if (dst.baseType().sortOrder != baseType.sortOrder) {
+        codeGen.escape();
+        return;
+      }
+      if (dst.baseType() != baseType && dst.baseType() != Core.VARRAY) {
+        // Different-sized arrays
+        codeGen.escape();
+        return;
+      }
+      int n = baseType.size();
+      if (dst instanceof Template.RefVar.ForFrame dstVar) {
+        FrameLayout frameLayout = dstVar.frameLayout();
+        Template[] srcTemplates = new Template[n];
+        for (int i = 0; i < n; i++) {
+          Value e = (Value) elements[i];
+          if (e instanceof ConditionalValue cv) {
+            int start = codeGen.cb.numRegisters();
+            Template saved =
+                frameLayout.elementTemplate(i).toBuilder().build(codeGen.newAllocator());
+            cv.emitStore(codeGen, saved, start, codeGen.cb.numRegisters());
+            srcTemplates[i] = saved;
+          } else {
+            srcTemplates[i] = RValue.toTemplate(e);
+          }
+        }
+        Register dstRegister = codeGen.register(dstVar);
+        if (frameLayout instanceof RecordLayout layout) {
+          codeGen.emitSet(dstRegister, layout.emitAlloc(codeGen));
+          CopyPlan copyPlan =
+              layout.storePlan(Template.Compound.of(baseType, srcTemplates), layout.template);
+          layout.copyTo(dstRegister).emit(codeGen, copyPlan, codeGen.escapeLink());
+        } else {
+          VArrayLayout layout = (VArrayLayout) frameLayout;
+          codeGen.emitSet(dstRegister, layout.emitAlloc(codeGen, CodeValue.of(n)));
+          for (int i = 0; i < n; i++) {
+            layout.emitSetElement(
+                codeGen, dstRegister, CodeValue.of(i), srcTemplates[i], codeGen.escapeLink());
+          }
+        }
+      } else {
+        Template.Compound compound = (Template.Compound) dst;
+        for (int i = 0; i < n; i++) {
+          Template element = compound.element(i);
+          Template.IndexBounds bounds = new Template.IndexBounds(element);
+          codeGen.emitStore((Value) elements[i], element, bounds.minIndex, bounds.maxIndex + 1);
+        }
+      }
+    }
   }
 }

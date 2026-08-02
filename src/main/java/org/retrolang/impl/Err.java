@@ -130,7 +130,7 @@ public class Err extends BaseType.SimpleStackEntryType {
 
   public static final Err OUT_OF_MEMORY = new Err("Out of memory");
 
-  static final Err INTERNAL_ERROR = new Err("Internal error", "details");
+  public static final Err INTERNAL_ERROR = new Err("Internal error", "details");
 
   public static final Err ASSERTION_FAILED = new Err("Not true");
   public static final Err ASSERTION_FAILED_WITH_MSG = new Err("Error", "msg");

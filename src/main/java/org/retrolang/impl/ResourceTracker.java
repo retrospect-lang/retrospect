@@ -139,6 +139,10 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     this(scope, limit, 16, debug);
   }
 
+  public Scope scope() {
+    return scope;
+  }
+
   /** Returns true if this ResourceTracker has an associated DebugTracker. */
   boolean debugTracking() {
     return debugTracker != null;

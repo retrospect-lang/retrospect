@@ -84,12 +84,13 @@ public class VirtualMachineTest {
           (LIMIT\\((?<limit>\\d+)\\) *)?\
           (TRACE_DEPTH\\((?<tracedepth>\\d+)\\) *)?\
           (CODEGEN\\((?<codegen>\\d+)\\) *)?\
+          (?<nocodegen>NO_CODEGEN *)?\
           (?<returns>RETURNS|ERRORS) *\
           (?<debug>RC_DEBUG *)?\
           \n\
           """);
 
-  static boolean CODEGEN_ALL = true;
+  static boolean CODEGEN_DEFAULT = true;
 
   @Rule public final Expect expect = Expect.create();
 
@@ -117,6 +118,8 @@ public class VirtualMachineTest {
     boolean expectReturn = argsMatcher.group("returns").equals("RETURNS");
     Optional<Integer> codeGen =
         Optional.ofNullable(argsMatcher.group("codegen")).map(Integer::parseInt);
+    boolean disableCodeGen = argsMatcher.group("nocodegen") != null;
+    assertThat(disableCodeGen && codeGen.isPresent()).isFalse();
     boolean rcDebug = argsMatcher.group("debug") != null;
     String expected = testProgram.comment().substring(argsMatcher.end());
     String expectedTraces = "";
@@ -141,7 +144,7 @@ public class VirtualMachineTest {
             CharStreams.fromString(testProgram.code()), testProgram.name(), vm, module, argNames);
     module.build();
     TestMonitor monitor = null;
-    if (codeGen.isPresent() || CODEGEN_ALL) {
+    if (codeGen.isPresent() || (CODEGEN_DEFAULT && !disableCodeGen)) {
       CodeGenManager codeGenManager = vm.scope.codeGenManager;
       int threshold = codeGen.orElse(5);
       codeGenManager.setThresholds(2 * threshold, threshold);
@@ -189,7 +192,7 @@ public class VirtualMachineTest {
         .that(cleanLines(traces))
         .isEqualTo(cleanLines(expectedTraces));
     String codeGenLog = null;
-    if (codeGen.isPresent() || CODEGEN_ALL) {
+    if (monitor != null) {
       codeGenLog = vm.scope.codeGenDebugging().takeLog();
       if (codeGen.isPresent()) {
         expect.that(codeGenLog).isEqualTo(expectedCodeGen.trim());

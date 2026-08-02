@@ -17,8 +17,10 @@
 package org.retrolang.impl;
 
 import com.google.common.collect.ImmutableList;
+import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 /**
  * A Scope stores information that has been inferred by the VM during the execution of a
@@ -32,10 +34,31 @@ import java.util.function.Predicate;
  * <p>Since reference counted objects are associated with a single ResourceTracker and Scopes may be
  * shared by multiple ResourceTrackers, Scopes may not hold pointers to reference counted objects.
  */
-class Scope {
+public class Scope {
   final Evolver evolver = new Evolver();
 
   final MemoMerger memoMerger = new MemoMerger(this);
+
+  private Path rootDir;
+
+  private final HashMap<Class<?>, Object> extras = new HashMap<>();
+
+  void setRootDir(Path rootDir) {
+    this.rootDir = rootDir;
+  }
+
+  public Path rootDir() {
+    if (rootDir == null) {
+      throw new IllegalStateException("Root directory not set");
+    }
+    return rootDir;
+  }
+
+  public <T> T getExtra(Class<T> klass, Supplier<T> supplier) {
+    synchronized (extras) {
+      return klass.cast(extras.computeIfAbsent(klass, k -> supplier.get()));
+    }
+  }
 
   /**
    * StructTypes that aren't shared with the Core are saved per-Scope.
@@ -48,7 +71,7 @@ class Scope {
 
   final CodeGenManager codeGenManager = new CodeGenManager(this);
 
-  StructType compoundWithKeys(ImmutableList<String> keys) {
+  public StructType compoundWithKeys(ImmutableList<String> keys) {
     StructType result = Core.structType(keys);
     if (result != null) {
       return result;

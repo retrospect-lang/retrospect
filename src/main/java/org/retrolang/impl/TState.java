@@ -274,7 +274,7 @@ public final class TState extends MemoryHelper {
   CodeGenTarget unwoundFrom;
 
   /** Returns the Scope for the current computation. */
-  Scope scope() {
+  public Scope scope() {
     return tracker().scope;
   }
 

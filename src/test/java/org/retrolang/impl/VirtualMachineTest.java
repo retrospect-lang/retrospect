@@ -52,6 +52,7 @@ import org.retrolang.util.Pair;
 public class VirtualMachineTest {
 
   private static final Path TESTDATA = Path.of("src/test/java/org/retrolang/impl/testdata");
+  private static final Path TEST_INPUTS = TESTDATA.resolve("inputs");
 
   /**
    * Each .r8t file is expected to have source code followed by a comment that begins "{@code /* RUN
@@ -136,6 +137,7 @@ public class VirtualMachineTest {
     // Compile the program into a new module
     VirtualMachine vm = new VirtualMachine();
     vm.enableDebugging();
+    vm.scope.setRootDir(TEST_INPUTS);
     Vm.ModuleBuilder module = vm.newModule("(input)");
     String[] argNames = args.stream().map(p -> p.x).toArray(String[]::new);
     Vm.InstructionBlock insts =
@@ -204,6 +206,7 @@ public class VirtualMachineTest {
     // Confirm that memory use matched expectations
     String layouts = vm.getDebuggingSummary();
     String actualResources = tracker + (layouts.isEmpty() ? "" : "\n" + layouts);
+    System.out.println(actualResources);
     if (!checkForRanges(actualResources, expectedResources)) {
       expect.that(actualResources).isEqualTo(expectedResources);
     }

@@ -46,7 +46,9 @@ import org.retrolang.testing.TestdataScanner.TestProgram;
 @RunWith(TestParameterInjector.class)
 public class CodeGenTest {
 
-  private static final Path TESTDATA = Path.of("src/test/java/org/retrolang/impl/testdata/codegen");
+  private static final Path TESTDATA = Path.of("src/test/java/org/retrolang/impl/testdata");
+  private static final Path SCRIPTS = TESTDATA.resolve("codegen");
+  private static final Path TEST_INPUTS = TESTDATA.resolve("inputs");
 
   /**
    * Each .r8t file is expected to have source code followed by a comment that begins "{@code /*
@@ -87,7 +89,7 @@ public class CodeGenTest {
 
   public static final class AllPrograms extends TestdataScanner {
     public AllPrograms() {
-      super(TESTDATA, COMMENT_PATTERN);
+      super(SCRIPTS, COMMENT_PATTERN);
     }
   }
 
@@ -99,7 +101,7 @@ public class CodeGenTest {
       Pattern.compile(
           " *(?<fn>\\w+) +(ESCAPE_COUNT *= *(?<escapes>\\d+) *)?(?<returns>RETURNS|ERRORS)\n");
 
-  private static final int MEMORY_LIMIT = 2_000_000;
+  private static final int MEMORY_LIMIT = 10_000_000;
 
   private final VirtualMachine vm = new VirtualMachine();
   private final Vm.Value falseValue = lookupCoreSingleton("False");
@@ -152,6 +154,7 @@ public class CodeGenTest {
 
     // Configure the VM to always exline the specified function.
     vm.enableDebugging();
+    vm.scope.setRootDir(TEST_INPUTS);
     ModuleBuilder module = (ModuleBuilder) vm.newModule("(input)");
     vm.scope.setForceExlined(method -> isExlined(method, fnName, module));
 

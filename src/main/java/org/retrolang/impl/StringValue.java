@@ -34,6 +34,8 @@ public class StringValue extends RefCounted implements Value {
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + SizeOf.PTR);
 
+  public static final StringValue EMPTY = new StringValue(Allocator.UNCOUNTED, "");
+
   public final String value;
 
   /// Assumes that value is unshared, and will be released when we are dropped. Will overcount if

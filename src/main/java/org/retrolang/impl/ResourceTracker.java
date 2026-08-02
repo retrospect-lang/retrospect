@@ -54,7 +54,7 @@ import org.retrolang.util.SizeOf;
 /// created by executing that instruction.
 public class ResourceTracker implements Allocator, Vm.ResourceTracker {
 
-  final Scope scope;
+  public final Scope scope;
 
   final Coordinator coordinator;
 

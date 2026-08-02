@@ -88,7 +88,7 @@ public class MemoryHelper implements Allocator {
 
   /// Returns the ResourceTracker to which this MemoryHelper is bound, or null if it is currently
   /// unbound.
-  ResourceTracker tracker() {
+  public ResourceTracker tracker() {
     return tracker;
   }
 
@@ -217,7 +217,7 @@ public class MemoryHelper implements Allocator {
 
   /// Returns true if the given RefVisitor is a ReleaseVisitor, i.e. we are dropping the objects
   /// visited.
-  static boolean isReleaser(RefVisitor visitor) {
+  public static boolean isReleaser(RefVisitor visitor) {
     return visitor instanceof ReleaseVisitor;
   }
 

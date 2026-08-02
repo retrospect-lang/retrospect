@@ -175,7 +175,7 @@ public final class TState extends MemoryHelper {
   ///
   /// This entry point is used by methods like Vm.Value.close() that are invoked from outside the
   /// VM; during normal operation the TState is already bound to the appropriate ResourceTracker.
-  static void dropReferenceWithTracker(ResourceTracker tracker, @RC.In RefCounted obj) {
+  public static void dropReferenceWithTracker(ResourceTracker tracker, @RC.In RefCounted obj) {
     withTracker(
         tracker,
         tstate -> {

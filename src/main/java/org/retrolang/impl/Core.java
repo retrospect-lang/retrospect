@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.IntFunction;
+import org.retrolang.Vm;
 import org.retrolang.impl.BuiltinMethod.AnyFn;
 import org.retrolang.impl.BuiltinMethod.Caller;
 import org.retrolang.impl.BuiltinMethod.Fn;
@@ -40,6 +41,7 @@ import org.retrolang.impl.core.CollectionCore;
 import org.retrolang.impl.core.LoopCore;
 import org.retrolang.impl.core.MatrixCore;
 import org.retrolang.impl.core.NumberCore;
+import org.retrolang.impl.core.ParquetCore;
 import org.retrolang.impl.core.ParserCore;
 import org.retrolang.impl.core.RangeCore;
 import org.retrolang.impl.core.ReducerCore;
@@ -129,6 +131,11 @@ public class Core {
     return VmType.Union.withSubTypes(CORE, name, true, subTypes);
   }
 
+  public static BaseType.NonCompositional newNonCompositional(
+      String name, Class<? extends Value> javaType, Vm.Type... superTypes) {
+    return new BaseType.NonCompositional(CORE, name, javaType, superTypes);
+  }
+
   @Public public static final VmType.Union BOOLEAN = newUnion("Boolean");
   @Public public static final Singleton FALSE = newSingleton("False", BOOLEAN);
   @Public public static final Singleton TRUE = newSingleton("True", BOOLEAN);
@@ -193,7 +200,7 @@ public class Core {
 
   @Public
   public static final BaseType.NonCompositional STRING =
-      new BaseType.NonCompositional(CORE, "String", StringValue.class);
+      newNonCompositional("String", StringValue.class);
 
   @Public
   public static final BaseType.NonCompositional NUMBER =
@@ -523,7 +530,8 @@ public class Core {
             MatrixCore.class,
             RangeCore.class,
             StructCore.class,
-            ParserCore.class
+            ParserCore.class,
+            ParquetCore.class
           };
       Builder<String, VmType> typesBuilder = new Builder<>(true, t -> t.name);
       Builder<String, VmFunction> functionsBuilder =

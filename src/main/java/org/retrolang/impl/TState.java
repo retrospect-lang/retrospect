@@ -549,10 +549,21 @@ public final class TState extends MemoryHelper {
   public Value asCompoundValue(BaseType baseType, @RC.In Object[] elements) {
     int size = baseType.size();
     assert size != 0 && Value.containsValues(elements, size);
-    if (hasCodeGen() && Arrays.stream(elements, 0, size).anyMatch(e -> e instanceof RValue)) {
-      Template[] elementTemplates = new Template[size];
-      Arrays.setAll(elementTemplates, i -> RValue.toTemplate((Value) elements[i]));
-      return RValue.fromTemplate(Template.Compound.of(baseType, elementTemplates));
+    if (hasCodeGen()) {
+      boolean hasRValue = false;
+      for (int i = 0; i < size; i++) {
+        Object v = elements[i];
+        if (v instanceof ConditionalValue) {
+          return new ConditionalValue.Compound(baseType, elements);
+        } else if (v instanceof RValue) {
+          hasRValue = true;
+        }
+      }
+      if (hasRValue) {
+        Template[] elementTemplates = new Template[size];
+        Arrays.setAll(elementTemplates, i -> RValue.toTemplate((Value) elements[i]));
+        return RValue.fromTemplate(Template.Compound.of(baseType, elementTemplates));
+      }
     }
     return new CompoundValue(this, baseType, elements);
   }

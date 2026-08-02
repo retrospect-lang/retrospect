@@ -1033,7 +1033,7 @@ public class CodeGen {
       return r;
     }
     CodeValue asInt = materialize(Op.DOUBLE_TO_INT.result(r), int.class);
-    new TestBlock.IsEq(OpCodeType.DOUBLE, r, asInt).setBranch(false, escape).addTo(cb);
+    escapeUnless(Condition.doubleEq(r, asInt));
     return asInt;
   }
 

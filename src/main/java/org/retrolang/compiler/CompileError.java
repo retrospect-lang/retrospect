@@ -16,7 +16,7 @@
 
 package org.retrolang.compiler;
 
-/** All Retrospect language errors detected at compile time throw a CompileError. */
+/// All Retrospect language errors detected at compile time throw a CompileError.
 public class CompileError extends RuntimeException {
   public final String msg;
   public final int lineNum;

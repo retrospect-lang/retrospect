@@ -39,27 +39,23 @@ import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 
-/** Core methods on Arrays. */
+/// Core methods on Arrays.
 public final class ArrayCore {
 
-  /**
-   * {@code private compound ArrayAccessor is Lambda}
-   *
-   * <p>Elements {@code array}, {@code eKind}. The {@code at()} method does not check the validity
-   * of its argument! Intended only for internal use; should not be generally accessible.
-   */
+  /// `private compound ArrayAccessor is Lambda`
+  ///
+  /// Elements `array`, `eKind`. The `at()` method does not check the validity of its argument!
+  /// Intended only for internal use; should not be generally accessible.
   @Core.Private
   static final BaseType.Named ARRAY_ACCESSOR = Core.newBaseType("ArrayAccessor", 2, Core.LAMBDA);
 
-  /**
-   * {@code private compound ArrayUpdater is Lambda}
-   *
-   * <p>Elements are {@code array}, {@code index}.
-   */
+  /// `private compound ArrayUpdater is Lambda`
+  ///
+  /// Elements are `array`, `index`.
   @Core.Private
   static final BaseType.Named ARRAY_UPDATER = Core.newBaseType("ArrayUpdater", 2, Core.LAMBDA);
 
-  /** {@code method element(Array array, [i]) = ...} */
+  /// `method element(Array array, [i]) = ...`
   @Core.Method("element(Array, Array)")
   static void elementArray(TState tstate, Value array, Value index) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(index.isArrayOfLength(1));
@@ -73,7 +69,7 @@ public final class ArrayCore {
     }
   }
 
-  /** Returns true if {@code index} is a valid zero-based index for {@code array}. */
+  /// Returns true if `index` is a valid zero-based index for `array`.
   static boolean isValidIndex(Value array, long index) {
     return index >= 0 && index < array.numElements();
   }
@@ -83,19 +79,17 @@ public final class ArrayCore {
         tstate, index, NumValue.ONE, ValueUtil.numElements(tstate, array));
   }
 
-  /**
-   * <pre>
-   * method at(ArrayAccessor accessor, i) {
-   *   k = [i + 1]
-   *   v = accessor_.array @ k
-   *   if accessor_.eKind is EnumerateValues
-   *       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
-   *     return v
-   *   } else {
-   *     return [k, v]
-   *   }
-   * </pre>
-   */
+  /// ```
+  /// method at(ArrayAccessor accessor, i) {
+  ///   k = [i + 1]
+  ///   v = accessor_.array @ k
+  ///   if accessor_.eKind is EnumerateValues
+  ///       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
+  ///     return v
+  ///   } else {
+  ///     return [k, v]
+  ///   }
+  /// ```
   @Core.Method("at(ArrayAccessor, _)")
   static Value atArrayAccessor(TState tstate, Value accessor, Value index) throws BuiltinException {
     Value array = accessor.peekElement(0);
@@ -112,14 +106,12 @@ public final class ArrayCore {
             });
   }
 
-  /**
-   * <pre>
-   * method iterator(Array array, EnumerationKind eKind, loop=, initialState=) {
-   *   addLoopStep(ArrayAccessor_({array, eKind}), EnumerateValues, loop=, initialState=)
-   *   return SimpleRangeIterator(size(array))
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(Array array, EnumerationKind eKind, loop=, initialState=) {
+  ///   addLoopStep(ArrayAccessor_({array, eKind}), EnumerateValues, loop=, initialState=)
+  ///   return SimpleRangeIterator(size(array))
+  /// }
+  /// ```
   @Core.Method("iterator(Array, EnumerationKind, Loop, _)")
   static void iteratorArray(
       TState tstate,
@@ -134,36 +126,34 @@ public final class ArrayCore {
     tstate.setResults(iterator, loop, initialState);
   }
 
-  /** {@code method size(Array x) = ...} */
+  /// `method size(Array x) = ...`
   @Core.Method("size(Array)")
   static Value sizeArray(TState tstate, Value x) {
     return ValueUtil.numElements(tstate, x).makeStorable(tstate);
   }
 
-  /** {@code method sizes(Array x) = [size(x)]} */
+  /// `method sizes(Array x) = [size(x)]`
   @Core.Method("sizes(Array)")
   static Value sizesArray(TState tstate, Value x) {
     return tstate.arrayValue(sizeArray(tstate, x));
   }
 
-  /**
-   * <pre>
-   * method replaceElement(Array array, [index], value) {
-   *   if index is Integer {
-   *     ... replace one element of array with value
-   *   } else {
-   *     assert index is Range and value is Matrix
-   *     [vSize] = sizes(value)
-   *     min = min(index) is None ? 1 : min(index)
-   *     max = max(index) is None ? size(array) : max(index)
-   *     ... replace elements min..max of array with elements of value
-   *   }
-   * }
-   * </pre>
-   *
-   * {@code key} must be a single-element array, containing either an Integer or a Range; if a
-   * Range, {@code value} must be a one-dimensional Matrix.
-   */
+  /// ```
+  /// method replaceElement(Array array, [index], value) {
+  ///   if index is Integer {
+  ///     ... replace one element of array with value
+  ///   } else {
+  ///     assert index is Range and value is Matrix
+  ///     [vSize] = sizes(value)
+  ///     min = min(index) is None ? 1 : min(index)
+  ///     max = max(index) is None ? size(array) : max(index)
+  ///     ... replace elements min..max of array with elements of value
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// `key` must be a single-element array, containing either an Integer or a Range; if a Range,
+  /// `value` must be a one-dimensional Matrix.
   static class ReplaceElement extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -277,27 +267,21 @@ public final class ArrayCore {
     }
   }
 
-  /**
-   * The key matrix of an empty one-dimensional matrix is []. No other array is a valid key matrix.
-   *
-   * <pre>
-   * method new(Array empty, initialValue) {
-   *   assert size(empty) == 0
-   *   return []
-   * }
-   * </pre>
-   */
+  /// The key matrix of an empty one-dimensional matrix is []. No other array is a valid key matrix.
+  ///
+  /// ```
+  /// method new(Array empty, initialValue) {
+  ///   assert size(empty) == 0
+  ///   return []
+  /// }
+  /// ```
   @Core.Method("new(Array, _)")
   static Value newArray(TState tstate, Value empty, Value initial) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(empty.isArrayOfLength(0));
     return Core.EMPTY_ARRAY;
   }
 
-  /**
-   * <pre>
-   * method startUpdate(Array array=, Array key) { ... }
-   * </pre>
-   */
+  /// `method startUpdate(Array array=, Array key) { ... }`
   @Core.Method("startUpdate(Array, Array)")
   static void startUpdate(TState tstate, @RC.In Value array, Value key) throws BuiltinException {
     Err.INVALID_SIZES.unless(key.isArrayOfLength(1));
@@ -317,12 +301,10 @@ public final class ArrayCore {
     }
   }
 
-  /**
-   * <pre>
-   * method at(ArrayUpdater updater, newElement) =
-   *     replaceElement(updater_.array, [updater_.index], newElement)
-   * </pre>
-   */
+  /// ```
+  /// method at(ArrayUpdater updater, newElement) =
+  ///     replaceElement(updater_.array, [updater_.index], newElement)
+  /// ```
   @Core.Method("at(ArrayUpdater, _)")
   static Value atArrayUpdater(TState tstate, @RC.In Value updater, @RC.In Value v) {
     if (!(updater instanceof RValue || v instanceof RValue)) {

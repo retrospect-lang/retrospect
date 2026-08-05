@@ -21,123 +21,107 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import java.util.Arrays;
 import org.retrolang.code.FutureBlock;
 
-/**
- * A Destination represents yet-to-be-generated code that may be branched to from multiple points,
- * and will be passed zero or more Values. Destinations are used for "function complete" (where the
- * values are the function results), ContinuationMethods (where the values are the arguments), and
- * branch targets (where the values are locals to be harmonized). The representation of the passed
- * values is determined by a ValueMemo or a list of Templates.
- *
- * <p>Destinations also keep track of the current escape link at each branch point; if all branches
- * have the same escape we can keep it when emitting code for the destination, otherwise we must
- * create a new one.
- *
- * <p>In the simplest case there is only a single branch to the Destination and the values it passes
- * are a subset of the supported representations; in that case no additional code or registers is
- * needed.
- *
- * <p>In the general case a Destination will allocate new registers to represent a value using
- * RValues based on the given templates, and then each branch to the Destination will first copy the
- * passed values into the new registers.
- *
- * <p>Destinations also implement {@link #createChild}, an operation that creates a new Destination
- * with a subset of the values of an existing Destination. The child destination must be emitted
- * first, and its emitted code should eventually call {@link #branchToParent} providing the values
- * that were not provided to the child.
- */
+/// A Destination represents yet-to-be-generated code that may be branched to from multiple points,
+/// and will be passed zero or more Values. Destinations are used for "function complete" (where the
+/// values are the function results), ContinuationMethods (where the values are the arguments), and
+/// branch targets (where the values are locals to be harmonized). The representation of the passed
+/// values is determined by a ValueMemo or a list of Templates.
+///
+/// Destinations also keep track of the current escape link at each branch point; if all branches
+/// have the same escape we can keep it when emitting code for the destination, otherwise we must
+/// create a new one.
+///
+/// In the simplest case there is only a single branch to the Destination and the values it passes
+/// are a subset of the supported representations; in that case no additional code or registers is
+/// needed.
+///
+/// In the general case a Destination will allocate new registers to represent a value using RValues
+/// based on the given templates, and then each branch to the Destination will first copy the passed
+/// values into the new registers.
+///
+/// Destinations also implement [#createChild], an operation that creates a new Destination with a
+/// subset of the values of an existing Destination. The child destination must be emitted first,
+/// and its emitted code should eventually call [#branchToParent] providing the values that were not
+/// provided to the child.
 class Destination implements ResultsInfo {
-  /** Links to this Destination; null after this Destination has been emitted. */
+  /// Links to this Destination; null after this Destination has been emitted.
   private FutureBlock links = new FutureBlock();
 
-  /** The combined escape state from branches to this Destination. */
+  /// The combined escape state from branches to this Destination.
   private CodeGen.EscapeState escape;
 
-  /**
-   * One of
-   *
-   * <ul>
-   *   <li>{@link #TRIVIAL}, for Destinations with zero passed values;
-   *   <li>a {@link FromValueMemo}, for Destinations that were created from a ValueMemo and have
-   *       zero or one incoming links;
-   *   <li>a {@link FromTemplates}, for Destinations that were created from a list of templates and
-   *       have zero or one incoming links;
-   *   <li>a {@link ForChild}, for Destinations that were created by {@link #createChild}; or
-   *   <li>a {@link Full}, for non-child Destinations that have more than one incoming link.
-   * </ul>
-   */
+  /// One of
+  ///
+  /// - [#TRIVIAL], for Destinations with zero passed values;
+  /// - a [FromValueMemo], for Destinations that were created from a ValueMemo and have zero or one
+  ///   incoming links;
+  /// - a [FromTemplates], for Destinations that were created from a list of templates and have zero
+  ///   or one incoming links;
+  /// - a [ForChild], for Destinations that were created by [#createChild]; or
+  /// - a [Full], for non-child Destinations that have more than one incoming link.
   private State state;
 
   private Destination(State state) {
     this.state = state;
   }
 
-  /** Returns a new Destination with no passed values. */
+  /// Returns a new Destination with no passed values.
   static Destination newSimple() {
     return new Destination(TRIVIAL);
   }
 
-  /** Returns a new Destination with one passed value for each element of the given ValueMemo. */
+  /// Returns a new Destination with one passed value for each element of the given ValueMemo.
   static Destination fromValueMemo(ValueMemo vMemo) {
     return fromValueMemo(vMemo, 0);
   }
 
-  /**
-   * Returns a new Destination with one passed value for each element of the given ValueMemo
-   * beginning with {@code start}.
-   */
+  /// Returns a new Destination with one passed value for each element of the given ValueMemo
+  /// beginning with `start`.
   static Destination fromValueMemo(ValueMemo vMemo, int start) {
     return new Destination((vMemo.size() == start) ? TRIVIAL : new FromValueMemo(vMemo, start));
   }
 
-  /** Returns a new Destination with one passed value for each of the given templates. */
+  /// Returns a new Destination with one passed value for each of the given templates.
   static Destination fromTemplates(ImmutableList<Template> templates) {
     return new Destination(templates.isEmpty() ? TRIVIAL : new FromTemplates(templates));
   }
 
-  /**
-   * Returns a new child Destination that will be passed the first {@code prefixSize} values of this
-   * Destination.
-   */
+  /// Returns a new child Destination that will be passed the first `prefixSize` values of this
+  /// Destination.
   Destination createChild(int prefixSize) {
     assert prefixSize >= 0 && prefixSize <= size();
     return new Destination(new ForChild(this, prefixSize));
   }
 
-  /** Returns the number of values that will be passed to this Destination. */
+  /// Returns the number of values that will be passed to this Destination.
   int size() {
     return state.size();
   }
 
-  /** Returns true if this destination has allocated new registers. */
+  /// Returns true if this destination has allocated new registers.
   boolean isFull() {
     return root().state instanceof Full;
   }
 
-  /** Ensures that new registers are allocated to store the values passed to this Destination. */
+  /// Ensures that new registers are allocated to store the values passed to this Destination.
   void forceFull(CodeGen codeGen) {
     var unused = getFull(this, codeGen);
   }
 
-  /**
-   * Returns the index of the first register allocated to store the values passed to this
-   * Destination; assumes that {@link #forceFull} was called previously.
-   */
+  /// Returns the index of the first register allocated to store the values passed to this
+  /// Destination; assumes that [#forceFull] was called previously.
   int firstRegister() {
     return getFull(this, null).registerStart[0];
   }
 
-  /**
-   * Returns the index of the last register allocated to store the values passed to this
-   * Destination; assumes that {@link #forceFull} was called previously.
-   */
+  /// Returns the index of the last register allocated to store the values passed to this
+  /// Destination; assumes that [#forceFull] was called previously.
   int lastRegister() {
     return getFull(this, null).registerStart[state.size()] - 1;
   }
 
-  /**
-   * Creates a new Destination with the same value templates as this one. Should not be called on
-   * Destinations returned from {@link #createChild}.
-   */
+  /// Creates a new Destination with the same value templates as this one. Should not be called on
+  /// Destinations returned from [#createChild].
   Destination duplicate(CodeGen codeGen) {
     State newState = this.state;
     assert !(newState instanceof ForChild);
@@ -147,13 +131,13 @@ class Destination implements ResultsInfo {
     return new Destination(newState);
   }
 
-  /** The implementation of ResultInfo just delegates to the State. */
+  /// The implementation of ResultInfo just delegates to the State.
   @Override
   public <T> T result(int resultNum, TProperty<T> property) {
     return state.result(resultNum, property);
   }
 
-  /** Adds a branch to this Destination. */
+  /// Adds a branch to this Destination.
   void addBranch(CodeGen codeGen, Value[] values) {
     if (values == null || values.length == 0) {
       assert size() == 0;
@@ -164,7 +148,7 @@ class Destination implements ResultsInfo {
     addBranch(codeGen);
   }
 
-  /** Adds a branch to this Destination, assuming that the values have already been saved. */
+  /// Adds a branch to this Destination, assuming that the values have already been saved.
   void addBranch(CodeGen codeGen) {
     assert links != null;
     if (codeGen.cb.nextIsReachable()) {
@@ -180,12 +164,10 @@ class Destination implements ResultsInfo {
     }
   }
 
-  /**
-   * Returns an optimized CopyPlan from the given source Template to this Destination's registers.
-   * Calling {@code createCopyPlan}, emitting the plan it returns, and then calling {@link
-   * #addBranch(CodeGen)} is a more flexible (but less convenient and sometimes less efficient)
-   * alternative to calling {@link #addBranch(CodeGen, Value[])}.
-   */
+  /// Returns an optimized CopyPlan from the given source Template to this Destination's registers.
+  /// Calling `createCopyPlan`, emitting the plan it returns, and then calling [#addBranch(CodeGen)]
+  /// is a more flexible (but less convenient and sometimes less efficient) alternative to calling
+  /// [#addBranch(CodeGen, Value\[\])].
   CopyPlan createCopyPlan(CodeGen codeGen, int i, Template src) {
     Full full = getFull(this, codeGen);
     Template dst = full.templates[i];
@@ -193,13 +175,11 @@ class Destination implements ResultsInfo {
     return CopyOptimizer.toRegisters(plan, full.registerStart[i], full.registerStart[i + 1], dst);
   }
 
-  /**
-   * Prepares the CodeBuilder to add the blocks at this Destination; returns the values that were
-   * passed to it. No calls to {@link #addBranch} are allowed after this.
-   *
-   * <p>Returns null if the destination is unreachable or this destination was created by {@link
-   * #createChild}.
-   */
+  /// Prepares the CodeBuilder to add the blocks at this Destination; returns the values that were
+  /// passed to it. No calls to [#addBranch] are allowed after this.
+  ///
+  /// Returns null if the destination is unreachable or this destination was created by
+  /// [#createChild].
   @CanIgnoreReturnValue
   Value[] emit(CodeGen codeGen) {
     assert !codeGen.cb.nextIsReachable();
@@ -214,21 +194,17 @@ class Destination implements ResultsInfo {
     return result;
   }
 
-  /**
-   * Only valid on Destinations that were created by {@link #createChild}; branches to the parent
-   * Destination. If this child has fewer values than its parent, {@code extras} must contain the
-   * additional Values.
-   */
+  /// Only valid on Destinations that were created by [#createChild]; branches to the parent
+  /// Destination. If this child has fewer values than its parent, `extras` must contain the
+  /// additional Values.
   void branchToParent(CodeGen codeGen, Value extras) {
     // This should be called after emit() on this Destination but before emit() on its parent.
     assert links == null && codeGen.cb.nextIsReachable();
     ((ForChild) state).branchToParent(codeGen, extras);
   }
 
-  /**
-   * If this Destination was not created by {@link #createChild}, returns it; otherwise follows
-   * {@link ForChild#parent} links until it reaches a non-child Destination and returns that.
-   */
+  /// If this Destination was not created by [#createChild], returns it; otherwise follows
+  /// [ForChild#parent] links until it reaches a non-child Destination and returns that.
   private Destination root() {
     Destination result = this;
     while (result.state instanceof ForChild fc) {
@@ -237,12 +213,10 @@ class Destination implements ResultsInfo {
     return result;
   }
 
-  /**
-   * Ensures that the root of the given destination uses a Full state, and returns it.
-   *
-   * <p>If {@code codeGen} is non-null and the root does not already use a Full state, it will be
-   * converted; if {@code codeGen} is null, the root must already use a Full state.
-   */
+  /// Ensures that the root of the given destination uses a Full state, and returns it.
+  ///
+  /// If `codeGen` is non-null and the root does not already use a Full state, it will be converted;
+  /// if `codeGen` is null, the root must already use a Full state.
   private static Full getFull(Destination dest, CodeGen codeGen) {
     Destination root = dest.root();
     if (root.state instanceof Full full) {
@@ -256,23 +230,22 @@ class Destination implements ResultsInfo {
     return full;
   }
 
-  /**
-   * Each Destination has an associated State that determines how the passed values are represented.
-   */
+  /// Each Destination has an associated State that determines how the passed values are
+  /// represented.
   private abstract static class State implements ResultsInfo {
-    /** Returns the number of values that must be passed to this Destination. */
+    /// Returns the number of values that must be passed to this Destination.
     abstract int size();
 
-    /** Called each time a new branch is added to this Destination. */
+    /// Called each time a new branch is added to this Destination.
     abstract void saveValues(Destination dest, CodeGen codeGen, Value[] values);
 
-    /** The values that will be returned from {@link #emit}. */
+    /// The values that will be returned from [#emit].
     abstract Value[] values();
   }
 
   private static final Value[] EMPTY_VALUES = new Value[0];
 
-  /** The state for Destinations with no passed values. */
+  /// The state for Destinations with no passed values.
   private static final State TRIVIAL =
       new State() {
         @Override
@@ -296,29 +269,20 @@ class Destination implements ResultsInfo {
         }
       };
 
-  /**
-   * A simple State has not allocated any registers of its own; it is either
-   *
-   * <ul>
-   *   <li>a FromValueMemo or FromTemplates with zero or one inlinks, or
-   *   <li>a ForChild.
-   * </ul>
-   *
-   * <p>A FromValueMemo or FromTemplates that gets multiple inlinks will be converted to a Full
-   * state; a ForChild doesn't convert, but may cause its root to convert if it gets multiple
-   * inlinks.
-   */
+  /// A simple State has not allocated any registers of its own; it is either
+  ///
+  /// - a FromValueMemo or FromTemplates with zero or one inlinks, or
+  /// - a ForChild.
+  ///
+  /// A FromValueMemo or FromTemplates that gets multiple inlinks will be converted to a Full state;
+  /// a ForChild doesn't convert, but may cause its root to convert if it gets multiple inlinks.
   private abstract static class Simple extends State {
-    /**
-     * If this Destination has exactly one inlink (and the passed values are a subset of the
-     * ValueMemo or templates), these will be the values that were passed. If it has zero inlinks or
-     * is a ForChild with multiple inlinks this will be null.
-     */
+    /// If this Destination has exactly one inlink (and the passed values are a subset of the
+    /// ValueMemo or templates), these will be the values that were passed. If it has zero inlinks
+    /// or is a ForChild with multiple inlinks this will be null.
     Value[] savedValues;
 
-    /**
-     * If {@link #savedValues} is non-null, this is the corresponding value of {@code cb.nextSrc()}.
-     */
+    /// If [#savedValues] is non-null, this is the corresponding value of `cb.nextSrc()`.
     Object savedSrc;
 
     @Override
@@ -340,7 +304,7 @@ class Destination implements ResultsInfo {
       full.setValues(codeGen, 0, values);
     }
 
-    /** Returns true if saving the given values might require a runtime check. */
+    /// Returns true if saving the given values might require a runtime check.
     boolean saveNeedsCheck(Value[] values) {
       for (int i = 0; i < values.length; i++) {
         Value v = values[i];
@@ -355,10 +319,8 @@ class Destination implements ResultsInfo {
       return false;
     }
 
-    /**
-     * If this state has {@link #savedValues} from a previous inlink, add blocks to copy them to the
-     * registers allocated by {@code full}. This must be done before adding any more inlinks.
-     */
+    /// If this state has [#savedValues] from a previous inlink, add blocks to copy them to the
+    /// registers allocated by `full`. This must be done before adding any more inlinks.
     private void copyFromSavedValues(Destination dest, CodeGen codeGen, Full full) {
       if (savedValues != null) {
         // These blocks will be executed by the first inlink, but not by any that are added later.
@@ -390,7 +352,7 @@ class Destination implements ResultsInfo {
     }
   }
 
-  /** A Simple state for Destinations created by {@link #fromValueMemo}. */
+  /// A Simple state for Destinations created by [#fromValueMemo].
   private static class FromValueMemo extends Simple {
     private final ValueMemo vMemo;
     final int start;
@@ -411,7 +373,7 @@ class Destination implements ResultsInfo {
     }
   }
 
-  /** A Simple state for Destinations created by {@link #fromTemplates}. */
+  /// A Simple state for Destinations created by [#fromTemplates].
   private static class FromTemplates extends Simple {
     private final ImmutableList<Template> templates;
 
@@ -430,18 +392,14 @@ class Destination implements ResultsInfo {
     }
   }
 
-  /**
-   * A state for Destinations that have allocated new registers for the passed values; each inlink
-   * will get additional blocks to copy the passed values into the new registers.
-   */
+  /// A state for Destinations that have allocated new registers for the passed values; each inlink
+  /// will get additional blocks to copy the passed values into the new registers.
   private static class Full extends State {
-    /** A template (with vars referring to registers) for each passed value. */
+    /// A template (with vars referring to registers) for each passed value.
     private final Template[] templates;
 
-    /**
-     * The start (and end) register indices for each template, to simplify optimizing copies to
-     * them.
-     */
+    /// The start (and end) register indices for each template, to simplify optimizing copies to
+    /// them.
     private final int[] registerStart;
 
     Full(CodeGen codeGen, State source) {
@@ -458,7 +416,7 @@ class Destination implements ResultsInfo {
       registerStart[size] = codeGen.cb.numRegisters();
     }
 
-    /** Add blocks to store {@code values} into the templates starting at {@code offset}. */
+    /// Add blocks to store `values` into the templates starting at `offset`.
     void setValues(CodeGen codeGen, int offset, Value[] values) {
       for (int i = 0; i < values.length; i++) {
         int target = i + offset;
@@ -493,13 +451,11 @@ class Destination implements ResultsInfo {
     }
   }
 
-  /**
-   * The state for Destinations created by {@link #createChild}. Like other Simple states, these
-   * handle the simple case of one inlink by just saving the values, and more complex cases by
-   * copying the values into new registers. Unlike other Simple states they never convert to Full
-   * and allocate registers themselves; instead they ensure that their root has converted to Full
-   * and use the root's registers (to avoid an additional copy when they {@link #branchToParent}).
-   */
+  /// The state for Destinations created by [#createChild]. Like other Simple states, these handle
+  /// the simple case of one inlink by just saving the values, and more complex cases by copying the
+  /// values into new registers. Unlike other Simple states they never convert to Full and allocate
+  /// registers themselves; instead they ensure that their root has converted to Full and use the
+  /// root's registers (to avoid an additional copy when they [#branchToParent]).
   private static class ForChild extends Simple {
 
     private final Destination parent;

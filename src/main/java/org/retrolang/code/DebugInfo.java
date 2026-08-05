@@ -24,31 +24,25 @@ import java.util.regex.Pattern;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.util.TraceClassVisitor;
 
-/**
- * A DebugInfo aggregates information from a single CodeBuilder instance that may be useful for
- * interpreting stack traces (e.g. from an exception thrown while running the generated code) or
- * otherwise understanding CodeBuilder's results.
- */
+/// A DebugInfo aggregates information from a single CodeBuilder instance that may be useful for
+/// interpreting stack traces (e.g. from an exception thrown while running the generated code) or
+/// otherwise understanding CodeBuilder's results.
 public class DebugInfo {
-  /**
-   * A Block listing after optimizations but before finalization and register assignment. Only
-   * created if {@link CodeBuilder#verbose} is set.
-   */
+  /// A Block listing after optimizations but before finalization and register assignment. Only
+  /// created if [CodeBuilder#verbose] is set.
   public String postOptimization;
 
-  /**
-   * A final Block listing, after all optimizations have been applied and after register assignment.
-   * Block numbers in this listing are used as "line numbers" in the generated code.
-   */
+  /// A final Block listing, after all optimizations have been applied and after register
+  /// assignment. Block numbers in this listing are used as "line numbers" in the generated code.
   public String blocks;
 
-  /** The JVM bytecode emitted by the CodeBuilder. */
+  /// The JVM bytecode emitted by the CodeBuilder.
   public byte[] classBytes;
 
-  /** The constants referenced by {@link #classBytes}. */
+  /// The constants referenced by [#classBytes].
   public Object[] constants;
 
-  /** Spam in the TraceClassVisitor output that we throw away. */
+  /// Spam in the TraceClassVisitor output that we throw away.
   private static final Pattern TRACE_CLUTTER =
       Pattern.compile(
           """
@@ -59,10 +53,8 @@ public class DebugInfo {
           \\s*)?// access flags .*
           """);
 
-  /**
-   * Called with the value of {@link #classBytes}, returns a (relatively) human-readable listing of
-   * the JVM instructions.
-   */
+  /// Called with the value of [#classBytes], returns a (relatively) human-readable listing of the
+  /// JVM instructions.
   public static String printClassBytes(byte[] bytes) {
     if (bytes == null) {
       return "No bytecode\n";
@@ -84,10 +76,8 @@ public class DebugInfo {
     return s;
   }
 
-  /**
-   * Returns the number of digits in the decimal representation of the given int. Not intended for
-   * use with negative numbers (the current implementation will always return 1).
-   */
+  /// Returns the number of digits in the decimal representation of the given int. Not intended for
+  /// use with negative numbers (the current implementation will always return 1).
   public static int numDigits(int n) {
     int result = 1;
     for (long powerOfTen = 10; n >= powerOfTen; powerOfTen *= 10) {
@@ -96,9 +86,7 @@ public class DebugInfo {
     return result;
   }
 
-  /**
-   * Called with the value of {@link #constants}, returns a (relatively) readable listing of them.
-   */
+  /// Called with the value of [#constants], returns a (relatively) readable listing of them.
   @SuppressWarnings("AvoidObjectArrays")
   public static String printConstants(Object[] objs, MethodHandles.Lookup lookup) {
     if (objs == null || objs.length == 0) {

@@ -41,104 +41,85 @@ import org.retrolang.compiler.RetrospectParser.SimpleExtractContext;
 import org.retrolang.compiler.RetrospectParser.StructExtractContext;
 import org.retrolang.util.Bits;
 
-/**
- * A BlockCompiler holds the state associated with compiling a method body, lambda body, or main
- * program. Each InstructionBlock created by the compiler has an associated BlockCompiler.
- *
- * <p>Loop bodies are compiled using {@link Loop}, a subclass of BlockCompiler.
- */
+/// A BlockCompiler holds the state associated with compiling a method body, lambda body, or main
+/// program. Each InstructionBlock created by the compiler has an associated BlockCompiler.
+///
+/// Loop bodies are compiled using [Loop], a subclass of BlockCompiler.
 class BlockCompiler {
   final Symbols symbols;
 
-  /** The InstructionBlock to which we will emit instructions. */
+  /// The InstructionBlock to which we will emit instructions.
   final InstructionBlock ib;
 
-  /** A Scope that will have an entry for each variable read or written in this block. */
+  /// A Scope that will have an entry for each variable read or written in this block.
   final Scope.ForMethod scope;
 
-  /**
-   * True when compiling the method body for a procedure; false when compiling the body of a
-   * function or the main program. Not used when compiling a lambda or loop body. Set by {@link
-   * #setResults}.
-   */
+  /// True when compiling the method body for a procedure; false when compiling the body of a
+  /// function or the main program. Not used when compiling a lambda or loop body. Set by
+  /// [#setResults].
   boolean isProcedure;
 
-  /**
-   * Expressions for the current values of all inout args, preceded by an empty slot for the primary
-   * return value if isProcedure is false. Not used when compiling a lambda or loop body. Set by
-   * {@link #setResults}.
-   */
+  /// Expressions for the current values of all inout args, preceded by an empty slot for the
+  /// primary return value if isProcedure is false. Not used when compiling a lambda or loop body.
+  /// Set by [#setResults].
   private Expr[] results;
 
-  /**
-   * A simple counter used to generate distinct names for args that do not have a name in the source
-   * code.
-   */
+  /// A simple counter used to generate distinct names for args that do not have a name in the
+  /// source code.
   private int nextAnonymousArgIndex;
 
-  /**
-   * All locals that have been created to store the results of intermediate expressions. Those with
-   * indices less than {@code nextTmp} are currently in use; the rest are available.
-   */
+  /// All locals that have been created to store the results of intermediate expressions. Those with
+  /// indices less than `nextTmp` are currently in use; the rest are available.
   private final List<Local> tmps = new ArrayList<>();
 
   private int nextTmp;
 
-  /**
-   * An instance of ExpressionCompiler that will be used for compiling expressions in this block.
-   */
+  /// An instance of ExpressionCompiler that will be used for compiling expressions in this block.
   final ExpressionCompiler expressionCompiler = new ExpressionCompiler(this);
 
-  /**
-   * Creates a new BlockCompiler that will emit instructions in the given InstructionBlock. If
-   * parent is non-null, read-only references to its variables are allowed.
-   */
+  /// Creates a new BlockCompiler that will emit instructions in the given InstructionBlock. If
+  /// parent is non-null, read-only references to its variables are allowed.
   BlockCompiler(Symbols symbols, InstructionBlock ib, Scope parent) {
     this.symbols = symbols;
     this.ib = ib;
     this.scope = new Scope.ForMethod(parent, this);
   }
 
-  /**
-   * Must be called exactly once on any BlockCompiler that may encounter a return statement (i.e.
-   * when compiling a method body or main program). The length of results must match the {@code
-   * numResults()} of the function if this is a method body, or be one if this is a main program.
-   * The first element of results must be null if return statements are expected to provide a value;
-   * any remaining elements should be expressions for the returned values of inout parameters.
-   */
+  /// Must be called exactly once on any BlockCompiler that may encounter a return statement (i.e.
+  /// when compiling a method body or main program). The length of results must match the
+  /// `numResults()` of the function if this is a method body, or be one if this is a main program.
+  /// The first element of results must be null if return statements are expected to provide a
+  /// value; any remaining elements should be expressions for the returned values of inout
+  /// parameters.
   void setResults(Expr... results) {
     this.results = results;
     // Test this now, because results[0] will be overwritten by compileReturn()
     isProcedure = (results.length == 0) || (results[0] != null);
   }
 
-  /** Returns true if return statements are not expected to provide a result. */
+  /// Returns true if return statements are not expected to provide a result.
   boolean isProcedure() {
     return isProcedure;
   }
 
-  /**
-   * Sets the source position associated with any instructions emitted until the next call to {@code
-   * setLineNumber()}.
-   */
+  /// Sets the source position associated with any instructions emitted until the next call to
+  /// `setLineNumber()`.
   void setLineNumber(Token token) {
     ib.setLineNumber(token.getLine(), token.getCharPositionInLine());
   }
 
-  /** Returns a new Local with the given name. */
+  /// Returns a new Local with the given name.
   Local newLocal(String name) {
     return ib.newLocal(name);
   }
 
-  /**
-   * Returns an arbitrary name suitable for an anonymous argument (e.g. an arg that will be
-   * destructured, or an inout "_" arg).
-   */
+  /// Returns an arbitrary name suitable for an anonymous argument (e.g. an arg that will be
+  /// destructured, or an inout "\_" arg).
   String newAnonymousArgName() {
     return "_a" + nextAnonymousArgIndex++;
   }
 
-  /** Returns an available Local for temporary use. */
+  /// Returns an available Local for temporary use.
   Local newTmp() {
     if (nextTmp < tmps.size()) {
       return tmps.get(nextTmp++);
@@ -150,58 +131,49 @@ class BlockCompiler {
     return result;
   }
 
-  /**
-   * Returns a value representing the currently in-use temporaries. The only useful thing to do with
-   * the result is to later pass it to {@link #resetTmps}.
-   */
+  /// Returns a value representing the currently in-use temporaries. The only useful thing to do
+  /// with the result is to later pass it to [#resetTmps].
   int saveTmpState() {
     return nextTmp;
   }
 
-  /**
-   * Resets temporaries-in-use state, so that all allocated temporaries are considered available.
-   */
+  /// Resets temporaries-in-use state, so that all allocated temporaries are considered available.
   void resetTmps() {
     nextTmp = 0;
   }
 
-  /** Resets temporaries-in-use state to a state previously returned by {@link #saveTmpState}. */
+  /// Resets temporaries-in-use state to a state previously returned by [#saveTmpState].
   void resetTmps(int savedTmpState) {
     assert savedTmpState >= 0 && savedTmpState <= nextTmp;
     nextTmp = savedTmpState;
   }
 
-  /** If target is non-null, defines it. */
+  /// If target is non-null, defines it.
   void maybeDefineTarget(BranchTarget target) {
     if (target != null) {
       ib.defineTarget(target);
     }
   }
 
-  /**
-   * Returns an Expr with the given expression's value, after emitting instructions as necessary.
-   * The result may refer to temps that are now marked as in-use; caller is responsible for saving
-   * temp state before calling {@code compile()} and restoring it after the result is no longer
-   * needed.
-   */
+  /// Returns an Expr with the given expression's value, after emitting instructions as necessary.
+  /// The result may refer to temps that are now marked as in-use; caller is responsible for saving
+  /// temp state before calling `compile()` and restoring it after the result is no longer needed.
   Expr compile(ExpressionContext expr) {
     return expressionCompiler.visit(expr);
   }
 
-  /** Emits instructions to store the given expression's value into a specific Local. */
+  /// Emits instructions to store the given expression's value into a specific Local.
   void compileSet(Local lhs, ExpressionContext expr) {
     new ExpressionCompiler.Setter(this, lhs).compileSet(expr);
   }
 
-  /** Emits instructions to branch if the given expression's value is True or False. */
+  /// Emits instructions to branch if the given expression's value is True or False.
   void compileTest(BranchTarget branchTarget, boolean branchIfTrue, ExpressionContext expr) {
     new ExpressionCompiler.Tester(this, branchTarget, branchIfTrue).compileTest(expr);
   }
 
-  /**
-   * Given a list of expressions, returns a Bits that contains {@code i} if the {@code i}-th
-   * expression was preceded by "{@code ^}".
-   */
+  /// Given a list of expressions, returns a Bits that contains `i` if the `i`-th expression was
+  /// preceded by "`^`".
   static Bits checkDistributed(List<ArrayElementContext> exprs) {
     if (exprs == null) {
       return Bits.EMPTY;
@@ -210,17 +182,13 @@ class BlockCompiler {
     }
   }
 
-  /**
-   * Given an index returns a Bits indicating which parts of it, if any, are distributed:
-   *
-   * <ul>
-   *   <li>If given an array index ({@code []}), returns one bit per array element.
-   *   <li>If given a string index ({@code .}), returns EMPTY (these can't be distributed).
-   *   <li>If given a general index ({@code @}), returns a Bits that will contain 0 if the {@code @}
-   *       is followed by {@code ^}.
-   *   <li>If given an uncompounding ({@code _}), returns null (there is no index).
-   * </ul>
-   */
+  /// Given an index returns a Bits indicating which parts of it, if any, are distributed:
+  ///
+  /// - If given an array index (`[]`), returns one bit per array element.
+  /// - If given a string index (`.`), returns EMPTY (these can't be distributed).
+  /// - If given a general index (`@`), returns a Bits that will contain 0 if the `@` is followed by
+  ///   `^`.
+  /// - If given an uncompounding (`_`), returns null (there is no index).
   static @Nullable Bits checkDistributed(IndexContext index) {
     int tokenType = index.start.getType();
     if (tokenType == TokenType.LEFT_SQUARE) {
@@ -234,13 +202,10 @@ class BlockCompiler {
     }
   }
 
-  /**
-   * Returns an Expr with the value to use as an index, after emitting instructions as necessary.
-   * {@code distributed} must have been returned by a previous call to {@code
-   * checkDistributed(index)}. The result may refer to temps that are now marked as in-use; caller
-   * is responsible for saving temp state before calling {@code compileIndex()} and restoring it
-   * after the result is no longer needed.
-   */
+  /// Returns an Expr with the value to use as an index, after emitting instructions as necessary.
+  /// `distributed` must have been returned by a previous call to `checkDistributed(index)`. The
+  /// result may refer to temps that are now marked as in-use; caller is responsible for saving temp
+  /// state before calling `compileIndex()` and restoring it after the result is no longer needed.
   Expr compileIndex(IndexContext index, Bits distributed) {
     int tokenType = index.start.getType();
     if (tokenType == TokenType.LEFT_SQUARE) {
@@ -257,14 +222,12 @@ class BlockCompiler {
     }
   }
 
-  /**
-   * Called when an inout function arg is an indexExpression (e.g. {@code pop(a[i]=)}). Emits code
-   * to get the value of the indexExpression into a local, and returns a Runnable that emits code to
-   * put the (presumably changed) value of the local back into the original base var.
-   *
-   * <p>The Runnable may contain references to newly-allocated tmps so don't {@link #resetTmps} to a
-   * previously-saved state until after it has been called.
-   */
+  /// Called when an inout function arg is an indexExpression (e.g. `pop(a[i]=)`). Emits code to get
+  /// the value of the indexExpression into a local, and returns a Runnable that emits code to put
+  /// the (presumably changed) value of the local back into the original base var.
+  ///
+  /// The Runnable may contain references to newly-allocated tmps so don't [#resetTmps] to a
+  /// previously-saved state until after it has been called.
   Runnable compileIndexedInout(IndexExpressionContext ie, Local local) {
     IndexContext index = ie.index();
     ExpressionContext expr = ie.expression();
@@ -298,13 +261,11 @@ class BlockCompiler {
     };
   }
 
-  /**
-   * If {@code index} is non-null, emits a call to {@code startUpdate(obj, index)} storing the
-   * results in {@code elementOut} and {@code updaterOut}.
-   *
-   * <p>If {@code index} is null, emits a call to {@code updateCompound(obj)}, storing the results
-   * in {@code elementOut} and {@code updaterOut}.
-   */
+  /// If `index` is non-null, emits a call to `startUpdate(obj, index)` storing the results in
+  /// `elementOut` and `updaterOut`.
+  ///
+  /// If `index` is null, emits a call to `updateCompound(obj)`, storing the results in `elementOut`
+  /// and `updaterOut`.
   void startUpdate(Local elementOut, Local updaterOut, Expr obj, Expr index) {
     Local[] outputs = new Local[] {elementOut, updaterOut};
     if (index == null) {
@@ -314,15 +275,13 @@ class BlockCompiler {
     }
   }
 
-  /** Emits a call to {@code get(updater, newElement)}, storing the result in {@code updatedOut}. */
+  /// Emits a call to `get(updater, newElement)`, storing the result in `updatedOut`.
   void finishUpdate(Local updatedOut, Expr updater, Expr newElement) {
     ib.emitCall(updatedOut, symbols.vmAt, updater, newElement);
   }
 
-  /**
-   * Emits a return instruction. The given Expr should be null if {@link #isProcedure} is true. The
-   * current values of any inout args will be included.
-   */
+  /// Emits a return instruction. The given Expr should be null if [#isProcedure] is true. The
+  /// current values of any inout args will be included.
   void compileReturn(Expr result) {
     assert isProcedure == (result == null);
     if (!isProcedure) {
@@ -331,7 +290,7 @@ class BlockCompiler {
     ib.emitReturn(results);
   }
 
-  /** Emits instructions to extract {@code rhs} into {@code lhs}. */
+  /// Emits instructions to extract `rhs` into `lhs`.
   void extract(ExtractLhsContext lhs, Expr rhs) {
     if (lhs instanceof SimpleExtractContext) {
       // Not really extracting, just storing.
@@ -345,19 +304,17 @@ class BlockCompiler {
     }
   }
 
-  /**
-   * Emits instructions to extract {@code rhs} into {@code lhs}.
-   *
-   * <p>{@code extractLeaf} will be called with each name or "_" found in {@code lhs}, and should
-   * return the Local into which the corresponding value is to be stored or null if it should be
-   * discarded (the argument to {@code extractLeaf} will be null for "_").
-   *
-   * <p>If {@code needResult} is true, the results returned by {@code extractLeaf} will be
-   * reassembled into an Expr and returned; otherwise the result is unspecified.
-   *
-   * <p>Should only be called with an ArrayExtractContext or StructExtractContext; assumes that
-   * SimpleExtractContext and DiscardExtractContext have already been handled by caller.
-   */
+  /// Emits instructions to extract `rhs` into `lhs`.
+  ///
+  /// `extractLeaf` will be called with each name or "\_" found in `lhs`, and should return the
+  /// Local into which the corresponding value is to be stored or null if it should be discarded
+  /// (the argument to `extractLeaf` will be null for "\_").
+  ///
+  /// If `needResult` is true, the results returned by `extractLeaf` will be reassembled into an
+  /// Expr and returned; otherwise the result is unspecified.
+  ///
+  /// Should only be called with an ArrayExtractContext or StructExtractContext; assumes that
+  /// SimpleExtractContext and DiscardExtractContext have already been handled by caller.
   @Nullable Expr extractCompound(
       ExtractLhsContext lhs,
       Expr rhs,
@@ -407,14 +364,12 @@ class BlockCompiler {
     return (results == null) ? null : compound.make(results);
   }
 
-  /**
-   * When the lhs of an extract is a compound (array or struct) we create an ExtractElement for each
-   * of its elements to hold either the Local returned by extractLeaf (if the element is a leaf) or
-   * a temporary that will get the element's value and the extractLhsContext for the next step (if
-   * the element is not a leaf).
-   *
-   * <p>In addition, when extracting a struct each ExtractElement holds the corresponding key.
-   */
+  /// When the lhs of an extract is a compound (array or struct) we create an ExtractElement for
+  /// each of its elements to hold either the Local returned by extractLeaf (if the element is a
+  /// leaf) or a temporary that will get the element's value and the extractLhsContext for the next
+  /// step (if the element is not a leaf).
+  ///
+  /// In addition, when extracting a struct each ExtractElement holds the corresponding key.
   private static class ExtractElement {
     final Local local;
     final ExtractLhsContext lhs; // if non-null, another extract step is required
@@ -426,7 +381,7 @@ class BlockCompiler {
     }
   }
 
-  /** Creates a new ExtractElement for an extractLhs. */
+  /// Creates a new ExtractElement for an extractLhs.
   private ExtractElement extractElement(
       ExtractLhsContext lhs, Function<LowerIdContext, Local> extractLeaf) {
     if (lhs instanceof SimpleExtractContext) {
@@ -440,7 +395,7 @@ class BlockCompiler {
     }
   }
 
-  /** Creates a new ExtractElement for an extractStructElement. */
+  /// Creates a new ExtractElement for an extractStructElement.
   private ExtractElement extractStructEntry(
       ExtractStructElementContext entry, Function<LowerIdContext, Local> extractLeaf) {
     ExtractElement result;

@@ -51,29 +51,23 @@ import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
 
-/**
- * Statics-only class to enable scanning designated classes for definitions of Retrospect built-in
- * methods.
- *
- * <p>Built-in methods are defined by Java methods with a @Core.Method annotation. See builtins.md
- * for details.
- */
+/// Statics-only class to enable scanning designated classes for definitions of Retrospect built-in
+/// methods.
+///
+/// Built-in methods are defined by Java methods with a @Core.Method annotation. See builtins.md for
+/// details.
 class BuiltinSupport {
   private BuiltinSupport() {}
 
-  /**
-   * Given a MethodHandle whose last numValues arguments are Values, returns a MethodHandle with
-   * those arguments replaced by an Object[] argument; the original MethodHandle will be called with
-   * the first numValues elements of the array (which must all be Values).
-   *
-   * <p>This is almost equivalent to
-   *
-   * <pre>
-   *   mh.asSpreader(Object[].class, numValues);
-   * </pre>
-   *
-   * ... but that only works if the array's length is exactly numValues, and ours might be longer.
-   */
+  /// Given a MethodHandle whose last numValues arguments are Values, returns a MethodHandle with
+  /// those arguments replaced by an Object[] argument; the original MethodHandle will be called
+  /// with the first numValues elements of the array (which must all be Values).
+  ///
+  /// This is almost equivalent to
+  ///
+  /// `mh.asSpreader(Object[].class, numValues)`
+  ///
+  /// ... but that only works if the array's length is exactly numValues, and ours might be longer.
   static MethodHandle spreadObjArray(MethodHandle mh, int numValues) {
     int numArgs = mh.type().parameterCount();
     if (numValues == 0) {
@@ -98,21 +92,17 @@ class BuiltinSupport {
     return MethodHandles.permuteArguments(mh, mtype, reorder);
   }
 
-  /**
-   * Wraps a Java method that implements a Retrospect builtin or is a continuation within a
-   * builtin's implementation.
-   */
+  /// Wraps a Java method that implements a Retrospect builtin or is a continuation within a
+  /// builtin's implementation.
   static class BuiltinEntry {
-    /** The builtin that this entry implements or is part of. */
+    /// The builtin that this entry implements or is part of.
     final BuiltinImpl impl;
 
-    /** The Java method, with its signature canonicalized to match {@link MethodImpl#execute}. */
+    /// The Java method, with its signature canonicalized to match [MethodImpl#execute].
     final MethodHandle mh;
 
-    /**
-     * A StackEntryType to use if execution fails or is blocked; saves the Java method's original
-     * arguments.
-     */
+    /// A StackEntryType to use if execution fails or is blocked; saves the Java method's original
+    /// arguments.
     final SimpleStackEntryType stackEntryType;
 
     BuiltinEntry(BuiltinImpl impl, MethodHandle mh, String where, String... argNames) {
@@ -132,15 +122,13 @@ class BuiltinSupport {
           };
     }
 
-    /**
-     * The number of Values that are passed to this Java method, including any @Saved arguments to a
-     * continuation.
-     */
+    /// The number of Values that are passed to this Java method, including any @Saved arguments to
+    /// a continuation.
     int numArgs() {
       return stackEntryType.size();
     }
 
-    /** Executes the Java method with the given arguments. */
+    /// Executes the Java method with the given arguments.
     void execute(TState tstate, ResultsInfo results, MethodMemo mMemo, @RC.In Object[] args) {
       try {
         mh.invokeExact(tstate, results, mMemo, args);
@@ -177,39 +165,32 @@ class BuiltinSupport {
     }
   }
 
-  /**
-   * A ContinuationMethod identifies a Java method that will be called with the result of the
-   * function call (for {@link TState#startCall}) or immediately (for {@link TState#jump}).
-   */
+  /// A ContinuationMethod identifies a Java method that will be called with the result of the
+  /// function call (for [TState#startCall]) or immediately (for [TState#jump]).
   static class ContinuationMethod {
     final BuiltinImpl impl;
     final String name;
 
-    /**
-     * An optional argument to the {@link BuiltinMethod.Continuation} or {@link
-     * BuiltinMethod.LoopContinuation} annotation; constrains the order in which {@link #index}
-     * values are assigned. The body of a ContinuationMethod may only reference (via {@link
-     * TState#startCall} or {@link TState#jump}) continuations that have a greater order or for
-     * which {@link #isLoop} is true.
-     */
+    /// An optional argument to the [BuiltinMethod.Continuation] or [BuiltinMethod.LoopContinuation]
+    /// annotation; constrains the order in which [#index] values are assigned. The body of a
+    /// ContinuationMethod may only reference (via [TState#startCall] or [TState#jump])
+    /// continuations that have a greater order or for which [#isLoop] is true.
     final short order;
 
-    /** True if this method had a {@link BuiltinMethod.LoopContinuation} annotation. */
+    /// True if this method had a [BuiltinMethod.LoopContinuation] annotation.
     final boolean isLoop;
 
-    /** True if this method had a {@link BuiltinMethod.DetachedContinuation} annotation. */
+    /// True if this method had a [BuiltinMethod.DetachedContinuation] annotation.
     final boolean isDetached;
 
-    /**
-     * Each ContinuationMethod within a BuiltInMethod will have a distinct index; used as the {@link
-     * CallSite#vIndex} for each Caller that uses this continuation.
-     */
+    /// Each ContinuationMethod within a BuiltInMethod will have a distinct index; used as the
+    /// [CallSite#vIndex] for each Caller that uses this continuation.
     private int index = -1;
 
-    /** The Java code to be called, or null if this is TAIL_CALL. */
+    /// The Java code to be called, or null if this is TAIL\_CALL.
     final BuiltinEntry builtinEntry;
 
-    /** The names of any Value parameters following a {@code @Saved} annotation. */
+    /// The names of any Value parameters following a `@Saved` annotation.
     final String[] savedNames;
 
     ContinuationMethod(
@@ -234,10 +215,8 @@ class BuiltinSupport {
       return isTailCall() ? 0 : builtinEntry.numArgs();
     }
 
-    /**
-     * Sets this ContinuationMethod's {@link #index}; must be called exactly once before the
-     * ContinuationMethod is used.
-     */
+    /// Sets this ContinuationMethod's [#index]; must be called exactly once before the
+    /// ContinuationMethod is used.
     void setIndex(int index) {
       assert this.index < 0;
       this.index = index;
@@ -248,51 +227,47 @@ class BuiltinSupport {
       return index;
     }
 
-    /** Returns true if this is {@link BuiltinMethod#TAIL_CALL}. */
+    /// Returns true if this is [BuiltinMethod#TAIL_CALL].
     boolean isTailCall() {
       return (builtinEntry == null);
     }
 
-    /**
-     * Throws an IllegalArgumentException if a reference to this continuation from a continuation
-     * with the specified order is invalid.
-     */
+    /// Throws an IllegalArgumentException if a reference to this continuation from a continuation
+    /// with the specified order is invalid.
     void checkCallFrom(int previousOrder) {
       Preconditions.checkArgument(
           isTailCall() || isLoop || previousOrder < order, "Out-of-order call to %s", builtinEntry);
     }
 
-    /** Returns the ValueMemo to be used for harmonizing values passed to this continuation. */
+    /// Returns the ValueMemo to be used for harmonizing values passed to this continuation.
     ValueMemo valueMemo(TState tstate, MethodMemo memo) {
       return memo.valueMemo(tstate, index, builtinEntry.numArgs());
     }
   }
 
-  /** A MethodImpl for built-in methods. */
+  /// A MethodImpl for built-in methods.
   static class BuiltinImpl implements MethodImpl {
     final String where;
 
-    /** The BuiltinEntry for the begin method. */
+    /// The BuiltinEntry for the begin method.
     private BuiltinEntry builtinEntry;
 
-    /** The number of CallSites in this method. */
+    /// The number of CallSites in this method.
     private int numCallers;
 
-    /** This method's continuations, keyed by name. */
+    /// This method's continuations, keyed by name.
     private ImmutableMap<String, ContinuationMethod> cMethodsByName;
 
-    /** This method's continuations, sorted by order. */
+    /// This method's continuations, sorted by order.
     private ImmutableList<ContinuationMethod> cMethodsInOrder;
 
-    /**
-     * If this method has a @LoopContinuation, its index in {@link #cMethodsInOrder}; otherwise -1.
-     */
+    /// If this method has a @LoopContinuation, its index in [#cMethodsInOrder]; otherwise -1.
     private int loopIndex;
 
-    /** True if any of this method's entries expect a {@link MethodMemo.Extended}. */
+    /// True if any of this method's entries expect a [MethodMemo.Extended].
     private boolean needsExtendedMethodMemo;
 
-    /** True if this method has any detached continuations. */
+    /// True if this method has any detached continuations.
     private boolean hasDetached;
 
     private ToIntFunction<Object[]> loopBounder;
@@ -360,7 +335,7 @@ class BuiltinSupport {
       return (loopBounder == null) ? -1 : loopBounder.applyAsInt(args);
     }
 
-    /** Returns a distinct CallSite index each time it is called. */
+    /// Returns a distinct CallSite index each time it is called.
     int nextCallSiteIndex() {
       return numCallers++;
     }
@@ -369,16 +344,14 @@ class BuiltinSupport {
       needsExtendedMethodMemo = true;
     }
 
-    /**
-     * Returns a distinct ExtraValueMemo index each time it is called. Must be called after {@link
-     * #setContinuations}.
-     */
+    /// Returns a distinct ExtraValueMemo index each time it is called. Must be called after
+    /// [#setContinuations].
     int extraValueMemoIndex() {
       // ExtraValueMemos are allocated after the ValueMemos that we create for each continuation.
       return numContinuations() + numExtraValueMemos++;
     }
 
-    /** Creates a VmMethod from this MethodImpl and adds it to signature.function. */
+    /// Creates a VmMethod from this MethodImpl and adds it to signature.function.
     void createMethod(ParsedSignature signature) {
       int numArgs = signature.function.numArgs;
       int numResults = signature.function.numResults;
@@ -564,11 +537,9 @@ class BuiltinSupport {
       }
     }
 
-    /**
-     * Creates a stack entry describing our state at the start of the current step. This will be
-     * used to annotate any blocks we emit. If we need a new escape handler the stack entry can also
-     * be used as an unwind point.
-     */
+    /// Creates a stack entry describing our state at the start of the current step. This will be
+    /// used to annotate any blocks we emit. If we need a new escape handler the stack entry can
+    /// also be used as an unwind point.
     private static void createStackEntry(
         CodeGen codeGen, BuiltinEntry builtinEntry, Object[] args, boolean forceEscape) {
       BaseType.StackEntryType entryType = builtinEntry.stackEntryType;
@@ -597,20 +568,18 @@ class BuiltinSupport {
     }
   }
 
-  /** An EmitState holds the state involved in a single call to {@link BuiltinImpl#emit}. */
+  /// An EmitState holds the state involved in a single call to [BuiltinImpl#emit].
   static class EmitState {
     final BuiltinImpl impl;
 
-    /** A MethodMemo for {@link #impl}. */
+    /// A MethodMemo for [#impl].
     final MethodMemo mMemo;
 
-    /**
-     * A (lazily-created) Destination for each of {@link #impl}'s continuations.
-     *
-     * <p>If {@link #impl} has any detached continuations, we create Destinations for each; the
-     * first (at {@code destinations[cm.index]}) for successful completions and the second (at
-     * {@code destinations[cm.index + impl.numContinuations]}) for calls that unwind.
-     */
+    /// A (lazily-created) Destination for each of [#impl]'s continuations.
+    ///
+    /// If [#impl] has any detached continuations, we create Destinations for each; the first (at
+    /// `destinations[cm.index]`) for successful completions and the second (at
+    /// `destinations[cm.index + impl.numContinuations]`) for calls that unwind.
     private final Destination[] destinations;
 
     EmitState(BuiltinImpl impl, MethodMemo mMemo) {
@@ -620,20 +589,18 @@ class BuiltinSupport {
       this.destinations = new Destination[numDestinations];
     }
 
-    /** Returns the index in {@link #destinations} corresponding to the given continuation. */
+    /// Returns the index in [#destinations] corresponding to the given continuation.
     private int index(ContinuationMethod cm, boolean forDetached) {
       return cm.index() + (forDetached ? impl.numContinuations() : 0);
     }
 
-    /** Returns the Destination corresponding to the continuation with the given name. */
+    /// Returns the Destination corresponding to the continuation with the given name.
     Destination getDestination(CodeGen codeGen, String continuationName) {
       return getDestination(codeGen, impl.continuation(continuationName), false);
     }
 
-    /**
-     * Returns the Destination corresponding to the given continuation, creating it if this is the
-     * first reference.
-     */
+    /// Returns the Destination corresponding to the given continuation, creating it if this is the
+    /// first reference.
     Destination getDestination(CodeGen codeGen, ContinuationMethod cm, boolean forDetached) {
       int index = index(cm, forDetached);
       Destination result = destinations[index];
@@ -648,11 +615,9 @@ class BuiltinSupport {
       return result;
     }
 
-    /**
-     * Returns the Destination corresponding to the given continuation, or null if it was never
-     * created. Clears the entry in {@link #destinations} so that it can be reused (which only
-     * happens if we have unwound a loop).
-     */
+    /// Returns the Destination corresponding to the given continuation, or null if it was never
+    /// created. Clears the entry in [#destinations] so that it can be reused (which only happens if
+    /// we have unwound a loop).
     Destination takeDestination(ContinuationMethod cm, boolean forDetached) {
       int index = index(cm, forDetached);
       Destination destination = destinations[index];
@@ -661,14 +626,12 @@ class BuiltinSupport {
     }
   }
 
-  /**
-   * Scans the specified class for definitions of Retrospect methods and adds them to the
-   * appropriate functions.
-   *
-   * @param klass the class to search
-   * @param types the types that may be referred to in method predicates
-   * @param functions the functions for which methods may be defined
-   */
+  /// Scans the specified class for definitions of Retrospect methods and adds them to the
+  /// appropriate functions.
+  ///
+  /// @param klass the class to search
+  /// @param types the types that may be referred to in method predicates
+  /// @param functions the functions for which methods may be defined
   static void addMethodsFrom(
       Class<?> klass, Map<String, VmType> types, Map<String, VmFunction> functions) {
     String cName = klass.getSimpleName();
@@ -701,17 +664,15 @@ class BuiltinSupport {
 
   private static final String[] EMPTY_STRINGS = new String[0];
 
-  /** The result of parsing the string that appears in a @Core.Method annotation. */
+  /// The result of parsing the string that appears in a @Core.Method annotation.
   private static class ParsedSignature {
     final VmFunction.General function;
     final MethodPredicate predicate;
     final boolean isDefault;
 
-    /**
-     * Matches a method signature: a function name, followed by zero or more (comma-separated) args
-     * in parentheses, optionally followed by "default". Each arg is "_" or one or more type names
-     * separated by "|".
-     */
+    /// Matches a method signature: a function name, followed by zero or more (comma-separated) args
+    /// in parentheses, optionally followed by "default". Each arg is "\_" or one or more type names
+    /// separated by "|".
     private static final Pattern SIGNATURE_PATTERN =
         Pattern.compile("(\\w+)\\(([\\w\\-|, ]*)\\)( default)?");
 
@@ -719,14 +680,12 @@ class BuiltinSupport {
     private static final Pattern ALTERNATIVE_SEPARATOR = Pattern.compile(" *\\| *");
     private static final Pattern TYPE_NAME_SEPARATOR = Pattern.compile(" *- *");
 
-    /**
-     * Parses the given signature.
-     *
-     * @param where a description of where the signature appeared, for use in error messages
-     * @param signature the signature to parse
-     * @param types used to resolve any type names that appear in the signature
-     * @param functions used to resolve the function name that appears in the signature
-     */
+    /// Parses the given signature.
+    ///
+    /// @param where a description of where the signature appeared, for use in error messages
+    /// @param signature the signature to parse
+    /// @param types used to resolve any type names that appear in the signature
+    /// @param functions used to resolve the function name that appears in the signature
     ParsedSignature(
         String where,
         String signature,
@@ -755,15 +714,13 @@ class BuiltinSupport {
       this.predicate = predicate;
     }
 
-    /**
-     * Parses the given argument type into a MethodPredicate.
-     *
-     * <p>{@code arg} may be {@code "_"} (trivially true), a (possibly restricted) type name (true
-     * if the argument has that type), or multiple (possibly restricted) type names separated by
-     * {@code "|"} (true if the argument has any of those types).
-     *
-     * <p>A restricted type name is a type name followed by one or more negated type names.
-     */
+    /// Parses the given argument type into a MethodPredicate.
+    ///
+    /// `arg` may be `"_"` (trivially true), a (possibly restricted) type name (true if the argument
+    /// has that type), or multiple (possibly restricted) type names separated by `"|"` (true if the
+    /// argument has any of those types).
+    ///
+    /// A restricted type name is a type name followed by one or more negated type names.
     private static MethodPredicate asMethodPredicate(
         String where, String arg, int index, Map<String, VmType> types) {
       if (arg.equals("_")) {
@@ -786,57 +743,46 @@ class BuiltinSupport {
     }
   }
 
-  /**
-   * Wraps a Java method so that it matches the API defined in VmMethod.
-   *
-   * <p>The Java method
-   *
-   * <ul>
-   *   <li>must have a return type of {@code Value} or {@code void};
-   *   <li>may optionally have up to three argument initial arguments of type {@code TState}, {@code
-   *       ResultsInfo}, and/or {@code MethodMemo};
-   *   <li>must have all remaining arguments of type {@code Value}, each optionally annotated
-   *       {@code @RC.In} or {@code @RC.Singleton};
-   *   <li>may optionally throw {@link Err.BuiltinException}.
-   * </ul>
-   *
-   * <p>If an argument is annotated {@code @RC.In}, the method takes responsibility for decrementing
-   * its root count unless it throws {@code BuiltinException}. If the argument is not annotated, or
-   * the method throws {@code BuiltinException}, the method must not change the argument's root
-   * count.
-   */
+  /// Wraps a Java method so that it matches the API defined in VmMethod.
+  ///
+  /// The Java method
+  ///
+  /// - must have a return type of `Value` or `void`;
+  /// - may optionally have up to three argument initial arguments of type `TState`, `ResultsInfo`,
+  ///   and/or `MethodMemo`;
+  /// - must have all remaining arguments of type `Value`, each optionally annotated `@RC.In` or
+  ///   `@RC.Singleton`;
+  /// - may optionally throw [Err.BuiltinException].
+  ///
+  /// If an argument is annotated `@RC.In`, the method takes responsibility for decrementing its
+  /// root count unless it throws `BuiltinException`. If the argument is not annotated, or the
+  /// method throws `BuiltinException`, the method must not change the argument's root count.
   private static class Prepared {
     final Method m;
 
-    /** True if the Java method returns a Value, false if it returns void. */
+    /// True if the Java method returns a Value, false if it returns void.
     final boolean returnsValue;
 
-    /**
-     * The index of the first {@code Value} argument, either 1 if the method has an initial {@code
-     * TState} argument, or 0 if it does not.
-     */
+    /// The index of the first `Value` argument, either 1 if the method has an initial `TState`
+    /// argument, or 0 if it does not.
     final int valueStart;
 
-    /** The number of {@code Value} arguments. */
+    /// The number of `Value` arguments.
     final int numValues;
 
-    /**
-     * The number of Value arguments following the {@code @Saved} annotation, or zero if there is no
-     * {@code @Saved}.
-     */
+    /// The number of Value arguments following the `@Saved` annotation, or zero if there is no
+    /// `@Saved`.
     final int numSaved;
 
-    /** A BuiltinEntry for this method. */
+    /// A BuiltinEntry for this method.
     final BuiltinEntry builtinEntry;
 
-    /**
-     * Wrap the given method.
-     *
-     * @param where a description of where the signature appeared, for use in error messages and
-     *     stack traces
-     * @param m the method to be wrapped
-     * @param functions used to resolve function names that appear in Caller arguments
-     */
+    /// Wrap the given method.
+    ///
+    /// @param where a description of where the signature appeared, for use in error messages and
+    ///   stack traces
+    /// @param m the method to be wrapped
+    /// @param functions used to resolve function names that appear in Caller arguments
     Prepared(String where, Method m, Map<String, VmFunction> functions, BuiltinImpl impl) {
       Preconditions.checkArgument(
           Modifier.isStatic(m.getModifiers()), "Should be static (%s)", where);
@@ -1017,7 +963,7 @@ class BuiltinSupport {
       builtinEntry = new BuiltinEntry(impl, mh, where, valueNames(numValues));
     }
 
-    /** Returns the names of this method's last {@code n} Value parameters. */
+    /// Returns the names of this method's last `n` Value parameters.
     private String[] valueNames(int n) {
       if (n == 0) {
         return EMPTY_STRINGS;
@@ -1029,18 +975,16 @@ class BuiltinSupport {
       return result;
     }
 
-    /** Returns the names of any parameters following a {@link Saved} annotation. */
+    /// Returns the names of any parameters following a [Saved] annotation.
     String[] savedNames() {
       return valueNames(numSaved);
     }
 
-    /**
-     * Checks that this method definition has the expected number of arguments and results.
-     *
-     * <p>We can only check the number of results if the method returns {@code Value} (in which case
-     * {@code numResults} must be 1); otherwise the method calls {@link TState#setResults} and we'll
-     * have to rely on runtime checks.
-     */
+    /// Checks that this method definition has the expected number of arguments and results.
+    ///
+    /// We can only check the number of results if the method returns `Value` (in which case
+    /// `numResults` must be 1); otherwise the method calls [TState#setResults] and we'll have to
+    /// rely on runtime checks.
     void checkSignature(String where, int numArgs, int numResults, boolean savedOK) {
       Preconditions.checkArgument(savedOK || numSaved == 0, "@Saved not expected (%s)", where);
       Preconditions.checkArgument(
@@ -1053,18 +997,16 @@ class BuiltinSupport {
     }
   }
 
-  /**
-   * Calls {@code first} followed by {@code second}, passing shared arguments to both of them.
-   *
-   * <p>Returns a MethodHandle with the same parameter types as {@code first} and the same result
-   * type as {@code second}.
-   *
-   * <p>If {@code first} returns void, the arguments to {@code second} will be a prefix of the
-   * arguments to {@code first}.
-   *
-   * <p>If {@code first} returns non-void, the arguments to {@code second} will be a prefix of the
-   * arguments to {@code first} followed by the result of {@code first}.
-   */
+  /// Calls `first` followed by `second`, passing shared arguments to both of them.
+  ///
+  /// Returns a MethodHandle with the same parameter types as `first` and the same result type as
+  /// `second`.
+  ///
+  /// If `first` returns void, the arguments to `second` will be a prefix of the arguments to
+  /// `first`.
+  ///
+  /// If `first` returns non-void, the arguments to `second` will be a prefix of the arguments to
+  /// `first` followed by the result of `first`.
   private static MethodHandle sequence(MethodHandle first, MethodHandle second) {
     int numArgsToFirst = first.type().parameterCount();
     int numFirstResults = (first.type().returnType() == void.class) ? 0 : 1;
@@ -1082,37 +1024,34 @@ class BuiltinSupport {
     return MethodHandles.permuteArguments(mh, type, perm);
   }
 
-  /** A MethodHandle of type `Value <- (Object[], int)` that returns the specified array element. */
+  /// A MethodHandle of type \`Value <- (Object[], int)\` that returns the specified array element.
   private static final MethodHandle GET_VALUE_FROM_OBJECT_ARRAY =
       MethodHandles.arrayElementGetter(Object[].class)
           .asType(MethodType.methodType(Value.class, Object[].class, int.class));
 
-  /**
-   * A MethodHandle of type `void <- (Object[], int, Object)` that sets the specified array element.
-   */
+  /// A MethodHandle of type \`void <- (Object[], int, Object)\` that sets the specified array
+  /// element.
   private static final MethodHandle SET_OBJECT_ARRAY =
       MethodHandles.arrayElementSetter(Object[].class);
 
-  /** The MethodType of {@link MethodImpl#execute}. */
+  /// The MethodType of [MethodImpl#execute].
   private static final MethodType EXEC_TYPE =
       MethodType.methodType(
           void.class, TState.class, ResultsInfo.class, MethodMemo.class, Object[].class);
 
-  /** A MethodHandle of type `void <- (TState, Value)` that calls {@link #checkForResult}. */
+  /// A MethodHandle of type \`void <- (TState, Value)\` that calls [#checkForResult].
   private static final MethodHandle CHECK_FOR_RESULT =
       Handle.forMethod(BuiltinSupport.class, "checkForResult", TState.class, Value.class);
 
-  /**
-   * Checks the result returned by a builtin method, and calls {@link TState#setResult(Value)} if it
-   * is non-null.
-   */
+  /// Checks the result returned by a builtin method, and calls [TState#setResult(Value)] if it is
+  /// non-null.
   static void checkForResult(TState tstate, Value result) {
     if (result != null) {
       tstate.setResult(result);
     }
   }
 
-  /** Creates a builtin method from a subclass of BuiltinMethod. */
+  /// Creates a builtin method from a subclass of BuiltinMethod.
   private static void addMethodFromNestedClass(
       String parentName,
       Class<?> klass,

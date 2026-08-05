@@ -33,133 +33,116 @@ import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.VmFunctionBuilder;
 
-/** Core methods providing support for collections. */
+/// Core methods providing support for collections.
 public final class CollectionCore {
 
-  /**
-   * {@code private compound Filter is Lambda}
-   *
-   * <p>Filter wraps a Boolean-valued Lambda to create a Lambda that returns either its argument (if
-   * the wrapped Lambda returns True) or Absent (if it returns False).
-   */
+  /// `private compound Filter is Lambda`
+  ///
+  /// Filter wraps a Boolean-valued Lambda to create a Lambda that returns either its argument (if
+  /// the wrapped Lambda returns True) or Absent (if it returns False).
   @Core.Private static final BaseType.Named FILTER = Core.newBaseType("Filter", 1, Core.LAMBDA);
 
-  /** {@code function filter(lambda)} */
+  /// `function filter(lambda)`
   @Core.Public
   static final VmFunctionBuilder filterFn = VmFunctionBuilder.create("filter", 1).isOpen();
 
-  /** {@code private compound WithKeys is Collection} */
+  /// `private compound WithKeys is Collection`
   @Core.Private
   static final BaseType.Named WITH_KEYS = Core.newBaseType("WithKeys", 1, Core.COLLECTION);
 
-  /** {@code private compound WithKeysMatrix is Matrix} */
+  /// `private compound WithKeysMatrix is Matrix`
   @Core.Private
   static final BaseType.Named WITH_KEYS_MATRIX = Core.newBaseType("WithKeysMatrix", 1, Core.MATRIX);
 
-  /** {@code function withKeys(collection)} */
+  /// `function withKeys(collection)`
   @Core.Public
   static final VmFunctionBuilder withKeys = VmFunctionBuilder.create("withKeys", 1).isOpen();
 
   @Core.Public static final VmFunctionBuilder join = VmFunctionBuilder.create("join", 2).isOpen();
 
-  /**
-   * {@code private compound TransformedLambda is Lambda}
-   *
-   * <p>Elements are {@code first}, {@code second} (both Lambdas).
-   *
-   * <p>Applying a TransformedLambda applies its elements in sequence (aka lambda composition). If
-   * the result of {@code first} is Absent, {@code second} is skipped and the overall result is
-   * Absent.
-   */
+  /// `private compound TransformedLambda is Lambda`
+  ///
+  /// Elements are `first`, `second` (both Lambdas).
+  ///
+  /// Applying a TransformedLambda applies its elements in sequence (aka lambda composition). If the
+  /// result of `first` is Absent, `second` is skipped and the overall result is Absent.
   @Core.Private
   static final BaseType.Named TRANSFORMED_LAMBDA =
       Core.newBaseType("TransformedLambda", 2, Core.LAMBDA);
 
-  /**
-   * {@code private compound TransformedCollection is Collection}
-   *
-   * <p>Elements are {@code base} (a Collection) and {@code lambda}.
-   *
-   * <p>A TransformedCollection has the same keys as its {@code base}; its value at each key is the
-   * the result of applying {@code lambda} to the corresponding value of {@code base} (unless that
-   * value is Absent).
-   *
-   * <p>If Retrospect allowed compound types to be subtypes of other compound types it would make
-   * sense for TransformedCollection to be a subtype of TransformedLambda, and at least one method
-   * definition (AtTransformed) treats them that way. Without complicating the type system we could
-   * also get this effect by making TransformedLambda a union containing two compounds
-   * (TransformedCollection and TransformedNonCollection), but just using a more complex
-   * MethodPredicate (and implicitly relying on them having their elements in the same order) seems
-   * like the least clunky alternative.
-   */
+  /// `private compound TransformedCollection is Collection`
+  ///
+  /// Elements are `base` (a Collection) and `lambda`.
+  ///
+  /// A TransformedCollection has the same keys as its `base`; its value at each key is the the
+  /// result of applying `lambda` to the corresponding value of `base` (unless that value is
+  /// Absent).
+  ///
+  /// If Retrospect allowed compound types to be subtypes of other compound types it would make
+  /// sense for TransformedCollection to be a subtype of TransformedLambda, and at least one method
+  /// definition (AtTransformed) treats them that way. Without complicating the type system we could
+  /// also get this effect by making TransformedLambda a union containing two compounds
+  /// (TransformedCollection and TransformedNonCollection), but just using a more complex
+  /// MethodPredicate (and implicitly relying on them having their elements in the same order) seems
+  /// like the least clunky alternative.
   @Core.Private
   static final BaseType.Named TRANSFORMED_COLLECTION =
       Core.newBaseType("TransformedCollection", 2, Core.COLLECTION);
 
-  /**
-   * {@code private compound TransformedMatrix is Matrix}
-   *
-   * <p>Elements are {@code base}, {@code lambda}.
-   *
-   * <p>Following the comments on {@link #TRANSFORMED_COLLECTION}, this would be a subtype of
-   * TransformedCollection if such a thing were possible.
-   */
+  /// `private compound TransformedMatrix is Matrix`
+  ///
+  /// Elements are `base`, `lambda`.
+  ///
+  /// Following the comments on [#TRANSFORMED_COLLECTION], this would be a subtype of
+  /// TransformedCollection if such a thing were possible.
   @Core.Private
   public static final BaseType.Named TRANSFORMED_MATRIX =
       Core.newBaseType("TransformedMatrix", 2, Core.MATRIX);
 
-  /**
-   * {@code private compound PipedCollection is Collection}
-   *
-   * <p>Elements are {@code base}, {@code step}.
-   *
-   * <p>{@code step} is not a Lambda (if it were, we would use a TransformedCollection or
-   * TransformedMatrix). The resulting collection does not implement {@code at()}, {@code size()},
-   * or {@code keys()} the only thing you can really do with it is iterate through its elements.
-   */
+  /// `private compound PipedCollection is Collection`
+  ///
+  /// Elements are `base`, `step`.
+  ///
+  /// `step` is not a Lambda (if it were, we would use a TransformedCollection or
+  /// TransformedMatrix). The resulting collection does not implement `at()`, `size()`, or `keys()`
+  /// the only thing you can really do with it is iterate through its elements.
   @Core.Private
   public static final BaseType.Named PIPED_COLLECTION =
       Core.newBaseType("PipedCollection", 2, Core.COLLECTION);
 
-  /**
-   * {@code private compound JoinedCollection is Collection}
-   *
-   * <p>Elements are {@code c1}, {@code c2}.
-   */
+  /// `private compound JoinedCollection is Collection`
+  ///
+  /// Elements are `c1`, `c2`.
   @Core.Private
   static final BaseType.Named JOINED_COLLECTION =
       Core.newBaseType("JoinedCollection", 2, Core.COLLECTION);
 
-  /**
-   * {@code private compound JoinedMatrix is Matrix}
-   *
-   * <p>Elements are {@code c1}, {@code c2}.
-   *
-   * <p>Following the comments on {@link #TRANSFORMED_COLLECTION}, this would be a subtype of
-   * JoinedCollection if such a thing were possible.
-   */
+  /// `private compound JoinedMatrix is Matrix`
+  ///
+  /// Elements are `c1`, `c2`.
+  ///
+  /// Following the comments on [#TRANSFORMED_COLLECTION], this would be a subtype of
+  /// JoinedCollection if such a thing were possible.
   @Core.Private
   static final BaseType.Named JOINED_MATRIX = Core.newBaseType("JoinedMatrix", 2, Core.MATRIX);
 
-  /**
-   * {@code private compound MatchFinder is Lambda}
-   *
-   * <p>Elements are {@code c2}, {@code eKind}.
-   */
+  /// `private compound MatchFinder is Lambda`
+  ///
+  /// Elements are `c2`, `eKind`.
   @Core.Private
   static final BaseType.Named MATCH_FINDER = Core.newBaseType("MatchFinder", 2, Core.LAMBDA);
 
-  /** {@code singleton DuplicateKey is Lambda} */
+  /// `singleton DuplicateKey is Lambda`
   @Core.Private
   public static final Singleton DUPLICATE_KEY = Core.newSingleton("DuplicateKey", Core.LAMBDA);
 
-  /** {@code method filter(lambda) = Filter_(lambda) // v -> (lambda @ v) ? v : Absent} */
+  /// `method filter(lambda) = Filter_(lambda) // v -> (lambda @ v) ? v : Absent`
   @Core.Method("filter(Lambda)")
   static Value filter(TState tstate, @RC.In Value lambda) {
     return tstate.compound(FILTER, lambda);
   }
 
-  /** {@code method at(Filter filter, x) = filter_ @ x ? x : Absent} */
+  /// `method at(Filter filter, x) = filter_ @ x ? x : Absent`
   static class AtFilter extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 
@@ -178,21 +161,19 @@ public final class CollectionCore {
     }
   }
 
-  /** {@code default method withKeys(c) = c is Matrix ? WithKeysMatrix_(c) : WithKeys_(c)} */
+  /// `default method withKeys(c) = c is Matrix ? WithKeysMatrix_(c) : WithKeys_(c)`
   @Core.Method("withKeys(Collection) default")
   static Value withKeys(TState tstate, @RC.In Value c) {
     return c.isa(Core.MATRIX)
         .choose(() -> tstate.compound(WITH_KEYS_MATRIX, c), () -> tstate.compound(WITH_KEYS, c));
   }
 
-  /**
-   * <pre>
-   * method at(WithKeys wk, key) {
-   *   v = wk_ @ key
-   *   return v is Absent ? Absent : [key, v]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method at(WithKeys wk, key) {
+  ///   v = wk_ @ key
+  ///   return v is Absent ? Absent : [key, v]
+  /// }
+  /// ```
   static class AtWithKeys extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 
@@ -213,14 +194,12 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method element(WithKeysMatrix wk, Array key) {
-   *   v = element(wk_, key)
-   *   return v is Absent ? Absent : [key, v]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method element(WithKeysMatrix wk, Array key) {
+  ///   v = element(wk_, key)
+  ///   return v is Absent ? Absent : [key, v]
+  /// }
+  /// ```
   static class ElementWithKeys extends BuiltinMethod {
     static final Caller element = new Caller("element:2", "afterElement");
 
@@ -235,22 +214,21 @@ public final class CollectionCore {
     }
   }
 
-  /** {@code method keys(wk) (wk is WithKeys or wk is WithKeysMatrix) = keys(wk_)} */
+  /// `method keys(wk) (wk is WithKeys or wk is WithKeysMatrix) = keys(wk_)`
   @Core.Method("keys(WithKeys|WithKeysMatrix)")
   static void keysWithKeys(TState tstate, Value wk, @Fn("keys:1") Caller keys) {
     tstate.startCall(keys, wk.element(0));
   }
 
-  /**
-   * <pre>
-   * method iterator(wk, eKind, loop=, initialState=) (wk is WithKeys or wk is WithKeysMatrix) {
-   *   if eKind is EnumerateValues {
-   *     return iterator(wk_, EnumerateWithKeys, loop=, initialState=)
-   *   }
-   *   loop = transformLoop([k, v] -> [k, [k, v]], loop)
-   *   return iterator(wk_, eKind, loop=, initialState=)
-   * </pre>
-   */
+  /// ```
+  /// method iterator(wk, eKind, loop=, initialState=) (wk is WithKeys or wk is WithKeysMatrix) {
+  ///   if eKind is EnumerateValues {
+  ///     return iterator(wk_, EnumerateWithKeys, loop=, initialState=)
+  ///   }
+  ///   loop = transformLoop([k, v] -> [k, [k, v]], loop)
+  ///   return iterator(wk_, eKind, loop=, initialState=)
+  /// }
+  /// ```
   @Core.Method("iterator(WithKeys|WithKeysMatrix, EnumerationKind, Loop, _)")
   static void iteratorWithKeys(
       TState tstate,
@@ -271,7 +249,7 @@ public final class CollectionCore {
             });
   }
 
-  /** {@code method at(DuplicateKey, [k, v]) = [k, [k, v]] } */
+  /// `method at(DuplicateKey, [k, v]) = [k, [k, v]]`
   @Core.Method("at(DuplicateKey, Array)")
   static Value atDuplicateKey(TState tstate, Value duplicateKey, @RC.In Value pair)
       throws BuiltinException {
@@ -280,33 +258,31 @@ public final class CollectionCore {
     return tstate.arrayValue(key, pair);
   }
 
-  /**
-   * <pre>
-   * method pipe(PipelineStep left, PipelineStep right) default {
-   *   if left is Collection {
-   *     if right is not Lambda {
-   *       return PipedCollection_({base: left, step: right})
-   *     }
-   *     if left is TransformedCollection or left is TransformedMatrix {
-   *       // Rather than nest TransformedCollection we compose the Lambdas.
-   *       // There's no clear reason to prefer one or the other.
-   *       right = left_.lambda | right
-   *       left = left_.base
-   *     }
-   *     if left is Matrix {
-   *       return TransformedMatrix_({base: left, lambda: right})
-   *     } else {
-   *       return TransformedCollection_({base: left, lambda: right})
-   *     }
-   *   }
-   *   if left is Lambda and right is Lambda {
-   *     return TransformedLambda_({first: left, second: right})
-   *   } else {
-   *     return CompoundStep_({step1: left, step2: right})
-   *   }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method pipe(PipelineStep left, PipelineStep right) default {
+  ///   if left is Collection {
+  ///     if right is not Lambda {
+  ///       return PipedCollection_({base: left, step: right})
+  ///     }
+  ///     if left is TransformedCollection or left is TransformedMatrix {
+  ///       // Rather than nest TransformedCollection we compose the Lambdas.
+  ///       // There's no clear reason to prefer one or the other.
+  ///       right = left_.lambda | right
+  ///       left = left_.base
+  ///     }
+  ///     if left is Matrix {
+  ///       return TransformedMatrix_({base: left, lambda: right})
+  ///     } else {
+  ///       return TransformedCollection_({base: left, lambda: right})
+  ///     }
+  ///   }
+  ///   if left is Lambda and right is Lambda {
+  ///     return TransformedLambda_({first: left, second: right})
+  ///   } else {
+  ///     return CompoundStep_({step1: left, step2: right})
+  ///   }
+  /// }
+  /// ```
   @Core.Method("pipe(PipelineStep, PipelineStep) default")
   static Value pipeStepStep(TState tstate, @RC.In Value left, @RC.In Value right) {
     return left.isa(Core.COLLECTION)
@@ -348,24 +324,22 @@ public final class CollectionCore {
             () -> tstate.compound(TRANSFORMED_COLLECTION, left, right));
   }
 
-  /**
-   * <pre>
-   * method at(TransformedLambda tLambda, x) {
-   *   x = tLambda_.first @ x
-   *   return x is Absent ? Absent : tLambda_.second @ x
-   * }
-   *
-   * method at(tc, x) (tc is TransformedCollection) {
-   *   x = tc_.base @ x
-   *   return x is Absent ? Absent : tc_.lambda @ x
-   * }
-   * </pre>
-   *
-   * <p>Note that we use the same method for TransformedLambda and TransformedCollection; see
-   * comment on TransformedCollection. Also note that this method is *not* used for
-   * TransformedMatrix; that uses the default {@code at(Matrix, _)} method in MatrixCore to ensure
-   * that ranges are handled properly.
-   */
+  /// ```
+  /// method at(TransformedLambda tLambda, x) {
+  ///   x = tLambda_.first @ x
+  ///   return x is Absent ? Absent : tLambda_.second @ x
+  /// }
+  ///
+  /// method at(tc, x) (tc is TransformedCollection) {
+  ///   x = tc_.base @ x
+  ///   return x is Absent ? Absent : tc_.lambda @ x
+  /// }
+  /// ```
+  ///
+  /// Note that we use the same method for TransformedLambda and TransformedCollection; see comment
+  /// on TransformedCollection. Also note that this method is \*not\* used for TransformedMatrix;
+  /// that uses the default `at(Matrix, _)` method in MatrixCore to ensure that ranges are handled
+  /// properly.
   static class AtTransformed extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 
@@ -383,14 +357,12 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method element(TransformedMatrix tm, Array x) {
-   *   x = element(tm_.base, x)
-   *   return x is Absent ? Absent : tm_.lambda @ x
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method element(TransformedMatrix tm, Array x) {
+  ///   x = element(tm_.base, x)
+  ///   return x is Absent ? Absent : tm_.lambda @ x
+  /// }
+  /// ```
   static class ElementTransformed extends BuiltinMethod {
     static final Caller element = new Caller("element:2", "afterElement");
 
@@ -406,35 +378,29 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method keys(tc) (tc is TransformedCollection or tc is TransformedMatrix) = keys(tc_.base)
-   * </pre>
-   */
+  /// ```
+  /// `method keys(tc) (tc is TransformedCollection or tc is TransformedMatrix) = keys(tc_.base)`
+  /// ```
   @Core.Method("keys(TransformedCollection|TransformedMatrix)")
   static void keysTransformed(TState tstate, Value tc, @Fn("keys:1") Caller keys) {
     tstate.startCall(keys, tc.element(0));
   }
 
-  /**
-   * <pre>
-   * method size(tc) (tc is TransformedCollection or tc is TransformedMatrix) = size(tc_.base)
-   * </pre>
-   */
+  /// ```
+  /// method size(tc) (tc is TransformedCollection or tc is TransformedMatrix) = size(tc_.base)
+  /// ```
   @Core.Method("size(TransformedCollection|TransformedMatrix)")
   static void sizeTransformed(TState tstate, Value tc, @Fn("size:1") Caller size) {
     tstate.startCall(size, tc.element(0));
   }
 
-  /**
-   * <pre>
-   * method iterator(tc, eKind, loop=, initialState=)
-   *      (tc is TransformedCollection or tc is TransformedMatrix or tc is PipedCollection) {
-   *   addLoopStep(tc_.step, eKind, loop=, initialState=)
-   *   return iterator(tc_.base, eKind, loop=, initialState=)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(tc, eKind, loop=, initialState=)
+  ///      (tc is TransformedCollection or tc is TransformedMatrix or tc is PipedCollection) {
+  ///   addLoopStep(tc_.step, eKind, loop=, initialState=)
+  ///   return iterator(tc_.base, eKind, loop=, initialState=)
+  /// }
+  /// ```
   static class IteratorPiped extends BuiltinMethod {
     static final Caller addLoopStep = new Caller("addLoopStep:4", "afterAddLoopStep");
 
@@ -464,15 +430,13 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method at(JoinedCollection jc, key) {
-   *   x1 = jc_.c1 @ key
-   *   x2 = jc_.c2 @ key
-   *   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method at(JoinedCollection jc, key) {
+  ///   x1 = jc_.c1 @ key
+  ///   x2 = jc_.c2 @ key
+  ///   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
+  /// }
+  /// ```
   static class AtJoinedCollection extends BuiltinMethod {
     static final Caller atC1 = new Caller("at:2", "afterAtC1");
     static final Caller atC2 = new Caller("at:2", "afterAtC2");
@@ -496,15 +460,13 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method element(JoinedMatrix jc, key) {
-   *   x1 = element(jc_.c1, key)
-   *   x2 = element(jc_.c2, key)
-   *   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method element(JoinedMatrix jc, key) {
+  ///   x1 = element(jc_.c1, key)
+  ///   x2 = element(jc_.c2, key)
+  ///   return (x1 is Absent and x2 is Absent) ? Absent : [x1, x2]
+  /// }
+  /// ```
   static class ElementJoinedMatrix extends BuiltinMethod {
     static final Caller elementC1 = new Caller("element:2", "afterElementC1");
     static final Caller elementC2 = new Caller("element:2", "afterElementC2");
@@ -528,19 +490,16 @@ public final class CollectionCore {
     }
   }
 
-  /**
-   * <pre>
-   * method iterator(jc, eKind, loop=, initialState=) (jc is JoinedCollection or jc is JoinedMatrix) {
-   *   loop = transformLoop(MatchFinder_({c2: jc_.c2, eKind: eKind}), loop)
-   *   return iterator(jc_.c1, EnumerateAllKeys, loop=, initialState)
-   * }
-   * </pre>
-   *
-   * <p>Note that this implementation assumes that the joined collections have the same key set,
-   * which is true for the only joined collections we have implemented so far (matrices). If we
-   * start supporting joins between collections with different key sets we will need to revisit
-   * this.
-   */
+  /// ```
+  /// method iterator(jc, eKind, loop=, initialState=) (jc is JoinedCollection or jc is JoinedMatrix) {
+  ///   loop = transformLoop(MatchFinder_({c2: jc_.c2, eKind: eKind}), loop)
+  ///   return iterator(jc_.c1, EnumerateAllKeys, loop=, initialState)
+  /// }
+  /// ```
+  ///
+  /// Note that this implementation assumes that the joined collections have the same key set, which
+  /// is true for the only joined collections we have implemented so far (matrices). If we start
+  /// supporting joins between collections with different key sets we will need to revisit this.
   @Core.Method("iterator(JoinedCollection|JoinedMatrix, EnumerationKind, Loop, _)")
   static void iteratorJoined(
       TState tstate,
@@ -554,18 +513,16 @@ public final class CollectionCore {
     tstate.startCall(iterator, jc.element(0), LoopCore.ENUMERATE_ALL_KEYS, loop, initialState);
   }
 
-  /**
-   * <pre>
-   * method at(MatchFinder mf, [key, v1]) {
-   *   v2 = mf_.c2 @ key
-   *   if v1 is Absent and v2 is Absent and mf_.eKind is not EnumerateAllKeys {
-   *     return Absent
-   *   }
-   *   v = [v1, v2]
-   *   return (eKind is EnumerateValues) ? v : [key, v]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method at(MatchFinder mf, [key, v1]) {
+  ///   v2 = mf_.c2 @ key
+  ///   if v1 is Absent and v2 is Absent and mf_.eKind is not EnumerateAllKeys {
+  ///     return Absent
+  ///   }
+  ///   v = [v1, v2]
+  ///   return (eKind is EnumerateValues) ? v : [key, v]
+  /// }
+  /// ```
   static class AtMatchFinder extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 

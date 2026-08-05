@@ -40,78 +40,58 @@ import org.retrolang.util.Bits;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
 
-/**
- * Frames using this FrameLayout represent a Retrospect array using parallel Java arrays. Each
- * element of the Retrospect array is described by the template, with variable values supplied by
- * corresponding elements of the Java arrays.
- */
+/// Frames using this FrameLayout represent a Retrospect array using parallel Java arrays. Each
+/// element of the Retrospect array is described by the template, with variable values supplied by
+/// corresponding elements of the Java arrays.
 public class VArrayLayout extends FrameLayout {
   final Template template;
 
-  /** Maps the index of each NumVar in {@link #template} to its NumEncoding. */
+  /// Maps the index of each NumVar in [#template] to its NumEncoding.
   private final NumEncoding[] nvEncodings;
 
-  /**
-   * The length of any pointer overflow array required, or zero if this layout's element arrays fit
-   * in the chosen FrameClass.
-   */
+  /// The length of any pointer overflow array required, or zero if this layout's element arrays fit
+  /// in the chosen FrameClass.
   final int overflowSize;
 
-  /** A zero-length, immutable instance of this VArrayLayout. */
+  /// A zero-length, immutable instance of this VArrayLayout.
   final Frame empty;
 
-  /**
-   * The number of bytes required for an instance of this VArrayLayout, not counting the elements.
-   */
+  /// The number of bytes required for an instance of this VArrayLayout, not counting the elements.
   final long baseSize;
 
-  /**
-   * The number of additional bytes required for each element by an instance of this VArrayLayout.
-   */
+  /// The number of additional bytes required for each element by an instance of this VArrayLayout.
   final long perElementSize;
 
-  /** One more than the maximum RefVar index in this layout's template. */
+  /// One more than the maximum RefVar index in this layout's template.
   final int numRV;
 
-  /**
-   * Either 1 (if numRV == 0 and all nvEncodings are UINT8), 8 (if nvEncodings contains at least one
-   * FLOAT64) or 4 (otherwise).
-   */
+  /// Either 1 (if numRV == 0 and all nvEncodings are UINT8), 8 (if nvEncodings contains at least
+  /// one FLOAT64) or 4 (otherwise).
   final int maxVarSize;
 
   private final Choice numberChoice;
 
-  /**
-   * A {@link Frame.Replacement} that points to {@link #empty}; returned by {@link
-   * Frame#getReplacement} for the empty instances of VArrayLayouts that have evolved to this.
-   */
+  /// A [Frame.Replacement] that points to [#empty]; returned by [Frame#getReplacement] for the
+  /// empty instances of VArrayLayouts that have evolved to this.
   final Frame.Replacement emptyReplacement;
 
-  /**
-   * An Op with arguments (TState, int size) that allocates and initializes a new instance. Built
-   * lazily.
-   */
+  /// An Op with arguments (TState, int size) that allocates and initializes a new instance. Built
+  /// lazily.
   private Op allocOp;
 
-  /**
-   * An Op with arguments (TState, Frame, int start, int end) that clears all pointers associated
-   * with elements between {@code start} (inclusive) and {@code end} (exclusive). Built lazily, and
-   * only for layouts with at least one RefVar.
-   */
+  /// An Op with arguments (TState, Frame, int start, int end) that clears all pointers associated
+  /// with elements between `start` (inclusive) and `end` (exclusive). Built lazily, and only for
+  /// layouts with at least one RefVar.
   private Op clearElementsOp;
 
-  /**
-   * An Op with arguments (TState, Frame, int keepPrefix, int removeSize, int addSize) that
-   * implements {@link #removeRange(TState, Frame, int, int, int)} for frames with this layout.
-   * Built lazily.
-   */
+  /// An Op with arguments (TState, Frame, int keepPrefix, int removeSize, int addSize) that
+  /// implements [#removeRange(TState, Frame, int, int, int)] for frames with this layout. Built
+  /// lazily.
   private Op removeRangeOp;
 
-  /**
-   * An Op with arguments (Frame dst, int dstStart, Frame src, int srcStart, int count) that clears
-   * all pointers associated with elements between {@code start} (inclusive) and {@code end}
-   * (exclusive). Built lazily, and only for layouts with at least one RefVar.
-   */
+  /// An Op with arguments (Frame dst, int dstStart, Frame src, int srcStart, int count) that clears
+  /// all pointers associated with elements between `start` (inclusive) and `end` (exclusive). Built
+  /// lazily, and only for layouts with at least one RefVar.
   private Op copyRangeOp;
 
   private static final VarHandle ALLOC_OP =
@@ -123,7 +103,7 @@ public class VArrayLayout extends FrameLayout {
   private static final VarHandle COPY_RANGE_OP =
       Handle.forVar(MethodHandles.lookup(), VArrayLayout.class, "copyRangeOp", Op.class);
 
-  /** Builds a template with the given builder, and creates a VArrayLayout using the result. */
+  /// Builds a template with the given builder, and creates a VArrayLayout using the result.
   static VArrayLayout newFromBuilder(Scope scope, TemplateBuilder builder) {
     VarAllocator allocator = new VarAllocator();
     Template template = builder.build(allocator);
@@ -132,28 +112,25 @@ public class VArrayLayout extends FrameLayout {
     return result;
   }
 
-  /**
-   * Creates a VArrayLayout from a template and the allocator that was used to build it.
-   *
-   * <p>Should only be called directly by the Evolver; other callers should use {@link
-   * #newFromBuilder}.
-   */
+  /// Creates a VArrayLayout from a template and the allocator that was used to build it.
+  ///
+  /// Should only be called directly by the Evolver; other callers should use [#newFromBuilder].
   static VArrayLayout newWithAllocator(Scope scope, Template template, VarAllocator alloc) {
     int ptrSize = alloc.ptrSize();
     FrameClass frameClass = FrameClass.select(NUM_INTS, ptrSize);
     return new VArrayLayout(scope, frameClass, ptrSize, template, alloc.shared.nvEncodings());
   }
 
-  /** Each varray Frame has a single int field, its length. */
+  /// Each varray Frame has a single int field, its length.
   private static final int NUM_INTS = 1;
 
-  /** The index of the length field (an int). */
+  /// The index of the length field (an int).
   private static final int LENGTH_FIELD = 0;
 
-  /** The byte offset of the length field (an int). */
+  /// The byte offset of the length field (an int).
   private static final int LENGTH_FIELD_OFFSET = 0;
 
-  /** The index of the overflow field (a ptr). */
+  /// The index of the overflow field (a ptr).
   private static final int OVERFLOW_FIELD = 0;
 
   private VArrayLayout(
@@ -233,7 +210,7 @@ public class VArrayLayout extends FrameLayout {
     return (start < end) ? evolveElement(start, newElement) : this;
   }
 
-  /** Caller is responsible for ensuring that newTemplate includes the current template. */
+  /// Caller is responsible for ensuring that newTemplate includes the current template.
   FrameLayout evolveTemplate(TemplateBuilder newTemplate) {
     return (newTemplate == template) ? this : scope.evolver.evolve(this, newTemplate, true);
   }
@@ -249,22 +226,18 @@ public class VArrayLayout extends FrameLayout {
     return baseSize + perElementSize * TState.chooseCapacityBytes(numElements);
   }
 
-  /**
-   * Given a RefVar or NumVar in {@link #template}, returns the index used to identify the
-   * corresponding Java array. NumVars will return indices between 0 (inclusive) and {@link
-   * #numVarIndexLimit} (exclusive); RefVars will return indices between {@link #numVarIndexLimit}
-   * (inclusive) and {@link #numVarIndexLimit}+{@link #numRV} (exclusive).
-   */
+  /// Given a RefVar or NumVar in [#template], returns the index used to identify the corresponding
+  /// Java array. NumVars will return indices between 0 (inclusive) and [#numVarIndexLimit]
+  /// (exclusive); RefVars will return indices between [#numVarIndexLimit] (inclusive) and
+  /// [#numVarIndexLimit]+[#numRV] (exclusive).
   int varIndex(Object v) {
     return (v instanceof Template.NumVar nv)
         ? nv.index
         : ((Template.RefVar) v).index + numVarIndexLimit();
   }
 
-  /**
-   * Allocates a byte[] or Object[] of the appropriate size for the specified variable; see {@link
-   * #varIndex} for the interpretation of {@code index}.
-   */
+  /// Allocates a byte[] or Object[] of the appropriate size for the specified variable; see
+  /// [#varIndex] for the interpretation of `index`.
   private Object allocElementArray(TState tstate, int index, int size) {
     if (index < numVarIndexLimit()) {
       return tstate.allocByteArray(size << nvEncodings[index].nBytesLog2);
@@ -273,7 +246,7 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /** Returns a CodeValue equivalent to calling {@link #allocElementArray} with the given args. */
+  /// Returns a CodeValue equivalent to calling [#allocElementArray] with the given args.
   private CodeValue emitAllocElementArray(CodeValue tstate, int index, CodeValue size) {
     Op op;
     if (index < numVarIndexLimit()) {
@@ -288,10 +261,8 @@ public class VArrayLayout extends FrameLayout {
     return op.result(tstate, size);
   }
 
-  /**
-   * Returns the index of the pointer field containing the first element array, i.e. 0 if there is
-   * no overflow array, 1 if there is.
-   */
+  /// Returns the index of the pointer field containing the first element array, i.e. 0 if there is
+  /// no overflow array, 1 if there is.
   private int firstElementArray() {
     return (overflowSize == 0) ? 0 : 1;
   }
@@ -302,11 +273,8 @@ public class VArrayLayout extends FrameLayout {
     return alloc(tstate, size, null);
   }
 
-  /**
-   * Allocates a new Frame using this layout. If {@code omitElementArrays} is non-null, element
-   * arrays with indices in that set will not be allocated and must be set by calls to {@link
-   * #setElementArray}.
-   */
+  /// Allocates a new Frame using this layout. If `omitElementArrays` is non-null, element arrays
+  /// with indices in that set will not be allocated and must be set by calls to [#setElementArray].
   @RC.Out
   Frame alloc(TState tstate, int size, Bits omitElementArrays) {
     if (size == 0) {
@@ -402,10 +370,8 @@ public class VArrayLayout extends FrameLayout {
     return allocOp(true).resultWithInfo(notSharedInfo, codeGen.tstateRegister(), size);
   }
 
-  /**
-   * Returns the byte[] or Object[] for the specified variable; see {@link #varIndex} for the
-   * interpretation of {@code index}.
-   */
+  /// Returns the byte[] or Object[] for the specified variable; see [#varIndex] for the
+  /// interpretation of `index`.
   Object getElementArray(Frame f, int index) {
     // Skip over the overflow array, if present
     index += firstElementArray();
@@ -446,13 +412,11 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /**
-   * Sets the element array used for the specified variable; see {@link #varIndex} for the
-   * interpretation of {@code index}.
-   *
-   * <p>Should only be used to complete the initialization of frames allocated by {@link
-   * #alloc(TState, int, Bits)} with a non-empty {@code omitElementArrays}.
-   */
+  /// Sets the element array used for the specified variable; see [#varIndex] for the interpretation
+  /// of `index`.
+  ///
+  /// Should only be used to complete the initialization of frames allocated by [#alloc(TState, int,
+  /// Bits)] with a non-empty `omitElementArrays`.
   void setElementArray(Frame f, int index, Object array) {
     assert (index < numVarIndexLimit())
         ? ((byte[]) array).length >= numElements(f) * nvEncodings[index].nBytes
@@ -468,14 +432,12 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /**
-   * Clears some of the given frame's pointers to its element arrays; see {@link #varIndex} for the
-   * interpretation of {@code indices}.
-   *
-   * <p>Used when a replacement frame is sharing some of the original frame's element arrays and we
-   * are about to release the original frame; we need to ensure that the shared arrays are not
-   * released along with it.
-   */
+  /// Clears some of the given frame's pointers to its element arrays; see [#varIndex] for the
+  /// interpretation of `indices`.
+  ///
+  /// Used when a replacement frame is sharing some of the original frame's element arrays and we
+  /// are about to release the original frame; we need to ensure that the shared arrays are not
+  /// released along with it.
   void clearElementArrays(Frame f, int[] indices) {
     for (int index : indices) {
       index += firstElementArray();
@@ -488,18 +450,14 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /**
-   * Modifies a varray by removing some elements and inserting some number of TO_BE_SET elements in
-   * their place. On return the array will contain
-   *
-   * <ul>
-   *   <li>the first {@code keepPrefix} elements unchanged, followed by
-   *   <li>{@code addSize} elements that are {@code TO_BE_SET}, followed by
-   *   <li>the elements that previously started at {@code keepPrefix+removeSize} to the end.
-   * </ul>
-   *
-   * <p>This method is used to implement replaceElement and concatenation.
-   */
+  /// Modifies a varray by removing some elements and inserting some number of TO\_BE\_SET elements
+  /// in their place. On return the array will contain
+  ///
+  /// - the first `keepPrefix` elements unchanged, followed by
+  /// - `addSize` elements that are `TO_BE_SET`, followed by
+  /// - the elements that previously started at `keepPrefix+removeSize` to the end.
+  ///
+  /// This method is used to implement replaceElement and concatenation.
   @RC.Out
   Frame removeRange(TState tstate, @RC.In Frame f, int keepPrefix, int removeSize, int addSize) {
     assert f.layout() == this;
@@ -726,12 +684,10 @@ public class VArrayLayout extends FrameLayout {
     return op.result(tstate, array, size, keepPrefix, removeSize, addSize, copy);
   }
 
-  /**
-   * Copies elements from an array with this layout into an array with the same layout (possibly the
-   * same array).
-   *
-   * <p>This method is used to implement replaceElement and concatenation.
-   */
+  /// Copies elements from an array with this layout into an array with the same layout (possibly
+  /// the same array).
+  ///
+  /// This method is used to implement replaceElement and concatenation.
   @RC.Out
   Value fastCopyRange(
       TState tstate, @RC.In Value dst, Value dstStart, Value src, Value srcStart, Value count)
@@ -988,22 +944,20 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /** Emits a call to this layout's {@link #clearElementsOp}, building it if necessary. */
+  /// Emits a call to this layout's [#clearElementsOp], building it if necessary.
   private void emitClearElements(CodeGen codeGen, CodeValue f, CodeValue start, CodeValue end) {
     clearElementsOp(true).block(codeGen.tstateRegister(), f, start, end).addTo(codeGen.cb);
   }
 
-  /**
-   * Returns this layout's {@link #clearElementsOp}; if {@code build} is true and the op is null,
-   * builds it first.
-   */
+  /// Returns this layout's [#clearElementsOp]; if `build` is true and the op is null, builds it
+  /// first.
   private Op clearElementsOp(boolean build) {
     assert numRV != 0;
     Op op = (Op) CLEAR_ELEMENTS_OP.getAcquire(this);
     return (op == null && build) ? buildClearElements() : op;
   }
 
-  /** Builds and stores this layout's {@link #clearElementsOp}. */
+  /// Builds and stores this layout's [#clearElementsOp].
   synchronized Op buildClearElements() {
     if (this.clearElementsOp != null) {
       // Another thread beat us to it.
@@ -1055,11 +1009,8 @@ public class VArrayLayout extends FrameLayout {
     emitSetElement(codeGen, f, pos, newElement, codeGen.escapeLink());
   }
 
-  /**
-   * Implements {@link #emitSetElement(CodeGen, CodeValue, CodeValue, Template)}; the emitted blocks
-   * will branch to {@code onFail} if the {@code newElement} cannot be stored with evolving the
-   * layout.
-   */
+  /// Implements [#emitSetElement(CodeGen, CodeValue, CodeValue, Template)]; the emitted blocks will
+  /// branch to `onFail` if the `newElement` cannot be stored with evolving the layout.
   void emitSetElement(
       CodeGen codeGen, CodeValue f, CodeValue pos, Template newElement, FutureBlock onFail) {
     CopyEmitter emitter =
@@ -1124,7 +1075,7 @@ public class VArrayLayout extends FrameLayout {
     return copyFrom(frame, CodeValue.of(index));
   }
 
-  /** Returns a CopyEmitter who source is the specified element of a frame with this layout. */
+  /// Returns a CopyEmitter who source is the specified element of a frame with this layout.
   CopyEmitter copyFrom(Register frame, CodeValue index) {
     return new CopyEmitter() {
       @Override
@@ -1134,10 +1085,7 @@ public class VArrayLayout extends FrameLayout {
     };
   }
 
-  /**
-   * Set all elements of {@code f} with indices between {@code start} and {@code end} to {@code
-   * newElement}
-   */
+  /// Set all elements of `f` with indices between `start` and `end` to `newElement`
   public void emitSetElements(
       CodeGen codeGen, CodeValue f, CodeValue start, CodeValue end, Template newElement) {
     CopyEmitter emitter =
@@ -1164,10 +1112,8 @@ public class VArrayLayout extends FrameLayout {
     emitter.emit(codeGen, plan, codeGen.escapeLink());
   }
 
-  /**
-   * Given a NumVar or RefVar in this layout's template, a CodeValue for a Frame with this layout,
-   * and a CodeValue for an element index return a CodeValue for the NumVar or RefVar's value.
-   */
+  /// Given a NumVar or RefVar in this layout's template, a CodeValue for a Frame with this layout,
+  /// and a CodeValue for an element index return a CodeValue for the NumVar or RefVar's value.
   CodeValue codeValue(Template t, CodeValue frame, CodeValue pos) {
     CodeValue elementArray = getElementArray(frame, t);
     if (t instanceof NumVar nv) {
@@ -1185,10 +1131,8 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /**
-   * Given a NumVar or RefVar in this layout's template, a CodeValue for a Frame with this layout,
-   * and a CodeValue for an element index, stores {@code v} as the new value.
-   */
+  /// Given a NumVar or RefVar in this layout's template, a CodeValue for a Frame with this layout,
+  /// and a CodeValue for an element index, stores `v` as the new value.
   void setCodeValue(CodeGen codeGen, Template t, CodeValue frame, CodeValue pos, CodeValue v) {
     CodeValue elementArray = getElementArray(frame, t);
     if (t instanceof NumVar nv) {
@@ -1198,7 +1142,7 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /** Sets one element of a numeric array with the given encoding. */
+  /// Sets one element of a numeric array with the given encoding.
   private static void setNumericArrayElement(
       CodeGen codeGen, CodeValue elementArray, NumEncoding encoding, CodeValue pos, CodeValue v) {
     Op op;
@@ -1239,10 +1183,8 @@ public class VArrayLayout extends FrameLayout {
     return template.peekValue(asVarSource(f, i, mayBeUninitialized));
   }
 
-  /**
-   * Returns the number of bytes that should be reserved for an update to {@code f} that will change
-   * its size to {@code newSize}.
-   */
+  /// Returns the number of bytes that should be reserved for an update to `f` that will change its
+  /// size to `newSize`.
   long reservationForChange(Frame f, int newSize) {
     if (f == null || !f.isNotShared()) {
       return sizeOf(newSize);
@@ -1255,7 +1197,7 @@ public class VArrayLayout extends FrameLayout {
     // The actual requirement may be less (e.g. we may not need any additional allocations if the
     // element arrays are already big enough) or more (because we round array sizes up).  For
     // large sizes (the only ones we care about) it will be at most 25% more than our calculation
-    // (see {@link MemoryHelper#chooseCapacity}), so let's be pessimistic (we risk getting a
+    // (see MemoryHelper.chooseCapacity()), so let's be pessimistic (we risk getting a
     // premature OOM when you're close to the limit and try to do a large allocation).
     result += result / 4;
     return result;
@@ -1330,19 +1272,17 @@ public class VArrayLayout extends FrameLayout {
     };
   }
 
-  /**
-   * VArrayLayout's VarAllocator assigns sequential indices from separate pools for RefVars and
-   * NumVars. Related VarAllocators (i.e. ones that were created by a chain of duplicate() calls)
-   * will not assign NumVars with different encodings to the same index.
-   */
+  /// VArrayLayout's VarAllocator assigns sequential indices from separate pools for RefVars and
+  /// NumVars. Related VarAllocators (i.e. ones that were created by a chain of duplicate() calls)
+  /// will not assign NumVars with different encodings to the same index.
   static class VarAllocator implements TemplateBuilder.VarAllocator {
     // Related VarAllocators will share an instance of VarAllocatorShared.
     private final VarAllocatorShared shared;
 
-    /** The minimum index at which the next NumVar of each encoding could be allocated. */
+    /// The minimum index at which the next NumVar of each encoding could be allocated.
     private final int[] nextNumVar;
 
-    /** The index of the next refvar. */
+    /// The index of the next refvar.
     private int nextX;
 
     VarAllocator() {
@@ -1356,7 +1296,7 @@ public class VArrayLayout extends FrameLayout {
       nextX = toDuplicate.nextX;
     }
 
-    /** Returns the minimum nPtrs required for a Frame to hold these vars. */
+    /// Returns the minimum nPtrs required for a Frame to hold these vars.
     int ptrSize() {
       return nextX + shared.nvEncodings.size();
     }
@@ -1404,18 +1344,14 @@ public class VArrayLayout extends FrameLayout {
     }
   }
 
-  /** Keeps track of which encoding each NumVar index has. */
+  /// Keeps track of which encoding each NumVar index has.
   private static class VarAllocatorShared {
-    /**
-     * If we have allocated a NumVar with index {@code i}, {@code nvEncodings.get(i)} is the
-     * encoding of that NumVar.
-     */
+    /// If we have allocated a NumVar with index `i`, `nvEncodings.get(i)` is the encoding of that
+    /// NumVar.
     private final List<NumEncoding> nvEncodings = new ArrayList<>();
 
-    /**
-     * Returns the first index starting from {@code next} that can be used for a NumVar with the
-     * specified encoding.
-     */
+    /// Returns the first index starting from `next` that can be used for a NumVar with the
+    /// specified encoding.
     int allocNumVar(NumEncoding encoding, int next) {
       int size = nvEncodings.size();
       for (int i = next; i < size; i++) {
@@ -1427,27 +1363,23 @@ public class VArrayLayout extends FrameLayout {
       return size;
     }
 
-    /** Returns the NumEncoding of each used NumVar index. */
+    /// Returns the NumEncoding of each used NumVar index.
     NumEncoding[] nvEncodings() {
       return nvEncodings.toArray(NumEncoding[]::new);
     }
   }
 
-  /**
-   * A Choice locates the Template that is used for array elements with a given baseType (since it
-   * actually checks sort order, if the baseType is an array type then it will locate any element
-   * that is an array).
-   *
-   * <p>There three flavors of Choice:
-   *
-   * <ul>
-   *   <li>NEVER: the array cannot hold elements of baseType
-   *   <li>ALWAYS: the array can only elements of baseType (i.e. template.baseType().sortOrder ==
-   *       baseType.sortOrder)
-   *   <li>all other Choices: template is a Union, and template.choice(index).baseType().sortOrder
-   *       == baseType.sortOrder
-   * </ul>
-   */
+  /// A Choice locates the Template that is used for array elements with a given baseType (since it
+  /// actually checks sort order, if the baseType is an array type then it will locate any element
+  /// that is an array).
+  ///
+  /// There three flavors of Choice:
+  ///
+  /// - NEVER: the array cannot hold elements of baseType
+  /// - ALWAYS: the array can only elements of baseType (i.e. template.baseType().sortOrder ==
+  ///   baseType.sortOrder)
+  /// - all other Choices: template is a Union, and template.choice(index).baseType().sortOrder ==
+  ///   baseType.sortOrder
   private static class Choice {
     static final Choice NEVER = new Choice(-1);
     static final Choice ALWAYS = new Choice(-1);
@@ -1457,26 +1389,24 @@ public class VArrayLayout extends FrameLayout {
     // the first choice in any union.)
     private static final Choice CHOICE_0 = new Choice(0);
 
-    /** The index of this choice in a Union template. -1 if the layout template is not a Union. */
+    /// The index of this choice in a Union template. -1 if the layout template is not a Union.
     final int index;
 
     private Choice(int index) {
       this.index = index;
     }
 
-    /** True if this sort order is one choice in a Union. */
+    /// True if this sort order is one choice in a Union.
     boolean isInUnion() {
       return index >= 0;
     }
 
-    /**
-     * Returns the template used for values with this sort order, or null if this is {@link #NEVER}.
-     */
+    /// Returns the template used for values with this sort order, or null if this is [#NEVER].
     Template template(Template t) {
       return isInUnion() ? ((Template.Union) t).choice(index) : (this == ALWAYS ? t : null);
     }
 
-    /** Returns the Choice for the given BaseType, given the layout's template. */
+    /// Returns the Choice for the given BaseType, given the layout's template.
     static Choice forBaseType(BaseType baseType, Template t) {
       if (t instanceof Template.Union union) {
         int i = union.indexOf(baseType.sortOrder);

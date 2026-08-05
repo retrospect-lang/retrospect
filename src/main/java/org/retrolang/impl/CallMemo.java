@@ -20,31 +20,24 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.function.ObjIntConsumer;
 
-/**
- * A CallMemo is a linked list of the MethodMemos that have been used at a single call site.
- *
- * <p>Having to search a sequential list in {@link #memoForMethod} might sound problematic, but in
- * practice
- *
- * <ul>
- *   <li>most call sites are expected to have a small number of methods that are actually invoked
- *       (usually one or two);
- *   <li>this structure is only traversed when interpreting instructions or when generating code,
- *       not when executing generated code; and
- *   <li>the generated method dispatch code will still need to do a type check for each method, i.e.
- *       it will be O(n) even if we were to do something more complex here.
- * </ul>
- */
+/// A CallMemo is a linked list of the MethodMemos that have been used at a single call site.
+///
+/// Having to search a sequential list in [#memoForMethod] might sound problematic, but in practice
+///
+/// - most call sites are expected to have a small number of methods that are actually invoked
+///   (usually one or two);
+/// - this structure is only traversed when interpreting instructions or when generating code, not
+///   when executing generated code; and
+/// - the generated method dispatch code will still need to do a type check for each method, i.e. it
+///   will be O(n) even if we were to do something more complex here.
 class CallMemo {
   private static final VarHandle COUNT_VAR =
       Handle.forVar(MethodHandles.lookup(), CallMemo.class, "count", int.class);
 
   private MethodMemo memo;
 
-  /**
-   * A counter for the number of times we've chosen this method; will be used to order type checks
-   * in generated code.
-   */
+  /// A counter for the number of times we've chosen this method; will be used to order type checks
+  /// in generated code.
   private volatile int count;
 
   private CallMemo next;
@@ -54,18 +47,13 @@ class CallMemo {
     this.next = next;
   }
 
-  /**
-   * Stop incrementing count when it gets this big, to ensure that it doesn't overflow.
-   *
-   * <p>Due to races we may end up going over this value, but it's intentionally chosen to be low
-   * enough that we still won't overflow.
-   */
+  /// Stop incrementing count when it gets this big, to ensure that it doesn't overflow.
+  ///
+  /// Due to races we may end up going over this value, but it's intentionally chosen to be low
+  /// enough that we still won't overflow.
   private static final int MAX_COUNT = Integer.MAX_VALUE / 8;
 
-  /**
-   * Increments this CallMemo's {@link #count} field by {@code delta}, capping at {@link
-   * #MAX_COUNT}.
-   */
+  /// Increments this CallMemo's [#count] field by `delta`, capping at [#MAX_COUNT].
   private void incrementCount(int delta) {
     assert delta >= 0;
     delta = Math.min(delta, MAX_COUNT - count);
@@ -79,7 +67,7 @@ class CallMemo {
     }
   }
 
-  /** Returns the total weight of all MethodMemos at this call site. */
+  /// Returns the total weight of all MethodMemos at this call site.
   int totalWeight() {
     assert MemoMerger.isLocked();
     int sum = 0;
@@ -89,7 +77,7 @@ class CallMemo {
     return sum;
   }
 
-  /** Returns the maximum weight of all MethodMemos at this call site. */
+  /// Returns the maximum weight of all MethodMemos at this call site.
   int maxWeight() {
     assert MemoMerger.isLocked();
     int max = 0;
@@ -99,14 +87,12 @@ class CallMemo {
     return max;
   }
 
-  /**
-   * Returns this CallMemo's MethodMemo for the given method, or null if there is none.
-   *
-   * <p>If {@code isLocked} is true and the MethodMemo we find has been forwarded (happens when
-   * exlined methods are merged), we will fix the CallMemo to point to the replacement. If {@code
-   * isLocked} is false we will leave any forwarded MethodMemo unchanged and just return null (which
-   * will cause the caller to acquire the appropriate lock and try again).
-   */
+  /// Returns this CallMemo's MethodMemo for the given method, or null if there is none.
+  ///
+  /// If `isLocked` is true and the MethodMemo we find has been forwarded (happens when exlined
+  /// methods are merged), we will fix the CallMemo to point to the replacement. If `isLocked` is
+  /// false we will leave any forwarded MethodMemo unchanged and just return null (which will cause
+  /// the caller to acquire the appropriate lock and try again).
   MethodMemo memoForMethod(VmMethod method, boolean isLocked) {
     assert !isLocked || MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
@@ -132,12 +118,10 @@ class CallMemo {
     return null;
   }
 
-  /**
-   * Replaces this CallMemo's link to {@code prev} with the given replacement.
-   *
-   * <p>Will error (with a NullPointerException) unless this CallMemo or one linked from it links to
-   * {@code prev}.
-   */
+  /// Replaces this CallMemo's link to `prev` with the given replacement.
+  ///
+  /// Will error (with a NullPointerException) unless this CallMemo or one linked from it links to
+  /// `prev`.
   void replaceMemo(MethodMemo prev, MethodMemo replacement) {
     assert MemoMerger.isLocked();
     for (CallMemo cm = this; ; cm = cm.next) {
@@ -148,10 +132,8 @@ class CallMemo {
     }
   }
 
-  /**
-   * Called when a CallMemo is being moved from one MethodMemo to another (as part of a merge);
-   * calls {@link MethodMemo#updateParent} on each MethodMemo.
-   */
+  /// Called when a CallMemo is being moved from one MethodMemo to another (as part of a merge);
+  /// calls [MethodMemo#updateParent] on each MethodMemo.
   void updateParents(MethodMemo newParent) {
     assert MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
@@ -159,16 +141,14 @@ class CallMemo {
     }
   }
 
-  /** Returns one of the MethodMemos. */
+  /// Returns one of the MethodMemos.
   MethodMemo firstMethodMemo() {
     return memo;
   }
 
-  /**
-   * Calls {@code action} with each of this CallMemo's MethodMemos, along with their corresponding
-   * counts. Should only be called while holding the MemoMerger lock; {@code action} should not
-   * modify this CallMemo.
-   */
+  /// Calls `action` with each of this CallMemo's MethodMemos, along with their corresponding
+  /// counts. Should only be called while holding the MemoMerger lock; `action` should not modify
+  /// this CallMemo.
   void forEachChild(ObjIntConsumer<MethodMemo> action) {
     assert MemoMerger.isLocked();
     for (CallMemo cm = this; cm != null; cm = cm.next) {
@@ -176,12 +156,10 @@ class CallMemo {
     }
   }
 
-  /**
-   * {@link VmMethod#newMemo} checks for a matching exlined memo before allocating a new MethodMemo,
-   * but after a memo is exlined there may still be existing lightweight memos that would now match
-   * it (heavyweight ones can be checked for by the MemoMerger directly). This method checks each of
-   * the CallMemo's lightweight memos for such a match, and if found does the merge.
-   */
+  /// [VmMethod#newMemo] checks for a matching exlined memo before allocating a new MethodMemo, but
+  /// after a memo is exlined there may still be existing lightweight memos that would now match it
+  /// (heavyweight ones can be checked for by the MemoMerger directly). This method checks each of
+  /// the CallMemo's lightweight memos for such a match, and if found does the merge.
   void checkForExlinedLightWeights(MemoMerger merger) {
     for (CallMemo cm = this; cm != null; cm = cm.next) {
       MethodMemo mm = cm.memo;
@@ -191,11 +169,9 @@ class CallMemo {
     }
   }
 
-  /**
-   * Moves or merges this CallMemo's MethodMemos into {@code other}. After calling {@code
-   * mergeInto()} this CallMemo may still be read (and may return MethodMemos that have been merged,
-   * or that are in {@code other}) but should not be modified.
-   */
+  /// Moves or merges this CallMemo's MethodMemos into `other`. After calling `mergeInto()` this
+  /// CallMemo may still be read (and may return MethodMemos that have been merged, or that are in
+  /// `other`) but should not be modified.
   void mergeInto(CallMemo other, MethodMemo otherParent, MemoMerger merger) {
     // Note that since we linear search other's MethodMemos for each of our MethodMemos this has
     // is O(product of the sizes).  I do not expect this to be a performance issue since almost
@@ -211,10 +187,8 @@ class CallMemo {
     ;
   }
 
-  /**
-   * Moves or merges {@code cm2}'s first MethodMemo into this CallMemo. May reuse {@code cm2} by
-   * linking it into {@code this}.
-   */
+  /// Moves or merges `cm2`'s first MethodMemo into this CallMemo. May reuse `cm2` by linking it
+  /// into `this`.
   private void addOrMerge(CallMemo cm2, MethodMemo thisParent, MemoMerger merger) {
     MethodMemo called2 = cm2.memo.resolve();
     MemoMerger.PerMethod perMethod = called2.perMethod;
@@ -258,7 +232,7 @@ class CallMemo {
     }
   }
 
-  /** Calls {@link MethodMemo#checkConsistency} on each of our MethodMemos. */
+  /// Calls [MethodMemo#checkConsistency] on each of our MethodMemos.
   static void checkConsistency(CallMemo cm) {
     for (; cm != null; cm = cm.next) {
       cm.memo.checkConsistency(false);

@@ -42,7 +42,7 @@ public class FrameTest {
     tstate.bindTo(tracker);
   }
 
-  /** Call this once at the end of each test. */
+  /// Call this once at the end of each test.
   private void dropAndCheckAllReleased(Value... values) {
     Arrays.stream(values).forEach(tstate::dropValue);
     // Doing this in an @After method had the drawback that any real error during a test got buried
@@ -52,17 +52,14 @@ public class FrameTest {
     assertThat(tracker.allReleased()).isTrue();
   }
 
-  /**
-   * Verifies that {@code layout.toString()} matches {@code expected}, after removing the
-   * "@(hexString)" UIDs.
-   */
+  /// Verifies that `layout.toString()` matches `expected`, after removing the "@(hexString)" UIDs.
   private static void assertLayoutMatches(FrameLayout layout, String expected) {
     String s = layout.toString();
     String withoutIds = s.replaceAll("@[0-9a-f]+", "");
     assertWithMessage(s).that(withoutIds).isEqualTo(expected);
   }
 
-  /** Returns a template for an array containing the given elements. */
+  /// Returns a template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }

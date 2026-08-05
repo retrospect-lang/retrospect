@@ -4,19 +4,15 @@ import com.google.common.base.Preconditions;
 import java.util.Arrays;
 import org.retrolang.Vm;
 
-/**
- * A static-only class that creates BaseTypes for {@link VmFunction#asLambdaExpr} and for partial
- * applications of those lambdas.
- */
+/// A static-only class that creates BaseTypes for [VmFunction#asLambdaExpr] and for partial
+/// applications of those lambdas.
 public class Lambdas {
-  /**
-   * A singleton BaseType that can be passed as the first argument to {@code at()} to execute the
-   * given VmFunction. Only created for functions with one result and no inouts. Also used as the
-   * StackEntryType for the tail calls made by {@code at()}.
-   *
-   * <p>See {@link Vm.Function#asLambdaExpr} for details of how the second argument to {@code at()}
-   * is interpreted.
-   */
+  /// A singleton BaseType that can be passed as the first argument to `at()` to execute the given
+  /// VmFunction. Only created for functions with one result and no inouts. Also used as the
+  /// StackEntryType for the tail calls made by `at()`.
+  ///
+  /// See [Vm.Function#asLambdaExpr] for details of how the second argument to `at()` is
+  /// interpreted.
   static class AsLambdaExpr extends BaseType.StackEntryType {
     final VmFunction function;
 
@@ -30,9 +26,7 @@ public class Lambdas {
       return Core.FUNCTION_LAMBDA;
     }
 
-    /**
-     * Implements the {@code at()} method. {@code caller} is an {@link BuiltinMethod.AnyFn} Caller.
-     */
+    /// Implements the `at()` method. `caller` is an [BuiltinMethod.AnyFn] Caller.
     void at(TState tstate, @RC.In Value arg, BuiltinMethod.Caller caller)
         throws Err.BuiltinException {
       int numArgs = function.numArgs;
@@ -49,11 +43,9 @@ public class Lambdas {
       tstate.startCall(caller, function, this, args);
     }
 
-    /**
-     * Creates a new {@link PartialApplication} baseType that saves all but one of the arguments to
-     * this function, and uses the lambda argument as the specified argument. Only valid for
-     * functions with at least two arguments.
-     */
+    /// Creates a new [PartialApplication] baseType that saves all but one of the arguments to this
+    /// function, and uses the lambda argument as the specified argument. Only valid for functions
+    /// with at least two arguments.
     BaseType partialApplication(int argNum) {
       Preconditions.checkArgument(argNum >= 0 && argNum < function.numArgs && function.numArgs > 1);
       return new PartialApplication(this, argNum);
@@ -86,7 +78,7 @@ public class Lambdas {
     }
   }
 
-  /** A compound BaseType created by calls to {@link VmFunction#partialApplication}. */
+  /// A compound BaseType created by calls to [VmFunction#partialApplication].
   static class PartialApplication extends BaseType {
     final AsLambdaExpr asLambda;
     final int argNum;
@@ -102,9 +94,7 @@ public class Lambdas {
       return Core.PARTIAL_APPLICATION_LAMBDA;
     }
 
-    /**
-     * Implements the {@code at()} method. {@code caller} is an {@link BuiltinMethod.AnyFn} Caller.
-     */
+    /// Implements the `at()` method. `caller` is an [BuiltinMethod.AnyFn] Caller.
     void at(TState tstate, Value lambda, @RC.In Value arg, BuiltinMethod.Caller caller)
         throws Err.BuiltinException {
       assert lambda.baseType() == this;

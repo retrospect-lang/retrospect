@@ -119,16 +119,14 @@ public class SmallIntMapTest {
     assertThat(builder.toString()).isEqualTo("{5:x5y, 6:x6y, 7:x7y}");
   }
 
-  /**
-   * Exercises {@link SmallIntMap.Builder#innerJoin} by calling it with different combinations of
-   * SmallIntMaps. Each Sequence maps each key in an arithmetic sequence to itself. The right-hand
-   * side of the join is just the map from {@code s2}. For the left-hand side we start with the map
-   * from {@code s1}, but then apply {@link #tweakLeft} to each value; this ensures that the
-   * corresponding values from left and right are sometimes the same and sometimes different. The
-   * ValueCombiner (used when the values differ) sometimes returns null to test dropping elements.
-   *
-   * <p>{@link JoinChecker} is used to verify that the result of the join is correct.
-   */
+  /// Exercises [SmallIntMap.Builder#innerJoin] by calling it with different combinations of
+  /// SmallIntMaps. Each Sequence maps each key in an arithmetic sequence to itself. The right-hand
+  /// side of the join is just the map from `s2`. For the left-hand side we start with the map from
+  /// `s1`, but then apply [#tweakLeft] to each value; this ensures that the corresponding values
+  /// from left and right are sometimes the same and sometimes different. The ValueCombiner (used
+  /// when the values differ) sometimes returns null to test dropping elements.
+  ///
+  /// [JoinChecker] is used to verify that the result of the join is correct.
   @Parameters(method = "sequencePairs")
   @Test
   public void innerJoin(Sequence s1, Sequence s2) {
@@ -144,9 +142,7 @@ public class SmallIntMapTest {
         .isTrue();
   }
 
-  /**
-   * Exercises {@link SmallIntMap.Builder#outerJoin} using the same approach as {@link #innerJoin}.
-   */
+  /// Exercises [SmallIntMap.Builder#outerJoin] using the same approach as [#innerJoin].
   @Parameters(method = "sequencePairs")
   @Test
   public void outerJoin(Sequence s1, Sequence s2) {
@@ -159,13 +155,13 @@ public class SmallIntMapTest {
     // comparable to the one in innerJoin().
   }
 
-  /** Represents an increasing sequence of regularly-spaced integers. */
+  /// Represents an increasing sequence of regularly-spaced integers.
   private static class Sequence {
     final int start;
     final int step;
     final int size;
 
-    /** A SmallIntMap that maps each int in this sequence to itself. */
+    /// A SmallIntMap that maps each int in this sequence to itself.
     final SmallIntMap<Integer> map;
 
     Sequence(int start, int step, int size) {
@@ -184,9 +180,7 @@ public class SmallIntMapTest {
       return result;
     }
 
-    /**
-     * Returns the last element of the sequence, or {@code start - step} if the sequence is empty.
-     */
+    /// Returns the last element of the sequence, or `start - step` if the sequence is empty.
     int last() {
       return start + (size - 1) * step;
     }
@@ -204,13 +198,11 @@ public class SmallIntMapTest {
     }
   }
 
-  /**
-   * Sequences for {@link #innerJoin} and {@link #outerJoin}. The order they appear here doesn't
-   * matter; we test all possible pairs.
-   *
-   * <p>Since the key masks are allocated in units of 64 bits, I've tried to ensure that we exercise
-   * different mask lengths, masks with all zeros in leading elements, etc.
-   */
+  /// Sequences for [#innerJoin] and [#outerJoin]. The order they appear here doesn't matter; we
+  /// test all possible pairs.
+  ///
+  /// Since the key masks are allocated in units of 64 bits, I've tried to ensure that we exercise
+  /// different mask lengths, masks with all zeros in leading elements, etc.
   static final ImmutableList<Sequence> SEQUENCES =
       ImmutableList.of(
           new Sequence(0, 1, 0),
@@ -224,21 +216,19 @@ public class SmallIntMapTest {
           new Sequence(3, 13, 30),
           new Sequence(0, 200, 5));
 
-  /** An int larger than any element of the sequences in {@link #SEQUENCES}. */
+  /// An int larger than any element of the sequences in [#SEQUENCES].
   static final int SEQUENCES_LIMIT =
       SEQUENCES.stream().mapToInt(Sequence::last).max().getAsInt() + 1;
 
-  /** Returns all pairs of elements from {@link #SEQUENCES}. */
+  /// Returns all pairs of elements from [#SEQUENCES].
   private static Object[] sequencePairs() {
     return SEQUENCES.stream()
         .flatMap(s -> SEQUENCES.stream().map(s2 -> new Object[] {s, s2}))
         .toArray();
   }
 
-  /**
-   * A ValueCombiner for Integers. The details are arbitrary, but to find bugs we want something
-   * non-symmetric that depends on both arguments and sometimes returns null.
-   */
+  /// A ValueCombiner for Integers. The details are arbitrary, but to find bugs we want something
+  /// non-symmetric that depends on both arguments and sometimes returns null.
   static final SmallIntMap.ValueCombiner<Integer> COMBINER =
       (k, x, y) -> {
         // The combiner should not be called when the values are identical
@@ -249,10 +239,8 @@ public class SmallIntMapTest {
         return (result % 5 == 0) ? null : result;
       };
 
-  /**
-   * Verifies that a join operation returned the expected result. After initialization, call {@link
-   * #check} with the result of the join.
-   */
+  /// Verifies that a join operation returned the expected result. After initialization, call
+  /// [#check] with the result of the join.
   static class JoinChecker {
     final Sequence s1;
     final Sequence s2;
@@ -260,19 +248,17 @@ public class SmallIntMapTest {
 
     int prev = -1;
 
-    /**
-     * Creates a JoinChecker that expects to see the results of s1 (after applying {@link
-     * #tweakLeft} to each of its elements) joined with s2.
-     *
-     * <p>A JoinChecker should only be used once.
-     */
+    /// Creates a JoinChecker that expects to see the results of s1 (after applying [#tweakLeft] to
+    /// each of its elements) joined with s2.
+    ///
+    /// A JoinChecker should only be used once.
     JoinChecker(Sequence s1, Sequence s2, boolean outerJoin) {
       this.s1 = s1;
       this.s2 = s2;
       this.outerJoin = outerJoin;
     }
 
-    /** Verify the given result. */
+    /// Verify the given result.
     void check(SmallIntMap.Builder<Integer> result) {
       result.forEachEntry(this::checkNext);
       checkUpTo(SEQUENCES_LIMIT);
@@ -300,10 +286,7 @@ public class SmallIntMapTest {
       }
     }
 
-    /**
-     * Verifies that none of the keys between {@link #prev} and {@code k} were expected to have a
-     * value.
-     */
+    /// Verifies that none of the keys between [#prev] and `k` were expected to have a value.
     private void checkUpTo(int k) {
       for (int i = prev + 1; i < k; i++) {
         if (s1.contains(i) && s2.contains(i)) {
@@ -318,16 +301,14 @@ public class SmallIntMapTest {
     }
   }
 
-  /**
-   * Arbitrarily modify some elements of the left argument to join (since all of our sequences have
-   * the key=value, if we didn't do this the ValueCombiner would never be used).
-   */
+  /// Arbitrarily modify some elements of the left argument to join (since all of our sequences have
+  /// the key=value, if we didn't do this the ValueCombiner would never be used).
   @SuppressWarnings("UnnecessaryBoxedVariable")
   static Integer tweakLeft(Integer v) {
     return (v % 2 == 0) ? v + 1 : v;
   }
 
-  /** Returns the value expected for a join with matching keys. */
+  /// Returns the value expected for a join with matching keys.
   @SuppressWarnings({"BoxedPrimitiveEquality", "ReferenceEquality"})
   static Integer expected(int k) {
     Integer left = tweakLeft(k);

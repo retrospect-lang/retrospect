@@ -41,34 +41,27 @@ import org.retrolang.code.CodeValue.Const;
 import org.retrolang.code.ValueInfo.IntRange;
 import org.retrolang.util.Bits;
 
-/**
- * An Op represents an operation that can be performed by the JVM, typically by a simple opcode or
- * method call. Each Op has fixed number of arguments of specified types, and a result type (which
- * may be void for Ops that return no result). An Op is used to construct an {@link Op.Result}.
- */
+/// An Op represents an operation that can be performed by the JVM, typically by a simple opcode or
+/// method call. Each Op has fixed number of arguments of specified types, and a result type (which
+/// may be void for Ops that return no result). An Op is used to construct an [Op.Result].
 public class Op {
 
-  /** An OpSimplifier is used to implement the {@link Op.Result#simplify} method. */
+  /// An OpSimplifier is used to implement the [Op.Result#simplify] method.
   public interface OpSimplifier {
-    /**
-     * Given the Op's (already simplified) arguments and what is known about the values of
-     * registers, returns a CodeValue that will always evaluate to the same value as {@code
-     * Op.Result(op, args)} but is simpler, or null if there is no simpler CodeValue.
-     */
+    /// Given the Op's (already simplified) arguments and what is known about the values of
+    /// registers, returns a CodeValue that will always evaluate to the same value as `Op.Result(op,
+    /// args)` but is simpler, or null if there is no simpler CodeValue.
     CodeValue simplify(ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo);
   }
 
-  /** An OpInfo is used to implement the {@link Op.Result#info} method. */
+  /// An OpInfo is used to implement the [Op.Result#info] method.
   public interface OpInfo {
-    /**
-     * Given the Op's (already simplified) arguments and what is known about the values of
-     * registers, returns a ValueInfo that includes all possible values of {@code Op.Result(op,
-     * args)}.
-     */
+    /// Given the Op's (already simplified) arguments and what is known about the values of
+    /// registers, returns a ValueInfo that includes all possible values of `Op.Result(op, args)`.
     ValueInfo info(ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo);
   }
 
-  /** An OpEmit is used to implement the {@link Op.Result#push} method. */
+  /// An OpEmit is used to implement the [Op.Result#push] method.
   public interface OpEmit {
     void emit(Emitter emitter, Result result);
 
@@ -78,43 +71,37 @@ public class Op {
     }
   }
 
-  /** Used only for {@code toString()}. */
+  /// Used only for `toString()`.
   public final String name;
 
-  /** The type of result returned by this Op, or {@code void.class} if the Op returns no result. */
+  /// The type of result returned by this Op, or `void.class` if the Op returns no result.
   public final Class<?> resultType;
 
-  /** The argument types required by this Op. */
+  /// The argument types required by this Op.
   public final ImmutableList<Class<?>> argTypes;
 
-  /** False if executing this Op and discarding any result is a no-op; otherwise true. */
+  /// False if executing this Op and discarding any result is a no-op; otherwise true.
   public final boolean hasSideEffect;
 
-  /**
-   * True if at least one element of {@link #simplifiers} depends on the {@code registerInfo}
-   * argument (most simplifiers don't, and knowing that can save us some pointless re-checking).
-   */
+  /// True if at least one element of [#simplifiers] depends on the `registerInfo` argument (most
+  /// simplifiers don't, and knowing that can save us some pointless re-checking).
   public final boolean hasInfoSensitiveSimplifier;
 
-  /** If non-null, this Op can be implemented by invoking {@code mh}. */
+  /// If non-null, this Op can be implemented by invoking `mh`.
   public final MethodHandle mh;
 
-  /**
-   * If non-null, will emit the bytecode to implement this Op. If null, mh must be non-null and the
-   * emitted bytecode will invoke it.
-   */
+  /// If non-null, will emit the bytecode to implement this Op. If null, mh must be non-null and the
+  /// emitted bytecode will invoke it.
   public final OpEmit opEmit;
 
-  /**
-   * Implementations of {@link #simplify}. If there are multiple simplifiers they will be tried in
-   * order until one returns a non-null result.
-   */
+  /// Implementations of [#simplify]. If there are multiple simplifiers they will be tried in order
+  /// until one returns a non-null result.
   public final ImmutableList<OpSimplifier> simplifiers;
 
-  /** If non-null, will be called to implement {@link #info}. */
+  /// If non-null, will be called to implement [#info].
   public final OpInfo resultInfo;
 
-  /** A Builder is used to construct a new Op. */
+  /// A Builder is used to construct a new Op.
   public static class Builder {
     final String name;
     final Class<?> resultType;
@@ -166,10 +153,8 @@ public class Op {
       return new Op(this);
     }
 
-    /**
-     * Adds a simplifier that calls the MethodHandle if the arguments are all constants. Should only
-     * be called if this Op has an associated MethodHandle.
-     */
+    /// Adds a simplifier that calls the MethodHandle if the arguments are all constants. Should
+    /// only be called if this Op has an associated MethodHandle.
     @CanIgnoreReturnValue
     public Builder withConstSimplifier() {
       assert mh != null;
@@ -177,10 +162,8 @@ public class Op {
       return this;
     }
 
-    /**
-     * Adds a simplifier that calls the given function if the argument is a constant. Should only be
-     * called if this Op has a single argument.
-     */
+    /// Adds a simplifier that calls the given function if the argument is a constant. Should only
+    /// be called if this Op has a single argument.
     @CanIgnoreReturnValue
     public Builder withConstSimplifier(UnaryOperator<Object> constSimplifier) {
       assert argTypes.size() == 1;
@@ -192,10 +175,8 @@ public class Op {
       return this;
     }
 
-    /**
-     * Adds a simplifier that calls the given function if the arguments are constants. Should only
-     * be called if this Op has two arguments.
-     */
+    /// Adds a simplifier that calls the given function if the arguments are constants. Should only
+    /// be called if this Op has two arguments.
     @CanIgnoreReturnValue
     public Builder withConstSimplifier(BinaryOperator<Object> constSimplifier) {
       assert argTypes.size() == 2;
@@ -208,10 +189,8 @@ public class Op {
       return this;
     }
 
-    /**
-     * Adds a simplifier that calls the given function with the argument CodeValues. Should only be
-     * called if this Op has two arguments.
-     */
+    /// Adds a simplifier that calls the given function with the argument CodeValues. Should only be
+    /// called if this Op has two arguments.
     @CanIgnoreReturnValue
     public Builder withSimplifier(BinaryOperator<CodeValue> binarySimplifier) {
       assert argTypes.size() == 2;
@@ -219,14 +198,14 @@ public class Op {
       return this;
     }
 
-    /** Adds a simplifier that depends only on the argument CodeValues. */
+    /// Adds a simplifier that depends only on the argument CodeValues.
     @CanIgnoreReturnValue
     public Builder withSimplifier(Function<ImmutableList<CodeValue>, CodeValue> simplifier) {
       simplifiers.add((args, infos) -> simplifier.apply(args));
       return this;
     }
 
-    /** Adds a simplifier that depends on both the arguments and the register infos. */
+    /// Adds a simplifier that depends on both the arguments and the register infos.
     @CanIgnoreReturnValue
     public Builder withOpSimplifier(OpSimplifier simplifier) {
       simplifiers.add(simplifier);
@@ -235,14 +214,14 @@ public class Op {
       return this;
     }
 
-    /** Sets a function that will be called to implement {@link Op#info}. */
+    /// Sets a function that will be called to implement [Op#info].
     @CanIgnoreReturnValue
     public Builder withInfo(OpInfo resultInfo) {
       this.resultInfo = resultInfo;
       return this;
     }
 
-    /** Returns a const simplifier that invokes the given MethodHandle. */
+    /// Returns a const simplifier that invokes the given MethodHandle.
     private static OpSimplifier constSimplifier(MethodHandle mh) {
       return (args, infos) -> {
         if (!allConst(args)) {
@@ -276,38 +255,32 @@ public class Op {
     this.resultInfo = builder.resultInfo;
   }
 
-  /** Returns a new CodeValue that applies this Op to the given arguments. */
+  /// Returns a new CodeValue that applies this Op to the given arguments.
   public final CodeValue result(CodeValue... args) {
     return resultWithInfo(null, args);
   }
 
-  /** Returns a new Block that applies this Op to the given arguments and discards any result. */
+  /// Returns a new Block that applies this Op to the given arguments and discards any result.
   public final Block.NonTerminal block(CodeValue... args) {
     assert hasSideEffect;
     return new SetBlock(null, result(args));
   }
 
-  /**
-   * Returns a new CodeValue that applies this Op to the given args. If {@code infoOverride} is
-   * non-null, asserts that the result satisfies the given ValueInfo.
-   */
+  /// Returns a new CodeValue that applies this Op to the given args. If `infoOverride` is non-null,
+  /// asserts that the result satisfies the given ValueInfo.
   public CodeValue resultWithInfo(ValueInfo infoOverride, CodeValue... args) {
     return resultWithInfo(infoOverride, ImmutableList.copyOf(args));
   }
 
-  /**
-   * Returns a new CodeValue that applies this Op to the given args. If {@code infoOverride} is
-   * non-null, asserts that the result satisfies the given ValueInfo.
-   */
+  /// Returns a new CodeValue that applies this Op to the given args. If `infoOverride` is non-null,
+  /// asserts that the result satisfies the given ValueInfo.
   public CodeValue resultWithInfo(ValueInfo infoOverride, ImmutableList<CodeValue> args) {
     return resultWithInfo(infoOverride, args, i -> ValueInfo.ANY);
   }
 
-  /**
-   * Returns a new CodeValue that applies this Op to the given args. If {@code infoOverride} is
-   * non-null, asserts that the result satisfies the given ValueInfo. If {@code registerInfo} is
-   * non-null, attempts to simplify the result and if successful returns the simplification instead.
-   */
+  /// Returns a new CodeValue that applies this Op to the given args. If `infoOverride` is non-null,
+  /// asserts that the result satisfies the given ValueInfo. If `registerInfo` is non-null, attempts
+  /// to simplify the result and if successful returns the simplification instead.
   private CodeValue resultWithInfo(
       ValueInfo infoOverride, ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo) {
     if (registerInfo != null) {
@@ -319,15 +292,13 @@ public class Op {
     return new Result(this, args, infoOverride);
   }
 
-  /** Returns a ValueInfo that is satisfied by the result of this Op applied to the given args. */
+  /// Returns a ValueInfo that is satisfied by the result of this Op applied to the given args.
   public ValueInfo info(ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo) {
     return (resultInfo == null) ? ValueInfo.ANY : resultInfo.info(args, registerInfo);
   }
 
-  /**
-   * If the result of this Op applied to the given args can be represented by a simpler CodeValue,
-   * returns it; otherwise returns null.
-   */
+  /// If the result of this Op applied to the given args can be represented by a simpler CodeValue,
+  /// returns it; otherwise returns null.
   @Nullable CodeValue simplify(ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo) {
     for (OpSimplifier simplifier : simplifiers) {
       CodeValue result = simplifier.simplify(args, registerInfo);
@@ -338,19 +309,19 @@ public class Op {
     return null;
   }
 
-  /** Emits code to push the result of applying this Op to the given args. */
+  /// Emits code to push the result of applying this Op to the given args.
   public void emit(Emitter emitter, CodeValue... args) {
     // It's too late to do the usual simplification, etc.; just create a Result and immediately
     // call push().
     new Result(this, ImmutableList.copyOf(args), null).push(emitter, resultType);
   }
 
-  /** Returns an Op that reads the specified field from an object of the given Class. */
+  /// Returns an Op that reads the specified field from an object of the given Class.
   public static Op getField(Class<?> klass, String name, Class<?> type) {
     return forField(Opcodes.GETFIELD, klass, name, type, ImmutableList.of(klass));
   }
 
-  /** Returns an Op that reads the specified static field. */
+  /// Returns an Op that reads the specified static field.
   public static Op getStatic(Class<?> klass, String name, Class<?> type) {
     return forField(Opcodes.GETSTATIC, klass, name, type, ImmutableList.of());
   }
@@ -366,10 +337,8 @@ public class Op {
     return new Builder(klass.getSimpleName() + "." + name, type, argTypes, emitter).build();
   }
 
-  /**
-   * Only valid on an Op returned by {@link #getField} or {@link #getStatic}; returns a Builder for
-   * an Op that writes the same field.
-   */
+  /// Only valid on an Op returned by [#getField] or [#getStatic]; returns a Builder for an Op that
+  /// writes the same field.
   public Builder setter() {
     FieldEmit emitter = (FieldEmit) this.opEmit;
     int newOpcode;
@@ -390,10 +359,8 @@ public class Op {
         .hasSideEffect();
   }
 
-  /**
-   * Only valid on an Op returned by {@link #getField} with a non-primitive type; returns a Builder
-   * for an Op that writes null to the same field and returns its previous value (non-atomically).
-   */
+  /// Only valid on an Op returned by [#getField] with a non-primitive type; returns a Builder for
+  /// an Op that writes null to the same field and returns its previous value (non-atomically).
   public Builder taker() {
     FieldEmit emitter = (FieldEmit) this.opEmit;
     Preconditions.checkArgument(emitter.opCode == Opcodes.GETFIELD && !resultType.isPrimitive());
@@ -402,10 +369,8 @@ public class Op {
         .hasSideEffect();
   }
 
-  /**
-   * Calls {@link Class#getDeclaredMethod}, converting any (checked) ReflectiveOperationException to
-   * an (unchecked) LinkageError.
-   */
+  /// Calls [Class#getDeclaredMethod], converting any (checked) ReflectiveOperationException to an
+  /// (unchecked) LinkageError.
   public static Method getDeclaredMethod(Class<?> klass, String name, Class<?>... argTypes) {
     try {
       return klass.getDeclaredMethod(name, argTypes);
@@ -414,10 +379,8 @@ public class Op {
     }
   }
 
-  /**
-   * Calls {@link Lookup#unreflect}, converting any (checked) IllegalAccessException to an
-   * (unchecked) IllegalArgumentException.
-   */
+  /// Calls [Lookup#unreflect], converting any (checked) IllegalAccessException to an (unchecked)
+  /// IllegalArgumentException.
   public static MethodHandle findMethod(Lookup lookup, Method method) {
     try {
       return lookup.unreflect(method);
@@ -426,24 +389,20 @@ public class Op {
     }
   }
 
-  /** Returns a Builder for an Op that calls the specified method, which must be public. */
+  /// Returns a Builder for an Op that calls the specified method, which must be public.
   public static Builder forMethod(Class<?> klass, String name, Class<?>... argTypes) {
     return forMethod(MethodHandles.publicLookup(), klass, name, argTypes);
   }
 
-  /**
-   * Returns a Builder for an Op that calls the specified method, which must be accessible with the
-   * given Lookup.
-   */
+  /// Returns a Builder for an Op that calls the specified method, which must be accessible with the
+  /// given Lookup.
   public static Builder forMethod(
       Lookup lookup, Class<?> klass, String name, Class<?>... argTypes) {
     return forMethod(lookup, getDeclaredMethod(klass, name, argTypes));
   }
 
-  /**
-   * Returns a Builder for an Op that calls the specified method, which must be accessible with the
-   * given Lookup.
-   */
+  /// Returns a Builder for an Op that calls the specified method, which must be accessible with the
+  /// given Lookup.
   public static Builder forMethod(Lookup lookup, Method method) {
     MethodHandle mh = findMethod(lookup, method);
     Class<?> c = method.getDeclaringClass();
@@ -468,7 +427,7 @@ public class Op {
     return new Builder(name, mh, opEmit);
   }
 
-  /** Returns a Builder for an Op that invokes the given MethodHandle. */
+  /// Returns a Builder for an Op that invokes the given MethodHandle.
   public static Builder forMethodHandle(String name, MethodHandle mh) {
     return new Builder(name, mh, null);
   }
@@ -478,18 +437,15 @@ public class Op {
     return name;
   }
 
-  /** A CodeValue that applies an Op. */
+  /// A CodeValue that applies an Op.
   public static class Result extends CodeValue {
     public final Op op;
     public final ImmutableList<CodeValue> args;
 
-    /** If non-null, this is the ValueInfo that should be returned by {@link #info(IntFunction)}. */
+    /// If non-null, this is the ValueInfo that should be returned by [#info(IntFunction)].
     private final ValueInfo infoOverride;
 
-    /**
-     * Do not call this directly; use {@link Op#result}, {@link Op#resultWithInfo}, or {@link
-     * Op#block}.
-     */
+    /// Do not call this directly; use [Op#result], [Op#resultWithInfo], or [Op#block].
     protected Result(Op op, ImmutableList<CodeValue> args, ValueInfo infoOverride) {
       assert op.argTypes.size() == args.size();
       assert IntStream.range(0, args.size())
@@ -499,17 +455,15 @@ public class Op {
       this.infoOverride = infoOverride;
     }
 
-    /**
-     * Emits instructions to push the arguments on the stack, in order, with the types expected by
-     * the Op.
-     */
+    /// Emits instructions to push the arguments on the stack, in order, with the types expected by
+    /// the Op.
     public void pushArgs(Emitter emitter) {
       for (int i = 0; i < args.size(); i++) {
         pushArg(emitter, i, op.argTypes.get(i));
       }
     }
 
-    /** Emits instructions to a single argument on the stack. */
+    /// Emits instructions to a single argument on the stack.
     public void pushArg(Emitter emitter, int i, Class<?> type) {
       args.get(i).push(emitter, type);
     }
@@ -538,16 +492,14 @@ public class Op {
       return result;
     }
 
-    /**
-     * Applies {@code argSimplifier} to each of this Op's arguments. If all of them are returned
-     * unchanged, returns this; otherwise creates a copy with the simplified arguments.
-     *
-     * <p>The arguments are simplified in reverse order; this usually doesn't matter, but one client
-     * (RcCodeBuilder.BackwardPass) relies on it.
-     *
-     * @param registerInfo if non-null and any of the arguments simplify, passed in the {@link
-     *     Op#simplify} call to check for further optimization
-     */
+    /// Applies `argSimplifier` to each of this Op's arguments. If all of them are returned
+    /// unchanged, returns this; otherwise creates a copy with the simplified arguments.
+    ///
+    /// The arguments are simplified in reverse order; this usually doesn't matter, but one client
+    /// (RcCodeBuilder.BackwardPass) relies on it.
+    ///
+    /// @param registerInfo if non-null and any of the arguments simplify, passed in the
+    ///   [Op#simplify] call to check for further optimization
     public CodeValue simplify(
         Function<CodeValue, CodeValue> argSimplifier, IntFunction<ValueInfo> registerInfo) {
       CodeValue[] newArgs = null;
@@ -635,17 +587,17 @@ public class Op {
     }
   }
 
-  /** Emits the instructions to get, set, or take a field. */
+  /// Emits the instructions to get, set, or take a field.
   private static class FieldEmit implements OpEmit {
 
-    /** One of GETFIELD, PUTFIELD, GETSTATIC, PUTSTATIC, or TAKE_OPCODE. */
+    /// One of GETFIELD, PUTFIELD, GETSTATIC, PUTSTATIC, or TAKE\_OPCODE.
     final int opCode;
 
     final String className;
     final String fieldName;
     final String typeDescriptor;
 
-    /** A flag value for {@link #opCode} to indicate that this Op was created by {@link #taker}. */
+    /// A flag value for [#opCode] to indicate that this Op was created by [#taker].
     static final int TAKE_OPCODE = -1;
 
     FieldEmit(int opCode, String className, String fieldName, String typeDescriptor) {
@@ -655,7 +607,7 @@ public class Op {
       this.typeDescriptor = typeDescriptor;
     }
 
-    /** Returns a new FieldEmit with the given opCode; other fields are unchanged. */
+    /// Returns a new FieldEmit with the given opCode; other fields are unchanged.
     FieldEmit withOpCode(int opCode) {
       return new FieldEmit(opCode, className, fieldName, typeDescriptor);
     }
@@ -691,13 +643,13 @@ public class Op {
     }
   }
 
-  /** Returns a new Builder for an Op that is implemented by the given OpEmit. */
+  /// Returns a new Builder for an Op that is implemented by the given OpEmit.
   public static Builder simple(
       String name, OpEmit emit, Class<?> resultType, Class<?>... argTypes) {
     return new Builder(name, resultType, ImmutableList.copyOf(argTypes), emit);
   }
 
-  /** Returns a new Builder for an Op that is implemented by a simple instruction. */
+  /// Returns a new Builder for an Op that is implemented by a simple instruction.
   public static Builder simple(String name, int opcode, Class<?> resultType, Class<?>... argTypes) {
     OpEmit emit = (emitter, result) -> emitOpcode(opcode, emitter, result);
     return simple(name, emit, resultType, argTypes);
@@ -708,7 +660,7 @@ public class Op {
     emitter.mv.visitInsn(opcode);
   }
 
-  /** An Op implemented by the IADD instruction. */
+  /// An Op implemented by the IADD instruction.
   public static final Op ADD_INTS =
       simple("iAdd", Opcodes.IADD, int.class, int.class, int.class)
           .withSimplifier(
@@ -723,11 +675,11 @@ public class Op {
           .withInfo(Op::iAddInfo)
           .build();
 
-  /** An Op implemented by the INEG instruction. */
+  /// An Op implemented by the INEG instruction.
   public static final Op NEGATE_INT =
       simple("iNeg", Opcodes.INEG, int.class, int.class).withConstSimplifier(x -> -(int) x).build();
 
-  /** An Op implemented by the ISUB instruction. */
+  /// An Op implemented by the ISUB instruction.
   public static final Op SUBTRACT_INTS =
       simple("iSub", Opcodes.ISUB, int.class, int.class, int.class)
           .withSimplifier(
@@ -741,7 +693,7 @@ public class Op {
               })
           .build();
 
-  /** Returns a ValueInfo for {@code ADD_INTS.result(args.get(0), args.get(1))}. */
+  /// Returns a ValueInfo for `ADD_INTS.result(args.get(0), args.get(1))`.
   private static ValueInfo iAddInfo(
       ImmutableList<CodeValue> args, IntFunction<ValueInfo> registerInfo) {
     ValueInfo info0 = args.get(0).info(registerInfo);
@@ -768,10 +720,8 @@ public class Op {
     }
   }
 
-  /**
-   * Returns a CodeValue equivalent to {@code arg + add}, if it is possible to do so with something
-   * simpler than an ADD_INTS wrapped around {@code arg}. Otherwise returns null.
-   */
+  /// Returns a CodeValue equivalent to `arg + add`, if it is possible to do so with something
+  /// simpler than an ADD\_INTS wrapped around `arg`. Otherwise returns null.
   private static @Nullable CodeValue simplifyAdd(CodeValue arg, int add) {
     if (add == 0) {
       return arg;
@@ -793,10 +743,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If either of the CodeValues is ZERO, returns the other; otherwise returns null. Used to
-   * simplify addition operations other than IADD, and for "addition-like" operations (e.g. IOR).
-   */
+  /// If either of the CodeValues is ZERO, returns the other; otherwise returns null. Used to
+  /// simplify addition operations other than IADD, and for "addition-like" operations (e.g. IOR).
   private static @Nullable CodeValue simplifyAdd(CodeValue x, CodeValue y) {
     if (CodeValue.ZERO.equals(x)) {
       return y;
@@ -806,10 +754,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If {@code y} is ZERO, returns {@code x}; otherwise returns null. Used to simplify subtraction
-   * operations other than ISUB.
-   */
+  /// If `y` is ZERO, returns `x`; otherwise returns null. Used to simplify subtraction operations
+  /// other than ISUB.
   private static @Nullable CodeValue simplifySubtract(CodeValue x, CodeValue y) {
     if (CodeValue.ZERO.equals(y)) {
       return x;
@@ -817,10 +763,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If either of the CodeValues is ONE, returns the other; if either is ZERO, returns ZERO.
-   * Otherwise returns null. Used to simplify multiplication operations.
-   */
+  /// If either of the CodeValues is ONE, returns the other; if either is ZERO, returns ZERO.
+  /// Otherwise returns null. Used to simplify multiplication operations.
   private static @Nullable CodeValue simplifyMultiply(CodeValue x, CodeValue y) {
     if (CodeValue.ONE.equals(x) || CodeValue.ZERO.equals(y)) {
       return y;
@@ -830,10 +774,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If {@code y} is ONE, returns {@code x}; if {@code y} is ZERO returns ARITHMETIC_EXCEPTION;
-   * otherwise returns null. Used to simplify divide operations.
-   */
+  /// If `y` is ONE, returns `x`; if `y` is ZERO returns ARITHMETIC\_EXCEPTION; otherwise returns
+  /// null. Used to simplify divide operations.
   private static @Nullable CodeValue simplifyDivide(CodeValue x, CodeValue y) {
     if (CodeValue.ONE.equals(y)) {
       return x;
@@ -846,10 +788,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If {@code y} is ONE or NEGATIVE_ONE, returns ZERO; if {@code y} is ZERO returns
-   * ARITHMETIC_EXCEPTION; otherwise returns null. Used to simplify modulo operations.
-   */
+  /// If `y` is ONE or NEGATIVE\_ONE, returns ZERO; if `y` is ZERO returns ARITHMETIC\_EXCEPTION;
+  /// otherwise returns null. Used to simplify modulo operations.
   private static @Nullable CodeValue simplifyMod(CodeValue x, CodeValue y) {
     if (CodeValue.ONE.equals(y) || CodeValue.NEGATIVE_ONE.equals(y)) {
       return CodeValue.ZERO;
@@ -862,10 +802,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If either of the CodeValues is ZERO, returns ZERO; otherwise returns null. Used to simplify
-   * IAND and LAND.
-   */
+  /// If either of the CodeValues is ZERO, returns ZERO; otherwise returns null. Used to simplify
+  /// IAND and LAND.
   private static @Nullable CodeValue simplifyZeroToZero(CodeValue x, CodeValue y) {
     if (CodeValue.ZERO.equals(x) || CodeValue.ZERO.equals(y)) {
       return CodeValue.ZERO;
@@ -873,10 +811,8 @@ public class Op {
     return null;
   }
 
-  /**
-   * If either of the two CodeValues is ZERO, returns {@code x}; otherwise returns null. Used to
-   * simplify shift and rotation operations.
-   */
+  /// If either of the two CodeValues is ZERO, returns `x`; otherwise returns null. Used to simplify
+  /// shift and rotation operations.
   private static @Nullable CodeValue simplifyShift(CodeValue x, CodeValue y) {
     if (CodeValue.ZERO.equals(x) || CodeValue.ZERO.equals(y)) {
       return x;
@@ -884,116 +820,116 @@ public class Op {
     return null;
   }
 
-  /** An Op implemented by the L2I instruction. */
+  /// An Op implemented by the L2I instruction.
   public static final Op LONG_TO_INT =
       simple("toInt", Opcodes.L2I, int.class, long.class)
           .withConstSimplifier(x -> ((Number) x).intValue())
           .build();
 
-  /** An Op implemented by the IMUL instruction. */
+  /// An Op implemented by the IMUL instruction.
   public static final Op MULTIPLY_INTS =
       simple("iMul", Opcodes.IMUL, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyMultiply)
           .withConstSimplifier((x, y) -> ((int) x) * ((int) y))
           .build();
 
-  /** An Op implemented by the IAND instruction. */
+  /// An Op implemented by the IAND instruction.
   public static final Op BIT_AND_INTS =
       simple("iAnd", Opcodes.IAND, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyZeroToZero)
           .withConstSimplifier((x, y) -> ((int) x) & ((int) y))
           .build();
 
-  /** An Op implemented by the IOR instruction. */
+  /// An Op implemented by the IOR instruction.
   public static final Op BIT_OR_INTS =
       simple("iOr", Opcodes.IOR, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyAdd)
           .withConstSimplifier((x, y) -> ((int) x) | ((int) y))
           .build();
 
-  /** An Op implemented by the IXOR instruction. */
+  /// An Op implemented by the IXOR instruction.
   public static final Op BIT_XOR_INTS =
       simple("iXor", Opcodes.IXOR, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyAdd)
           .withConstSimplifier((x, y) -> ((int) x) ^ ((int) y))
           .build();
 
-  /** An Op implemented by the LAND instruction. */
+  /// An Op implemented by the LAND instruction.
   public static final Op BIT_AND_LONGS =
       simple("lAnd", Opcodes.LAND, long.class, long.class, long.class)
           .withSimplifier(Op::simplifyZeroToZero)
           .withConstSimplifier((x, y) -> asLong(x) & asLong(y))
           .build();
 
-  /** An Op implemented by the {@link Math#addExact} method. */
+  /// An Op implemented by the [Math#addExact] method.
   public static final Op ADD_INTS_EXACT =
       forMethod(Math.class, "addExact", int.class, int.class)
           .withSimplifier(Op::simplifyAdd)
           .withConstSimplifier()
           .build();
 
-  /** An Op implemented by the {@link Math#subtractExact} method. */
+  /// An Op implemented by the [Math#subtractExact] method.
   public static final Op SUBTRACT_INTS_EXACT =
       forMethod(Math.class, "subtractExact", int.class, int.class)
           .withSimplifier(Op::simplifySubtract)
           .withConstSimplifier()
           .build();
 
-  /** An Op implemented by the {@link Math#multiplyExact} method. */
+  /// An Op implemented by the [Math#multiplyExact] method.
   public static final Op MULTIPLY_INTS_EXACT =
       forMethod(Math.class, "multiplyExact", int.class, int.class)
           .withSimplifier(Op::simplifyMultiply)
           .withConstSimplifier()
           .build();
 
-  /** An Op implemented by the {@link Math#negateExact} method. */
+  /// An Op implemented by the [Math#negateExact] method.
   public static final Op NEGATE_INT_EXACT =
       forMethod(Math.class, "negateExact", int.class).withConstSimplifier().build();
 
-  /** An Op implemented by the {@link Math#absExact} method. */
+  /// An Op implemented by the [Math#absExact] method.
   public static final Op ABS_INT_EXACT =
       forMethod(Math.class, "absExact", int.class).withConstSimplifier().build();
 
-  /** An Op implemented by the {@link Math#toIntExact} method. */
+  /// An Op implemented by the [Math#toIntExact] method.
   public static final Op LONG_TO_INT_EXACT =
       forMethod(Math.class, "toIntExact", long.class).withConstSimplifier().build();
 
-  /** An Op implemented by the ISHL instruction. */
+  /// An Op implemented by the ISHL instruction.
   public static final Op SHIFT_LEFT_INT =
       simple("iShl", Opcodes.ISHL, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyShift)
           .withConstSimplifier((x, y) -> ((int) x) << ((int) y))
           .build();
 
-  /** An Op implemented by the {@link Integer#rotateLeft} method. */
+  /// An Op implemented by the [Integer#rotateLeft] method.
   public static final Op ROTATE_LEFT_INT =
       forMethod(Integer.class, "rotateLeft", int.class, int.class)
           .withSimplifier(Op::simplifyShift)
           .withConstSimplifier((x, y) -> Integer.rotateLeft((int) x, (int) y))
           .build();
 
-  /** An Op implemented by the LSHL instruction. */
+  /// An Op implemented by the LSHL instruction.
   public static final Op SHIFT_LEFT_LONG =
       simple("lShl", Opcodes.LSHL, long.class, long.class, int.class)
           .withSimplifier(Op::simplifyShift)
           .withConstSimplifier((x, y) -> asLong(x) << ((int) y))
           .build();
 
-  /** An Op implemented by the LSHR instruction. */
+  /// An Op implemented by the LSHR instruction.
   public static final Op SHIFT_RIGHT_LONG =
       simple("lShr", Opcodes.LSHR, long.class, long.class, int.class)
           .withSimplifier(Op::simplifyShift)
           .withConstSimplifier((x, y) -> asLong(x) >> ((int) y))
           .build();
 
-  /** An Op implemented by the {@link Long#rotateLeft} method. */
+  /// An Op implemented by the [Long#rotateLeft] method.
   public static final Op ROTATE_LEFT_LONG =
       forMethod(Long.class, "rotateLeft", long.class, int.class)
           .withSimplifier(Op::simplifyShift)
           .withConstSimplifier((x, y) -> Long.rotateLeft(asLong(x), (int) y))
           .build();
 
-  /** An Op implemented by the IDIV instruction. */
+  /// An Op implemented by the IDIV instruction.
   public static final Op DIV_INTS =
       simple("iDiv", Opcodes.IDIV, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyDivide)
@@ -1001,7 +937,7 @@ public class Op {
           .withConstSimplifier((x, y) -> ((int) x) / ((int) y))
           .build();
 
-  /** An Op implemented by the IREM instruction. */
+  /// An Op implemented by the IREM instruction.
   public static final Op MOD_INTS =
       simple("iMod", Opcodes.IREM, int.class, int.class, int.class)
           .withSimplifier(Op::simplifyMod)
@@ -1009,34 +945,34 @@ public class Op {
           .withConstSimplifier((x, y) -> ((int) x) % ((int) y))
           .build();
 
-  /** An Op implemented by the LADD instruction. */
+  /// An Op implemented by the LADD instruction.
   public static final Op ADD_LONGS =
       simple("lAdd", Opcodes.LADD, long.class, long.class, long.class)
           .withSimplifier(Op::simplifyAdd)
           .withConstSimplifier((x, y) -> asLong(x) + asLong(y))
           .build();
 
-  /** An Op implemented by the LSUB instruction. */
+  /// An Op implemented by the LSUB instruction.
   public static final Op SUBTRACT_LONGS =
       simple("lSub", Opcodes.LSUB, long.class, long.class, long.class)
           .withSimplifier(Op::simplifySubtract)
           .withConstSimplifier((x, y) -> asLong(x) - asLong(y))
           .build();
 
-  /** An Op implemented by the LMUL instruction. */
+  /// An Op implemented by the LMUL instruction.
   public static final Op MULTIPLY_LONGS =
       simple("lMul", Opcodes.LMUL, long.class, long.class, long.class)
           .withSimplifier(Op::simplifyMultiply)
           .withConstSimplifier((x, y) -> asLong(x) * asLong(y))
           .build();
 
-  /** An Op implemented by the D2I instruction. */
+  /// An Op implemented by the D2I instruction.
   public static final Op DOUBLE_TO_INT =
       simple("d2i", Opcodes.D2I, int.class, double.class)
           .withConstSimplifier(x -> ((Number) x).intValue())
           .build();
 
-  /** An Op implemented by the D2L instruction. */
+  /// An Op implemented by the D2L instruction.
   public static final Op DOUBLE_TO_LONG =
       simple("d2l", Opcodes.D2L, long.class, double.class)
           .withConstSimplifier(x -> ((Number) x).longValue())
@@ -1050,64 +986,62 @@ public class Op {
     return ((Number) x).longValue();
   }
 
-  /** An Op implemented by the DADD instruction. */
+  /// An Op implemented by the DADD instruction.
   public static final Op ADD_DOUBLES =
       simple("dAdd", Opcodes.DADD, double.class, double.class, double.class)
           .withSimplifier(Op::simplifyAdd)
           .withConstSimplifier((x, y) -> asDouble(x) + asDouble(y))
           .build();
 
-  /** An Op implemented by the DNEG instruction. */
+  /// An Op implemented by the DNEG instruction.
   public static final Op NEGATE_DOUBLE =
       simple("dNeg", Opcodes.DNEG, double.class, double.class)
           .withConstSimplifier(x -> -asDouble(x))
           .build();
 
-  /** An Op implemented by the {@link Math#abs(double)} method. */
+  /// An Op implemented by the [Math#abs(double)] method.
   public static final Op ABS_DOUBLE =
       forMethod(Math.class, "abs", double.class).withConstSimplifier().build();
 
-  /** An Op implemented by the DSUB instruction. */
+  /// An Op implemented by the DSUB instruction.
   public static final Op SUBTRACT_DOUBLES =
       simple("dSub", Opcodes.DSUB, double.class, double.class, double.class)
           .withSimplifier(Op::simplifySubtract)
           .withConstSimplifier((x, y) -> asDouble(x) - asDouble(y))
           .build();
 
-  /** An Op implemented by the DMUL instruction. */
+  /// An Op implemented by the DMUL instruction.
   public static final Op MULTIPLY_DOUBLES =
       simple("dMul", Opcodes.DMUL, double.class, double.class, double.class)
           .withSimplifier(Op::simplifyMultiply)
           .withConstSimplifier((x, y) -> asDouble(x) * asDouble(y))
           .build();
 
-  /** An Op implemented by the DDIV instruction. */
+  /// An Op implemented by the DDIV instruction.
   public static final Op DIV_DOUBLES =
       simple("dDiv", Opcodes.DDIV, double.class, double.class, double.class)
           .withSimplifier(Op::simplifyDivide)
           .withConstSimplifier((x, y) -> asDouble(x) / asDouble(y))
           .build();
 
-  /** An Op implemented by the ARRAYLENGTH instruction on an int[]. */
+  /// An Op implemented by the ARRAYLENGTH instruction on an int[].
   public static final Op INT_ARRAY_LENGTH =
       simple("lengthInt[]", Opcodes.ARRAYLENGTH, int.class, int[].class)
           .withConstSimplifier(Array::getLength)
           .build();
 
-  /** An Op implemented by the IALOAD instruction. */
+  /// An Op implemented by the IALOAD instruction.
   public static final Op INT_ARRAY_ELEMENT =
       simple("int[]", Opcodes.IALOAD, int.class, int[].class, int.class)
           .withConstSimplifier((ints, index) -> ((int[]) ints)[(int) index])
           .build();
 
-  /** An Op implemented by the IASTORE instruction. */
+  /// An Op implemented by the IASTORE instruction.
   public static final Op SET_INT_ARRAY_ELEMENT =
       simple("setInt[]", Opcodes.IASTORE, void.class, int[].class, int.class, int.class).build();
 
-  /**
-   * An Op implemented by the BALOAD instruction, except that the result is in [0..255] rather than
-   * [-128..127].
-   */
+  /// An Op implemented by the BALOAD instruction, except that the result is in [0..255] rather than
+  /// [-128..127].
   public static final Op UINT8_ARRAY_ELEMENT =
       simple("uint8[]", Op::emitUint8ArrayElement, int.class, byte[].class, int.class)
           .withConstSimplifier((bytes, index) -> ((byte[]) bytes)[(int) index] & 255)
@@ -1121,22 +1055,22 @@ public class Op {
     emitter.mv.visitInsn(Opcodes.IAND);
   }
 
-  /** An Op implemented by the BASTORE instruction. */
+  /// An Op implemented by the BASTORE instruction.
   public static final Op SET_UINT8_ARRAY_ELEMENT =
       simple("setUint8[]", Opcodes.BASTORE, void.class, byte[].class, int.class, int.class).build();
 
-  /** An Op implemented by the AALOAD instruction. */
+  /// An Op implemented by the AALOAD instruction.
   public static final Op OBJ_ARRAY_ELEMENT =
       simple("Object[]", Opcodes.AALOAD, Object.class, Object[].class, int.class)
           .withConstSimplifier((objs, index) -> ((Object[]) objs)[(int) index])
           .build();
 
-  /** An Op implemented by the AASTORE instruction. */
+  /// An Op implemented by the AASTORE instruction.
   public static final Op SET_OBJ_ARRAY_ELEMENT =
       simple("setObject[]", Opcodes.AASTORE, void.class, Object[].class, int.class, Object.class)
           .build();
 
-  /** An Op implemented by the {@link Objects#equals} method. */
+  /// An Op implemented by the [Objects#equals] method.
   public static final Op EQUAL =
       forMethod(Objects.class, "equals", Object.class, Object.class).withConstSimplifier().build();
 }

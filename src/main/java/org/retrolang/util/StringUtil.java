@@ -23,16 +23,14 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-/** Static-only class with methods for building, escaping, and unescaping strings. */
+/// Static-only class with methods for building, escaping, and unescaping strings.
 public class StringUtil {
 
   private StringUtil() {}
 
-  /**
-   * Constructs a string by calling the given IntFunction for each int from 0 to size-1, calling
-   * {@code String.valueOf()} on each element, separating them with {@code ", "}, and adding the
-   * given prefix and suffix.
-   */
+  /// Constructs a string by calling the given IntFunction for each int from 0 to size-1, calling
+  /// `String.valueOf()` on each element, separating them with `", "`, and adding the given prefix
+  /// and suffix.
   public static String joinElements(
       String prefix, String suffix, int size, IntFunction<?> elements) {
     assert size >= 0;
@@ -41,12 +39,10 @@ public class StringUtil {
         .collect(Collectors.joining(", ", prefix, suffix));
   }
 
-  /**
-   * Given a (quoted) Retrospect string literal, returns the corresponding Java string.
-   *
-   * <p>Caller is responsible for ensuring that the literal is well formed, i.e. that it begins and
-   * ends with {@code "} and that any {@code \} characters are part of a valid escape sequence.
-   */
+  /// Given a (quoted) Retrospect string literal, returns the corresponding Java string.
+  ///
+  /// Caller is responsible for ensuring that the literal is well formed, i.e. that it begins and
+  /// ends with `"` and that any `\\` characters are part of a valid escape sequence.
   public static String unescape(String s) {
     // Drop the beginning and ending '"'.
     s = s.substring(1, s.length() - 1);
@@ -111,7 +107,7 @@ public class StringUtil {
     };
   }
 
-  /** Given a string, return an equivalent quoted Retrospect string literal. */
+  /// Given a string, return an equivalent quoted Retrospect string literal.
   public static String escape(String s) {
     if (s == null) {
       return "null";
@@ -121,13 +117,11 @@ public class StringUtil {
     return "\"" + escaped + "\"";
   }
 
-  /**
-   * Call {@link String#valueOf} but swallow any errors; intended for debugging or formatting errors
-   * when the system is already known to be in a bad state.
-   *
-   * <p>If {@code x} is an array of objects, formats as {@link java.util.Arrays#toString} (but uses
-   * {@link #safeToString} for each element).
-   */
+  /// Call [String#valueOf] but swallow any errors; intended for debugging or formatting errors when
+  /// the system is already known to be in a bad state.
+  ///
+  /// If `x` is an array of objects, formats as [java.util.Arrays#toString] (but uses
+  /// [#safeToString] for each element).
   public static String safeToString(Object x) {
     if (x instanceof Object[] array) {
       return joinElements("[", "]", array.length, i -> safeToString(array[i]));
@@ -141,7 +135,7 @@ public class StringUtil {
 
   private static final int ID_LENGTH = 4;
 
-  /** Returns a short, arbitrary string useful for identifying this object. */
+  /// Returns a short, arbitrary string useful for identifying this object.
   public static String id(Object x) {
     if (x == null) {
       return "null";

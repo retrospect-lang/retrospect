@@ -29,52 +29,42 @@ import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.Evolver.Evolution;
 import org.retrolang.util.StringUtil;
 
-/**
- * A FrameLayout determines the interpretation of the fields in an instance of Frame. It has two
- * subclasses: RecordLayout and VArrayLayout.
- *
- * <p>A FrameLayout may also be used as the ValueInfo for a pointer-valued register, indicating that
- * it points to a Frame with this layout.
- */
+/// A FrameLayout determines the interpretation of the fields in an instance of Frame. It has two
+/// subclasses: RecordLayout and VArrayLayout.
+///
+/// A FrameLayout may also be used as the ValueInfo for a pointer-valued register, indicating that
+/// it points to a Frame with this layout.
 public abstract class FrameLayout extends Frame.LayoutOrReplacement implements PtrInfo {
-  /**
-   * The Scope that this FrameLayout belongs to. All computations that use this layout must share
-   * this Scope.
-   */
+  /// The Scope that this FrameLayout belongs to. All computations that use this layout must share
+  /// this Scope.
   final Scope scope;
 
-  /** The FrameClass that will be used to allocate Frames using this layout. */
+  /// The FrameClass that will be used to allocate Frames using this layout.
   final FrameClass frameClass;
 
-  /** The number of Object fields that will be used in each Frame. */
+  /// The number of Object fields that will be used in each Frame.
   final int nPtrs;
 
-  /** A RefVar template with this FrameLayout. */
+  /// A RefVar template with this FrameLayout.
   final Template.RefVar.ForFrame asRefVar;
 
-  /**
-   * If non-null, this FrameLayout has evolved; the updated FrameLayout should be preferred.
-   *
-   * <p>Can only be changed from null to non-null by the Evolver, while {@code scope.evolver} is
-   * locked. Once non-null can be swapped (to track further evolutions) without locking (details in
-   * {@link #evolution()}). Always read and written with getAcquire/setRelease (or
-   * compareAndExchange, which is stronger) to ensure cross-thread sanity.
-   */
+  /// If non-null, this FrameLayout has evolved; the updated FrameLayout should be preferred.
+  ///
+  /// Can only be changed from null to non-null by the Evolver, while `scope.evolver` is locked.
+  /// Once non-null can be swapped (to track further evolutions) without locking (details in
+  /// [#evolution()]). Always read and written with getAcquire/setRelease (or compareAndExchange,
+  /// which is stronger) to ensure cross-thread sanity.
   @Keep private Evolution evolution;
 
   private static final VarHandle EVOLUTION =
       Handle.forVar(MethodHandles.lookup(), FrameLayout.class, "evolution", Evolution.class);
 
-  /**
-   * For the Evolver's private use during evolution operations; only read or written while {@code
-   * scope.evolver} is locked. Null if the {@code scope.evolver} is not locked.
-   */
+  /// For the Evolver's private use during evolution operations; only read or written while
+  /// `scope.evolver` is locked. Null if the `scope.evolver` is not locked.
   private Evolver.Pending pending;
 
-  /**
-   * A ValueInfo that indicates that the register points to a Frame with this layout and with
-   * refCount=1.
-   */
+  /// A ValueInfo that indicates that the register points to a Frame with this layout and with
+  /// refCount=1.
   final ValueInfo notSharedInfo;
 
   FrameLayout(Scope scope, BaseType baseType, FrameClass frameClass, int nPtrs) {
@@ -92,13 +82,11 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return asRefVar.baseType;
   }
 
-  /**
-   * Returns a FrameLayout that can store all values that can be stored by this FrameLayout as well
-   * as the given value. If the result is not identical to this, this layout will have been evolved
-   * to the result.
-   *
-   * <p>Requires that {@code v.baseType().sortOrder == this.baseType().sortOrder}.
-   */
+  /// Returns a FrameLayout that can store all values that can be stored by this FrameLayout as well
+  /// as the given value. If the result is not identical to this, this layout will have been evolved
+  /// to the result.
+  ///
+  /// Requires that `v.baseType().sortOrder == this.baseType().sortOrder`.
   final FrameLayout addValue(Value v) {
     assert v.baseType().sortOrder == baseType().sortOrder;
     if (v instanceof Frame) {
@@ -111,51 +99,39 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     }
   }
 
-  /**
-   * Returns the template for this Value (for RecordLayouts) or for each element of this Value (for
-   * VArrayLayouts).
-   */
+  /// Returns the template for this Value (for RecordLayouts) or for each element of this Value (for
+  /// VArrayLayouts).
   abstract Template template();
 
-  /** Returns the template for the specified element of this Value. */
+  /// Returns the template for the specified element of this Value.
   abstract Template elementTemplate(int index);
 
-  /** Implements {@link #addValue} when {@code v} is not a Frame. */
+  /// Implements [#addValue] when `v` is not a Frame.
   abstract FrameLayout addValueImpl(Value v);
 
-  /**
-   * Returns a value greater than the index of any NumVar in {@link #template} (0 if there are no
-   * NumVars).
-   */
+  /// Returns a value greater than the index of any NumVar in [#template] (0 if there are no
+  /// NumVars).
   abstract int numVarIndexLimit();
 
-  /**
-   * Returns a value greater than the index of any RefVar in {@link #template}, (0 if there are no
-   * RefVars).
-   */
+  /// Returns a value greater than the index of any RefVar in [#template], (0 if there are no
+  /// RefVars).
   abstract int refVarIndexLimit();
 
-  /**
-   * Returns a FrameLayout that can store all values that can be stored by this FrameLayout or are
-   * included in the given TemplateBuilder. The result may or may not be identical to this.
-   *
-   * <p>Requires that {@code compound.baseType.sortOrder == this.baseType().sortOrder}.
-   */
+  /// Returns a FrameLayout that can store all values that can be stored by this FrameLayout or are
+  /// included in the given TemplateBuilder. The result may or may not be identical to this.
+  ///
+  /// Requires that `compound.baseType.sortOrder == this.baseType().sortOrder`.
   abstract FrameLayout merge(TemplateBuilder.CompoundBase compound);
 
-  /** Evolves this layout so that the specified element can store the given value. */
+  /// Evolves this layout so that the specified element can store the given value.
   abstract FrameLayout evolveElement(int index, Value newElement);
 
-  /**
-   * Evolves this layout so that elements from start (inclusive) to end (exclusive) can store the
-   * given value.
-   */
+  /// Evolves this layout so that elements from start (inclusive) to end (exclusive) can store the
+  /// given value.
   public abstract FrameLayout evolveElements(int start, int end, Value newElement);
 
-  /**
-   * If this FrameLayout has been evolved, returns the FrameLayout to use in its place; otherwise
-   * returns this.
-   */
+  /// If this FrameLayout has been evolved, returns the FrameLayout to use in its place; otherwise
+  /// returns this.
   FrameLayout latest() {
     Evolution ev = evolution();
     return (ev == null) ? this : ev.newLayout;
@@ -167,7 +143,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return EVOLUTION.getOpaque(this) != null;
   }
 
-  /** If this FrameLayout has been evolved, returns the latest Evolution; otherwise returns null. */
+  /// If this FrameLayout has been evolved, returns the latest Evolution; otherwise returns null.
   Evolution evolution() {
     // Use getAcquire since this pointer may have been written asynchronously by another thread
     Evolution current = (Evolution) EVOLUTION.getAcquire(this);
@@ -198,41 +174,33 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     }
   }
 
-  /**
-   * Update this FrameLayout's {@link #pending} field. Only called from the Evolver while the
-   * Evolver is locked.
-   */
+  /// Update this FrameLayout's [#pending] field. Only called from the Evolver while the Evolver is
+  /// locked.
   void setPending(Evolver.Pending pending, Evolver.Pending prev) {
     assert this.pending == prev && this.evolution == null;
     assert Thread.holdsLock(scope.evolver);
     this.pending = pending;
   }
 
-  /**
-   * Set this FrameLayout's {@link #evolution} field, which should be null. Only called from the
-   * Evolver while the Evolver is locked.
-   */
+  /// Set this FrameLayout's [#evolution] field, which should be null. Only called from the Evolver
+  /// while the Evolver is locked.
   void setEvolution(FrameLayout newLayout) {
     assert this.evolution == null && newLayout != this && newLayout.evolution == null;
     assert Thread.holdsLock(scope.evolver);
     EVOLUTION.setRelease(this, new Evolution(this, newLayout));
   }
 
-  /**
-   * Return this FrameLayout's {@link #pending} field. Only called from the Evolver while the
-   * Evolver is locked.
-   */
+  /// Return this FrameLayout's [#pending] field. Only called from the Evolver while the Evolver is
+  /// locked.
   Evolver.Pending pending() {
     return pending;
   }
 
-  /**
-   * Returns a Value equal to {@code value} and suitable for storing in a RefVar with this layout.
-   * May evolve this layout if necessary to include the given value. If {@code value} is already a
-   * frame with this layout just increments its reference count.
-   *
-   * <p>Requires that {@code value.baseType().sortOrder == this.baseType().sortOrder}.
-   */
+  /// Returns a Value equal to `value` and suitable for storing in a RefVar with this layout. May
+  /// evolve this layout if necessary to include the given value. If `value` is already a frame with
+  /// this layout just increments its reference count.
+  ///
+  /// Requires that `value.baseType().sortOrder == this.baseType().sortOrder`.
   @RC.Out
   Frame cast(TState tstate, Value value) {
     assert value.baseType().sortOrder == baseType().sortOrder;
@@ -254,10 +222,8 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return result;
   }
 
-  /**
-   * Tries to allocate a new instance of this layout equal to {@code value}. Returns null if this
-   * layout cannot represent {@code value}.
-   */
+  /// Tries to allocate a new instance of this layout equal to `value`. Returns null if this layout
+  /// cannot represent `value`.
   @RC.Out
   private @Nullable Frame tryCopyOf(TState tstate, Value value) {
     int n = value.numElements();
@@ -274,87 +240,69 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return result;
   }
 
-  /**
-   * Returns the number of bytes of memory required for a Frame with this layout and the specified
-   * number of elements.
-   */
+  /// Returns the number of bytes of memory required for a Frame with this layout and the specified
+  /// number of elements.
   abstract long sizeOf(int numElements);
 
-  /**
-   * Allocates a new Frame using this FrameLayout.
-   *
-   * <p>If this is a RecordLayout {@code numElements} is ignored.
-   */
+  /// Allocates a new Frame using this FrameLayout.
+  ///
+  /// If this is a RecordLayout `numElements` is ignored.
   @RC.Out
   public abstract Frame alloc(TState tstate, int numElements);
 
-  /**
-   * Allocates a new Frame using this FrameLayout and copies the contents of the given Frame (which
-   * must use this layout) into it.
-   */
+  /// Allocates a new Frame using this FrameLayout and copies the contents of the given Frame (which
+  /// must use this layout) into it.
   @RC.Out
   abstract Frame duplicate(TState tstate, Frame f);
 
-  /** Returns the amount of memory that would be used by a call to {@link #duplicate}. */
+  /// Returns the amount of memory that would be used by a call to [#duplicate].
   abstract long bytesForDuplicate(Frame f);
 
-  /** Implements {@link Value#numElements} for a Frame that uses this FrameLayout. */
+  /// Implements [Value#numElements] for a Frame that uses this FrameLayout.
   abstract int numElements(Frame f);
 
-  /** Implements {@link Value#element} for a Frame that uses this FrameLayout. */
+  /// Implements [Value#element] for a Frame that uses this FrameLayout.
   @RC.Out
   abstract Value element(Frame f, int i);
 
-  /**
-   * Implements {@link Value#peekElement} for a Frame that uses this FrameLayout.
-   *
-   * <p>If {@code mayBeUninitialized} is true, some conditions that normally would be an error
-   * return TO_BE_SET instead:
-   *
-   * <ul>
-   *   <li>a tagged union has an invalid tag value; or
-   *   <li>a reference value is null.
-   * </ul>
-   */
+  /// Implements [Value#peekElement] for a Frame that uses this FrameLayout.
+  ///
+  /// If `mayBeUninitialized` is true, some conditions that normally would be an error return
+  /// TO\_BE\_SET instead:
+  ///
+  /// - a tagged union has an invalid tag value; or
+  /// - a reference value is null.
   abstract Value peekElement(Frame f, int i, boolean mayBeUninitialized);
 
-  /** Nulls any pointers associated with the specified element. */
+  /// Nulls any pointers associated with the specified element.
   abstract void clearElement(TState tstate, Frame f, int index);
 
-  /** Emits blocks to clear any pointers associated with the specified element. */
+  /// Emits blocks to clear any pointers associated with the specified element.
   abstract void emitClearElement(CodeGen codeGen, CodeValue f, CodeValue index);
 
-  /**
-   * Sets the specified element, which must have previously been cleared.
-   *
-   * <p>Returns true if successful, false if the value cannot be stored. If the returned value is
-   * false the element remains cleared.
-   */
+  /// Sets the specified element, which must have previously been cleared.
+  ///
+  /// Returns true if successful, false if the value cannot be stored. If the returned value is
+  /// false the element remains cleared.
   abstract boolean setElement(TState tstate, Frame f, int index, Value newElement);
 
-  /**
-   * Emits blocks to set the specified element, which must have previously been cleared. Vars in
-   * newElement are interpreted as registers.
-   */
+  /// Emits blocks to set the specified element, which must have previously been cleared. Vars in
+  /// newElement are interpreted as registers.
   abstract void emitSetElement(CodeGen codeGen, CodeValue f, CodeValue index, Template newElement);
 
-  /**
-   * Sets elements from start (inclusive) to end (exclusive), which must have previously been
-   * cleared.
-   *
-   * <p>Returns true if successful, false if the value cannot be stored. If the returned value is
-   * false the elements remain cleared.
-   */
+  /// Sets elements from start (inclusive) to end (exclusive), which must have previously been
+  /// cleared.
+  ///
+  /// Returns true if successful, false if the value cannot be stored. If the returned value is
+  /// false the elements remain cleared.
   public abstract boolean setElements(TState tstate, Frame f, int start, int end, Value newElement);
 
-  /** Returns a CopyEmitter who source is the specified element of a frame with this layout. */
+  /// Returns a CopyEmitter who source is the specified element of a frame with this layout.
   abstract CopyEmitter copyFrom(Register frame, int index);
 
-  /**
-   * The default implementation of {@link Evolver.FrameReplacer}. Only used for RecordLayouts
-   * (although it would work for VArrayLayouts those are instead handled by the optimized
-   * implementation in VArrayReplacer).
-   */
+  /// The default implementation of [Evolver.FrameReplacer]. Only used for RecordLayouts (although
+  /// it would work for VArrayLayouts those are instead handled by the optimized implementation in
+  /// VArrayReplacer).
   @RC.Out
   Frame simpleReplace(TState tstate, Frame src, FrameLayout newLayout) {
     int numElements = src.numElements();
@@ -370,11 +318,9 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return dst;
   }
 
-  /**
-   * Returns a Frame representing an array of length {@code numElements}, with all elements equal to
-   * {@code initialValue}. If {@code initialLayout} is non-null, the frame will use that layout
-   * (evolving it if necessary); otherwise it will create a new VArrayLayout.
-   */
+  /// Returns a Frame representing an array of length `numElements`, with all elements equal to
+  /// `initialValue`. If `initialLayout` is non-null, the frame will use that layout (evolving it if
+  /// necessary); otherwise it will create a new VArrayLayout.
   @RC.Out
   public static Frame newArray(
       TState tstate, FrameLayout initialLayout, int numElements, Value initialValue)
@@ -445,7 +391,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return arg instanceof Register r && PtrInfo.isUnshared(registerInfo.apply(r.index));
   }
 
-  /** If {@code f} is unshared, returns {@code f}; otherwise, returns a duplicate of {@code f}. */
+  /// If `f` is unshared, returns `f`; otherwise, returns a duplicate of `f`.
   @RC.Out
   Frame ensureUnshared(TState tstate, @RC.In Frame f) {
     assert f.layout() == this;
@@ -457,17 +403,14 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return result;
   }
 
-  /**
-   * If a call to {@link #ensureUnshared} would not require duplication, returns true; otherwise
-   * returns true if this layout has not evolved and we are able to reserve memory for the
-   * duplicate.
-   */
+  /// If a call to [#ensureUnshared] would not require duplication, returns true; otherwise returns
+  /// true if this layout has not evolved and we are able to reserve memory for the duplicate.
   boolean checkBeforeDuplicate(TState tstate, Frame f) {
     assert f.layout() == this;
     return f.isNotShared() || (!hasEvolved() && tstate.tryReserve(bytesForDuplicate(f)));
   }
 
-  /** If {@code f} is unshared, returns {@code f}; otherwise, returns a duplicate of {@code f}. */
+  /// If `f` is unshared, returns `f`; otherwise, returns a duplicate of `f`.
   public Register emitEnsureUnshared(CodeGen codeGen, CodeValue f) {
     if (f instanceof Register r && PtrInfo.isUnshared(codeGen.cb.nextInfoResolved(r.index))) {
       return r;
@@ -482,10 +425,8 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return (Register) result;
   }
 
-  /**
-   * Like {@link #emitEnsureUnshared}, but escapes if duplication would be needed and either the
-   * layout has evolved or we are unable to reserve enough memory for the duplicate.
-   */
+  /// Like [#emitEnsureUnshared], but escapes if duplication would be needed and either the layout
+  /// has evolved or we are unable to reserve enough memory for the duplicate.
   public Register emitEnsureUnsharedWithCheck(CodeGen codeGen, CodeValue f) {
     if (f instanceof Register r && PtrInfo.isUnshared(codeGen.cb.nextInfoResolved(r.index))) {
       return r;
@@ -496,20 +437,16 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return emitEnsureUnshared(codeGen, f);
   }
 
-  /**
-   * Returns a varray containing
-   *
-   * <ul>
-   *   <li>the first {@code keepPrefix} elements of {@code array}, followed by
-   *   <li>{@code addSize} uninitialized elements, followed by
-   *   <li>the elements of {@code array} from {@code keepPrefix+removeSize} to its end.
-   * </ul>
-   *
-   * <p>This method is used to implement replaceElement (with a range index) and concatenation.
-   *
-   * <p>If {@code array} is not a Frame and {@code resultLayout} is non-null, it will be used for
-   * the result (evolving it if necessary).
-   */
+  /// Returns a varray containing
+  ///
+  /// - the first `keepPrefix` elements of `array`, followed by
+  /// - `addSize` uninitialized elements, followed by
+  /// - the elements of `array` from `keepPrefix+removeSize` to its end.
+  ///
+  /// This method is used to implement replaceElement (with a range index) and concatenation.
+  ///
+  /// If `array` is not a Frame and `resultLayout` is non-null, it will be used for the result
+  /// (evolving it if necessary).
   @RC.Out
   public static Frame removeRange(
       TState tstate,
@@ -592,7 +529,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return result;
   }
 
-  /** Implements {@link Value#replaceElement} for a Frame that uses this FrameLayout. */
+  /// Implements [Value#replaceElement] for a Frame that uses this FrameLayout.
   @RC.Out
   Value replaceElement(TState tstate, @RC.In Frame f, int index, @RC.In Value newElement) {
     if (!f.isNotShared()) {
@@ -624,10 +561,8 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     }
   }
 
-  /**
-   * Returns a CodeValue representing the result of a call to {@link #replaceElement} on a frame
-   * with this layout.
-   */
+  /// Returns a CodeValue representing the result of a call to [#replaceElement] on a frame with
+  /// this layout.
   Register emitReplaceElement(CodeGen codeGen, CodeValue f, CodeValue index, Value newElement) {
     // TODO: should we sometimes be checking here?
     Register result = emitEnsureUnshared(codeGen, f);
@@ -650,7 +585,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return containsValue(constInfo.value) ? this : ValueInfo.ANY;
   }
 
-  /** Implements RefCounted.visitRefs() for a Frame that uses this FrameLayout. */
+  /// Implements RefCounted.visitRefs() for a Frame that uses this FrameLayout.
   @Override
   final long visitRefs(Frame f, RefVisitor visitor) {
     // TODO: if visitor is a releaser, add f to a freeList on TState *unless* we've been
@@ -658,10 +593,10 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return frameClass.visitRefs(f, visitor, nPtrs);
   }
 
-  /** Implements Object.equals() for a Frame that uses this FrameLayout. */
+  /// Implements Object.equals() for a Frame that uses this FrameLayout.
   abstract boolean equals(Frame f, Value other);
 
-  /** Implements {@link Object#toString} for a Frame that uses this FrameLayout. */
+  /// Implements [Object#toString] for a Frame that uses this FrameLayout.
   abstract String toString(Frame f);
 
   @Override
@@ -669,17 +604,17 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     return toStringPrefix() + template() + "@" + StringUtil.id(this);
   }
 
-  /** Renders this layout's template using the given Template.Printer. */
+  /// Renders this layout's template using the given Template.Printer.
   final String toString(Template.Printer printer) {
     return toStringPrefix() + template().toBuilder().toString(printer);
   }
 
-  /** A more compact {@code toString()}. */
+  /// A more compact `toString()`.
   final String toStringNoTemplate() {
     return toStringPrefix() + "@" + StringUtil.id(this);
   }
 
-  /** Returns {@code "*"} (for RecordLayouts) or {@code "*[]"} (for VArrayLayouts). */
+  /// Returns `"*"` (for RecordLayouts) or `"*[]"` (for VArrayLayouts).
   private String toStringPrefix() {
     return (this instanceof RecordLayout) ? "*" : "*[]";
   }

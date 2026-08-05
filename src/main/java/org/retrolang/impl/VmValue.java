@@ -20,33 +20,24 @@ import com.google.common.base.Preconditions;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import org.retrolang.Vm;
 
-/**
- * Implements Vm.Value.
- *
- * <p>A VmValue is a wrapper around a refCounted Value (non-refcounted Values are handled by VmExpr,
- * which also implements Vm.Value). The {@link #close} method drops the wrapped Value and nulls it.
- */
+/// Implements Vm.Value.
+///
+/// A VmValue is a wrapper around a refCounted Value (non-refcounted Values are handled by VmExpr,
+/// which also implements Vm.Value). The [#close] method drops the wrapped Value and nulls it.
 public final class VmValue implements Vm.Value {
-  /**
-   * The {@code value} is both a {@link Value} and a {@link RefCounted}. Null if {@link #close} has
-   * been called.
-   */
+  /// The `value` is both a [Value] and a [RefCounted]. Null if [#close] has been called.
   @RC.Counted private RefCounted value;
 
-  /** The ResourceTracker that allocated {@link #value} and should be notified when it is closed. */
+  /// The ResourceTracker that allocated [#value] and should be notified when it is closed.
   final ResourceTracker tracker;
 
-  /**
-   * If false, the first use of this VmValue (via {@link asValue}) will close it and drop the
-   * underlying Value. If true the value will be kept until {@link close} is called.
-   */
+  /// If false, the first use of this VmValue (via [asValue]) will close it and drop the underlying
+  /// Value. If true the value will be kept until [close] is called.
   private boolean keep;
 
-  /**
-   * Wraps the given Value as a {@link Vm.Value}. If {@code value} is refCounted, it should have
-   * been allocated by the given ResourceTracker and will be wrapped with a VmValue; otherwise it
-   * will be wrapped as a {@link VmExpr.Constant} and {@code tracker} is ignored.
-   */
+  /// Wraps the given Value as a [Vm.Value]. If `value` is refCounted, it should have been allocated
+  /// by the given ResourceTracker and will be wrapped with a VmValue; otherwise it will be wrapped
+  /// as a [VmExpr.Constant] and `tracker` is ignored.
   static Vm.Value of(@RC.In Value value, ResourceTracker tracker) {
     if (RefCounted.isRefCounted(value)) {
       Preconditions.checkArgument(tracker != null);
@@ -61,17 +52,12 @@ public final class VmValue implements Vm.Value {
     this.tracker = tracker;
   }
 
-  /**
-   * Unwraps the result of a previous call to {@link #of}. If {@code v} is a {@link
-   * VmExpr.Constant}, the unwrapping is trivial. Otherwise:
-   *
-   * <ul>
-   *   <li>It is an error if the VmValue has already been closed.
-   *   <li>If {@code mustMatch} is non-null, it must match the ResourceTracker that was passed to
-   *       {@link #of}.
-   *   <li>If {@link #keep} has not been called on this VmValue, it is implicitly closed.
-   * </ul>
-   */
+  /// Unwraps the result of a previous call to [#of]. If `v` is a [VmExpr.Constant], the unwrapping
+  /// is trivial. Otherwise:
+  ///
+  /// - It is an error if the VmValue has already been closed.
+  /// - If `mustMatch` is non-null, it must match the ResourceTracker that was passed to [#of].
+  /// - If [#keep] has not been called on this VmValue, it is implicitly closed.
   @RC.Out
   static Value asValue(Vm.Value v, ResourceTracker mustMatch) {
     if (v instanceof VmExpr.Constant c) {

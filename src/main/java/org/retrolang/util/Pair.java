@@ -16,7 +16,7 @@
 
 package org.retrolang.util;
 
-/** A simple pair. */
+/// A simple pair.
 public class Pair<X, Y> {
   public final X x;
   public final Y y;

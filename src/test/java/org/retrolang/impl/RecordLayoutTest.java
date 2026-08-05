@@ -28,7 +28,7 @@ import org.retrolang.impl.TemplateBuilder.VarAllocator;
 @RunWith(JUnit4.class)
 public class RecordLayoutTest {
 
-  /** Returns a template for an array containing the given elements. */
+  /// Returns a template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
@@ -60,10 +60,8 @@ public class RecordLayoutTest {
         allocator, 2, 2, 2, result -> assertThat(result.toString()).isEqualTo("32i-32d-0x"));
   }
 
-  /**
-   * Allocates NumVars with the specified number of each encoding in all possible orders, and calls
-   * {@code finalCheck} with each of the resulting VarAllocators.
-   */
+  /// Allocates NumVars with the specified number of each encoding in all possible orders, and calls
+  /// `finalCheck` with each of the resulting VarAllocators.
   private static void tryAllOrders(
       VarAllocator allocator, int numB, int numI, int numD, Consumer<VarAllocator> finalCheck) {
     if (numB == 0 && numI == 0 && numD == 0) {

@@ -31,11 +31,11 @@ import org.retrolang.code.TestBlock;
 import org.retrolang.code.ValueInfo;
 import org.retrolang.util.ArrayUtil;
 
-/** A static-only class with simple value operations that work equally well with RValues. */
+/// A static-only class with simple value operations that work equally well with RValues.
 public class ValueUtil {
   private ValueUtil() {}
 
-  /** Returns the same value as {@link Value#numElements}, but as a transient Value. */
+  /// Returns the same value as [Value#numElements], but as a transient Value.
   public static Value numElements(TState tstate, Value v) {
     if (v instanceof RValue) {
       CodeGen codeGen = tstate.codeGen();
@@ -53,10 +53,7 @@ public class ValueUtil {
     return NumValue.of(v.numElements(), Allocator.TRANSIENT);
   }
 
-  /**
-   * Returns the element of {@code array} identified by {@code index}, which may be zero-based or
-   * one-based.
-   */
+  /// Returns the element of `array` identified by `index`, which may be zero-based or one-based.
   @RC.Out
   public static Value element(TState tstate, Value array, Value index, int firstIndex) {
     assert array.baseType().isArray() || array.baseType().isCompositional();
@@ -122,10 +119,8 @@ public class ValueUtil {
     return RValue.fromTemplate(result);
   }
 
-  /**
-   * Returns a copy of {@code array} with the specified element replaced; {@code index} may be
-   * zero-based or one-based.
-   */
+  /// Returns a copy of `array` with the specified element replaced; `index` may be zero-based or
+  /// one-based.
   @RC.Out
   public static Value replaceElement(
       TState tstate, @RC.In Value array, Value index, int firstIndex, @RC.In Value newElement) {
@@ -217,7 +212,7 @@ public class ValueUtil {
     return RValue.fromTemplate(Template.Compound.of(baseType, merged));
   }
 
-  /** Emits blocks to clear each of the pointer-valued registers in {@code t}. */
+  /// Emits blocks to clear each of the pointer-valued registers in `t`.
   private static void clear(CodeGen codeGen, Template t) {
     // If t contains a Union we may end up emitting multiple instructions that set the same Register
     // to null.  That's OK; the optimizer will clean it up (all but the last will be removed since
@@ -226,7 +221,7 @@ public class ValueUtil {
     Template.visitVars(t, refVar -> codeGen.emitSet(codeGen.register(refVar), CodeValue.NULL));
   }
 
-  /** For use in place of {@link Value#numElements} when {@code array} might be an RValue. */
+  /// For use in place of [Value#numElements] when `array` might be an RValue.
   public static CodeValue numElementsAsCodeValue(CodeGen codeGen, Value array) {
     array = codeGen.simplify(array);
     BaseType baseType = array.baseType();
@@ -239,7 +234,7 @@ public class ValueUtil {
     }
   }
 
-  /** Errors unless {@code index} is an int in {@code 0..size(array)-1}. */
+  /// Errors unless `index` is an int in `0..size(array)-1`.
   public static void checkIndex(TState tstate, Value array, Value index)
       throws Err.BuiltinException {
     if (!(array instanceof RValue || index instanceof RValue)) {
@@ -254,7 +249,7 @@ public class ValueUtil {
     }
   }
 
-  /** Throws {@code err} unless {@code v} is an array of non-negative integers. */
+  /// Throws `err` unless `v` is an array of non-negative integers.
   public static void checkSizes(Value v, Err err) throws Err.BuiltinException {
     err.unless(v.isa(Core.ARRAY));
     if (!(v instanceof RValue)) {
@@ -275,10 +270,8 @@ public class ValueUtil {
     }
   }
 
-  /**
-   * Returns {@code v} as an integer between or {@code min} and {@code max} (inclusive) or throws an
-   * INVALID_ARGUMENT BuiltinException. {@code min} and {@code max} must be integers.
-   */
+  /// Returns `v` as an integer between or `min` and `max` (inclusive) or throws an
+  /// INVALID\_ARGUMENT BuiltinException. `min` and `max` must be integers.
   @RC.Out
   public static Value verifyBoundedInt(TState tstate, Value v, Value min, Value max)
       throws Err.BuiltinException {
@@ -293,31 +286,31 @@ public class ValueUtil {
         .makeStorable(tstate);
   }
 
-  /** Returns the sum of two integers; does not check for overflow. */
+  /// Returns the sum of two integers; does not check for overflow.
   @RC.Out
   public static Value addInts(TState tstate, Value v1, Value v2) {
     return IntOp.ADD.apply(tstate, v1, v2);
   }
 
-  /** Returns the difference of two integers; does not check for overflow. */
+  /// Returns the difference of two integers; does not check for overflow.
   @RC.Out
   public static Value subtractInts(TState tstate, Value v1, Value v2) {
     return IntOp.SUBTRACT.apply(tstate, v1, v2);
   }
 
-  /** Returns one more than the difference of two integers; does not check for overflow. */
+  /// Returns one more than the difference of two integers; does not check for overflow.
   @RC.Out
   public static Value rangeSize(TState tstate, Value min, Value max) {
     return IntOp.RANGE_SIZE.apply(tstate, min, max);
   }
 
-  /** Returns one less than the sum of two integers; does not check for overflow. */
+  /// Returns one less than the sum of two integers; does not check for overflow.
   @RC.Out
   public static Value oneBasedOffset(TState tstate, Value v1, Value v2) {
     return IntOp.ONE_BASED_OFFSET.apply(tstate, v1, v2);
   }
 
-  /** A simple binary operation over integers. */
+  /// A simple binary operation over integers.
   private enum IntOp {
     ADD {
       @Override
@@ -386,10 +379,8 @@ public class ValueUtil {
     }
   }
 
-  /**
-   * If {@code sizes} is an Array of non-negative integers and their product is an int, returns it;
-   * otherwise throws the specified error.
-   */
+  /// If `sizes` is an Array of non-negative integers and their product is an int, returns it;
+  /// otherwise throws the specified error.
   @RC.Out
   public static Value sizeFromSizes(TState tstate, Value sizes, Err err)
       throws Err.BuiltinException {
@@ -460,7 +451,7 @@ public class ValueUtil {
     return codeGen.toValue(result);
   }
 
-  /** All elements of {@code array} must be numbers; true if any of them is zero. */
+  /// All elements of `array` must be numbers; true if any of them is zero.
   public static Condition containsZero(Value array) {
     assert array.baseType().isArray();
     BaseType baseType = array.baseType();
@@ -480,10 +471,8 @@ public class ValueUtil {
     return result;
   }
 
-  /**
-   * Given an array of sizes and a key, errors unless the key is valid for a matrix with those
-   * sizes.
-   */
+  /// Given an array of sizes and a key, errors unless the key is valid for a matrix with those
+  /// sizes.
   public static void checkKey(TState tstate, Value key, Value sizes) throws Err.BuiltinException {
     if (!(key instanceof RValue || sizes instanceof RValue)) {
       int nDims = sizes.numElements();
@@ -517,11 +506,9 @@ public class ValueUtil {
     }
   }
 
-  /**
-   * Given an array of sizes and a key, returns the (zero-based) index of that key in a sequential
-   * enumeration of a matrix with those sizes (as transient non-negative int). Errors if {@link
-   * #checkKey} would error.
-   */
+  /// Given an array of sizes and a key, returns the (zero-based) index of that key in a sequential
+  /// enumeration of a matrix with those sizes (as transient non-negative int). Errors if
+  /// [#checkKey] would error.
   public static Value keyToIndex(TState tstate, Value key, Value sizes)
       throws Err.BuiltinException {
     if (!(key instanceof RValue || sizes instanceof RValue)) {
@@ -570,10 +557,8 @@ public class ValueUtil {
     return codeGen.toValue(codeGen.materializeCatchingArithmeticException(sum));
   }
 
-  /**
-   * Given an array of sizes and a (zero-based) index in the sequential enumeration of a matrix with
-   * those sizes, returns the corresponding key (an array of int).
-   */
+  /// Given an array of sizes and a (zero-based) index in the sequential enumeration of a matrix
+  /// with those sizes, returns the corresponding key (an array of int).
   @RC.Out
   public static Value indexToKey(
       TState tstate, Value index, Value sizes, Supplier<Object> resultLayoutOrBaseType) {
@@ -619,7 +604,7 @@ public class ValueUtil {
     return tstate.asArrayValue(result, nDims);
   }
 
-  /** Adds one element at the end of the given array. */
+  /// Adds one element at the end of the given array.
   @RC.Out
   public static Value appendElement(
       TState tstate, @RC.In Value array, @RC.In Value newElement, FrameLayout resultLayout)
@@ -627,10 +612,8 @@ public class ValueUtil {
     return insertElements(tstate, array, true, resultLayout, newElement);
   }
 
-  /**
-   * A CopyEmitter that just discards the values, used to pre-test whether the source can be stored
-   * in a given template.
-   */
+  /// A CopyEmitter that just discards the values, used to pre-test whether the source can be stored
+  /// in a given template.
   private static final CopyEmitter TEST_STORE =
       new CopyEmitter() {
         @Override
@@ -639,7 +622,7 @@ public class ValueUtil {
         }
       };
 
-  /** Adds elements at the beginning or end of the given array. */
+  /// Adds elements at the beginning or end of the given array.
   @RC.Out
   public static Value insertElements(
       TState tstate,
@@ -711,10 +694,8 @@ public class ValueUtil {
     return array;
   }
 
-  /**
-   * Adds the elements of {@code array2} (which must not be a varray) at the beginning or end of
-   * {@code array} (which may be).
-   */
+  /// Adds the elements of `array2` (which must not be a varray) at the beginning or end of `array`
+  /// (which may be).
   @RC.Out
   public static Value insertAllElements(
       TState tstate,
@@ -733,7 +714,7 @@ public class ValueUtil {
     return insertElements(tstate, array, atEnd, resultLayout, elements);
   }
 
-  /** Returns the concatenation of two arrays. */
+  /// Returns the concatenation of two arrays.
   @RC.Out
   public static Value appendArrays(
       TState tstate, @RC.In Value array1, @RC.In Value array2, FrameLayout resultLayout)
@@ -785,22 +766,18 @@ public class ValueUtil {
     return array1;
   }
 
-  /**
-   * Returns a varray containing
-   *
-   * <ul>
-   *   <li>the first {@code keepPrefix} elements of {@code array}, followed by
-   *   <li>{@code addSize} uninitialized elements, followed by
-   *   <li>the elements of {@code array} from {@code keepPrefix+removeSize} to its end.
-   * </ul>
-   *
-   * <p>This method is used to implement replaceElement (with a range index) and concatenation.
-   *
-   * <p>If {@code array} is not a Frame and {@code resultLayout} is non-null, it will be used for
-   * the result (evolving it if necessary).
-   *
-   * <p>Will only throw an exception during codeGen (if caller should just escape).
-   */
+  /// Returns a varray containing
+  ///
+  /// - the first `keepPrefix` elements of `array`, followed by
+  /// - `addSize` uninitialized elements, followed by
+  /// - the elements of `array` from `keepPrefix+removeSize` to its end.
+  ///
+  /// This method is used to implement replaceElement (with a range index) and concatenation.
+  ///
+  /// If `array` is not a Frame and `resultLayout` is non-null, it will be used for the result
+  /// (evolving it if necessary).
+  ///
+  /// Will only throw an exception during codeGen (if caller should just escape).
   @RC.Out
   public static Value removeRange(
       TState tstate,
@@ -830,10 +807,7 @@ public class ValueUtil {
     }
   }
 
-  /**
-   * Generate code to implement {@link #removeRange(TState, Value, Value, Value, Value,
-   * FrameLayout)}.
-   */
+  /// Generate code to implement [#removeRange(TState, Value, Value, Value, Value, FrameLayout)].
   @RC.Out
   public static Value removeRange(
       CodeGen codeGen,

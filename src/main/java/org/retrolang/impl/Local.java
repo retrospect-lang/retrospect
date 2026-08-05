@@ -18,10 +18,10 @@ package org.retrolang.impl;
 
 import org.retrolang.Vm;
 
-/** Minimal implementation of Vm.Local. */
+/// Minimal implementation of Vm.Local.
 class Local extends VmExpr implements Vm.Local {
 
-  /** Used as a placeholder for unnamed arguments. */
+  /// Used as a placeholder for unnamed arguments.
   static final Local UNNAMED = new Local(null, "_", -1);
 
   final InstructionBlock ib;

@@ -28,29 +28,27 @@ import org.retrolang.util.Bits;
 @RunWith(JUnit4.class)
 public class VArrayReplacerTest {
 
-  /** A Constant template for the string {@code "x"}. */
+  /// A Constant template for the string `"x"`.
   private static final Template stringX = Constant.of(StringValue.uncounted("x"));
 
-  /** Returns a template for an array containing the given elements. */
+  /// Returns a template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Converts double quotes to single quotes, to make expected values easier to read. */
+  /// Converts double quotes to single quotes, to make expected values easier to read.
   private static String cleanString(Object replacer) {
     return replacer.toString().replace('"', '\'');
   }
 
   Scope scope = new Scope();
 
-  /**
-   * Creates src and dst VArrayLayouts from the given templates, constructs a replacer to convert
-   * instances of src to instances of dst, and then verifies that replacer and its associated
-   * sharedArrayElements have the expected values.
-   *
-   * <p>Note that since the templates are only used as builders, the indices of their NumVars and
-   * RefVars are ignored.
-   */
+  /// Creates src and dst VArrayLayouts from the given templates, constructs a replacer to convert
+  /// instances of src to instances of dst, and then verifies that replacer and its associated
+  /// sharedArrayElements have the expected values.
+  ///
+  /// Note that since the templates are only used as builders, the indices of their NumVars and
+  /// RefVars are ignored.
   private void runTest(
       Template src, Template dst, String expected, Integer... sharedArrayElements) {
     VArrayLayout srcLayout = VArrayLayout.newFromBuilder(scope, src.toBuilder());

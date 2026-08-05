@@ -21,19 +21,15 @@ import java.util.Arrays;
 import java.util.function.Consumer;
 import org.retrolang.Vm;
 
-/**
- * A base class for implementations of Vm.Expr.
- *
- * <p>There are three subclasses: {@link Constant}, {@link Local}, and {@link Compound}.
- */
+/// A base class for implementations of Vm.Expr.
+///
+/// There are three subclasses: [Constant], [Local], and [Compound].
 abstract class VmExpr implements Vm.Expr {
 
-  /**
-   * Calls the given consumer with each Local in this VmExpr.
-   *
-   * <p>The more obvious implementation would be an abstract method with implementations on each
-   * subclass, but this seems easier to read.
-   */
+  /// Calls the given consumer with each Local in this VmExpr.
+  ///
+  /// The more obvious implementation would be an abstract method with implementations on each
+  /// subclass, but this seems easier to read.
   void forEachLocal(Consumer<Local> consumer) {
     if (this instanceof Local local) {
       consumer.accept(local);
@@ -44,12 +40,10 @@ abstract class VmExpr implements Vm.Expr {
     }
   }
 
-  /**
-   * A constant expression. Note that VmExprs aren't refcounted, so Constants can only be made from
-   * non-refcounted values. Also provides a trivial implementation of Vm.Value.
-   *
-   * <p>{@link Singleton} is a subclass of Constant.
-   */
+  /// A constant expression. Note that VmExprs aren't refcounted, so Constants can only be made from
+  /// non-refcounted values. Also provides a trivial implementation of Vm.Value.
+  ///
+  /// [Singleton] is a subclass of Constant.
   static class Constant extends VmExpr implements Vm.Value {
     final Value value;
 
@@ -58,12 +52,12 @@ abstract class VmExpr implements Vm.Expr {
       this.value = value;
     }
 
-    /** Used only by the Singleton subclass. */
+    /// Used only by the Singleton subclass.
     Constant() {
       this.value = (Singleton) this;
     }
 
-    /** Returns a Constant with the given value, which must not be refcounted. */
+    /// Returns a Constant with the given value, which must not be refcounted.
     static Constant of(Value value) {
       return (value instanceof Singleton singleton) ? singleton : new Constant(value);
     }
@@ -83,10 +77,8 @@ abstract class VmExpr implements Vm.Expr {
     }
   }
 
-  /**
-   * A compound expression, composed of a BaseType (with positive size) and a VmExpr for each of its
-   * elements.
-   */
+  /// A compound expression, composed of a BaseType (with positive size) and a VmExpr for each of
+  /// its elements.
   static class Compound extends VmExpr {
     final BaseType baseType;
     private final VmExpr[] elements;
@@ -110,7 +102,7 @@ abstract class VmExpr implements Vm.Expr {
     }
   }
 
-  /** Returns a VmExpr for an array containing the given elements. */
+  /// Returns a VmExpr for an array containing the given elements.
   static VmExpr array(Vm.Expr... elements) {
     return Core.FixedArrayType.withSize(elements.length).compound.make(elements);
   }

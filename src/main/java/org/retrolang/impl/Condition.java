@@ -28,46 +28,42 @@ import org.retrolang.code.TestBlock.IsEq;
 import org.retrolang.code.TestBlock.IsLessThan;
 import org.retrolang.impl.Err.BuiltinException;
 
-/**
- * A Condition represents a boolean value. There are two constant Conditions (TRUE and FALSE); all
- * other Conditions depend on one or more RValues and so will only be determined when the generated
- * code is executed.
- */
+/// A Condition represents a boolean value. There are two constant Conditions (TRUE and FALSE); all
+/// other Conditions depend on one or more RValues and so will only be determined when the generated
+/// code is executed.
 public abstract class Condition {
 
-  /** The Condition that is always true. */
+  /// The Condition that is always true.
   public static final Condition TRUE = new Const(true);
 
-  /** The Condition that is always false. */
+  /// The Condition that is always false.
   public static final Condition FALSE = new Const(false);
 
-  /** Returns {@link #TRUE} or @link #FALSE}. */
+  /// Returns [#TRUE] or @link #FALSE}.
   public static Condition of(boolean x) {
     return x ? TRUE : FALSE;
   }
 
-  /**
-   * Adds one or more blocks that branch to {@code elseBranch} if the Condition is false, and fall
-   * through if it is true.
-   */
+  /// Adds one or more blocks that branch to `elseBranch` if the Condition is false, and fall
+  /// through if it is true.
   public abstract void addTest(CodeGen codeGen, FutureBlock elseBranch);
 
-  /** Should only be called on {@link #TRUE} or @link #FALSE}; returns the corresponding boolean. */
+  /// Should only be called on [#TRUE] or @link #FALSE}; returns the corresponding boolean.
   public boolean asBoolean() {
     return ((Const) this).value;
   }
 
-  /** Like {@code Runnable}, except that run() may throw a BuiltinException. */
+  /// Like `Runnable`, except that run() may throw a BuiltinException.
   public interface RunnableExcept {
     void run() throws BuiltinException;
   }
 
-  /** Like {@code Supplier<Value>}, except that get() may throw a BuiltinException. */
+  /// Like `Supplier<Value>`, except that get() may throw a BuiltinException.
   public interface ValueSupplier {
     Value get() throws BuiltinException;
   }
 
-  /** Executes {@code ifTrue} if this Condition is true, {@code ifFalse} if it is not. */
+  /// Executes `ifTrue` if this Condition is true, `ifFalse` if it is not.
   public void test(Runnable ifTrue, Runnable ifFalse) {
     // Just use testExcept(), which should not throw a BuiltinException if the Runnables don't.
     try {
@@ -77,7 +73,7 @@ public abstract class Condition {
     }
   }
 
-  /** Executes {@code ifTrue} if this Condition is true, {@code ifFalse} if it is not. */
+  /// Executes `ifTrue` if this Condition is true, `ifFalse` if it is not.
   public void testExcept(RunnableExcept ifTrue, RunnableExcept ifFalse) throws BuiltinException {
     // Const overrides this method, so if we get here we must be generating code.
     // When generating code we'll emit blocks to test this Condition, then run ifTrue to emit the
@@ -124,7 +120,7 @@ public abstract class Condition {
     }
   }
 
-  /** Returns {@code ifTrue} if this Condition is true, {@code ifFalse} if it is not. */
+  /// Returns `ifTrue` if this Condition is true, `ifFalse` if it is not.
   public Value choose(Value ifTrueValue, Value ifFalseValue) {
     return new ConditionalValue.Simple(this, () -> ifTrueValue, () -> ifFalseValue) {
       @Override
@@ -136,67 +132,59 @@ public abstract class Condition {
     };
   }
 
-  /** Returns {@code ifTrue.get()} if this Condition is true, {@code ifFalse.get()} if it is not. */
+  /// Returns `ifTrue.get()` if this Condition is true, `ifFalse.get()` if it is not.
   public Value choose(Supplier<Value> ifTrue, Supplier<Value> ifFalse) {
     return new ConditionalValue.Simple(this, ifTrue::get, ifFalse::get);
   }
 
-  /** Returns {@code ifTrue.get()} if this Condition is true, {@code ifFalse.get()} if it is not. */
+  /// Returns `ifTrue.get()` if this Condition is true, `ifFalse.get()` if it is not.
   public Value chooseExcept(ValueSupplier ifTrue, ValueSupplier ifFalse) throws BuiltinException {
     return new ConditionalValue.Simple(this, ifTrue, ifFalse);
   }
 
-  /**
-   * Returns a CodeValue equal to {@code ifTrue} if this Condition is true, {@code ifFalse} if it is
-   * not. May allocate a new register of the specified type to hold the result.
-   */
+  /// Returns a CodeValue equal to `ifTrue` if this Condition is true, `ifFalse` if it is not. May
+  /// allocate a new register of the specified type to hold the result.
   public CodeValue choose(CodeGen codeGen, CodeValue ifTrue, CodeValue ifFalse, Class<?> type) {
     Register result = codeGen.cb.newRegister(type);
     test(() -> codeGen.emitSet(result, ifTrue), () -> codeGen.emitSet(result, ifFalse));
     return result;
   }
 
-  /** Returns {@code Core.TRUE} if this Condition is true, {@code Core.FALSE} if it is not. */
+  /// Returns `Core.TRUE` if this Condition is true, `Core.FALSE` if it is not.
   @RC.Singleton
   public Value asValue() {
     return choose(Core.TRUE, Core.FALSE);
   }
 
-  /** Returns a Condition that is true if either this Condition or {@code other} is true. */
+  /// Returns a Condition that is true if either this Condition or `other` is true.
   public Condition or(Condition other) {
     return ternary(TRUE, other);
   }
 
-  /**
-   * Returns a Condition that is true if either this Condition or {@code other.get()} is true. Does
-   * not call {@code other.get()} if this is {@link #TRUE}.
-   */
+  /// Returns a Condition that is true if either this Condition or `other.get()` is true. Does not
+  /// call `other.get()` if this is [#TRUE].
   public Condition or(Supplier<Condition> other) {
     return or(other.get());
   }
 
-  /** Returns a Condition that is true if both this Condition and {@code other} are true. */
+  /// Returns a Condition that is true if both this Condition and `other` are true.
   public Condition and(Condition other) {
     return ternary(other, FALSE);
   }
 
-  /**
-   * Returns a Condition that is true if both this Condition and {@code other.get()} are true. Does
-   * not call {@code other.get()} if this is {@link #FALSE}.
-   */
+  /// Returns a Condition that is true if both this Condition and `other.get()` are true. Does not
+  /// call `other.get()` if this is [#FALSE].
   public Condition and(Supplier<Condition> other) {
     return and(other.get());
   }
 
-  /** Returns a Condition that is true if this Condition is false. */
+  /// Returns a Condition that is true if this Condition is false.
   public Condition not() {
     return new NegatedCondition(this);
   }
 
-  /**
-   * Returns a Condition that is equivalent to {@code onTrue} if this is true or {@code onFalse} if
-   * this is false.
-   */
+  /// Returns a Condition that is equivalent to `onTrue` if this is true or `onFalse` if this is
+  /// false.
   public Condition ternary(Condition onTrue, Condition onFalse) {
     if (onTrue == this) {
       onTrue = TRUE;
@@ -215,19 +203,14 @@ public abstract class Condition {
     }
   }
 
-  /**
-   * Returns a Condition that is equivalent to {@code onTrue.get()} if this is true or to {@code
-   * onFalse.get()} if this is false. If this is a constant condition, only evaluates the relevant
-   * Supplier.
-   */
+  /// Returns a Condition that is equivalent to `onTrue.get()` if this is true or to `onFalse.get()`
+  /// if this is false. If this is a constant condition, only evaluates the relevant Supplier.
   public Condition ternary(Supplier<Condition> onTrue, Supplier<Condition> onFalse) {
     return ternary(onTrue.get(), onFalse.get());
   }
 
-  /**
-   * Returns a Condition that is true if {@code v} is {@code Core.TRUE} and false if {@code v} is
-   * {@code Core.FALSE}; throws a BuiltinException if {@code v} is some other value.
-   */
+  /// Returns a Condition that is true if `v` is `Core.TRUE` and false if `v` is `Core.FALSE`;
+  /// throws a BuiltinException if `v` is some other value.
   public static Condition fromBoolean(Value v) throws BuiltinException {
     if (v instanceof RValue) {
       return new Condition() {
@@ -244,10 +227,8 @@ public abstract class Condition {
     }
   }
 
-  /**
-   * Returns a Condition that is implemented by emitting the given TestBlock (since {@link #addTest}
-   * may be called more than once, we need a TestBlock supplier).
-   */
+  /// Returns a Condition that is implemented by emitting the given TestBlock (since [#addTest] may
+  /// be called more than once, we need a TestBlock supplier).
   public static Condition fromTest(Supplier<TestBlock> test) {
     return new Condition() {
       @Override
@@ -257,7 +238,7 @@ public abstract class Condition {
     };
   }
 
-  /** Returns a Condition that is true if {@code v1} and {@code v2} are equal. */
+  /// Returns a Condition that is true if `v1` and `v2` are equal.
   public static Condition equal(Value v1, Value v2) {
     if (v1 instanceof RValue || v2 instanceof RValue) {
       return new Condition() {
@@ -271,10 +252,7 @@ public abstract class Condition {
     }
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} and {@code v2} are equal; both must be of type
-   * int.
-   */
+  /// Returns a Condition that is true if `v1` and `v2` are equal; both must be of type int.
   public static Condition intEq(CodeValue v1, CodeValue v2) {
     if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {
       return Condition.of(v1.iValue() == v2.iValue());
@@ -282,18 +260,14 @@ public abstract class Condition {
     return fromTest(() -> new IsEq(OpCodeType.INT, v1, v2));
   }
 
-  /**
-   * Returns a Condition that is true if {@code v} (which must be of type int) is not zero (or is
-   * true, if {@code v} represents a boolean).
-   */
+  /// Returns a Condition that is true if `v` (which must be of type int) is not zero (or is true,
+  /// if `v` represents a boolean).
   public static Condition isNonZero(CodeValue v) {
     return intEq(v, CodeValue.ZERO).not();
   }
 
-  /**
-   * Returns a Condition that is true if the CodeValue returned by {@code supplier} (which must be
-   * of type int) is not zero (or is true, if it represents a boolean).
-   */
+  /// Returns a Condition that is true if the CodeValue returned by `supplier` (which must be of
+  /// type int) is not zero (or is true, if it represents a boolean).
   public static Condition isNonZero(Function<CodeGen, CodeValue> supplier) {
     return new Condition() {
       @Override
@@ -306,10 +280,7 @@ public abstract class Condition {
     };
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is less than {@code v2}; both must be of type
-   * int.
-   */
+  /// Returns a Condition that is true if `v1` is less than `v2`; both must be of type int.
   public static Condition intLessThan(CodeValue v1, CodeValue v2) {
     if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {
       return Condition.of(v1.iValue() < v2.iValue());
@@ -317,18 +288,13 @@ public abstract class Condition {
     return fromTest(() -> new IsLessThan(OpCodeType.INT, v1, v2));
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is less than or equal to {@code v2}; both must
-   * be of type int.
-   */
+  /// Returns a Condition that is true if `v1` is less than or equal to `v2`; both must be of type
+  /// int.
   public static Condition intLessOrEq(CodeValue v1, CodeValue v2) {
     return intLessThan(v2, v1).not();
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is less than {@code v2}; both must be of type
-   * int or long.
-   */
+  /// Returns a Condition that is true if `v1` is less than `v2`; both must be of type int or long.
   public static Condition longLessThan(CodeValue v1, CodeValue v2) {
     if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {
       return Condition.of(v1.lValue() < v2.lValue());
@@ -336,9 +302,7 @@ public abstract class Condition {
     return fromTest(() -> new IsLessThan(OpCodeType.LONG, v1, v2));
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} and {@code v2} are equal; both must be numeric.
-   */
+  /// Returns a Condition that is true if `v1` and `v2` are equal; both must be numeric.
   public static Condition doubleEq(CodeValue v1, CodeValue v2) {
     if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {
       return Condition.of(v1.dValue() == v2.dValue());
@@ -346,7 +310,7 @@ public abstract class Condition {
     return fromTest(() -> new IsEq(OpCodeType.DOUBLE, v1, v2));
   }
 
-  /** Returns a Condition that is true if {@code v} is null. */
+  /// Returns a Condition that is true if `v` is null.
   public static Condition isNull(CodeValue v) {
     if (v instanceof CodeValue.Const c) {
       return Condition.of(c.value == null);
@@ -354,10 +318,7 @@ public abstract class Condition {
     return fromTest(() -> new IsEq(OpCodeType.OBJ, v, CodeValue.NULL));
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is equal to {@code v2}; both arguments must be
-   * numbers.
-   */
+  /// Returns a Condition that is true if `v1` is equal to `v2`; both arguments must be numbers.
   public static Condition numericEq(Value v1, Value v2) {
     if (v1 == v2) {
       return Condition.TRUE;
@@ -370,10 +331,7 @@ public abstract class Condition {
     }
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is less than {@code v2}; both arguments must be
-   * numbers.
-   */
+  /// Returns a Condition that is true if `v1` is less than `v2`; both arguments must be numbers.
   public static Condition numericLessThan(Value v1, Value v2) {
     if (v1 == v2) {
       return Condition.FALSE;
@@ -386,10 +344,8 @@ public abstract class Condition {
     }
   }
 
-  /**
-   * Returns a Condition that is true if {@code v1} is less than or equal to {@code v2}; both
-   * arguments must be numbers.
-   */
+  /// Returns a Condition that is true if `v1` is less than or equal to `v2`; both arguments must be
+  /// numbers.
   public static Condition numericLessOrEq(Value v1, Value v2) {
     return numericLessThan(v2, v1).not();
   }
@@ -598,10 +554,7 @@ public abstract class Condition {
     return new IsEq(OpCodeType.INT, RefCounted.IS_NOT_SHARED_OP.result(v), CodeValue.ZERO);
   }
 
-  /**
-   * Returns a Condition that is true if {@link RefCounted#isNotShared(Object)} returns true for
-   * {@code v}.
-   */
+  /// Returns a Condition that is true if [RefCounted#isNotShared(Object)] returns true for `v`.
   public static Condition isNotShared(Value v) {
     if (v instanceof RValue) {
       Register r = TState.get().codeGen().register(v);

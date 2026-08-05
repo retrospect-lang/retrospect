@@ -60,15 +60,12 @@ import org.retrolang.util.Bits;
 import org.retrolang.util.Pair;
 import org.retrolang.util.StringUtil;
 
-/**
- * Emits instructions to compute the value of a Retrospect expression.
- *
- * <p>Instances of the base class are used to implement BlockCompiler.compile(); visiting an
- * expression returns an Expr with its value, after emitting instructions as necessary. For example,
- * visiting "{@code x}" will just return the Local corresponding to "{@code x}", while visiting
- * "{@code x+1}" will emit code to call {@code add(x, 1)} and store the result in a temp, then
- * return the temp.
- */
+/// Emits instructions to compute the value of a Retrospect expression.
+///
+/// Instances of the base class are used to implement BlockCompiler.compile(); visiting an
+/// expression returns an Expr with its value, after emitting instructions as necessary. For
+/// example, visiting "`x`" will just return the Local corresponding to "`x`", while visiting
+/// "`x+1`" will emit code to call `add(x, 1)` and store the result in a temp, then return the temp.
 class ExpressionCompiler extends VisitorBase<Expr> {
   final BlockCompiler blockCompiler;
 
@@ -84,15 +81,13 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     return blockCompiler.symbols.vmCore;
   }
 
-  /** If we need to store the result in a Local, use this one. */
+  /// If we need to store the result in a Local, use this one.
   Local outputLocal() {
     return blockCompiler.newTmp();
   }
 
-  /**
-   * Emits a function call, given an Expr for each arg. Returns an Expr for the result, or null if
-   * the function has no outputs.
-   */
+  /// Emits a function call, given an Expr for each arg. Returns an Expr for the result, or null if
+  /// the function has no outputs.
   @Nullable Local fnCall(Vm.Function fn, Expr... args) {
     assert fn.numArgs() == args.length;
     Local[] outputs;
@@ -111,7 +106,7 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     return compileNumber(ctx, false);
   }
 
-  /** Converts a numeric literal to a constant Expr. */
+  /// Converts a numeric literal to a constant Expr.
   private Expr compileNumber(NumberExpressionContext ctx, boolean negate) {
     String s = ctx.getText();
     if (s.chars().noneMatch(i -> i == '.' || i == 'e' || i == 'E')) {
@@ -297,12 +292,10 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     return result;
   }
 
-  /**
-   * Compiles an expression that will always return a boolean by treating it as "if EXPR { output =
-   * True } else { output = False }".
-   *
-   * <p>Used when EXPR is an "and" or "or" expression, or a (non-distributed) type check.
-   */
+  /// Compiles an expression that will always return a boolean by treating it as "if EXPR { output =
+  /// True } else { output = False }".
+  ///
+  /// Used when EXPR is an "and" or "or" expression, or a (non-distributed) type check.
   Local booleanOutput(ExpressionContext ctx) {
     // Tester overrides all the paths that would lead here.
     assert !(this instanceof Tester);
@@ -464,12 +457,10 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     return asExpression ? results[0] : null;
   }
 
-  /**
-   * Compiles a call to a Distributable that may be distributed over one or more arguments.
-   *
-   * @param distribute indicates which of the arguments are to be distributed
-   * @param args an IntFunction to compile the nth argument
-   */
+  /// Compiles a call to a Distributable that may be distributed over one or more arguments.
+  ///
+  /// @param distribute indicates which of the arguments are to be distributed
+  /// @param args an IntFunction to compile the nth argument
   private Expr compileDistributable(
       Distributable distributable, Bits distribute, IntFunction<Expr> args) {
     int nDistribute = distribute.count();
@@ -610,10 +601,8 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     return fnCall(symbols.vmPipe, pipeFrom, lambda);
   }
 
-  /**
-   * Compiles an array expression; {@code distributed} must have been returned by a previous call to
-   * {@link BlockCompiler#checkDistributed} on the given expressions.
-   */
+  /// Compiles an array expression; `distributed` must have been returned by a previous call to
+  /// [BlockCompiler#checkDistributed] on the given expressions.
   Expr compileExpressions(List<ArrayElementContext> exprs, Bits distributed) {
     int n = (exprs == null) ? 0 : exprs.size();
     if (n == 0) {
@@ -650,24 +639,20 @@ class ExpressionCompiler extends VisitorBase<Expr> {
         new Distributable.FromFunction(blockCompiler.symbols.vmAt), distributeAt, atArgs);
   }
 
-  /**
-   * Instances of Setter are used to implement {@link BlockCompiler#compileSet}; visiting an
-   * expression will either return an Expr with its value or store that Expr into the specified
-   * Local and return the destination (knowing where the result should end up enables often allows
-   * us to eliminate extra moving of values to and from temps).
-   */
+  /// Instances of Setter are used to implement [BlockCompiler#compileSet]; visiting an expression
+  /// will either return an Expr with its value or store that Expr into the specified Local and
+  /// return the destination (knowing where the result should end up enables often allows us to
+  /// eliminate extra moving of values to and from temps).
   static class Setter extends ExpressionCompiler {
     final Local lhs;
 
-    /**
-     * Creates a Setter that will store the value of the visited expression into the given Local.
-     */
+    /// Creates a Setter that will store the value of the visited expression into the given Local.
     Setter(BlockCompiler blockCompiler, Local lhs) {
       super(blockCompiler);
       this.lhs = lhs;
     }
 
-    /** Emits instructions to store the value of {@code expr} into this Setter's destination. */
+    /// Emits instructions to store the value of `expr` into this Setter's destination.
     void compileSet(ExpressionContext expr) {
       // visit() may allocate temps, but once we've stored its result they're no longer needed.
       int tmpState = blockCompiler.saveTmpState();
@@ -713,36 +698,29 @@ class ExpressionCompiler extends VisitorBase<Expr> {
     }
   }
 
-  /**
-   * Instances of Tester are used to implement {@link BlockCompiler#compileTest}; visiting an
-   * expression will either return an Expr with its value or emit a conditional branch to the
-   * specified BranchTarget and return null.
-   */
+  /// Instances of Tester are used to implement [BlockCompiler#compileTest]; visiting an expression
+  /// will either return an Expr with its value or emit a conditional branch to the specified
+  /// BranchTarget and return null.
   static class Tester extends ExpressionCompiler {
     final BranchTarget branchTarget;
     final boolean branchIfTrue;
 
-    /**
-     * Creates a Tester that will emit a conditional branch to the specified target, to be taken if
-     * the visited expression is True or False.
-     */
+    /// Creates a Tester that will emit a conditional branch to the specified target, to be taken if
+    /// the visited expression is True or False.
     Tester(BlockCompiler blockCompiler, BranchTarget branchTarget, boolean branchIfTrue) {
       super(blockCompiler);
       this.branchTarget = branchTarget;
       this.branchIfTrue = branchIfTrue;
     }
 
-    /**
-     * Emits an instruction to branch to this Tester's target based on the value of {@code result}.
-     * Note that this uses the {@code ifTrue} parameter in place of the {@code branchIfTrue} that
-     * was passed to the constructor (callers pass either {@code branchIfTrue} or {@code
-     * !branchIfTrue}).
-     */
+    /// Emits an instruction to branch to this Tester's target based on the value of `result`. Note
+    /// that this uses the `ifTrue` parameter in place of the `branchIfTrue` that was passed to the
+    /// constructor (callers pass either `branchIfTrue` or `!branchIfTrue`).
     void emitBranch(Local result, boolean ifTrue) {
       blockCompiler.ib.emitConditionalBranch(branchTarget, result, ifTrue);
     }
 
-    /** Emits instructions to conditionally branch based on the value of {@code expr}. */
+    /// Emits instructions to conditionally branch based on the value of `expr`.
     void compileTest(ExpressionContext expr) {
       int tmpState = blockCompiler.saveTmpState();
       Expr result = visit(expr);
@@ -753,7 +731,7 @@ class ExpressionCompiler extends VisitorBase<Expr> {
       }
     }
 
-    /** Emits instructions to conditionally branch based on the value of {@code expr}. */
+    /// Emits instructions to conditionally branch based on the value of `expr`.
     void compileTest(Expr expr, Token token) {
       if (expr instanceof Local local) {
         emitBranch(local, branchIfTrue);
@@ -775,10 +753,8 @@ class ExpressionCompiler extends VisitorBase<Expr> {
       }
     }
 
-    /**
-     * To compile "{@code not}" in a test context we don't need to call the {@code not()} function,
-     * we can just invert the sense of the branch.
-     */
+    /// To compile "`not`" in a test context we don't need to call the `not()` function, we can just
+    /// invert the sense of the branch.
     @Override
     public @Nullable Expr visitOpExpression(OpExpressionContext ctx) {
       if (ctx.op.getType() == TokenType.KEYWORD_NOT && ctx.rdist == null) {
@@ -790,10 +766,8 @@ class ExpressionCompiler extends VisitorBase<Expr> {
       return super.visitOpExpression(ctx);
     }
 
-    /**
-     * To compile "{@code ?:}" in a test context we don't need a variable to store the result in, we
-     * can just compile each alternative with the same Tester.
-     */
+    /// To compile "`?:`" in a test context we don't need a variable to store the result in, we can
+    /// just compile each alternative with the same Tester.
     @Override
     public @Nullable Expr visitTernaryExpression(TernaryExpressionContext ctx) {
       InstructionBlock ib = blockCompiler.ib;

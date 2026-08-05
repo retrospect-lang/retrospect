@@ -37,22 +37,18 @@ import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 
-/** Core methods on Structs. */
+/// Core methods on Structs.
 public class StructCore {
-  /**
-   * {@code private compound StructAccessor is Lambda}
-   *
-   * <p>Elements {@code struct}, {@code eKind}. The {@code at()} method does not check the validity
-   * of its argument! Intended only for internal use; should not be generally accessible.
-   */
+  /// `private compound StructAccessor is Lambda`
+  ///
+  /// Elements `struct`, `eKind`. The `at()` method does not check the validity of its argument!
+  /// Intended only for internal use; should not be generally accessible.
   @Core.Private
   static final BaseType.Named STRUCT_ACCESSOR = Core.newBaseType("StructAccessor", 2, Core.LAMBDA);
 
-  /**
-   * {@code private compound StructUpdater is Lambda}
-   *
-   * <p>Elements are {@code struct}, {@code index}.
-   */
+  /// `private compound StructUpdater is Lambda`
+  ///
+  /// Elements are `struct`, `index`.
   @Core.Private
   static final BaseType.Named STRUCT_UPDATER = Core.newBaseType("StructUpdater", 2, Core.LAMBDA);
 
@@ -78,7 +74,7 @@ public class StructCore {
     }
   }
 
-  /** {@code method at(Struct struct, String key) = ...} */
+  /// `method at(Struct struct, String key) = ...`
   @Core.Method("at(Struct|StructKeys, String)")
   static Value atStruct(TState tstate, Value struct, Value key) throws BuiltinException {
     BaseType baseType = struct.baseType();
@@ -94,15 +90,13 @@ public class StructCore {
     }
   }
 
-  /**
-   * <pre>
-   * method iterator(Struct struct, EnumerationKind eKind, Loop loop=, initialState=) {
-   *   lambda = StructAccessor_({struct, eKind})
-   *   loop = transformLoop(lambda, loop)
-   *   return SimpleRangeIterator(size(struct))
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(Struct struct, EnumerationKind eKind, Loop loop=, initialState=) {
+  ///   lambda = StructAccessor_({struct, eKind})
+  ///   loop = transformLoop(lambda, loop)
+  ///   return SimpleRangeIterator(size(struct))
+  /// }
+  /// ```
   @Core.Method("iterator(Struct|StructKeys, EnumerationKind, Loop, _)")
   static void iteratorStruct(
       TState tstate,
@@ -118,18 +112,16 @@ public class StructCore {
     tstate.setResults(iterator, loop, initialState);
   }
 
-  /**
-   * <pre>
-   * method at(StructAccessor accessor, i) {
-   *   v = accessor_.struct @ i
-   *   if accessor_.eKind is EnumerateValues
-   *       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
-   *     return v
-   *   } else {
-   *     return [keys @ i, v]
-   *   }
-   * </pre>
-   */
+  /// ```
+  /// method at(StructAccessor accessor, i) {
+  ///   v = accessor_.struct @ i
+  ///   if accessor_.eKind is EnumerateValues
+  ///       or (v is Absent and accessor_.eKind is EnumerateWithKeys) {
+  ///     return v
+  ///   } else {
+  ///     return [keys @ i, v]
+  ///   }
+  /// ```
   @Core.Method("at(StructAccessor, _)")
   static Value atStructAccessor(TState tstate, Value accessor, Value index)
       throws BuiltinException {
@@ -152,7 +144,7 @@ public class StructCore {
             });
   }
 
-  /** {@code method replaceElement(Struct struct, String key, v) = ...} */
+  /// `method replaceElement(Struct struct, String key, v) = ...`
   @Core.Method("replaceElement(Struct, String, _)")
   static Value replaceElementStruct(TState tstate, @RC.In Value struct, Value key, @RC.In Value v)
       throws BuiltinException {
@@ -162,7 +154,7 @@ public class StructCore {
     return ValueUtil.replaceElement(tstate, struct, index, 0, v);
   }
 
-  /** {@code method startUpdate(Struct struct, String key) = ...} */
+  /// `method startUpdate(Struct struct, String key) = ...`
   @Core.Method("startUpdate(Struct, String)")
   static void startUpdateStruct(TState tstate, @RC.In Value struct, Value key)
       throws BuiltinException {
@@ -175,7 +167,7 @@ public class StructCore {
     tstate.setResults(element, tstate.compound(STRUCT_UPDATER, struct, index));
   }
 
-  /** {@code method at(StructUpdater updater, newElement) = ...} */
+  /// `method at(StructUpdater updater, newElement) = ...`
   @Core.Method("at(StructUpdater, _)")
   static Value atStructUpdater(TState tstate, @RC.In Value updater, @RC.In Value v) {
     Value struct = updater.element(0);
@@ -184,13 +176,13 @@ public class StructCore {
     return ValueUtil.replaceElement(tstate, struct, index, 0, v);
   }
 
-  /** {@code method keys(Struct updater) = ...} */
+  /// `method keys(Struct updater) = ...`
   @Core.Method("keys(Struct|StructKeys)")
   static Value keysStruct(Value struct) {
     return StructType.from(struct.baseType()).keySet;
   }
 
-  /** {@code method new(StructKeys keys, initialValue) = ...} */
+  /// `method new(StructKeys keys, initialValue) = ...`
   @Core.Method("new(StructKeys, _)")
   static Value newStruct(TState tstate, Value keys, Value initial) {
     StructType structType = StructType.from(keys.baseType());

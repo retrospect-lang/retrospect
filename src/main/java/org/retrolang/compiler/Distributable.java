@@ -4,44 +4,34 @@ import java.util.function.Supplier;
 import java.util.stream.IntStream;
 import org.retrolang.Vm;
 
-/**
- * A Function, Compound, or something else that can be called with its arguments optionally
- * distributed.
- */
+/// A Function, Compound, or something else that can be called with its arguments optionally
+/// distributed.
 interface Distributable {
 
   int numArgs();
 
   int numResults();
 
-  /**
-   * Returns true if the Expr returned by {@link #compileApply} may depend on Locals that were
-   * passed as args, false if it returns a new Local.
-   */
+  /// Returns true if the Expr returned by [#compileApply] may depend on Locals that were passed as
+  /// args, false if it returns a new Local.
   default boolean applyResultReferencesArgs() {
     return this instanceof FromCompound;
   }
 
-  /**
-   * Returns an Expr for the result of this Distributable applied to the given (non-distributed)
-   * arguments. If a Call instruction is needed it will be added to {@code ib}, and the result
-   * stored in the Local returned by {@code outputLocal}.
-   */
+  /// Returns an Expr for the result of this Distributable applied to the given (non-distributed)
+  /// arguments. If a Call instruction is needed it will be added to `ib`, and the result stored in
+  /// the Local returned by `outputLocal`.
   Vm.Expr compileApply(Vm.Expr[] args, Vm.InstructionBlock ib, Supplier<Vm.Local> outputLocal);
 
-  /**
-   * If there is a lambda value corresponding to this Distributable, returns it; otherwise returns
-   * null.
-   */
+  /// If there is a lambda value corresponding to this Distributable, returns it; otherwise returns
+  /// null.
   Vm.Expr asLambda();
 
-  /**
-   * A Distributable that calls the given Vm.Function (which must have zero or one results and no
-   * inOut arguments).
-   *
-   * <p>(A Function with no results is never distributed; we only support that case to simplify some
-   * logic in {@link ExpressionCompiler#compileFunctionCall}.)
-   */
+  /// A Distributable that calls the given Vm.Function (which must have zero or one results and no
+  /// inOut arguments).
+  ///
+  /// (A Function with no results is never distributed; we only support that case to simplify some
+  /// logic in [ExpressionCompiler#compileFunctionCall].)
   class FromFunction implements Distributable {
     final Vm.Function function;
 
@@ -81,12 +71,10 @@ interface Distributable {
     }
   }
 
-  /**
-   * A Distributable that calls a second (outer) function on the result of an inner Distributable.
-   * This currently only supports wrapping other function calls (not Vm.Compounds), but it would be
-   * straightforward to fix that. Since it is currently only used with {@code not()} as the outer
-   * function I haven't bothered.
-   */
+  /// A Distributable that calls a second (outer) function on the result of an inner Distributable.
+  /// This currently only supports wrapping other function calls (not Vm.Compounds), but it would be
+  /// straightforward to fix that. Since it is currently only used with `not()` as the outer
+  /// function I haven't bothered.
   class NestedFunction implements Distributable {
     final Vm.Function outer;
     final Distributable inner;
@@ -123,7 +111,7 @@ interface Distributable {
     }
   }
 
-  /** A Distributable that creates instances of the given Vm.Compound. */
+  /// A Distributable that creates instances of the given Vm.Compound.
   class FromCompound implements Distributable {
     final Vm.Compound compound;
     final int size;
@@ -155,10 +143,8 @@ interface Distributable {
     }
   }
 
-  /**
-   * A synonym for FromCompound; used so that we can identify instances that create arrays and treat
-   * them specially in one situation.
-   */
+  /// A synonym for FromCompound; used so that we can identify instances that create arrays and
+  /// treat them specially in one situation.
   class FromArray extends FromCompound {
     FromArray(Vm.Compound compound, int size) {
       super(compound, size);

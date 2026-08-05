@@ -21,27 +21,23 @@ import java.util.function.IntFunction;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.util.Bits;
 
-/**
- * A Register represents an entry in the local variable array of the JVM when running the code being
- * built. (When executing byte codes the JVM maintains an array of "local variable values", each of
- * which may be a pointer, an int, a long, or a double. Byte codes may load or store values in that
- * array; a Register represents one slot in it.)
- *
- * <p>Register also implements ValueInfo; when used as a ValueInfo, it indicates that one register
- * value has been copied to another.
- *
- * <p>(Note that most of the ValueInfo methods just throw exceptions; the caller should instead call
- * those methods on this register's info.)
- */
+/// A Register represents an entry in the local variable array of the JVM when running the code
+/// being built. (When executing byte codes the JVM maintains an array of "local variable values",
+/// each of which may be a pointer, an int, a long, or a double. Byte codes may load or store values
+/// in that array; a Register represents one slot in it.)
+///
+/// Register also implements ValueInfo; when used as a ValueInfo, it indicates that one register
+/// value has been copied to another.
+///
+/// (Note that most of the ValueInfo methods just throw exceptions; the caller should instead call
+/// those methods on this register's info.)
 public class Register extends CodeValue implements ValueInfo {
 
-  /**
-   * Registers are assigned indices sequentially increasing from zero in the order they are created.
-   * Since arguments must be created before any other registers, they will have indices zero through
-   * {@code cb.numArgs()-1}.
-   *
-   * <p>Unlike Blocks (which may be renumbered), Register indices never change and are never reused.
-   */
+  /// Registers are assigned indices sequentially increasing from zero in the order they are
+  /// created. Since arguments must be created before any other registers, they will have indices
+  /// zero through `cb.numArgs()-1`.
+  ///
+  /// Unlike Blocks (which may be renumbered), Register indices never change and are never reused.
   public final int index;
 
   private Class<?> type;
@@ -54,38 +50,32 @@ public class Register extends CodeValue implements ValueInfo {
     this.type = type;
   }
 
-  /**
-   * Modifies the type of this register to a supertype of its current type. The type of a primitive
-   * register cannot be modified.
-   */
+  /// Modifies the type of this register to a supertype of its current type. The type of a primitive
+  /// register cannot be modified.
   void setType(Class<?> newType) {
     assert newType.isAssignableFrom(type);
     this.type = newType;
   }
 
-  /**
-   * Sets the index of this register in the JVM's local array. Should only be called from
-   * RegisterAssigner.
-   */
+  /// Sets the index of this register in the JVM's local array. Should only be called from
+  /// RegisterAssigner.
   void setJvmLocal(int i) {
     this.jvmLocal = i;
   }
 
-  /** Returns true if {@link #setJvmLocal} has been called. */
+  /// Returns true if [#setJvmLocal] has been called.
   public boolean hasJvmLocal() {
     return jvmLocal >= 0;
   }
 
-  /**
-   * Returns the index of this register in the JVM's local array. {@link #setJvmLocal} must have
-   * been called previously.
-   */
+  /// Returns the index of this register in the JVM's local array. [#setJvmLocal] must have been
+  /// called previously.
   public int jvmLocal() {
     assert hasJvmLocal();
     return jvmLocal;
   }
 
-  /** Returns the OpCodeType for this register. */
+  /// Returns the OpCodeType for this register.
   OpCodeType opCodeType() {
     return OpCodeType.forType(type);
   }

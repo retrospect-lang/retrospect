@@ -26,12 +26,12 @@ import org.retrolang.Vm.Access;
 @RunWith(JUnit4.class)
 public class MethodPredicateTest {
 
-  /** A varargs wrapper for MethodPredicate#test, for convenience. */
+  /// A varargs wrapper for MethodPredicate#test, for convenience.
   private static boolean test(MethodPredicate mp, Value... values) {
     return mp.test(values).asBoolean();
   }
 
-  /** Tests {@link MethodPredicate.Simple}. */
+  /// Tests [MethodPredicate.Simple].
   @Test
   public void simple() {
     ModuleBuilder mb = new ModuleBuilder("MyModule");

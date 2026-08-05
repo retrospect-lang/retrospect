@@ -37,59 +37,51 @@ import org.retrolang.impl.TemplateBuilder.VarAllocator;
 import org.retrolang.util.Bits;
 import org.retrolang.util.SmallIntMap;
 
-/**
- * A Block that allocates a new stack entry frame, initializes it, and saves it in a register.
- *
- * <p>The straightforward implementation would be to construct a new RecordLayout from the RValue's
- * template, and emit instructions to allocate a frame with that layout and set each field from the
- * corresponding register. That would work, but is suboptimal if during optimization we find out
- * that a register has a known value (so didn't need to be saved at all) or two registers have the
- * same value (so we only needed to save one of them).
- *
- * <p>This implementation instead delays choosing the RecordLayout until all optimizations are
- * complete, minimizing the size of the frame we need. (If all registers are discovered to have
- * constant values we don't even need a RecordLayout or frame -- we can just use a constant
- * CompoundValue.)
- */
+/// A Block that allocates a new stack entry frame, initializes it, and saves it in a register.
+///
+/// The straightforward implementation would be to construct a new RecordLayout from the RValue's
+/// template, and emit instructions to allocate a frame with that layout and set each field from the
+/// corresponding register. That would work, but is suboptimal if during optimization we find out
+/// that a register has a known value (so didn't need to be saved at all) or two registers have the
+/// same value (so we only needed to save one of them).
+///
+/// This implementation instead delays choosing the RecordLayout until all optimizations are
+/// complete, minimizing the size of the frame we need. (If all registers are discovered to have
+/// constant values we don't even need a RecordLayout or frame -- we can just use a constant
+/// CompoundValue.)
 class StackEntryBlock extends Block.NonTerminal {
-  /** The register in which the stack entry will be stored. */
+  /// The register in which the stack entry will be stored.
   private final Register lhs;
 
-  /** The stack entry to be saved. May be simplified by CodeBuilder optimizations. */
+  /// The stack entry to be saved. May be simplified by CodeBuilder optimizations.
   private Template.Compound rhs;
 
-  /**
-   * A SmallIntMap with one entry for each register that appears in {@link #rhs}; the value is a
-   * Const or a Register, initially the same as the key.
-   */
+  /// A SmallIntMap with one entry for each register that appears in [#rhs]; the value is a Const or
+  /// a Register, initially the same as the key.
   private final SmallIntMap.Builder<CodeValue> replacements = new SmallIntMap.Builder<>();
 
-  /** Contains any registers that appear as union tags in {@link #rhs}. */
+  /// Contains any registers that appear as union tags in [#rhs].
   private final Bits.Builder unionTags = new Bits.Builder();
 
-  /** Scratch state for {@link #updateInfo}. */
+  /// Scratch state for [#updateInfo].
   private boolean allConst;
 
-  /** Scratch state for {@link #updateInfo}. */
+  /// Scratch state for [#updateInfo].
   private boolean needSimplify;
 
-  /**
-   * The registers that will be returned by {@link #input}; includes all the registers in {@link
-   * #replacements} plus the TState register.
-   *
-   * <p>Computed on demand; may be null if we have not yet computed it or if a call to {@link
-   * #updateInfo} has invalidated it.
-   */
+  /// The registers that will be returned by [#input]; includes all the registers in [#replacements]
+  /// plus the TState register.
+  ///
+  /// Computed on demand; may be null if we have not yet computed it or if a call to [#updateInfo]
+  /// has invalidated it.
   private ImmutableList<Register> registerList;
 
-  /** Registers that we should addRef before saving. */
+  /// Registers that we should addRef before saving.
   private ImmutableList<Register> addRef;
 
-  /**
-   * Returns a CodeValue for the given stack entry. If {@code stackEntry} is not an RValue, just
-   * returns a constant CodeValue; otherwise allocates a new register and emits a StackEntryBlock to
-   * initialize it.
-   */
+  /// Returns a CodeValue for the given stack entry. If `stackEntry` is not an RValue, just returns
+  /// a constant CodeValue; otherwise allocates a new register and emits a StackEntryBlock to
+  /// initialize it.
   static CodeValue create(Value stackEntry, CodeBuilder cb) {
     assert stackEntry.baseType() instanceof BaseType.StackEntryType;
     if (!(stackEntry instanceof RValue rValue)) {
@@ -106,16 +98,14 @@ class StackEntryBlock extends Block.NonTerminal {
     findRegisters(rhs, cb);
   }
 
-  /** Must be called exactly once before this StackEntryBlock is emitted. */
+  /// Must be called exactly once before this StackEntryBlock is emitted.
   void setAddRef(ImmutableList<Register> addRef) {
     assert this.addRef == null;
     this.addRef = addRef;
   }
 
-  /**
-   * Adds a self entry to {@link #replacements} for each numvar or refvar in the given template.
-   * Adds any union tags to {@link #unionTags}.
-   */
+  /// Adds a self entry to [#replacements] for each numvar or refvar in the given template. Adds any
+  /// union tags to [#unionTags].
   private void findRegisters(Template t, CodeBuilder cb) {
     int index;
     if (Template.isConstant(t)) {
@@ -145,11 +135,9 @@ class StackEntryBlock extends Block.NonTerminal {
     replacements.put(index, cb.register(index));
   }
 
-  /**
-   * Simplifies the given template by looking up register values in the given replacements map and
-   * replacing any that are constants. Reinitializes {@link #replacements} and {@link #unionTags} to
-   * match the new template.
-   */
+  /// Simplifies the given template by looking up register values in the given replacements map and
+  /// replacing any that are constants. Reinitializes [#replacements] and [#unionTags] to match the
+  /// new template.
   private Template simplify(Template t, SmallIntMap<CodeValue> prevReplacements) {
     int index;
     if (Template.isConstant(t)) {
@@ -307,15 +295,11 @@ class StackEntryBlock extends Block.NonTerminal {
     return next.targetBlock();
   }
 
-  /**
-   * Similar to building {@code t} with {@code alloc}, except that
-   *
-   * <ul>
-   *   <li>NumVars and RefVars are first replaced with {@link #replacements}; and
-   *   <li>we also build a mapping from registers to their locations in the new template, and if a
-   *       register occurs more than once we only want to allocate it once.
-   * </ul>
-   */
+  /// Similar to building `t` with `alloc`, except that
+  ///
+  /// - NumVars and RefVars are first replaced with [#replacements]; and
+  /// - we also build a mapping from registers to their locations in the new template, and if a
+  ///   register occurs more than once we only want to allocate it once.
   private Template allocate(Template t, SmallIntMap.Builder<Template> vars, VarAllocator alloc) {
     int index;
     if (Template.isConstant(t)) {
@@ -383,7 +367,7 @@ class StackEntryBlock extends Block.NonTerminal {
     return result;
   }
 
-  /** Converts a constant CodeValue to the corresponding constant template. */
+  /// Converts a constant CodeValue to the corresponding constant template.
   private static Template asTemplate(Const c) {
     // The value must either be a Value (used as-is) or a Number (converted to a NumValue).
     Value v =

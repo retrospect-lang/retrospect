@@ -59,16 +59,12 @@ import org.retrolang.compiler.RetrospectParser.UnitContext;
 import org.retrolang.util.Bits;
 import org.retrolang.util.Pair;
 
-/**
- * A Symbols instance holds the global context while compiling a Retrospect program, including
- *
- * <ul>
- *   <li>arguments passed to compile() (the VirtualMachine, ModuleBuilder, etc.);
- *   <li>a bunch of commonly-used VM objects;
- *   <li>the types and functions defined by the program; and
- *   <li>the base ForkJoinTask tracking all the subtasks.
- * </ul>
- */
+/// A Symbols instance holds the global context while compiling a Retrospect program, including
+///
+/// - arguments passed to compile() (the VirtualMachine, ModuleBuilder, etc.);
+/// - a bunch of commonly-used VM objects;
+/// - the types and functions defined by the program; and
+/// - the base ForkJoinTask tracking all the subtasks.
 class Symbols {
   final Vm.VirtualMachine vm;
   final Vm.ModuleBuilder module;
@@ -87,11 +83,9 @@ class Symbols {
   final Vm.Function vmBinaryUpdate;
   final Vm.Function vmConcatUpdate;
 
-  /**
-   * We create separate ForkJoinTasks for each method declaration (since they can be compiled
-   * independently) and add them all as children of this base task so that we can easily wait until
-   * they're all done.
-   */
+  /// We create separate ForkJoinTasks for each method declaration (since they can be compiled
+  /// independently) and add them all as children of this base task so that we can easily wait until
+  /// they're all done.
   private final CountedCompleter<Void> baseTask =
       new CountedCompleter<Void>() {
         @Override
@@ -102,32 +96,24 @@ class Symbols {
         }
       };
 
-  /**
-   * This map will have an entry for each of the "singleton", "compound", or "type" declarations in
-   * the program, keyed by its name. It is linked to preserve the original ordering.
-   *
-   * <p>Access to this map is unsynchronized; it is only mutated during the initial
-   * (single-threaded) stage of computation, and once we start creating subtasks it must be
-   * considered immutable.
-   */
+  /// This map will have an entry for each of the "singleton", "compound", or "type" declarations in
+  /// the program, keyed by its name. It is linked to preserve the original ordering.
+  ///
+  /// Access to this map is unsynchronized; it is only mutated during the initial (single-threaded)
+  /// stage of computation, and once we start creating subtasks it must be considered immutable.
   private final Map<String, TypeDecl> types = new LinkedHashMap<>();
 
-  /**
-   * This map will have an entry for each of the function declarations in the program, with a key of
-   * "name:numArgs".
-   *
-   * <p>Access to this map is unsynchronized; it is only mutated during the initial
-   * (single-threaded) stage of computation, and once we start creating subtasks it must be
-   * considered immutable.
-   */
+  /// This map will have an entry for each of the function declarations in the program, with a key
+  /// of "name:numArgs".
+  ///
+  /// Access to this map is unsynchronized; it is only mutated during the initial (single-threaded)
+  /// stage of computation, and once we start creating subtasks it must be considered immutable.
   private final Map<String, FunctionDecl> functions = new HashMap<>();
 
-  /**
-   * Creates a Symbols instance for a compilation, does the initial compilation steps, and waits for
-   * any asynchronous steps to complete.
-   *
-   * <p>Returns an InstructionBlock for the main program, or null if there was no main program.
-   */
+  /// Creates a Symbols instance for a compilation, does the initial compilation steps, and waits
+  /// for any asynchronous steps to complete.
+  ///
+  /// Returns an InstructionBlock for the main program, or null if there was no main program.
   static InstructionBlock compile(
       Vm.VirtualMachine vm,
       Vm.ModuleBuilder module,
@@ -159,11 +145,9 @@ class Symbols {
     this.vmConcatUpdate = vmCore.lookupFunction("concatUpdate", 2);
   }
 
-  /**
-   * Compiles a unit. Processes all the type and function declarations first, then creates subtasks
-   * for each of the method declarations (including those implicit in lambda expressions and loop
-   * bodies), and then compiles the main program itself.
-   */
+  /// Compiles a unit. Processes all the type and function declarations first, then creates subtasks
+  /// for each of the method declarations (including those implicit in lambda expressions and loop
+  /// bodies), and then compiles the main program itself.
   private @Nullable InstructionBlock doCompile(UnitContext unit, String[] argNames) {
     // Step one: scan all the declarations, saving functions and types into the corresponding
     // hashMaps and methods into a list for later.
@@ -241,10 +225,8 @@ class Symbols {
                 method.methodDef()));
   }
 
-  /**
-   * A map from binary operator (e.g. "+") to the corresponding Retrospect Core function name (e.g.
-   * "add").
-   */
+  /// A map from binary operator (e.g. "+") to the corresponding Retrospect Core function name (e.g.
+  /// "add").
   static final ImmutableMap<String, String> BIN_OP_FUNCTION_NAMES =
       ImmutableMap.<String, String>builder()
           .put("+", "add")
@@ -261,18 +243,14 @@ class Symbols {
           .put("++", "rangeWithSize")
           .buildOrThrow();
 
-  /**
-   * A map with the same entries as BIN_OP_FUNCTION_NAMES, but keyed by token type instead of
-   * string.
-   */
+  /// A map with the same entries as BIN\_OP\_FUNCTION\_NAMES, but keyed by token type instead of
+  /// string.
   static final ImmutableMap<Integer, String> FUNCTION_NAME_FROM_BINOP_TOKEN;
 
-  /**
-   * A map from compound assignment operator (e.g. "+=") to the corresponding function name (e.g.
-   * "add"), keyed by token type. Note that this includes all tokens that look like assignment
-   * operators, even if they're not (e.g. "<=" maps to "lessThan"); those entries will never be
-   * looked up (since the grammar doesn't recognize them as an assignOp) so they're harmless.
-   */
+  /// A map from compound assignment operator (e.g. "+=") to the corresponding function name (e.g.
+  /// "add"), keyed by token type. Note that this includes all tokens that look like assignment
+  /// operators, even if they're not (e.g. "<=" maps to "lessThan"); those entries will never be
+  /// looked up (since the grammar doesn't recognize them as an assignOp) so they're harmless.
   static final ImmutableMap<Integer, String> FUNCTION_NAME_FROM_ASSIGNMENT_TOKEN;
 
   static {
@@ -294,9 +272,7 @@ class Symbols {
     FUNCTION_NAME_FROM_ASSIGNMENT_TOKEN = assignmentBuilder.buildOrThrow();
   }
 
-  /**
-   * Adds an asynchronous compilation step that must be completed before the compilation returns.
-   */
+  /// Adds an asynchronous compilation step that must be completed before the compilation returns.
   void addSubTask(Runnable runnable) {
     baseTask.addToPendingCount(1);
     new CountedCompleter<Void>(baseTask) {
@@ -308,15 +284,13 @@ class Symbols {
     }.fork();
   }
 
-  /**
-   * Compiles a method predicate expression into a Vm.MethodPredicate.
-   *
-   * @param positive if false, the result should be negated
-   * @param ambiguousTokenType if TokenType.KEYWORD_AND or TokenType.KEYWORD_OR, the predicate may
-   *     not be a conjunction using that keyword (since the expression would be ambiguous)
-   * @param paramNames the method's parameter names; some or all entries may be null if the
-   *     corresponding parameter does not have a name
-   */
+  /// Compiles a method predicate expression into a Vm.MethodPredicate.
+  ///
+  /// @param positive if false, the result should be negated
+  /// @param ambiguousTokenType if TokenType.KEYWORD\_AND or TokenType.KEYWORD\_OR, the predicate
+  ///   may not be a conjunction using that keyword (since the expression would be ambiguous)
+  /// @param paramNames the method's parameter names; some or all entries may be null if the
+  ///   corresponding parameter does not have a name
   private Vm.MethodPredicate getPredicate(
       MethodPredicateContext ctx, boolean positive, int ambiguousTokenType, String[] paramNames) {
     while (ctx instanceof ParenMethodPredicateContext) {
@@ -358,11 +332,9 @@ class Symbols {
     }
   }
 
-  /**
-   * Compiles a method, found either as part of a {@code function} declaration or in a standalone
-   * {@code method} declaration. Handles both simple expressions ({@code methodDef} begins with
-   * "{@code =}") and blocks ({@code methodDef} begins with "<code>{</code>").
-   */
+  /// Compiles a method, found either as part of a `function` declaration or in a standalone
+  /// `method` declaration. Handles both simple expressions (`methodDef` begins with "`=`") and
+  /// blocks (`methodDef` begins with "`{`").
   private void compileMethodDecl(
       Vm.Function function,
       List<ParamContext> params,
@@ -417,25 +389,21 @@ class Symbols {
     return (list == null) ? ImmutableList.of() : list.param();
   }
 
-  /**
-   * Process the parameters of a method declaration:
-   *
-   * <ul>
-   *   <li>returns an array of parameter names (with nulls for unnamed parameters);
-   *   <li>returns a Vm.MethodPredicate combining any parameter type constraints, or null if there
-   *       are none;
-   *   <li>emits instructions to verify that any parameters declared as Integer are actually
-   *       Integers (the Vm.MethodPredicate will only require that they be Numbers);
-   *   <li>emits instructions to destructure any parameters declared with array or structure
-   *       expressions; and
-   *   <li>calls blockCompiler.setResults() to save expressions that will provide the final values
-   *       for all inout parameters.
-   * </ul>
-   *
-   * @param blockCompiler the BlockCompiler for the method body
-   * @param startToken the first token of the method declaration, used only for reporting errors
-   * @return a Pair of the parameter names and the MethodPredicate
-   */
+  /// Process the parameters of a method declaration:
+  ///
+  /// - returns an array of parameter names (with nulls for unnamed parameters);
+  /// - returns a Vm.MethodPredicate combining any parameter type constraints, or null if there are
+  ///   none;
+  /// - emits instructions to verify that any parameters declared as Integer are actually Integers
+  ///   (the Vm.MethodPredicate will only require that they be Numbers);
+  /// - emits instructions to destructure any parameters declared with array or structure
+  ///   expressions; and
+  /// - calls blockCompiler.setResults() to save expressions that will provide the final values for
+  ///   all inout parameters.
+  ///
+  /// @param blockCompiler the BlockCompiler for the method body
+  /// @param startToken the first token of the method declaration, used only for reporting errors
+  /// @return a Pair of the parameter names and the MethodPredicate
   private Pair<String[], Vm.MethodPredicate> processParams(
       List<ParamContext> params,
       Vm.Function function,
@@ -560,15 +528,13 @@ class Symbols {
     return new Pair<>(paramNames, predicate);
   }
 
-  /** Returns true if the given annotation is "<<". */
+  /// Returns true if the given annotation is "<<".
   static boolean isCollector(ParamAnnotationContext annotation) {
     return annotation != null && annotation.start.getType() == TokenType.DOUBLE_LESS_THAN;
   }
 
-  /**
-   * Checks whether the specified parameter of a function is inout, and throws an appropriate
-   * CompileError if it is not as expected.
-   */
+  /// Checks whether the specified parameter of a function is inout, and throws an appropriate
+  /// CompileError if it is not as expected.
   static void checkInOutParameter(
       Vm.Function fn, int paramIndex, boolean isInOut, ParserRuleContext ctx) {
     if (fn.argIsInout(paramIndex) != isInOut) {
@@ -577,10 +543,8 @@ class Symbols {
     }
   }
 
-  /**
-   * Returns the Vm.Type identified by the given name, or throws a CompileError if there is none.
-   * Reads but does not modify the types map.
-   */
+  /// Returns the Vm.Type identified by the given name, or throws a CompileError if there is none.
+  /// Reads but does not modify the types map.
   Vm.Type getType(TypeNameContext typeName) {
     if (typeName.localName != null) {
       throw new UnsupportedOperationException("finish package support!");
@@ -600,10 +564,8 @@ class Symbols {
     return result;
   }
 
-  /**
-   * Returns the Vm.Singleton identified by the given name, or throws a CompileError if the name is
-   * unknown or not a singleton. Reads but does not modify the types map.
-   */
+  /// Returns the Vm.Singleton identified by the given name, or throws a CompileError if the name is
+  /// unknown or not a singleton. Reads but does not modify the types map.
   Vm.Singleton getSingleton(TypeNameContext typeName) {
     if (typeName.localName != null) {
       throw new UnsupportedOperationException("finish package support!");
@@ -625,10 +587,8 @@ class Symbols {
     throw Compiler.error(typeName.start, "'%s' is not a singleton", name);
   }
 
-  /**
-   * Returns the Vm.Compound identified by the given name, or throws a CompileError if there is
-   * none. Reads but does not modify the types map.
-   */
+  /// Returns the Vm.Compound identified by the given name, or throws a CompileError if there is
+  /// none. Reads but does not modify the types map.
   Vm.Compound getOwnCompound(TypeNameContext typeName) {
     if (typeName.localName == null) {
       String name = typeName.start.getText();
@@ -644,10 +604,8 @@ class Symbols {
         typeName.start, "'%s' is not a compound type declared in this module", typeName.getText());
   }
 
-  /**
-   * Returns the Vm.Function identified by the given name and numArgs, or throws a CompileError if
-   * there is none. Reads but does not modify the functions map.
-   */
+  /// Returns the Vm.Function identified by the given name and numArgs, or throws a CompileError if
+  /// there is none. Reads but does not modify the functions map.
   Vm.Function getFunction(FunctionNameContext fnName, int numArgs) {
     if (fnName.module != null) {
       throw new UnsupportedOperationException("finish package support!");
@@ -665,10 +623,8 @@ class Symbols {
     return result;
   }
 
-  /**
-   * If the given declaration begins with "{@code private}" or "{@code open}", returns the
-   * corresponding Vm.Access; otherwise returns VISIBLE.
-   */
+  /// If the given declaration begins with "`private`" or "`open`", returns the corresponding
+  /// Vm.Access; otherwise returns VISIBLE.
   private static Vm.Access access(ParserRuleContext decl) {
     int token = decl.start.getType();
     if (token == TokenType.KEYWORD_PRIVATE) {
@@ -680,27 +636,25 @@ class Symbols {
     }
   }
 
-  /**
-   * A FunctionDecl is added to the {@link #functions} table for each function declaration in the
-   * program being compiled.
-   */
+  /// A FunctionDecl is added to the [#functions] table for each function declaration in the program
+  /// being compiled.
   private static class FunctionDecl {
-    /** The parsed function declaration that this object was created from. */
+    /// The parsed function declaration that this object was created from.
     final FunctionDeclContext parsed;
 
-    /** The function name. */
+    /// The function name.
     final String name;
 
-    /** The number of arguments to this function. */
+    /// The number of arguments to this function.
     final int numArgs;
 
-    /** The indices of any inout arguments. */
+    /// The indices of any inout arguments.
     final Bits inOutArgs;
 
-    /** If non-null, the method definition that was included in the function definition. */
+    /// If non-null, the method definition that was included in the function definition.
     final MethodDefContext method;
 
-    /** The corresponding Vm.Function object. */
+    /// The corresponding Vm.Function object.
     final Vm.Function function;
 
     FunctionDecl(FunctionDeclContext parsed, Symbols symbols) {
@@ -734,10 +688,8 @@ class Symbols {
           symbols.module.newFunction(name, numArgs, this.inOutArgs, hasResult, access(parsed));
     }
 
-    /**
-     * If this function declaration included a method declaration, creates a subtask to compile the
-     * method.
-     */
+    /// If this function declaration included a method declaration, creates a subtask to compile the
+    /// method.
     void compileMethod(Symbols symbols) {
       if (method != null) {
         symbols.addSubTask(
@@ -748,11 +700,9 @@ class Symbols {
     }
   }
 
-  /**
-   * A TypeDecl is added to the {@link #types} table for each type declaration in the program being
-   * compiled. "singleton" and "compound" declarations create a LeafTypeDecl, while "type"
-   * declarations create a UnionTypeDecl.
-   */
+  /// A TypeDecl is added to the [#types] table for each type declaration in the program being
+  /// compiled. "singleton" and "compound" declarations create a LeafTypeDecl, while "type"
+  /// declarations create a UnionTypeDecl.
   private abstract static class TypeDecl {
     final String name;
 
@@ -764,12 +714,12 @@ class Symbols {
       this.name = name;
     }
 
-    /** Creates the Vm.Type object corresponding to this declaration. */
+    /// Creates the Vm.Type object corresponding to this declaration.
     abstract void create(Symbols symbols);
 
     private static final Vm.Type[] NO_TYPES = new Vm.Type[0];
 
-    /** Converts the given superclass or subclass list to an array of Vm.Type. */
+    /// Converts the given superclass or subclass list to an array of Vm.Type.
     static Vm.Type[] types(TypeListContext typeList, Symbols symbols) {
       if (typeList == null) {
         return NO_TYPES;

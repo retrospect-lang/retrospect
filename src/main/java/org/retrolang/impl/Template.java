@@ -32,32 +32,26 @@ import org.retrolang.impl.TemplateBuilder.CompoundBase;
 import org.retrolang.impl.TemplateBuilder.UnionBase;
 import org.retrolang.util.Ordered;
 
-/**
- * There are exactly six classes that implement Template, all defined in this file: Empty, Constant,
- * NumVar, RefVar, Compound, and Union. See templates.md for details.
- */
+/// There are exactly six classes that implement Template, all defined in this file: Empty,
+/// Constant, NumVar, RefVar, Compound, and Union. See templates.md for details.
 public sealed interface Template {
-  /**
-   * For a Template that can only represent a single BaseType (Constant, NumVar, RefVar, and
-   * Compound) returns that BaseType. Should not be called on Empty or Union.
-   *
-   * <p>Note that a RefVar whose FrameLayout has evolved will return the BaseType of the original
-   * layout, which may not match the current FrameLayout (it might be a FixedArrayType when the
-   * layout has evolved to a VArrayLayout), but it will still have the same sortOrder.
-   */
+  /// For a Template that can only represent a single BaseType (Constant, NumVar, RefVar, and
+  /// Compound) returns that BaseType. Should not be called on Empty or Union.
+  ///
+  /// Note that a RefVar whose FrameLayout has evolved will return the BaseType of the original
+  /// layout, which may not match the current FrameLayout (it might be a FixedArrayType when the
+  /// layout has evolved to a VArrayLayout), but it will still have the same sortOrder.
   BaseType baseType();
 
-  /** Returns the value of this template, given values for its variables. */
+  /// Returns the value of this template, given values for its variables.
   @RC.Out
   Value getValue(TState tstate, VarSource vars);
 
-  /** Returns the value of this template, given values for its variables. */
+  /// Returns the value of this template, given values for its variables.
   Value peekValue(VarSource vars);
 
-  /**
-   * Equivalent to calling {@link NumValue#asInt} or {@link NumValue#asIntOrMinusOne} on the result
-   * of {@link #peekValue}.
-   */
+  /// Equivalent to calling [NumValue#asInt] or [NumValue#asIntOrMinusOne] on the result of
+  /// [#peekValue].
   default int asInt(VarSource vars, boolean orMinusOne) {
     Value v;
     if (this instanceof Constant) {
@@ -72,59 +66,47 @@ public sealed interface Template {
     return orMinusOne ? NumValue.asIntOrMinusOne(v) : NumValue.asInt(v);
   }
 
-  /**
-   * Sets the value of this template's variables so that it equals the given Value and returns true,
-   * or returns false if this template cannot equal the given value. Should not be called on Empty.
-   *
-   * <p>Note that {@code setValue} may call some of the {@code set*} methods on {@code vars} before
-   * returning false.
-   */
+  /// Sets the value of this template's variables so that it equals the given Value and returns
+  /// true, or returns false if this template cannot equal the given value. Should not be called on
+  /// Empty.
+  ///
+  /// Note that `setValue` may call some of the `set*` methods on `vars` before returning false.
   boolean setValue(TState tstate, Value v, VarSink vars);
 
-  /**
-   * If this is a Compound or a Constant with compositional base type, returns a Template for each
-   * element; should not be called on any other type of Template.
-   */
+  /// If this is a Compound or a Constant with compositional base type, returns a Template for each
+  /// element; should not be called on any other type of Template.
   default Template element(int i) {
     throw new AssertionError();
   }
 
-  /**
-   * All Template implementations are subclasses of TemplateBuilder, so this method can just cast.
-   */
+  /// All Template implementations are subclasses of TemplateBuilder, so this method can just cast.
   default TemplateBuilder toBuilder() {
     return (TemplateBuilder) this;
   }
 
-  /** We only use Constant templates for values that are not reference counted and not transient. */
+  /// We only use Constant templates for values that are not reference counted and not transient.
   static boolean isConstantValue(Value v) {
     // If we're being asked to do anything with a ConditionalValue things have gone terribly wrong.
     assert !(v instanceof ConditionalValue);
     return !RefCounted.isRefCountedOrTransient(v);
   }
 
-  /**
-   * Returns true if the given Template contains no NumVars or RefVars, i.e. it is a Constant or
-   * Empty.
-   */
+  /// Returns true if the given Template contains no NumVars or RefVars, i.e. it is a Constant or
+  /// Empty.
   static boolean isConstant(Template t) {
     return t == EMPTY || t instanceof Constant;
   }
 
-  /**
-   * Should only be called when {@link #isConstant} returns true. If the given Template is a
-   * Constant, returns its value; if it is EMPTY, returns TO_BE_SET.
-   */
+  /// Should only be called when [#isConstant] returns true. If the given Template is a Constant,
+  /// returns its value; if it is EMPTY, returns TO\_BE\_SET.
   static Value toValue(Template t) {
     return t == EMPTY ? Core.TO_BE_SET : ((Constant) t).value;
   }
 
-  /**
-   * Calls {@code visitor} with each NumVar or RefVar in the given Template.
-   *
-   * <p>Note {@link VarVisitor#visitRefVar} will only be called once for an untagged union, so
-   * should not depend on the BaseType of the RefVar it is passed.
-   */
+  /// Calls `visitor` with each NumVar or RefVar in the given Template.
+  ///
+  /// Note [VarVisitor#visitRefVar] will only be called once for an untagged union, so should not
+  /// depend on the BaseType of the RefVar it is passed.
   static void visitVars(Template t, VarVisitor visitor) {
     if (isConstant(t)) {
       // Nothing to do
@@ -151,80 +133,63 @@ public sealed interface Template {
     }
   }
 
-  /**
-   * A VarSource is used by {@link #getValue} or {@link #peekValue} to get the values of NumVars and
-   * RefVars.
-   */
+  /// A VarSource is used by [#getValue] or [#peekValue] to get the values of NumVars and RefVars.
   interface VarSource {
 
-    /** Returns the value of a UINT8 NumVar with the given index. */
+    /// Returns the value of a UINT8 NumVar with the given index.
     int getB(int index);
 
-    /** Returns the value of an INT32 NumVar with the given index. */
+    /// Returns the value of an INT32 NumVar with the given index.
     int getI(int index);
 
-    /** Returns the value of a FLOAT64 NumVar with the given index. */
+    /// Returns the value of a FLOAT64 NumVar with the given index.
     double getD(int index);
 
-    /**
-     * Returns the value of a RefVar with the given index.
-     *
-     * <p>May return null, which should be treated as {@link Core#TO_BE_SET}.
-     */
+    /// Returns the value of a RefVar with the given index.
+    ///
+    /// May return null, which should be treated as [Core#TO_BE_SET].
     Value getValue(int index);
 
-    /**
-     * Determines the desired behavior if a Union tag is out-of-range. If false an error should be
-     * thrown; if true the call to {@link #getValue} or {@link #peekValue} should return {@link
-     * Core#TO_BE_SET}.
-     */
+    /// Determines the desired behavior if a Union tag is out-of-range. If false an error should be
+    /// thrown; if true the call to [#getValue] or [#peekValue] should return [Core#TO_BE_SET].
     boolean numVarsMayBeUninitialized();
   }
 
-  /** A VarSink is used by {@link #setValue} to set the values of NumVars and RefVars. */
+  /// A VarSink is used by [#setValue] to set the values of NumVars and RefVars.
   interface VarSink {
 
-    /** Sets the value of a UINT8 NumVar with the given index. */
+    /// Sets the value of a UINT8 NumVar with the given index.
     void setB(int index, int value);
 
-    /** Sets the value of an INT32 NumVar with the given index. */
+    /// Sets the value of an INT32 NumVar with the given index.
     void setI(int index, int value);
 
-    /** Sets the value of a FLOAT64 NumVar with the given index. */
+    /// Sets the value of a FLOAT64 NumVar with the given index.
     void setD(int index, double value);
 
-    /** Sets the value of a RefVar with the given index. */
+    /// Sets the value of a RefVar with the given index.
     void setValue(int index, @RC.In Value value);
   }
 
-  /**
-   * A VarVisitor will be called by {@link #visitVars} for each NumVar or RefVar in the given
-   * Template.
-   */
+  /// A VarVisitor will be called by [#visitVars] for each NumVar or RefVar in the given Template.
   interface VarVisitor {
     default void visitNumVar(NumVar v) {}
 
     void visitRefVar(RefVar v);
   }
 
-  /**
-   * A simple VarVisitor for finding the minimum and maximum indices of the NumVars and RefVars in a
-   * given template.
-   */
+  /// A simple VarVisitor for finding the minimum and maximum indices of the NumVars and RefVars in
+  /// a given template.
   static class IndexBounds implements VarVisitor {
-    /**
-     * The minimum index of any NumVar or RefVar in the given template, or Integer.MAX_VALUE if the
-     * template has no NumVar or RefVar.
-     */
+    /// The minimum index of any NumVar or RefVar in the given template, or Integer.MAX\_VALUE if
+    /// the template has no NumVar or RefVar.
     int minIndex = Integer.MAX_VALUE;
 
-    /**
-     * The maximum index of any NumVar or RefVar in the given template, or Integer.MIN_VALUE if the
-     * template has no NumVar or RefVar.
-     */
+    /// The maximum index of any NumVar or RefVar in the given template, or Integer.MIN\_VALUE if
+    /// the template has no NumVar or RefVar.
     int maxIndex = Integer.MIN_VALUE;
 
-    /** Creates an IndexBounds with its minIndex and maxIndex initialized for the given template. */
+    /// Creates an IndexBounds with its minIndex and maxIndex initialized for the given template.
     IndexBounds(Template t) {
       Template.visitVars(t, this);
     }
@@ -245,36 +210,28 @@ public sealed interface Template {
     }
   }
 
-  /**
-   * A Printer is used to modify the output of the {@code toString()} methods of Templates and
-   * TemplateBuilders. It only controls the representations chosen for NumVars and RefVars.
-   */
+  /// A Printer is used to modify the output of the `toString()` methods of Templates and
+  /// TemplateBuilders. It only controls the representations chosen for NumVars and RefVars.
   class Printer {
     public static final Printer DEFAULT = new Printer();
 
-    /**
-     * Returns the toString() representation of the given NumVar. The default implementation just
-     * calls {@link NumVar#toString()}.
-     */
+    /// Returns the toString() representation of the given NumVar. The default implementation just
+    /// calls [NumVar#toString()].
     public String toString(NumVar nv) {
       return nv.toString();
     }
 
-    /**
-     * Returns the toString() representation of the given RefVar. The default implementation just
-     * calls {@link RefVar#toString()}.
-     */
+    /// Returns the toString() representation of the given RefVar. The default implementation just
+    /// calls [RefVar#toString()].
     public String toString(RefVar rv) {
       return rv.toString();
     }
   }
 
-  /**
-   * A Template that doesn't actually represent any values. Most useful as a TemplateBuilder.
-   *
-   * <p>Note that Constant.of(TO_BE_SET) returns EMPTY, so methods like {@link #getValue} and {@link
-   * #peekValue} return TO_BE_SET.
-   */
+  /// A Template that doesn't actually represent any values. Most useful as a TemplateBuilder.
+  ///
+  /// Note that Constant.of(TO\_BE\_SET) returns EMPTY, so methods like [#getValue] and [#peekValue]
+  /// return TO\_BE\_SET.
   static final class Empty extends TemplateBuilder implements Template {
     // Singleton class
     private Empty() {
@@ -339,10 +296,10 @@ public sealed interface Template {
     }
   }
 
-  /** The empty Template. */
+  /// The empty Template.
   static final Empty EMPTY = new Empty();
 
-  /** A Constant template represents a single value. */
+  /// A Constant template represents a single value.
   static final class Constant extends TemplateBuilder implements Template {
     final Value value;
 
@@ -355,7 +312,7 @@ public sealed interface Template {
       this.value = value;
     }
 
-    /** Returns a Constant with the given value, which must not be refcounted. */
+    /// Returns a Constant with the given value, which must not be refcounted.
     public static Template of(Value value) {
       if (value instanceof Singleton v) {
         return v.asTemplate;
@@ -368,7 +325,7 @@ public sealed interface Template {
       }
     }
 
-    /** This entry point is only intended for use by the Singleton constructor. */
+    /// This entry point is only intended for use by the Singleton constructor.
     static Constant forSingletonConstructor(Singleton singleton) {
       return new Constant(singleton);
     }
@@ -508,10 +465,10 @@ public sealed interface Template {
     }
   }
 
-  /** The number of NumEncodings; useful for arrays indexed by encoding. */
+  /// The number of NumEncodings; useful for arrays indexed by encoding.
   static final int NUM_ENCODINGS = NumEncoding.values().length;
 
-  /** A NumVar represents a number provided as one of the template's inputs. */
+  /// A NumVar represents a number provided as one of the template's inputs.
   static final class NumVar extends TemplateBuilder implements Template {
     // When we need a new numeric TemplateBuilder we'll use one of these;
     // the proper index will be filled in when it's built.
@@ -529,7 +486,7 @@ public sealed interface Template {
       this.index = index;
     }
 
-    /** Returns a NumVar with the most compact NumEncoding that can store the given number. */
+    /// Returns a NumVar with the most compact NumEncoding that can store the given number.
     static NumVar forNumber(NumValue v) {
       if (NumValue.isUint8(v)) {
         return UINT8;
@@ -540,12 +497,12 @@ public sealed interface Template {
       }
     }
 
-    /** Returns a NumVar with the same encoding as this and the given index. */
+    /// Returns a NumVar with the same encoding as this and the given index.
     NumVar withIndex(int i) {
       return (index == i) ? this : new NumVar(encoding, i);
     }
 
-    /** Returns the value of this NumVar as an int; should not be called if encoding is FLOAT64. */
+    /// Returns the value of this NumVar as an int; should not be called if encoding is FLOAT64.
     int toInt(VarSource vars) {
       if (encoding == NumEncoding.UINT8) {
         return vars.getB(index);
@@ -589,7 +546,7 @@ public sealed interface Template {
       }
     }
 
-    /** Sets the value of this NumVar; should not be called if encoding is FLOAT64. */
+    /// Sets the value of this NumVar; should not be called if encoding is FLOAT64.
     void setToInt(int i, VarSink vars) {
       if (encoding == NumEncoding.UINT8) {
         vars.setB(index, i);
@@ -709,11 +666,9 @@ public sealed interface Template {
     }
   }
 
-  /**
-   * A RefVar represents a Value instance provided as one of the template's inputs. Instances of the
-   * base RefVar class represent Values with a specified non-compositional BaseType; instances of
-   * the {@link ForFrame} subclass represent Frames with a specified layout.
-   */
+  /// A RefVar represents a Value instance provided as one of the template's inputs. Instances of
+  /// the base RefVar class represent Values with a specified non-compositional BaseType; instances
+  /// of the [ForFrame] subclass represent Frames with a specified layout.
   static sealed class RefVar extends TemplateBuilder implements Template {
     final int index;
     final BaseType baseType;
@@ -724,10 +679,8 @@ public sealed interface Template {
       this.baseType = baseType;
     }
 
-    /**
-     * The BaseType of a RefVar that uses frames may change (from a FixedArrayType to VARRAY), but
-     * its sortOrder won't.
-     */
+    /// The BaseType of a RefVar that uses frames may change (from a FixedArrayType to VARRAY), but
+    /// its sortOrder won't.
     long sortOrder() {
       return baseType.sortOrder;
     }
@@ -805,7 +758,7 @@ public sealed interface Template {
       return this;
     }
 
-    /** Returns a RefVar with the same layout as this and the given index. */
+    /// Returns a RefVar with the same layout as this and the given index.
     RefVar withIndex(int newIndex) {
       return (index == newIndex) ? this : new RefVar(newIndex, baseType);
     }
@@ -823,7 +776,7 @@ public sealed interface Template {
       return (obj instanceof RefVar rv) && rv.index == index && rv.baseType == baseType;
     }
 
-    /** Returns true if obj is a RefVar with the same index as this one. */
+    /// Returns true if obj is a RefVar with the same index as this one.
     boolean equalsIgnoringType(Object obj) {
       return obj instanceof RefVar o && o.index == index;
     }
@@ -852,13 +805,11 @@ public sealed interface Template {
       static final VarHandle FRAME_LAYOUT =
           Handle.forVar(MethodHandles.lookup(), ForFrame.class, "frameLayout", FrameLayout.class);
 
-      /**
-       * If true, {@link #frameLayout()} will change if the layout evolves; otherwise {@link
-       * #frameLayout()} will always return the original layout.
-       *
-       * <p>We use RefVars with {@code tracksLayoutEvolution == false} in RValues, where we want a
-       * consistent view of the RValue's layout.
-       */
+      /// If true, [#frameLayout()] will change if the layout evolves; otherwise [#frameLayout()]
+      /// will always return the original layout.
+      ///
+      /// We use RefVars with `tracksLayoutEvolution == false` in RValues, where we want a
+      /// consistent view of the RValue's layout.
       final boolean tracksLayoutEvolution;
 
       ForFrame(
@@ -915,10 +866,8 @@ public sealed interface Template {
         return (other instanceof ForFrame rv) && (latestLayout() == rv.latestLayout());
       }
 
-      /**
-       * Returns the latest version of this RefVar's layout, whether or not we are tracking layout
-       * evolution.
-       */
+      /// Returns the latest version of this RefVar's layout, whether or not we are tracking layout
+      /// evolution.
       private FrameLayout latestLayout() {
         return tracksLayoutEvolution ? frameLayout() : frameLayout.latest();
       }
@@ -932,10 +881,8 @@ public sealed interface Template {
         return updateFrameLayout(layout, layout.latest());
       }
 
-      /**
-       * If {@code latest} is different from {@code current} (the value we read from our {@link
-       * #frameLayout} field), update the field.
-       */
+      /// If `latest` is different from `current` (the value we read from our [#frameLayout] field),
+      /// update the field.
       @CanIgnoreReturnValue
       private FrameLayout updateFrameLayout(FrameLayout current, FrameLayout latest) {
         assert tracksLayoutEvolution;
@@ -982,7 +929,7 @@ public sealed interface Template {
         return withIndex(newIndex, tracksLayoutEvolution);
       }
 
-      /** Returns a RefVar with the same layout as this and the given index. */
+      /// Returns a RefVar with the same layout as this and the given index.
       RefVar withIndex(int newIndex, boolean newTracksLayoutEvolution) {
         // Get the current version of frameLayout and the corresponding baseType
         FrameLayout newLayout = latestLayout();
@@ -1044,10 +991,8 @@ public sealed interface Template {
     }
   }
 
-  /**
-   * A Compound template represents values with a specified compositional BaseType; each element of
-   * the value is represented by a template.
-   */
+  /// A Compound template represents values with a specified compositional BaseType; each element of
+  /// the value is represented by a template.
   static final class Compound extends CompoundBase implements Template {
     private final Template[] elements;
 
@@ -1057,10 +1002,8 @@ public sealed interface Template {
       computeWeightPair();
     }
 
-    /**
-     * If {@link #isConstant} is true for all elements, returns a constant template for the
-     * compound; otherwise returns a compound template.
-     */
+    /// If [#isConstant] is true for all elements, returns a constant template for the compound;
+    /// otherwise returns a compound template.
     public static Template of(BaseType baseType, Template... elements) {
       assert elements.length == baseType.size();
       if (Arrays.stream(elements).allMatch(Template::isConstant)) {
@@ -1202,17 +1145,15 @@ public sealed interface Template {
     }
   }
 
-  /**
-   * A Union template represents all the values that can be represented by two or more other
-   * templates.
-   *
-   * <p>A tagged union can have Constants, NumVars, RefVars, and Compounds as choices; an additional
-   * NumVar (the tag) is used to determine which choice is active.
-   *
-   * <p>An untagged union can only have RefVars and Singleton Constants as choices; there must be at
-   * least one RefVar, and all the RefVars must have the same index. The type of the input is used
-   * to determine which of the choices is active.
-   */
+  /// A Union template represents all the values that can be represented by two or more other
+  /// templates.
+  ///
+  /// A tagged union can have Constants, NumVars, RefVars, and Compounds as choices; an additional
+  /// NumVar (the tag) is used to determine which choice is active.
+  ///
+  /// An untagged union can only have RefVars and Singleton Constants as choices; there must be at
+  /// least one RefVar, and all the RefVars must have the same index. The type of the input is used
+  /// to determine which of the choices is active.
   static final class Union extends UnionBase implements Template {
     // Exactly one of tag or untagged will be non-null.
     // If untagged is non-null all non-singleton choices are RefVars with the same index.
@@ -1244,7 +1185,7 @@ public sealed interface Template {
       }
     }
 
-    /** Returns the Template that represents this Union's value. */
+    /// Returns the Template that represents this Union's value.
     private Template chosen(VarSource vars) {
       if (untagged != null) {
         return untagged;
@@ -1376,7 +1317,7 @@ public sealed interface Template {
       return false;
     }
 
-    /** Returns the hashCode of the NumVar or RefVaf this Union switches on. */
+    /// Returns the hashCode of the NumVar or RefVaf this Union switches on.
     int tagHash() {
       return (tag != null) ? tag.hashCode() : untagged.hashCode();
     }

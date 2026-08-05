@@ -47,46 +47,37 @@ import org.retrolang.impl.core.SaveCore;
 import org.retrolang.impl.core.StructCore;
 import org.retrolang.util.StringUtil;
 
-/**
- * The Core module defines the types and functions that are available to all Retrospect programs;
- * see library_reference.md for details. This statics-only class defines the Core instance of
- * VmModule and an initial subset of its types and functions. Additional types and functions are
- * defined in other classes that are listed in the static constructor near the end of this file.
- */
+/// The Core module defines the types and functions that are available to all Retrospect programs;
+/// see library\_reference.md for details. This statics-only class defines the Core instance of
+/// VmModule and an initial subset of its types and functions. Additional types and functions are
+/// defined in other classes that are listed in the static constructor near the end of this file.
 public class Core {
 
-  /** Types and Functions annotated with @Public are visible to Retrospect code. */
+  /// Types and Functions annotated with @Public are visible to Retrospect code.
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Public {}
 
-  /**
-   * Types and Functions annotated with @Private are only accessible from within the VM
-   * implementation.
-   */
+  /// Types and Functions annotated with @Private are only accessible from within the VM
+  /// implementation.
   @Target(ElementType.FIELD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Private {}
 
-  /**
-   * Java methods annotated with @Method("<i>signature</i>") define a Retrospect method for a Core
-   * function.
-   *
-   * <p>If the method has return type {@code Value} it is implicitly declared {@code @RC.Out}.
-   */
+  /// Java methods annotated with @Method("_signature_") define a Retrospect method for a Core
+  /// function.
+  ///
+  /// If the method has return type `Value` it is implicitly declared `@RC.Out`.
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Method {
     String value();
   }
 
-  /**
-   * The Vm.Module known as "Core".
-   *
-   * <p>This field should only be used for operations (such as defining types) that do not require
-   * an initialized module. If you need to reference the fully-initialized module use {@link
-   * #core()}.
-   */
+  /// The Vm.Module known as "Core".
+  ///
+  /// This field should only be used for operations (such as defining types) that do not require an
+  /// initialized module. If you need to reference the fully-initialized module use [#core()].
   static final VmModule CORE;
 
   static {
@@ -98,15 +89,13 @@ public class Core {
     CORE = new ModuleBuilder().module;
   }
 
-  /**
-   * The Vm.Module known as "Core", fully initialized. Calling this from a static initializer is
-   * likely to result in NullPointerExceptions.
-   */
+  /// The Vm.Module known as "Core", fully initialized. Calling this from a static initializer is
+  /// likely to result in NullPointerExceptions.
   static VmModule core() {
     return Initializer.INITIALIZED_CORE;
   }
 
-  /** If the Core created a StructType with the given keys, returns it; otherwise returns null. */
+  /// If the Core created a StructType with the given keys, returns it; otherwise returns null.
   static StructType structType(ImmutableList<String> keys) {
     return keys.isEmpty() ? StructType.EMPTY : Initializer.ALL_STRUCTS.get(keys);
   }
@@ -114,30 +103,28 @@ public class Core {
   // statics only
   private Core() {}
 
-  /** Returns a new Core BaseType with the given name, size, and super types. */
+  /// Returns a new Core BaseType with the given name, size, and super types.
   public static BaseType.Named newBaseType(String name, int size, VmType.Union... superTypes) {
     return new BaseType.Named(CORE, name, size, superTypes);
   }
 
-  /** Returns a new Core Singleton with the given name and super types. */
+  /// Returns a new Core Singleton with the given name and super types.
   public static Singleton newSingleton(String name, VmType.Union... superTypes) {
     return new BaseType.Named(CORE, name, 0, superTypes).asValue();
   }
 
-  /**
-   * Returns a new Core union type with the given name and super types. This type will not be open,
-   * so only the VM can add additional subtypes to it.
-   */
+  /// Returns a new Core union type with the given name and super types. This type will not be open,
+  /// so only the VM can add additional subtypes to it.
   public static VmType.Union newUnion(String name, VmType.Union... superTypes) {
     return new VmType.Union(CORE, name, false, superTypes);
   }
 
-  /** Returns a new Core open union type with the given name and super types. */
+  /// Returns a new Core open union type with the given name and super types.
   public static VmType.Union newOpenUnion(String name, VmType.Union... superTypes) {
     return new VmType.Union(CORE, name, true, superTypes);
   }
 
-  /** Returns a new Core open union type with the given name and subtypes. */
+  /// Returns a new Core open union type with the given name and subtypes.
   public static VmType.Union newOpenUnionWithSubTypes(String name, VmType... subTypes) {
     return VmType.Union.withSubTypes(CORE, name, true, subTypes);
   }
@@ -146,7 +133,7 @@ public class Core {
   @Public public static final Singleton FALSE = newSingleton("False", BOOLEAN);
   @Public public static final Singleton TRUE = newSingleton("True", BOOLEAN);
 
-  /** Returns TRUE or FALSE. */
+  /// Returns TRUE or FALSE.
   public static Singleton bool(boolean value) {
     return value ? TRUE : FALSE;
   }
@@ -154,15 +141,13 @@ public class Core {
   @Public public static final Singleton NONE = newSingleton("None");
   @Public public static final Singleton ABSENT = newSingleton("Absent");
 
-  /** Used in stack entries as the value of undefined variables. */
+  /// Used in stack entries as the value of undefined variables.
   @Private
   public static final Singleton UNDEF =
       new BaseType.Named(CORE, "Undef", 0, BaseType.SORT_ORDER_UNDEF).asValue();
 
-  /**
-   * Used as the value of an element that will be replaced later; see
-   * docs/ref_counts.md#the-startupdate-idiom-for-compound-values for details.
-   */
+  /// Used as the value of an element that will be replaced later; see
+  /// docs/ref\_counts.md#the-startupdate-idiom-for-compound-values for details.
   @Private
   public static final Singleton TO_BE_SET =
       new BaseType.Named(CORE, "ToBeSet", 0, BaseType.SORT_ORDER_TO_BE_SET).asValue();
@@ -187,14 +172,11 @@ public class Core {
         }
       };
 
-  /**
-   * U32 is a compound type that wraps an Integer and interprets it as unsigned.
-   *
-   * <p>Rather than provide methods for {@code add()}, {@code multiply()}, etc., over U32 values,
-   * U32s use specialized functions ({@code uAdd()}, {@code uMultiply()}, etc.) to make it clear
-   * that these operations return multiple results (typically a pair {@code {low, high}} of U32s, to
-   * handle overflow).
-   */
+  /// U32 is a compound type that wraps an Integer and interprets it as unsigned.
+  ///
+  /// Rather than provide methods for `add()`, `multiply()`, etc., over U32 values, U32s use
+  /// specialized functions (`uAdd()`, `uMultiply()`, etc.) to make it clear that these operations
+  /// return multiple results (typically a pair `{low, high}` of U32s, to handle overflow).
   @Public
   public static final BaseType.Named U32 =
       new BaseType.Named(CORE, "U32", 1) {
@@ -238,14 +220,12 @@ public class Core {
         }
       };
 
-  /**
-   * One instance of FixedArrayType is created for each array size that we represent as a compound
-   * value. Note that large arrays will use a different representation, so we expect there to be a
-   * relatively small number of these (maybe 20 at most?).
-   */
+  /// One instance of FixedArrayType is created for each array size that we represent as a compound
+  /// value. Note that large arrays will use a different representation, so we expect there to be a
+  /// relatively small number of these (maybe 20 at most?).
   public static class FixedArrayType extends BaseType {
 
-    /** An implementation of Vm.Compound that will be returned by VirtualMachine.arrayOfSize(). */
+    /// An implementation of Vm.Compound that will be returned by VirtualMachine.arrayOfSize().
     final VmCompound compound;
 
     private FixedArrayType(int size) {
@@ -269,14 +249,11 @@ public class Core {
       return (size() == 0) ? "[]" : "array" + size();
     }
 
-    /**
-     * We allocate an initial set of FixedArrayType instances statically, and any additional ones
-     * on-demand.
-     *
-     * <p>It would make sense for this to be more like 16 (to avoid synchronization in the common
-     * cases), but I'm leaving it low for now to ensure that we test the {@link #moreTypes} code
-     * path.
-     */
+    /// We allocate an initial set of FixedArrayType instances statically, and any additional ones
+    /// on-demand.
+    ///
+    /// It would make sense for this to be more like 16 (to avoid synchronization in the common
+    /// cases), but I'm leaving it low for now to ensure that we test the [#moreTypes] code path.
     private static final int INITIAL_LIMIT = 4;
 
     private static final FixedArrayType[] initialTypes = new FixedArrayType[INITIAL_LIMIT];
@@ -286,7 +263,7 @@ public class Core {
       Arrays.setAll(initialTypes, FixedArrayType::new);
     }
 
-    /** Returns the FixedArrayType with the given size. */
+    /// Returns the FixedArrayType with the given size.
     public static FixedArrayType withSize(int size) {
       if (size < INITIAL_LIMIT) {
         return initialTypes[size];
@@ -303,7 +280,7 @@ public class Core {
 
   public static final Singleton EMPTY_ARRAY = FixedArrayType.withSize(0).asValue();
 
-  /** Variable-length arrays. */
+  /// Variable-length arrays.
   @Private
   public static final BaseType VARRAY =
       new BaseType(-1, BaseType.SORT_ORDER_ARRAY) {
@@ -318,22 +295,15 @@ public class Core {
         }
       };
 
-  /**
-   * A private union that contains baseTypes created by the core for e.g. {@link VmType#testLambda}
-   * and {@link VmCompound#asLambdaExpr}.
-   */
+  /// A private union that contains baseTypes created by the core for e.g. [VmType#testLambda] and
+  /// [VmCompound#asLambdaExpr].
   @Private static final VmType.Union CORE_LAMBDA = newUnion("CoreLambda", LAMBDA);
 
-  /**
-   * A private union that contains baseTypes created by the core for {@link
-   * VmFunction#asLambdaExpr()}.
-   */
+  /// A private union that contains baseTypes created by the core for [VmFunction#asLambdaExpr()].
   @Private static final VmType.Union FUNCTION_LAMBDA = newUnion("FunctionLambda", LAMBDA);
 
-  /**
-   * A private union that contains baseTypes created by the core for {@link
-   * VmFunction#partialApplication}.
-   */
+  /// A private union that contains baseTypes created by the core for
+  /// [VmFunction#partialApplication].
   @Private
   static final VmType PARTIAL_APPLICATION_LAMBDA =
       new VmType(CORE, "PartialApplication", LAMBDA) {
@@ -414,22 +384,18 @@ public class Core {
     }
   }
 
-  /**
-   * <pre>
-   * method reversedAt(x, y) = at(y, x)
-   * </pre>
-   */
+  /// ```
+  /// method reversedAt(x, y) = at(y, x)
+  /// ```
   @Core.Method("reversedAt(_, _)")
   static void reversedAt(
       TState tstate, @RC.In Value arg, @RC.In Value lambda, @Fn("at:2") Caller at) {
     tstate.startCall(at, lambda, arg);
   }
 
-  /**
-   * A subclass of BaseType that implements {@code at()}. Useful for lambdas whose behavior is
-   * determined by an object that's not a Value (e.g. a VmFunction or a VmType), and hence can't
-   * just be an element of a compositional baseType.
-   */
+  /// A subclass of BaseType that implements `at()`. Useful for lambdas whose behavior is determined
+  /// by an object that's not a Value (e.g. a VmFunction or a VmType), and hence can't just be an
+  /// element of a compositional baseType.
   abstract static class CoreLambda extends BaseType {
     CoreLambda(int size) {
       super(size);
@@ -460,11 +426,9 @@ public class Core {
     ((Lambdas.PartialApplication) lambda.baseType()).at(tstate, lambda, arg, caller);
   }
 
-  /**
-   * <pre>
-   * method min(x, y) default = y &lt; x ? y : x
-   * </pre>
-   */
+  /// ```
+  /// method min(x, y) default = y < x ? y : x
+  /// ```
   static class Min2 extends BuiltinMethod {
     static final Caller lessThan = new Caller("lessThan:2", "afterLessThan");
 
@@ -479,11 +443,9 @@ public class Core {
     }
   }
 
-  /**
-   * <pre>
-   * method max(x, y) default = x &lt; y ? y : x
-   * </pre>
-   */
+  /// ```
+  /// method max(x, y) default = x < y ? y : x
+  /// ```
   static class Max2 extends BuiltinMethod {
     static final Caller lessThan = new Caller("lessThan:2", "afterLessThan");
 
@@ -498,13 +460,11 @@ public class Core {
     }
   }
 
-  /**
-   * <pre>
-   * method binaryUpdate(lhs=, Lambda lambda, rhs) default {
-   *   lhs = lambda[lhs, rhs]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method binaryUpdate(lhs=, Lambda lambda, rhs) default {
+  ///   lhs = lambda[lhs, rhs]
+  /// }
+  /// ```
   @Core.Method("binaryUpdate(_, Lambda, _) default")
   static void binaryUpdateDefault(
       TState tstate,
@@ -515,10 +475,8 @@ public class Core {
     tstate.startCall(at, lambda, tstate.arrayValue(lhs, rhs));
   }
 
-  /**
-   * A special Singleton StackEntryType that expects to resume with results (like a call site) and
-   * just returns them. Used when a computation is interrupted during function return.
-   */
+  /// A special Singleton StackEntryType that expects to resume with results (like a call site) and
+  /// just returns them. Used when a computation is interrupted during function return.
   static final BaseType.StackEntryType RETURN =
       new BaseType.SimpleStackEntryType("return") {
         @Override
@@ -527,27 +485,21 @@ public class Core {
         }
       };
 
-  /**
-   * See https://en.wikipedia.org/wiki/Initialization-on-demand_holder_idiom for why this is in a
-   * nested class.
-   */
+  /// See https://en.wikipedia.org/wiki/Initialization-on-demand\_holder\_idiom for why this is in a
+  /// nested class.
   private static class Initializer {
-    /** The same value as Core.CORE, but only set after the module has been fully initialized. */
+    /// The same value as Core.CORE, but only set after the module has been fully initialized.
     static final VmModule INITIALIZED_CORE;
 
-    /**
-     * {@code CORE.types} contains all of the publicly-visible types in Core; this map also includes
-     * those that aren't public.
-     */
+    /// `CORE.types` contains all of the publicly-visible types in Core; this map also includes
+    /// those that aren't public.
     static final ImmutableMap<String, VmType> ALL_TYPES;
 
-    /**
-     * {@code CORE.functions} contains all of the publicly-visible functions in Core; this map also
-     * includes those that aren't public.
-     */
+    /// `CORE.functions` contains all of the publicly-visible functions in Core; this map also
+    /// includes those that aren't public.
     static final ImmutableMap<String, VmFunction> ALL_FUNCTIONS;
 
-    /** All StructTypes created by the core. */
+    /// All StructTypes created by the core.
     static final ImmutableMap<ImmutableList<String>, StructType> ALL_STRUCTS;
 
     static {
@@ -607,14 +559,12 @@ public class Core {
     }
   }
 
-  /**
-   * Used during initialization to build two maps (allItems and publicItems) with values of the
-   * given type.
-   */
+  /// Used during initialization to build two maps (allItems and publicItems) with values of the
+  /// given type.
   private static class Builder<Keys, T> {
     final boolean needPublicOrPrivate;
 
-    /** Returns the key that should be used for storing the given value. */
+    /// Returns the key that should be used for storing the given value.
     final Function<T, Keys> keyFn;
 
     final ImmutableMap.Builder<Keys, T> allItems;
@@ -627,11 +577,9 @@ public class Core {
       this.publicItems = needPublicOrPrivate ? ImmutableMap.builder() : null;
     }
 
-    /**
-     * Scans {@code klass} for static fields of type {@code ofClass} that are annotated with
-     * either @{@link Public} or @{@link Private}. For each field found, calls {@code extract} with
-     * the field's value to get the value to be saved.
-     */
+    /// Scans `klass` for static fields of type `ofClass` that are annotated with either @[Public]
+    /// or @[Private]. For each field found, calls `extract` with the field's value to get the value
+    /// to be saved.
     <T2> void addAllFrom(Class<?> klass, Class<T2> ofClass, Function<T2, T> extract) {
       for (Field f : klass.getDeclaredFields()) {
         if (Modifier.isStatic(f.getModifiers()) && ofClass.isAssignableFrom(f.getType())) {

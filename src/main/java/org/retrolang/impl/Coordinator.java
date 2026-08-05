@@ -24,79 +24,66 @@ import java.util.Arrays;
 import java.util.Queue;
 import org.retrolang.impl.Evolver.Evolution;
 
-/**
- * A Coordinator enables operations that must involve all of the Java threads currently executing on
- * behalf of a single ResourceTracker.
- *
- * <p>Currently the only such operation is the clearing of replaced Frames, but I expect there to be
- * more in the future.
- */
+/// A Coordinator enables operations that must involve all of the Java threads currently executing
+/// on behalf of a single ResourceTracker.
+///
+/// Currently the only such operation is the clearing of replaced Frames, but I expect there to be
+/// more in the future.
 class Coordinator {
 
   private static final int INITIAL_MAX_THREADS = 4;
 
-  /** The number of Java threads currently executing on behalf of this ResourceTracker. */
+  /// The number of Java threads currently executing on behalf of this ResourceTracker.
   @GuardedBy("this")
   private int numActive;
 
-  /**
-   * The TStates of the threads currently executing on behalf of this ResourceTracker (the first
-   * {@link #numActive} entries are non-null).
-   */
+  /// The TStates of the threads currently executing on behalf of this ResourceTracker (the first
+  /// [#numActive] entries are non-null).
   @GuardedBy("this")
   private TState[] activeThreads = new TState[INITIAL_MAX_THREADS];
 
-  /**
-   * A clock-like value that is incremented each time a new FrameReplacement is created.
-   *
-   * <p>Note that in a sufficiently long-running VM this value may wrap around, so care must be
-   * taken when comparing clocks: {@code (c1 - c2 > 0)} can be used to determine if {@code c1}
-   * happened after {@code c2}, but {@code c1 > c2} cannot (e.g. if {@code c2} is Integer.MAX_VALUE
-   * and {@code c1 = c2 + 1}, the former will return true but the latter will return false).
-   *
-   * <p>(Even comparing the difference would break down if the gap between {@code c1} and {@code c2}
-   * became too large, but we take other steps to ensure that it can't.)
-   */
+  /// A clock-like value that is incremented each time a new FrameReplacement is created.
+  ///
+  /// Note that in a sufficiently long-running VM this value may wrap around, so care must be taken
+  /// when comparing clocks: `(c1 - c2 > 0)` can be used to determine if `c1` happened after `c2`,
+  /// but `c1 > c2` cannot (e.g. if `c2` is Integer.MAX\_VALUE and `c1 = c2 + 1`, the former will
+  /// return true but the latter will return false).
+  ///
+  /// (Even comparing the difference would break down if the gap between `c1` and `c2` became too
+  /// large, but we take other steps to ensure that it can't.)
   @GuardedBy("this")
   private int replacementClock;
 
-  /**
-   * Parallel to {@link #activeThreads}; saves the value of {@link #replacementClock} the last time
-   * the corresponding thread synchronized with this Coordinator. These values are also stored in
-   * {@link TState#lastSync} so that {@link #syncClock} can quickly check whether a sync is needed.
-   *
-   * <p>{@code replacementClock - lastSync[i]} is the number of Frames that have been replaced since
-   * active thread {@code i} last synchronized, and is a lower bound on the size of {@link
-   * #pendingClear} (none of the Frames replaced since our last sync can be cleared until we sync).
-   * Since {@link #pendingClear} is an ArrayDeque, its maximum size is Integer.MAX_VALUE (actually
-   * slightly less with the current implementation), so no thread can ever fall so far behind that
-   * {@code replacementClock - lastSync[i]} becomes negative (before that could happen the attempt
-   * to grow {@code pendingClear} would throw an IllegalStateException, but long before that could
-   * happen we'd have run out of Java memory (since each queue entry is at last a Frame plus a
-   * Frame.Replacement, with a minimum size of 56 bytes, we'd have at least 128GB of junk), and
-   * before that could happen we should have interrupted the computation with an OUT_OF_MEMORY error
-   * since those Frames and Frame.Replacements are being counted against the ResourceTracker.
-   */
+  /// Parallel to [#activeThreads]; saves the value of [#replacementClock] the last time the
+  /// corresponding thread synchronized with this Coordinator. These values are also stored in
+  /// [TState#lastSync] so that [#syncClock] can quickly check whether a sync is needed.
+  ///
+  /// `replacementClock - lastSync[i]` is the number of Frames that have been replaced since active
+  /// thread `i` last synchronized, and is a lower bound on the size of [#pendingClear] (none of the
+  /// Frames replaced since our last sync can be cleared until we sync). Since [#pendingClear] is an
+  /// ArrayDeque, its maximum size is Integer.MAX\_VALUE (actually slightly less with the current
+  /// implementation), so no thread can ever fall so far behind that `replacementClock -
+  /// lastSync[i]` becomes negative (before that could happen the attempt to grow `pendingClear`
+  /// would throw an IllegalStateException, but long before that could happen we'd have run out of
+  /// Java memory (since each queue entry is at last a Frame plus a Frame.Replacement, with a
+  /// minimum size of 56 bytes, we'd have at least 128GB of junk), and before that could happen we
+  /// should have interrupted the computation with an OUT\_OF\_MEMORY error since those Frames and
+  /// Frame.Replacements are being counted against the ResourceTracker.
   @GuardedBy("this")
   private int[] lastSync = new int[INITIAL_MAX_THREADS];
 
-  /**
-   * Contains Frames that have been replaced but not yet cleared.
-   *
-   * <p>If {@link #numActive} is zero then {@code pendingClear} is empty. Otherwise {@code
-   * pendingClear.size()} is equal to the maximum of {@code replacementClock - lastSync[i]} for
-   * {@code 0 <= i < numActive}.
-   */
+  /// Contains Frames that have been replaced but not yet cleared.
+  ///
+  /// If [#numActive] is zero then `pendingClear` is empty. Otherwise `pendingClear.size()` is equal
+  /// to the maximum of `replacementClock - lastSync[i]` for `0 <= i < numActive`.
   @GuardedBy("this")
   private final Queue<Frame> pendingClear = new ArrayDeque<>();
 
   static final VarHandle REPLACEMENT_CLOCK =
       Handle.forVar(MethodHandles.lookup(), Coordinator.class, "replacementClock", int.class);
 
-  /**
-   * Returns the index in {@link #activeThreads} of the given TState; should not be called if {@code
-   * tstate} is not active in this ResourceTracker.
-   */
+  /// Returns the index in [#activeThreads] of the given TState; should not be called if `tstate` is
+  /// not active in this ResourceTracker.
   @GuardedBy("this")
   private int threadIndex(TState tstate) {
     // TODO: linear search will become suboptimal with large numbers of active threads
@@ -109,7 +96,7 @@ class Coordinator {
     return index;
   }
 
-  /** Adds the given TState to this ResourceTracker's set of active threads. */
+  /// Adds the given TState to this ResourceTracker's set of active threads.
   synchronized void addActiveThread(TState tstate) {
     assert Arrays.stream(activeThreads).noneMatch(t -> t == tstate);
     if (activeThreads.length == numActive) {
@@ -121,7 +108,7 @@ class Coordinator {
     activeThreads[numActive++] = tstate;
   }
 
-  /** Removes the given TState from this ResourceTracker's set of active threads. */
+  /// Removes the given TState from this ResourceTracker's set of active threads.
   synchronized void removeActiveThread(TState tstate) {
     int i = threadIndex(tstate);
     --numActive;
@@ -134,12 +121,10 @@ class Coordinator {
     doPending(tstate, tstate.lastSync);
   }
 
-  /**
-   * Synchronizes the given TState, clearing any replaced frames that were waiting for it. Does a
-   * fast check to avoid unneeded synchronization if this TState is already caught up.
-   *
-   * <p>Should be called periodically by all active TStates.
-   */
+  /// Synchronizes the given TState, clearing any replaced frames that were waiting for it. Does a
+  /// fast check to avoid unneeded synchronization if this TState is already caught up.
+  ///
+  /// Should be called periodically by all active TStates.
   void syncClock(TState tstate) {
     // replacementClock is only updated by replace(), which does a non-volatile write.   Because
     // it's non-volatile that write may be delayed in getting to memory, but must land before
@@ -158,10 +143,8 @@ class Coordinator {
     }
   }
 
-  /**
-   * Called after one of this ResourceTracker's threads has synchronized, with its previous {@code
-   * lastSync} value. Clears any frame replacements that were waiting only for the given thread.
-   */
+  /// Called after one of this ResourceTracker's threads has synchronized, with its previous
+  /// `lastSync` value. Clears any frame replacements that were waiting only for the given thread.
   @GuardedBy("this")
   private void doPending(TState tstate, int lastSync) {
     if (lastSync != replacementClock && pendingClear.size() == (replacementClock - lastSync)) {
@@ -183,10 +166,8 @@ class Coordinator {
     }
   }
 
-  /**
-   * Called with a Frame whose layout has evolved; returns the {@link Frame.Replacement} that points
-   * to its current replacement.
-   */
+  /// Called with a Frame whose layout has evolved; returns the [Frame.Replacement] that points to
+  /// its current replacement.
   synchronized Frame.Replacement replace(TState tstate, Frame old) {
     // Waiting to construct the replacement until after we've acquired the Coordinator lock
     // increases the chances of lock contention but avoids a lot of complexity (and possible

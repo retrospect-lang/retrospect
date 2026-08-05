@@ -23,48 +23,40 @@ import java.util.function.IntFunction;
 import java.util.stream.IntStream;
 import org.retrolang.util.StringUtil;
 
-/**
- * A ValueMemo is called repeatedly with Value tuples of a fixed size (e.g. the arguments each time
- * a function is called, or the results returned by each call to a function). It keeps information
- * about the structure of each Value it has seen, and coerces Values into consistent
- * representations.
- *
- * <p>For example, if the first value of the tuple always has the same BaseType but uses different
- * FrameLayouts, the ValueMemo will merge those layouts. Alternatively, if the first value is
- * sometimes a fixed-length array of length 2 and sometimes a fixed-length array of length 3, the
- * ValueMemo will create a VArray layout that can hold all of the elements it has seen and coerce
- * all arrays to that layout (expanding the layout as needed to so that it can represent the given
- * values).
- *
- * <p>A ValueMemo of size n is implemented by maintaining n TemplateBuilders, and updates the
- * corresponding value and/or TemplateBuilder so that the TemplateBuilder includes the value (a
- * process referred to as "harmonization").
- *
- * <p>A ValueMemo may be merged into another ValueMemo, after which the two ValueMemos are
- * equivalent and can be used interchangeably.
- */
+/// A ValueMemo is called repeatedly with Value tuples of a fixed size (e.g. the arguments each time
+/// a function is called, or the results returned by each call to a function). It keeps information
+/// about the structure of each Value it has seen, and coerces Values into consistent
+/// representations.
+///
+/// For example, if the first value of the tuple always has the same BaseType but uses different
+/// FrameLayouts, the ValueMemo will merge those layouts. Alternatively, if the first value is
+/// sometimes a fixed-length array of length 2 and sometimes a fixed-length array of length 3, the
+/// ValueMemo will create a VArray layout that can hold all of the elements it has seen and coerce
+/// all arrays to that layout (expanding the layout as needed to so that it can represent the given
+/// values).
+///
+/// A ValueMemo of size n is implemented by maintaining n TemplateBuilders, and updates the
+/// corresponding value and/or TemplateBuilder so that the TemplateBuilder includes the value (a
+/// process referred to as "harmonization").
+///
+/// A ValueMemo may be merged into another ValueMemo, after which the two ValueMemos are equivalent
+/// and can be used interchangeably.
 public abstract class ValueMemo implements ResultsInfo {
 
-  /**
-   * A arbitrary threshold for when we think compile-time values will have become too complex and we
-   * should introduce a Frame.
-   */
+  /// A arbitrary threshold for when we think compile-time values will have become too complex and
+  /// we should introduce a Frame.
   static final int TARGET_FRAME_WEIGHT = 8;
 
-  /**
-   * Non-null if this ValueMemo has been merged into another; all operations will be redirected to
-   * {@code forwardedTo}.
-   */
+  /// Non-null if this ValueMemo has been merged into another; all operations will be redirected to
+  /// `forwardedTo`.
   @GuardedBy("this")
   ValueMemo forwardedTo;
 
-  /**
-   * True if this ValueMemo should only allow modifications when the caller is holding an extra lock
-   * in addition to the ValueMemo's own lock.
-   *
-   * <p>Used to ensure that the {@link MethodMemo#argsMemo} for a heavy or exlined MethodMemo is
-   * only modified while also holding the MemoMerger lock.
-   */
+  /// True if this ValueMemo should only allow modifications when the caller is holding an extra
+  /// lock in addition to the ValueMemo's own lock.
+  ///
+  /// Used to ensure that the [MethodMemo#argsMemo] for a heavy or exlined MethodMemo is only
+  /// modified while also holding the MemoMerger lock.
   @GuardedBy("this")
   boolean writeRequiresExtraLock;
 
@@ -91,7 +83,7 @@ public abstract class ValueMemo implements ResultsInfo {
     return toString(null);
   }
 
-  /** Returns a new ValueMemo for the specified number of values. */
+  /// Returns a new ValueMemo for the specified number of values.
   static ValueMemo withSize(int size) {
     if (size == 0) {
       return EMPTY;
@@ -102,7 +94,7 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /** A subclass of ValueMemo used only for the (common) case of size == 1. */
+  /// A subclass of ValueMemo used only for the (common) case of size == 1.
   private static class SingleValueMemo extends ValueMemo {
     @GuardedBy("this")
     private TemplateBuilder contents;
@@ -131,7 +123,7 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /** A subclass of ValueMemo used when size != 1. */
+  /// A subclass of ValueMemo used when size != 1.
   private static class MultiValueMemo extends ValueMemo {
     @GuardedBy("this")
     private final TemplateBuilder[] contents;
@@ -181,19 +173,15 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /**
-   * Sets this ValueMemo so that its state can only be changed by calls to {@link #harmonizeAll}
-   * with {@code haveExtraLock} true.
-   */
+  /// Sets this ValueMemo so that its state can only be changed by calls to [#harmonizeAll] with
+  /// `haveExtraLock` true.
   synchronized void setWriteRequiresExtraLock(boolean writeRequiresExtraLock) {
     assert forwardedTo == null;
     this.writeRequiresExtraLock = writeRequiresExtraLock;
   }
 
-  /**
-   * Coerces the given value and/or updates this ValueMemo to be consistent. Should not be called on
-   * ValueMemos where {@link #writeRequiresExtraLock} is true.
-   */
+  /// Coerces the given value and/or updates this ValueMemo to be consistent. Should not be called
+  /// on ValueMemos where [#writeRequiresExtraLock] is true.
   @RC.Out
   Value harmonize(TState tstate, int index, @RC.In Value v) {
     assert RefCounted.isValidForStore(v);
@@ -217,10 +205,8 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /**
-   * Updates one of our TemplateBuilders to include the given value, and then casts the value with
-   * the resulting TemplateBuilder.
-   */
+  /// Updates one of our TemplateBuilders to include the given value, and then casts the value with
+  /// the resulting TemplateBuilder.
   @GuardedBy("this")
   @RC.Out
   private Value updateBuilder(TState tstate, int index, TemplateBuilder builder, Value v) {
@@ -236,29 +222,22 @@ public abstract class ValueMemo implements ResultsInfo {
     return result;
   }
 
-  /**
-   * The result of {@link #harmonizeAll}, one of
-   *
-   * <ul>
-   *   <li>NO_CHANGE_REQUIRED: the values could all be harmonized with no change to the ValueMemo;
-   *   <li>CHANGED: the ValueMemo was updated; either {@link #writeRequiresExtraLock} is false or
-   *       the {@code haveExtraLock} parameter was true; or
-   *   <li>CHANGE_REQUIRES_EXTRA_LOCK: harmonizing at least one of the values would require an
-   *       update to this ValueMemo but {@link #writeRequiresExtraLock} is true and {@code
-   *       haveExtraLock} was false (note that in this case some of the values may have already been
-   *       harmonized).
-   * </ul>
-   */
+  /// The result of [#harmonizeAll], one of
+  ///
+  /// - NO\_CHANGE\_REQUIRED: the values could all be harmonized with no change to the ValueMemo;
+  /// - CHANGED: the ValueMemo was updated; either [#writeRequiresExtraLock] is false or the
+  ///   `haveExtraLock` parameter was true; or
+  /// - CHANGE\_REQUIRES\_EXTRA\_LOCK: harmonizing at least one of the values would require an
+  ///   update to this ValueMemo but [#writeRequiresExtraLock] is true and `haveExtraLock` was false
+  ///   (note that in this case some of the values may have already been harmonized).
   enum Outcome {
     NO_CHANGE_REQUIRED,
     CHANGED,
     CHANGE_REQUIRES_EXTRA_LOCK
   };
 
-  /**
-   * Coerces the given values and/or updates this ValueMemo to be consistent. Reads and writes the
-   * elements of {@code values} from {@code start} to {@link #size}-1.
-   */
+  /// Coerces the given values and/or updates this ValueMemo to be consistent. Reads and writes the
+  /// elements of `values` from `start` to [#size]-1.
   @CanIgnoreReturnValue
   Outcome harmonizeAll(TState tstate, Object[] values, int start, boolean haveExtraLock) {
     int size = size();
@@ -294,10 +273,8 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /**
-   * Returns true if a call to {@link #harmonizeAll} with the given values would return
-   * NO_CHANGE_REQUIRED.
-   */
+  /// Returns true if a call to [#harmonizeAll] with the given values would return
+  /// NO\_CHANGE\_REQUIRED.
   boolean couldCast(Object[] values) {
     ValueMemo vMemoMutable = this;
     for (; ; ) {
@@ -313,10 +290,8 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /**
-   * Used by {@link MethodMemo#isSimilarEnough} to check for similarities between the args of two
-   * MethodMemos. See the comment on {@link TemplateBuilder#overlaps} for more context.
-   */
+  /// Used by [MethodMemo#isSimilarEnough] to check for similarities between the args of two
+  /// MethodMemos. See the comment on [TemplateBuilder#overlaps] for more context.
   boolean overlaps(ValueMemo other) {
     ValueMemo vm1 = this;
     for (; ; ) {
@@ -347,13 +322,11 @@ public abstract class ValueMemo implements ResultsInfo {
     }
   }
 
-  /**
-   * Merge this ValueMemo into {@code other}; after this call the two ValueMemos are equivalent and
-   * can be used interchangeably.
-   *
-   * <p>Note that concurrent calls to this method with the same ValueMemos may deadlock; the caller
-   * is responsible for not doing that.
-   */
+  /// Merge this ValueMemo into `other`; after this call the two ValueMemos are equivalent and can
+  /// be used interchangeably.
+  ///
+  /// Note that concurrent calls to this method with the same ValueMemos may deadlock; the caller is
+  /// responsible for not doing that.
   void mergeInto(ValueMemo other) {
     ValueMemo vm1 = this;
     for (; ; ) {

@@ -21,13 +21,11 @@ import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 import org.retrolang.impl.Err.BuiltinException;
 
-/**
- * The primary function of a VmModule is to hold maps of its public types and functions.
- *
- * <p>A VmModule is created before any of its types or functions. After they have all been created,
- * the {@link #initialize} method is called; only then are the {@link #lookupType}, {@link
- * #lookupSingleton}, and {@link #lookupFunction} methods usable.
- */
+/// The primary function of a VmModule is to hold maps of its public types and functions.
+///
+/// A VmModule is created before any of its types or functions. After they have all been created,
+/// the [#initialize] method is called; only then are the [#lookupType], [#lookupSingleton], and
+/// [#lookupFunction] methods usable.
 class VmModule implements Vm.Module {
 
   final String name;
@@ -65,7 +63,7 @@ class VmModule implements Vm.Module {
     return functions.get(VmFunction.key(name, numArgs));
   }
 
-  /** Should be called exactly once on each VmModule. */
+  /// Should be called exactly once on each VmModule.
   void initialize(ImmutableMap<String, VmType> types, ImmutableMap<String, VmFunction> functions) {
     assert this.types == null;
     this.types = types;
@@ -73,17 +71,13 @@ class VmModule implements Vm.Module {
     this.builder = null;
   }
 
-  /**
-   * If this module is still under construction, returns its ModuleBuilder; otherwise returns null.
-   */
+  /// If this module is still under construction, returns its ModuleBuilder; otherwise returns null.
   ModuleBuilder builder() {
     return builder;
   }
 
-  /**
-   * If {@code v} is a simple compound defined by this module, returns the corresponding VmCompound;
-   * otherwise returns null.
-   */
+  /// If `v` is a simple compound defined by this module, returns the corresponding VmCompound;
+  /// otherwise returns null.
   private VmCompound myCompound(Value v) {
     if (v.baseType() instanceof ModuleBuilder.Compound compound
         && compound.asType.module == this
@@ -93,13 +87,11 @@ class VmModule implements Vm.Module {
     return null;
   }
 
-  /**
-   * The method that implements the "_" suffix operator for this module.
-   *
-   * <p>(From language_reference.md#indexing: "`_` is a postfix operator that unwraps a compound
-   * value... It can only be applied to values whose type is a compound defined in the current
-   * package.")
-   */
+  /// The method that implements the "\_" suffix operator for this module.
+  ///
+  /// (From language\_reference.md#indexing: "\`\_\` is a postfix operator that unwraps a compound
+  /// value... It can only be applied to values whose type is a compound defined in the current
+  /// package.")
   void unCompoundMethod(TState tstate, Object[] args) throws BuiltinException {
     Value input = (Value) args[0];
     // TODO: handle the (unlikely) case where input is a union RValue
@@ -107,9 +99,7 @@ class VmModule implements Vm.Module {
     tstate.setResult(input.element(0));
   }
 
-  /**
-   * The method that implements the "_" suffix operator when used on the left-hand side of an "=".
-   */
+  /// The method that implements the "\_" suffix operator when used on the left-hand side of an "=".
   void updateCompoundMethod(TState tstate, Object[] args) throws BuiltinException {
     Value input = (Value) args[0];
     // TODO: handle the (unlikely) case where input is a union RValue

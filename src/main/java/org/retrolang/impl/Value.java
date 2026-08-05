@@ -21,37 +21,29 @@ import java.util.stream.IntStream;
 import org.retrolang.code.Op;
 import org.retrolang.util.ArrayUtil;
 
-/**
- * All VM objects that represent Retrospect-language values implement Value. Other objects may also
- * implement Value for convenience, e.g. the objects that represent stack entries.
- *
- * <p>Equality of Values is generally only defined within Retrospect. Some implementations of Value
- * define {@code equals()} to make testing easier, but non-test code should not be calling it; nor
- * should Values be used as keys in a hashtable.
- */
+/// All VM objects that represent Retrospect-language values implement Value. Other objects may also
+/// implement Value for convenience, e.g. the objects that represent stack entries.
+///
+/// Equality of Values is generally only defined within Retrospect. Some implementations of Value
+/// define `equals()` to make testing easier, but non-test code should not be calling it; nor should
+/// Values be used as keys in a hashtable.
 public interface Value {
 
   Op BASE_TYPE = RcOp.forRcMethod(Value.class, "baseType").build();
 
-  /**
-   * Every Value has a BaseType. If this is a Retrospect-language value it will be a BaseType.Named.
-   */
+  /// Every Value has a BaseType. If this is a Retrospect-language value it will be a
+  /// BaseType.Named.
   BaseType baseType();
 
-  /**
-   * The number of elements in this Value; only defined if this is an array Value or has a
-   * compositional BaseType.
-   */
+  /// The number of elements in this Value; only defined if this is an array Value or has a
+  /// compositional BaseType.
   default int numElements() {
     // Overridden by Frame, so if we're here this must have a compositional basetype.
     return baseType().size();
   }
 
-  /**
-   * Returns the specified component or array element. The behavior of this method is only defined
-   * if {@code index} is non-negative and less than {@link #numElements}.
-   * </ul>
-   */
+  /// Returns the specified component or array element. The behavior of this method is only defined
+  /// if `index` is non-negative and less than [#numElements].
   @RC.Out
   default Value element(int index) {
     throw new AssertionError();
@@ -59,55 +51,51 @@ public interface Value {
 
   Op PEEK_ELEMENT = RcOp.forRcMethod(Value.class, "peekElement", int.class).build();
 
-  /**
-   * Returns the specified component or array element, <i>not</i> reference-counted and possibly
-   * using a short-term-only representation.
-   *
-   * <p>See {@link #element} for preconditions and {@link RC.Transient} for restrictions on the use
-   * of this method's result.
-   */
+  /// Returns the specified component or array element, _not_ reference-counted and possibly using a
+  /// short-term-only representation.
+  ///
+  /// See [#element] for preconditions and [RC.Transient] for restrictions on the use of this
+  /// method's result.
   @RC.Transient
   default Value peekElement(int index) {
     throw new AssertionError();
   }
 
-  /** Returns the specified element as an int; {@code NumValue#isInt} must be true of it. */
+  /// Returns the specified element as an int; `NumValue#isInt` must be true of it.
   default int elementAsInt(int index) {
     return NumValue.asInt(peekElement(index));
   }
 
-  /** Returns the specified element as an int if {@code NumValue#isInt} is true, otherwise -1. */
+  /// Returns the specified element as an int if `NumValue#isInt` is true, otherwise -1.
   default int elementAsIntOrMinusOne(int index) {
     return NumValue.asIntOrMinusOne(peekElement(index));
   }
 
-  /**
-   * Returns a copy of this Value with the specified element replaced. The behavior of this method
-   * is only defined if {@code element(index)} is defined.
-   */
+  /// Returns a copy of this Value with the specified element replaced. The behavior of this method
+  /// is only defined if `element(index)` is defined.
   @RC.Out
   @RC.In
   default Value replaceElement(TState tstate, int index, @RC.In Value newElement) {
     throw new AssertionError();
   }
 
-  /** True if this Value is contained in the given type. */
+  /// True if this Value is contained in the given type.
   default Condition isa(VmType type) {
     return Condition.of(type.contains(baseType()));
   }
 
-  /** True if this Value has the given base type. */
+  /// True if this Value has the given base type.
   default Condition isa(BaseType type) {
     return Condition.of(baseType() == type);
   }
 
-  /** True if this Value is the given singleton. */
+  /// True if this Value is the given singleton.
   default Condition is(Singleton singleton) {
     assert !(this instanceof RValue);
     return Condition.of(this == singleton);
   }
 
-  /** True if this Value is an array with the given length. */
+  /// True if this Value is an array with the given length.
   default Condition isArrayOfLength(int length) {
     return Condition.of(baseType().isArray() && numElements() == length);
   }
@@ -118,10 +106,8 @@ public interface Value {
     return v;
   }
 
-  /**
-   * Given a Value returned by an {@link RC.Transient} method, returns an equal Value without any
-   * restrictions; {@code peekElement(i).makeStorable()} is equivalent to {@code element(i)}.
-   */
+  /// Given a Value returned by an [RC.Transient] method, returns an equal Value without any
+  /// restrictions; `peekElement(i).makeStorable()` is equivalent to `element(i)`.
   @RC.Out
   default Value makeStorable(TState tstate) {
     // Actually transient values will override this default.
@@ -130,15 +116,12 @@ public interface Value {
 
   Op LAYOUT = RcOp.forRcMethod(Value.class, "layout").build();
 
-  /** If this Value is represented by a Frame, returns its layout; otherwise returns null. */
+  /// If this Value is represented by a Frame, returns its layout; otherwise returns null.
   default FrameLayout layout() {
     return null;
   }
 
-  /**
-   * If {@code v} is a Frame that has been replaced, returns its replacement; otherwise returns
-   * {@code v}.
-   */
+  /// If `v` is a Frame that has been replaced, returns its replacement; otherwise returns `v`.
   @RC.Out
   static Value latest(@RC.In Value v) {
     return (v instanceof Frame f) ? Frame.latest(f) : v;
@@ -146,7 +129,7 @@ public interface Value {
 
   Op FROM_ARRAY_OP = RcOp.forRcMethod(Value.class, "fromArray", Object[].class, int.class).build();
 
-  /** Returns the specified array element as a Value. */
+  /// Returns the specified array element as a Value.
   static Value fromArray(Object[] array, int index) {
     Value v = (Value) array[index];
     Frame.Replacement replacement = (v instanceof Frame f) ? Frame.getReplacement(f) : null;
@@ -177,25 +160,21 @@ public interface Value {
     return result;
   }
 
-  /**
-   * Returns true if the first {@code size} elements of {@code values} are instances of Value, and
-   * any remaining elements are null. Used only for assertions.
-   */
+  /// Returns true if the first `size` elements of `values` are instances of Value, and any
+  /// remaining elements are null. Used only for assertions.
   static boolean containsValues(Object[] values, int size) {
     return IntStream.range(0, size).allMatch(i -> values[i] instanceof Value)
         && IntStream.range(size, values.length).allMatch(i -> values[i] == null);
   }
 
-  /**
-   * Copies the first {@code n} elements of this Value into consecutive elements of the given array.
-   */
+  /// Copies the first `n` elements of this Value into consecutive elements of the given array.
   default void getElements(int n, Object[] dest, int offset) {
     for (int i = 0; i < n; i++) {
       dest[i + offset] = element(i);
     }
   }
 
-  /** Allocates an Object[] and populates it with the elements of this Value. */
+  /// Allocates an Object[] and populates it with the elements of this Value.
   default @RC.Out Object[] getElements(TState tstate) {
     int n = numElements();
     Object[] result = tstate.allocObjectArray(n);
@@ -203,9 +182,7 @@ public interface Value {
     return result;
   }
 
-  /**
-   * Returns true if the first {@code numElements} elements of {@code v1} and {@code v2} are equals.
-   */
+  /// Returns true if the first `numElements` elements of `v1` and `v2` are equals.
   static boolean equalElements(Value v1, Value v2, int numElements) {
     for (int i = 0; i < numElements; i++) {
       if (!v1.peekElement(i).equals(v2.peekElement(i))) {
@@ -215,21 +192,17 @@ public interface Value {
     return true;
   }
 
-  /** Returns this Value as a transient Integer or throws the specified Err. */
+  /// Returns this Value as a transient Integer or throws the specified Err.
   default Value verifyInt(Err err) throws Err.BuiltinException {
     return NumValue.verifyInt(this, err);
   }
 
-  /**
-   * Values aren't generally required to be hashable, but Templates are, and constant Templates
-   * contain uncounted values, so any uncounted value must be hashable. In other cases throwing an
-   * AssertionError with this message is appropriate.
-   */
+  /// Values aren't generally required to be hashable, but Templates are, and constant Templates
+  /// contain uncounted values, so any uncounted value must be hashable. In other cases throwing an
+  /// AssertionError with this message is appropriate.
   static final String VALUES_ARENT_HASHABLE = "Values aren't hashable.";
 
-  /**
-   * A base class for implementations of Value returned from {@link RC.Transient} methods that
-   * should never be stored.
-   */
+  /// A base class for implementations of Value returned from [RC.Transient] methods that should
+  /// never be stored.
   abstract class NotStorable implements Value {}
 }

@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 
-/** A subclass of Vm.RuntimeError that saves the ResourceTracker and Retrospect thread stack. */
+/// A subclass of Vm.RuntimeError that saves the ResourceTracker and Retrospect thread stack.
 class RuntimeError extends Vm.RuntimeError {
 
   final ResourceTracker tracker;

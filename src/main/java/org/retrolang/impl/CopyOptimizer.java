@@ -31,36 +31,33 @@ import org.retrolang.util.Bits;
 import org.retrolang.util.Bits.Op;
 import org.retrolang.util.SmallIntMap;
 
-/**
- * CopyOptimizer identifies cases where a CopyPlan can be optimized by promoting one or more
- * assignments (COPY_NUM, SET_NUM, COPY_REF, or SET_REF) from inside switch branches to the top
- * level. "Optimized" here is judged primarily by reducing the number of assignments in the
- * resulting code; in some cases that might actually lead to more assignments being executed (if an
- * assignment is done at the top level and then overwritten by another assignment to the same
- * variable in the chosen switch branch), but we assume that on the whole reducing code size is an
- * improvement (and without statistics on how often each branch is taken we're unable to optimize
- * execution time directly).
- *
- * <p>CopyOptimizer objects are not created directly; the static {@link #optimize(CopyPlan, int,
- * int, int, Policy)} method (and a handful of convenience methods such as {@link #toRegisters} for
- * common cases) is the only entry point (the call to {@link #optimize} will create a CopyOptimizer
- * instance to hold temporary state if the plan to be optimized contains at least one Switch step).
- *
- * <p>Exactly when it is valid to promote an assignment, and when a promotion would be an
- * optimization, depends on how the plan will be used, so {@link #optimize} takes a {@link Policy}
- * argument.
- *
- * <p>When the policy is INITIALIZATION_REQUIRED, {@link #optimize} also ensures that all paths in
- * the returned plan assign values to all of the variables in {@code dst}; this is necessary when
- * the variables are Java locals, since those cannot be left uninitialized even if we do not care
- * about their values. This is an "optimization" in the sense that without it we would have to
- * blindly initialize all destination locals before executing the plan.
- *
- * <p>Note that CopyOptimizer currently only considers promoting assignments to the top level (i.e.
- * outside any switches); when there are nested switches there might be cases where a partial
- * promotion (from within a nested switch to within the containing switch) would be beneficial, but
- * for now we are not considering that possibility.
- */
+/// CopyOptimizer identifies cases where a CopyPlan can be optimized by promoting one or more
+/// assignments (COPY\_NUM, SET\_NUM, COPY\_REF, or SET\_REF) from inside switch branches to the top
+/// level. "Optimized" here is judged primarily by reducing the number of assignments in the
+/// resulting code; in some cases that might actually lead to more assignments being executed (if an
+/// assignment is done at the top level and then overwritten by another assignment to the same
+/// variable in the chosen switch branch), but we assume that on the whole reducing code size is an
+/// improvement (and without statistics on how often each branch is taken we're unable to optimize
+/// execution time directly).
+///
+/// CopyOptimizer objects are not created directly; the static [#optimize(CopyPlan, int, int, int,
+/// Policy)] method (and a handful of convenience methods such as [#toRegisters] for common cases)
+/// is the only entry point (the call to [#optimize] will create a CopyOptimizer instance to hold
+/// temporary state if the plan to be optimized contains at least one Switch step).
+///
+/// Exactly when it is valid to promote an assignment, and when a promotion would be an
+/// optimization, depends on how the plan will be used, so [#optimize] takes a [Policy] argument.
+///
+/// When the policy is INITIALIZATION\_REQUIRED, [#optimize] also ensures that all paths in the
+/// returned plan assign values to all of the variables in `dst`; this is necessary when the
+/// variables are Java locals, since those cannot be left uninitialized even if we do not care about
+/// their values. This is an "optimization" in the sense that without it we would have to blindly
+/// initialize all destination locals before executing the plan.
+///
+/// Note that CopyOptimizer currently only considers promoting assignments to the top level (i.e.
+/// outside any switches); when there are nested switches there might be cases where a partial
+/// promotion (from within a nested switch to within the containing switch) would be beneficial, but
+/// for now we are not considering that possibility.
 class CopyOptimizer {
 
   // See the javadoc of optimize(CopyPlan, int, int, int, Policy) for an explanation of these
@@ -70,76 +67,62 @@ class CopyOptimizer {
 
   final Policy policy;
 
-  /**
-   * Indexed by the result of {@link #index(NumVar)} or {@link #index(RefVar)}; if non-null, a step
-   * whose destination is the corresponding NumVar or RefVar.
-   *
-   * <p>We currently only consider promoting the first assignment we see to each destination NumVar
-   * or RefVar. In some cases we could do better by choosing a later assignment (if it occurs more
-   * often), but I'll wait for some evidence to justify the additional complexity of implementing
-   * that.
-   */
+  /// Indexed by the result of [#index(NumVar)] or [#index(RefVar)]; if non-null, a step whose
+  /// destination is the corresponding NumVar or RefVar.
+  ///
+  /// We currently only consider promoting the first assignment we see to each destination NumVar or
+  /// RefVar. In some cases we could do better by choosing a later assignment (if it occurs more
+  /// often), but I'll wait for some evidence to justify the additional complexity of implementing
+  /// that.
   private final Basic[] promotable;
 
-  /** Set if the corresponding step in {@link #promotable} has been seen more than once. */
+  /// Set if the corresponding step in [#promotable] has been seen more than once.
   private final Bits.Builder foundMultiple = new Bits.Builder();
 
-  /**
-   * Set if the corresponding destination variable is also set by steps other than the one in {@link
-   * #promotable}.
-   */
+  /// Set if the corresponding destination variable is also set by steps other than the one in
+  /// [#promotable].
   private final Bits.Builder conflicted = new Bits.Builder();
 
-  /**
-   * Set if the corresponding destination variable has been set outside of any switch.
-   *
-   * <p>Used only when policy is INITIALIZATION_REQUIRED; otherwise null.
-   */
+  /// Set if the corresponding destination variable has been set outside of any switch.
+  ///
+  /// Used only when policy is INITIALIZATION\_REQUIRED; otherwise null.
   private final Bits.Builder topLevelInitialized;
 
-  /**
-   * Set if the corresponding destination variable has been set on the current switch branch.
-   *
-   * <p>Used only when policy is VARRAY_REPLACE, INITIALIZATION_REQUIRED, or
-   * UNANIMOUS_PROMOTION_ONLY; otherwise null.
-   */
+  /// Set if the corresponding destination variable has been set on the current switch branch.
+  ///
+  /// Used only when policy is VARRAY\_REPLACE, INITIALIZATION\_REQUIRED, or
+  /// UNANIMOUS\_PROMOTION\_ONLY; otherwise null.
   private final Bits.Builder initialized;
 
-  /**
-   * Set if the corresponding destination variable has been set on some branches of a switch and not
-   * on others.
-   *
-   * <p>Used only when policy is VARRAY_REPLACE, INITIALIZATION_REQUIRED, or
-   * UNANIMOUS_PROMOTION_ONLY; otherwise null.
-   */
+  /// Set if the corresponding destination variable has been set on some branches of a switch and
+  /// not on others.
+  ///
+  /// Used only when policy is VARRAY\_REPLACE, INITIALIZATION\_REQUIRED, or
+  /// UNANIMOUS\_PROMOTION\_ONLY; otherwise null.
   private final Bits.Builder inconsistentInitialization;
 
-  /**
-   * Tracks whether a RefVar in the source template has been consistently assigned to a single
-   * destination RefVar. It is only safe to promote a RefVar copy if it is always assigned to the
-   * same RefVar in the destination and it is never read without copying it (since that would imply
-   * that sometimes the source is non-null when the destination should be null). The value in the
-   * map is either the index of the dst RefVar we can copy this src RefVar into, or -1 if this src
-   * RefVar cannot be safely copied into any dst RefVar.
-   *
-   * <p>The read-without-copying steps that can cause us to put -1 in this map are
-   *
-   * <ul>
-   *   <li>VERIFY_REF, VERIFY_REF_TYPE, or FRAME_TO_COMPOUND;
-   *   <li>COMPOUND_TO_FRAME with the RefVar anywhere in the source template; or
-   *   <li>a switch on the RefVar that has at least one non-FAIL branch corresponding to a singleton
-   *       in the source Union.
-   * </ul>
-   *
-   * <p>For example, the CopyPlan from an untagged union {@code x0⸨None, String⸩} to a tagged union
-   * {@code b0⸨i1, None, x0:String⸩} is {@code x0⸨None:set(1, b0); String:set(2, b0),set(x0, x0)⸩}.
-   * Although dst {@code x0} is only ever set to src {@code x0}, in cases where src {@code x0} is
-   * None, dst {@code x0} should be null, so the copy cannot be promoted.
-   *
-   * <p>Since (unlike the other fields of CopyOptimizer) {@code srcRefVarDstIndices} is indexed by
-   * src RefVars, we cannot rely on {@link #dstRefVarIndexBase} to shift them into a known range, so
-   * we just rely on SmallIntMap's efficient handling of sparse maps.
-   */
+  /// Tracks whether a RefVar in the source template has been consistently assigned to a single
+  /// destination RefVar. It is only safe to promote a RefVar copy if it is always assigned to the
+  /// same RefVar in the destination and it is never read without copying it (since that would imply
+  /// that sometimes the source is non-null when the destination should be null). The value in the
+  /// map is either the index of the dst RefVar we can copy this src RefVar into, or -1 if this src
+  /// RefVar cannot be safely copied into any dst RefVar.
+  ///
+  /// The read-without-copying steps that can cause us to put -1 in this map are
+  ///
+  /// - VERIFY\_REF, VERIFY\_REF\_TYPE, or FRAME\_TO\_COMPOUND;
+  /// - COMPOUND\_TO\_FRAME with the RefVar anywhere in the source template; or
+  /// - a switch on the RefVar that has at least one non-FAIL branch corresponding to a singleton in
+  ///   the source Union.
+  ///
+  /// For example, the CopyPlan from an untagged union `x0⸨None, String⸩` to a tagged union `b0⸨i1,
+  /// None, x0:String⸩` is `x0⸨None:set(1, b0); String:set(2, b0),set(x0, x0)⸩`. Although dst `x0`
+  /// is only ever set to src `x0`, in cases where src `x0` is None, dst `x0` should be null, so the
+  /// copy cannot be promoted.
+  ///
+  /// Since (unlike the other fields of CopyOptimizer) `srcRefVarDstIndices` is indexed by src
+  /// RefVars, we cannot rely on [#dstRefVarIndexBase] to shift them into a known range, so we just
+  /// rely on SmallIntMap's efficient handling of sparse maps.
   private final SmallIntMap.Builder<Integer> srcRefVarDstIndices = new SmallIntMap.Builder<>();
 
   private CopyOptimizer(
@@ -160,34 +143,26 @@ class CopyOptimizer {
   }
 
   enum Policy {
-    /**
-     * A simple promotion policy: assignments are promotable if the same assignment appears in more
-     * than one branch of a switch.
-     */
+    /// A simple promotion policy: assignments are promotable if the same assignment appears in more
+    /// than one branch of a switch.
     BASE(false),
-    /** Assignments are promotable if there are no conflicting assignments. */
+    /// Assignments are promotable if there are no conflicting assignments.
     NO_CONFLICTS(false),
-    /**
-     * Assignments are promotable if there are no conflicting assignments and either the variable is
-     * assigned on every non-FAIL branch or the assignment is a copy of a NumVar with the same
-     * encoding.
-     */
+    /// Assignments are promotable if there are no conflicting assignments and either the variable
+    /// is assigned on every non-FAIL branch or the assignment is a copy of a NumVar with the same
+    /// encoding.
     VARRAY_REPLACE(true),
-    /**
-     * Assignments are promotable if the same assignment appears in more than one branch of a
-     * switch, or if there are switch branches that don't assign to that destination at all. The
-     * resulting plan will assign a value to every destination variable (at least once) on every
-     * non-FAIL branch; if it is unable to promote one of the assignments (which can happen for
-     * RefVars, not NumVars) it will start the plan by assigning null to the RefVar.
-     */
+    /// Assignments are promotable if the same assignment appears in more than one branch of a
+    /// switch, or if there are switch branches that don't assign to that destination at all. The
+    /// resulting plan will assign a value to every destination variable (at least once) on every
+    /// non-FAIL branch; if it is unable to promote one of the assignments (which can happen for
+    /// RefVars, not NumVars) it will start the plan by assigning null to the RefVar.
     INITIALIZATION_REQUIRED(true),
-    /** Assignments are only promotable if the same value is assigned on every non-FAIL branch. */
+    /// Assignments are only promotable if the same value is assigned on every non-FAIL branch.
     UNANIMOUS_PROMOTION_ONLY(true),
-    /**
-     * The indices of destination NumVars are assumed to be byte offsets, so e.g. an assignment to
-     * i4 conflicts with an assignment to b5. Only promote assignments that don't conflict with any
-     * other assignments.
-     */
+    /// The indices of destination NumVars are assumed to be byte offsets, so e.g. an assignment to
+    /// i4 conflicts with an assignment to b5. Only promote assignments that don't conflict with any
+    /// other assignments.
     NUM_VARS_ARE_BYTE_OFFSETS(false);
 
     final boolean checkInitialization;
@@ -197,17 +172,15 @@ class CopyOptimizer {
     }
   }
 
-  /**
-   * A convenience method for optimizing plans whose destination template is an {@link RValue}, i.e.
-   * NumVar and RefVar indices refer to registers.
-   *
-   * @param registerStart the value of CodeBuilder.numRegisters() before the destination template
-   *     was built
-   * @param registerEnd the value of CodeBuilder.numRegisters() after the destination template was
-   *     built
-   * @param dst the destination template; ensures that all registers in this template will be
-   *     initialized
-   */
+  /// A convenience method for optimizing plans whose destination template is an [RValue], i.e.
+  /// NumVar and RefVar indices refer to registers.
+  ///
+  /// @param registerStart the value of CodeBuilder.numRegisters() before the destination template
+  ///   was built
+  /// @param registerEnd the value of CodeBuilder.numRegisters() after the destination template was
+  ///   built
+  /// @param dst the destination template; ensures that all registers in this template will be
+  ///   initialized
   static CopyPlan toRegisters(CopyPlan plan, int registerStart, int registerEnd, Template dst) {
     if (plan.isFail() || registerStart == registerEnd) {
       return plan;
@@ -228,39 +201,31 @@ class CopyOptimizer {
     return optimizer.finish(plan, dst);
   }
 
-  /**
-   * A convenience method for optimizing plans whose destination is the TState's function results.
-   */
+  /// A convenience method for optimizing plans whose destination is the TState's function results.
   static CopyPlan toFnResult(CopyPlan plan, int objSize, int byteSize) {
     return optimize(plan, 0, -byteSize, byteSize + objSize, Policy.NUM_VARS_ARE_BYTE_OFFSETS);
   }
 
-  /**
-   * A convenience method for optimizing plans whose destination is an instance of the given
-   * RecordLayout.
-   */
+  /// A convenience method for optimizing plans whose destination is an instance of the given
+  /// RecordLayout.
   static CopyPlan toRecord(CopyPlan plan, RecordLayout layout) {
     return optimize(plan, layout, Policy.NUM_VARS_ARE_BYTE_OFFSETS);
   }
 
-  /**
-   * A convenience method for optimizing plans whose destination is one element of an instance of
-   * the given VArrayLayout.
-   */
+  /// A convenience method for optimizing plans whose destination is one element of an instance of
+  /// the given VArrayLayout.
   static CopyPlan toVArray(CopyPlan plan, VArrayLayout layout) {
     return optimize(plan, layout, Policy.BASE);
   }
 
-  /**
-   * Assumes (like {@link #toRegisters}) that the destination template is an {@link RValue}, but
-   * instead of copying a value the resulting plan will be used to compare the source value with the
-   * destination value.
-   *
-   * @param registerStart the value of CodeBuilder.numRegisters() before the destination template
-   *     was built
-   * @param registerEnd the value of CodeBuilder.numRegisters() after the destination template was
-   *     built
-   */
+  /// Assumes (like [#toRegisters]) that the destination template is an [RValue], but instead of
+  /// copying a value the resulting plan will be used to compare the source value with the
+  /// destination value.
+  ///
+  /// @param registerStart the value of CodeBuilder.numRegisters() before the destination template
+  ///   was built
+  /// @param registerEnd the value of CodeBuilder.numRegisters() after the destination template was
+  ///   built
   static CopyPlan equalsRegisters(CopyPlan plan, int registerStart, int registerEnd) {
     return optimize(
         plan,
@@ -270,10 +235,8 @@ class CopyOptimizer {
         Policy.UNANIMOUS_PROMOTION_ONLY);
   }
 
-  /**
-   * Returns a plan suitable for comparing the source value with a RecordLayout instance or one
-   * element of a VArrayLayout instance.
-   */
+  /// Returns a plan suitable for comparing the source value with a RecordLayout instance or one
+  /// element of a VArrayLayout instance.
   static CopyPlan equalsLayout(CopyPlan plan, FrameLayout layout) {
     return optimize(plan, layout, Policy.UNANIMOUS_PROMOTION_ONLY);
   }
@@ -283,22 +246,18 @@ class CopyOptimizer {
     return optimize(plan, 0, -numNv, dstLayout.refVarIndexLimit() + numNv, policy);
   }
 
-  /**
-   * Returns an equivalent plan, optimized according to the given policy.
-   *
-   * <p>Most of CopyOptimizer's state has an entry for each NumVar and RefVar in the destination
-   * template. To make that efficient, we require that the caller provide a mapping from NumVar
-   * indices and RefVar indices to small integers. The requirements are that
-   *
-   * <ul>
-   *   <li>For all NumVars {@code nv} in the destination template, {@code
-   *       nv.index-dstNumVarIndexBase} is in {@code [0 .. numDstVars-1]}.
-   *   <li>For all RefVars {@code rv} in the destination template, {@code
-   *       rv.index-dstRefVarIndexBase} is in {@code [0 .. numDstVars-1]}.
-   *   <li>For any NumVar {@code nv} and RefVar {@code rv} in the destination template, {@code
-   *       nv.index-dstNumVarIndexBase != rv.index-dstRefVarIndexBase}.
-   * </ul>
-   */
+  /// Returns an equivalent plan, optimized according to the given policy.
+  ///
+  /// Most of CopyOptimizer's state has an entry for each NumVar and RefVar in the destination
+  /// template. To make that efficient, we require that the caller provide a mapping from NumVar
+  /// indices and RefVar indices to small integers. The requirements are that
+  ///
+  /// - For all NumVars `nv` in the destination template, `nv.index-dstNumVarIndexBase` is in `[0 ..
+  ///   numDstVars-1]`.
+  /// - For all RefVars `rv` in the destination template, `rv.index-dstRefVarIndexBase` is in `[0 ..
+  ///   numDstVars-1]`.
+  /// - For any NumVar `nv` and RefVar `rv` in the destination template,
+  ///   `nv.index-dstNumVarIndexBase != rv.index-dstRefVarIndexBase`.
   static CopyPlan optimize(
       CopyPlan plan,
       int dstNumVarIndexBase,
@@ -324,12 +283,10 @@ class CopyOptimizer {
     return (optimizer == null) ? plan : optimizer.finish(plan, null);
   }
 
-  /**
-   * Called after all of {@code plan} has been analyzed, to construct the optimized plan.
-   *
-   * <p>If {@link #policy} is INITIALIZATION_REQUIRED, the destination template must be supplied so
-   * that the full set of destination registers can be determined.
-   */
+  /// Called after all of `plan` has been analyzed, to construct the optimized plan.
+  ///
+  /// If [#policy] is INITIALIZATION\_REQUIRED, the destination template must be supplied so that
+  /// the full set of destination registers can be determined.
   private CopyPlan finish(CopyPlan plan, Template dst) {
     assert (policy != Policy.INITIALIZATION_REQUIRED) || (dst != null);
     ImmutableList.Builder<Step> newSteps = ImmutableList.builder();
@@ -404,18 +361,14 @@ class CopyOptimizer {
     return new CopyPlan(newSteps.build());
   }
 
-  /**
-   * Returns true if the src and dst NumVars of the given step (which must be a COPY_NUM) have the
-   * same encoding.
-   */
+  /// Returns true if the src and dst NumVars of the given step (which must be a COPY\_NUM) have the
+  /// same encoding.
   private static boolean sameEncoding(Basic step) {
     return ((NumVar) step.src).encoding == ((NumVar) step.dst).encoding;
   }
 
-  /**
-   * After completing the analysis pass, CopyOptimizer calls isPromotable once with each candidate
-   * assignment to decide whether it should be promoted.
-   */
+  /// After completing the analysis pass, CopyOptimizer calls isPromotable once with each candidate
+  /// assignment to decide whether it should be promoted.
   private boolean isPromotable(Basic step, int index) {
     if (step.type == StepType.COMPOUND_TO_FRAME || step.type == StepType.FRAME_TO_COMPOUND) {
       // These steps are never promotable (but we put them in `promotable` in case we're running
@@ -472,26 +425,20 @@ class CopyOptimizer {
     };
   }
 
-  /**
-   * Returns the index in {@link #promotable} (and other CopyOptimizer state) to use for the given
-   * NumVar from the destination template.
-   */
+  /// Returns the index in [#promotable] (and other CopyOptimizer state) to use for the given NumVar
+  /// from the destination template.
   private int index(NumVar dst) {
     return dst.index - dstNumVarIndexBase;
   }
 
-  /**
-   * Returns the index in {@link #promotable} (and other CopyOptimizer state) to use for the given
-   * RefVar from the destination template.
-   */
+  /// Returns the index in [#promotable] (and other CopyOptimizer state) to use for the given RefVar
+  /// from the destination template.
   private int index(RefVar dst) {
     return dst.index - dstRefVarIndexBase;
   }
 
-  /**
-   * Returns the index in {@link #promotable} (and other CopyOptimizer state) to use for the
-   * destination of the given step, or -1 if the destination is neither a NumVar nor a RefVar.
-   */
+  /// Returns the index in [#promotable] (and other CopyOptimizer state) to use for the destination
+  /// of the given step, or -1 if the destination is neither a NumVar nor a RefVar.
   private int dstIndex(Basic step) {
     return switch (step.type) {
       case COPY_NUM, SET_NUM -> index((NumVar) step.dst);
@@ -500,7 +447,7 @@ class CopyOptimizer {
     };
   }
 
-  /** Returns true if this is a step we've previously decided to promote. */
+  /// Returns true if this is a step we've previously decided to promote.
   private boolean isPromoted(Basic step) {
     int index = dstIndex(step);
     if (index < 0) {
@@ -510,7 +457,7 @@ class CopyOptimizer {
     return (fromPromotable != null) && fromPromotable.equals(step);
   }
 
-  /** Called with each step whose src is a RefVar, to update {@link #srcRefVarDstIndices}. */
+  /// Called with each step whose src is a RefVar, to update [#srcRefVarDstIndices].
   private void updateSrcRefVarDstIndices(Basic step) {
     int srcIndex = ((RefVar) step.src).index;
     if (step.dst instanceof RefVar rvDst) {
@@ -520,7 +467,7 @@ class CopyOptimizer {
     }
   }
 
-  /** Sets topLevelInitialized for any NumVar or RefVar in the destination of this step. */
+  /// Sets topLevelInitialized for any NumVar or RefVar in the destination of this step.
   void addTopLevel(Basic step) {
     int index = dstIndex(step);
     if (index >= 0) {
@@ -542,9 +489,7 @@ class CopyOptimizer {
     }
   }
 
-  /**
-   * Called once with each Basic step in the plan being optimized, to update the optimizer's state.
-   */
+  /// Called once with each Basic step in the plan being optimized, to update the optimizer's state.
   private void analyze(Basic step) {
     if (step.src instanceof RefVar) {
       updateSrcRefVarDstIndices(step);
@@ -578,7 +523,7 @@ class CopyOptimizer {
     }
   }
 
-  /** Called once with each Switch in the plan being optimized. */
+  /// Called once with each Switch in the plan being optimized.
   private void analyze(Switch sw) {
     int nChoices = sw.union.numChoices();
     // If we're checking initialization we need to save the current initialization state (which
@@ -624,10 +569,8 @@ class CopyOptimizer {
     }
   }
 
-  /**
-   * Set {@link #conflicted} for each NumVar or RefVar in the given destination template; called
-   * when we encounter a FRAME_TO_COMPOUND step.
-   */
+  /// Set [#conflicted] for each NumVar or RefVar in the given destination template; called when we
+  /// encounter a FRAME\_TO\_COMPOUND step.
   private void allVarsConflict(Template t, Basic step) {
     assert step.type == StepType.FRAME_TO_COMPOUND;
     Template.visitVars(
@@ -657,10 +600,8 @@ class CopyOptimizer {
         });
   }
 
-  /**
-   * Set {@link #srcRefVarDstIndices} to -1 for each RefVar in the given source template; called
-   * when we encounter a COMPOUND_TO_FRAME step.
-   */
+  /// Set [#srcRefVarDstIndices] to -1 for each RefVar in the given source template; called when we
+  /// encounter a COMPOUND\_TO\_FRAME step.
   private void invalidateAllSrcRefVars(Template t) {
     Template.visitVars(t, refVar -> srcRefVarDstIndices.put(refVar.index, -1));
   }

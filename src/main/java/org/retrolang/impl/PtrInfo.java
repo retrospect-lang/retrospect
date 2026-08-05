@@ -29,24 +29,18 @@ import org.retrolang.code.TestBlock;
 import org.retrolang.code.ValueInfo;
 import org.retrolang.util.Bits;
 
-/**
- * A ValueInfo that represents information about a pointer-valued register. The implementations of
- * PtrInfo include
- *
- * <ul>
- *   <li>BaseType.NonCompositional: when used as a PtrInfo represents that the pointer is an
- *       instance of the baseType's java class.
- *   <li>FrameLayout: when used as a PtrInfo represents that the pointer is a Frame with that
- *       layout.
- *   <li>IsNotShared: the pointer is a Frame (with a specified layout) for which {@link
- *       RefCounted#isNotShared()} returns true.
- *   <li>Non-array BaseType with size &gt; 0: when used as a PtrInfo represents that the pointer is
- *       a Frame using a RecordLayout with that BaseType.
- *   <li>Array BaseType with size &gt; 0: when used as a PtrInfo represents that the pointer is a
- *       Frame representing an array (but due to layout evolution it may no longer be the same
- *       baseType).
- * </ul>
- */
+/// A ValueInfo that represents information about a pointer-valued register. The implementations of
+/// PtrInfo include
+///
+/// - BaseType.NonCompositional: when used as a PtrInfo represents that the pointer is an instance
+///   of the baseType's java class.
+/// - FrameLayout: when used as a PtrInfo represents that the pointer is a Frame with that layout.
+/// - IsNotShared: the pointer is a Frame (with a specified layout) for which
+///   [RefCounted#isNotShared()] returns true.
+/// - Non-array BaseType with size > 0: when used as a PtrInfo represents that the pointer is a
+///   Frame using a RecordLayout with that BaseType.
+/// - Array BaseType with size > 0: when used as a PtrInfo represents that the pointer is a Frame
+///   representing an array (but due to layout evolution it may no longer be the same baseType).
 public interface PtrInfo extends ValueInfo {
 
   BaseType baseType();
@@ -135,7 +129,7 @@ public interface PtrInfo extends ValueInfo {
     return intersection(info2, info1) == info2;
   }
 
-  /** Converts an IsNotShared or Const to a FrameLayout or (for non-Frame constants) BaseType. */
+  /// Converts an IsNotShared or Const to a FrameLayout or (for non-Frame constants) BaseType.
   private static ValueInfo widen(ValueInfo ptrInfo) {
     if (ptrInfo instanceof IsNotShared) {
       return ((IsNotShared) ptrInfo).layout;
@@ -176,10 +170,8 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
-  /**
-   * A PtrInfo indicating that the pointer is a reference to an instance of a specified {@link
-   * BaseType.NonCompositional}; may optionally identify a subset of those instances.
-   */
+  /// A PtrInfo indicating that the pointer is a reference to an instance of a specified
+  /// [BaseType.NonCompositional]; may optionally identify a subset of those instances.
   record NonCompositional(BaseType.NonCompositional baseType) implements PtrInfo {
 
     @Override
@@ -211,15 +203,13 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
-  /** Returns true if the given ValueInfo implies that the value is unshared. */
+  /// Returns true if the given ValueInfo implies that the value is unshared.
   public static boolean isUnshared(ValueInfo info) {
     return info instanceof IsNotShared;
   }
 
-  /**
-   * A PtrInfo indicating that the pointer is a reference to a Frame with the given layout and for
-   * which {@link RefCounted#isNotShared()} returns true.
-   */
+  /// A PtrInfo indicating that the pointer is a reference to a Frame with the given layout and for
+  /// which [RefCounted#isNotShared()] returns true.
   record IsNotShared(FrameLayout layout) implements PtrInfo {
 
     @Override
@@ -244,14 +234,12 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
-  /**
-   * Tests the Java class of a CodeValue, looking either for Frame or for the Java class of a {@link
-   * BaseType.NonCompositional}.
-   */
+  /// Tests the Java class of a CodeValue, looking either for Frame or for the Java class of a
+  /// [BaseType.NonCompositional].
   static class TestClass extends TestBlock {
     final BaseType.NonCompositional baseType;
 
-    /** If baseType is null, test for Frame; otherwise test for the corresponding java type. */
+    /// If baseType is null, test for Frame; otherwise test for the corresponding java type.
     TestClass(CodeValue value, BaseType.NonCompositional baseType) {
       super(value, null);
       assert baseType == null || baseType.javaType != null;
@@ -301,14 +289,11 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
-  /**
-   * A TestBlock that checks if a Frame-typed CodeValue has the specified FrameLayout.
-   *
-   * <p>Note that although this test takes two values ({@code frame} and {@code layoutValue}) it is
-   * only testing one of them; {@code layoutValue} must be the result of {@link
-   * Frame#GET_LAYOUT_OR_REPLACEMENT} applied to {@code frame}. (We emit code that references {@code
-   * layoutValue}, but any info is attached to {@code frame}).
-   */
+  /// A TestBlock that checks if a Frame-typed CodeValue has the specified FrameLayout.
+  ///
+  /// Note that although this test takes two values (`frame` and `layoutValue`) it is only testing
+  /// one of them; `layoutValue` must be the result of [Frame#GET_LAYOUT_OR_REPLACEMENT] applied to
+  /// `frame`. (We emit code that references `layoutValue`, but any info is attached to `frame`).
   static class TestLayout extends TestBlock {
     final FrameLayout layout;
 
@@ -359,10 +344,8 @@ public interface PtrInfo extends ValueInfo {
     return (t instanceof Template.RefVar rv) && rv.baseType.usesFrames();
   }
 
-  /**
-   * A condition that is true if a register holding an untagged union is one of a specified subset
-   * of the union's choices.
-   */
+  /// A condition that is true if a register holding an untagged union is one of a specified subset
+  /// of the union's choices.
   static class TypeTest extends Condition {
     final Template.Union union;
     final Bits bits;

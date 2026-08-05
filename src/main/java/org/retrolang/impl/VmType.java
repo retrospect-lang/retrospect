@@ -28,32 +28,27 @@ import java.util.Map;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 
-/**
- * The implementation of Vm.Type; subclasses are responsible for defining {@link #contains}.
- *
- * <p>This class has four subtypes: {@link BaseType.AsType}, {@link Union}, {@link Core#INTEGER},
- * and {@link Core#ARRAY}.
- */
+/// The implementation of Vm.Type; subclasses are responsible for defining [#contains].
+///
+/// This class has four subtypes: [BaseType.AsType], [Union], [Core#INTEGER], and [Core#ARRAY].
 public abstract class VmType implements Vm.Type {
 
   final VmModule module;
   final String name;
 
-  /** If this is a Union, {@code superTypes} includes this; otherwise it does not. */
+  /// If this is a Union, `superTypes` includes this; otherwise it does not.
   final SuperTypes superTypes;
 
-  /** A lambda value that returns True if the arg has this type */
+  /// A lambda value that returns True if the arg has this type
   final Singleton testLambda;
 
-  /**
-   * Methods attached to this type. The key uniquely identifies the function + argument position.
-   *
-   * <p>Note that methods may be saved with the VmFunction, or attached to one or more of their
-   * argument types; see {@link ModuleBuilder#addMethod} for details.
-   *
-   * <p>Protected by locking module.builder; once that is null this field is immutable (and its
-   * value is either null or an ImmutableMap of ImmutableLists).
-   */
+  /// Methods attached to this type. The key uniquely identifies the function + argument position.
+  ///
+  /// Note that methods may be saved with the VmFunction, or attached to one or more of their
+  /// argument types; see [ModuleBuilder#addMethod] for details.
+  ///
+  /// Protected by locking module.builder; once that is null this field is immutable (and its value
+  /// is either null or an ImmutableMap of ImmutableLists).
   private Map<VmFunction.ArgKey, List<VmMethod>> methods;
 
   VmType(VmModule module, String name, Vm.Type... superTypes) {
@@ -63,21 +58,17 @@ public abstract class VmType implements Vm.Type {
     this.testLambda = new TestLambda(this).asValue();
   }
 
-  /**
-   * Returns true if this type contains all values in the given type.
-   *
-   * <p>More precisely:
-   *
-   * <ul>
-   *   <li>If this type corresponds to a BaseType, returns true if the argument is the same type as
-   *       this.
-   *   <li>If this type corresponds to a union declared with supertypes ("type X is ..."), returns
-   *       true if type was declared to have this as a supertype (directly or indirectly).
-   *   <li>If this type corresponds to a union declared with subtypes ("type X contains ..."),
-   *       returns true if type was declared to have some type T as a supertype, and this was
-   *       declared to have T as a subtype.
-   * </ul>
-   */
+  /// Returns true if this type contains all values in the given type.
+  ///
+  /// More precisely:
+  ///
+  /// - If this type corresponds to a BaseType, returns true if the argument is the same type as
+  ///   this.
+  /// - If this type corresponds to a union declared with supertypes ("type X is ..."), returns true
+  ///   if type was declared to have this as a supertype (directly or indirectly).
+  /// - If this type corresponds to a union declared with subtypes ("type X contains ..."), returns
+  ///   true if type was declared to have some type T as a supertype, and this was declared to have
+  ///   T as a subtype.
   abstract boolean contains(BaseType type);
 
   @Override
@@ -100,9 +91,7 @@ public abstract class VmType implements Vm.Type {
     return (methods == null) ? null : (ImmutableList<VmMethod>) methods.get(key);
   }
 
-  /**
-   * Attach the given method to this type, for the function/argIndex represented by the given key.
-   */
+  /// Attach the given method to this type, for the function/argIndex represented by the given key.
   void addMethod(VmFunction.ArgKey key, VmMethod method) {
     assert Thread.holdsLock(module.builder());
     assert key != null;
@@ -115,11 +104,9 @@ public abstract class VmType implements Vm.Type {
     }
   }
 
-  /**
-   * If any methods have been attached to this type, copy the {@link #methods} map into an
-   * ImmutableMap of ImmutableLists. After this has been called, no additional methods can be
-   * attached to this type.
-   */
+  /// If any methods have been attached to this type, copy the [#methods] map into an ImmutableMap
+  /// of ImmutableLists. After this has been called, no additional methods can be attached to this
+  /// type.
   void finalizeType() {
     assert Thread.holdsLock(module.builder());
     if (methods != null) {
@@ -128,10 +115,8 @@ public abstract class VmType implements Vm.Type {
     }
   }
 
-  /**
-   * A singleton BaseType that can be passed as the first argument to {@code at()} to test for
-   * values of the given VmType.
-   */
+  /// A singleton BaseType that can be passed as the first argument to `at()` to test for values of
+  /// the given VmType.
   private static class TestLambda extends Core.CoreLambda {
     final VmType vmType;
 
@@ -153,10 +138,8 @@ public abstract class VmType implements Vm.Type {
     }
   }
 
-  /**
-   * A set of Unions closed under the supertype relation; i.e. if a SuperTypes contains x and y is
-   * declared to be a supertype of x, then that SuperTypes also contains y.
-   */
+  /// A set of Unions closed under the supertype relation; i.e. if a SuperTypes contains x and y is
+  /// declared to be a supertype of x, then that SuperTypes also contains y.
   static class SuperTypes {
     static final SuperTypes EMPTY = new SuperTypes(ImmutableSet.of());
 
@@ -166,12 +149,10 @@ public abstract class VmType implements Vm.Type {
       this.asSet = asSet;
     }
 
-    /**
-     * Returns a SuperTypes that contains {@code self} (if it is non-null) and each of the given
-     * super types, and all of their direct and indirect super types.
-     *
-     * <p>The superTypes must all be instances of VmType.Union.
-     */
+    /// Returns a SuperTypes that contains `self` (if it is non-null) and each of the given super
+    /// types, and all of their direct and indirect super types.
+    ///
+    /// The superTypes must all be instances of VmType.Union.
     static SuperTypes construct(Union self, Vm.Type... superTypes) {
       // Optimize some common simple cases.
       if (self == null) {
@@ -195,33 +176,28 @@ public abstract class VmType implements Vm.Type {
     }
   }
 
-  /**
-   * A subclass of VmType for types defined by the Retrospect "type" declaration. There are two
-   * flavors of this declaration:
-   *
-   * <ul>
-   *   <li>"{@code type T is Super1, Super2, ...}" creates a Union with empty {@link #subTypes},
-   *       whose {@link #superTypes} contains T, the listed super types, and all of their direct and
-   *       indirect supertypes.
-   *   <li>"{@code type T contains Sub1, Sub2, ...}" creates a Union whose {@link #subTypes}
-   *       contains the listed subtypes and their subtypes, and whose {@link #superTypes} contains
-   *       only T.
-   * </ul>
-   */
+  /// A subclass of VmType for types defined by the Retrospect "type" declaration. There are two
+  /// flavors of this declaration:
+  ///
+  /// - "`type T is Super1, Super2, ...`" creates a Union with empty [#subTypes], whose
+  ///   [#superTypes] contains T, the listed super types, and all of their direct and indirect
+  ///   supertypes.
+  /// - "`type T contains Sub1, Sub2, ...`" creates a Union whose [#subTypes] contains the listed
+  ///   subtypes and their subtypes, and whose [#superTypes] contains only T.
   public static class Union extends VmType {
     final boolean open;
 
-    /** Does not include this. */
+    /// Does not include this.
     final ImmutableSet<VmType> subTypes;
 
-    /** Creates a new union type that with the given supertypes. */
+    /// Creates a new union type that with the given supertypes.
     Union(VmModule module, String name, boolean open, Vm.Type... superTypes) {
       super(module, name, superTypes);
       this.open = open;
       this.subTypes = ImmutableSet.of();
     }
 
-    /** Creates a new union type that contains the given subtypes. */
+    /// Creates a new union type that contains the given subtypes.
     private Union(VmModule module, String name, Vm.Type[] subTypes, boolean open) {
       super(module, name);
       this.open = open;
@@ -239,7 +215,7 @@ public abstract class VmType implements Vm.Type {
       this.subTypes = builder.build();
     }
 
-    /** Creates a new union type that contains the given subtypes. */
+    /// Creates a new union type that contains the given subtypes.
     static Union withSubTypes(VmModule module, String name, boolean open, Vm.Type... subTypes) {
       return new Union(module, name, subTypes, open);
     }

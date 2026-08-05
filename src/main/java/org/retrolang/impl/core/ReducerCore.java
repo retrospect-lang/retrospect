@@ -38,27 +38,27 @@ import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
 import org.retrolang.impl.VmType;
 
-/** Core Reducer implementations. */
+/// Core Reducer implementations.
 public final class ReducerCore {
-  /** {@code open type Reducer is Collector, Loop} */
+  /// `open type Reducer is Collector, Loop`
   @Core.Public
   public static final VmType.Union REDUCER =
       Core.newOpenUnion("Reducer", LoopCore.COLLECTOR, LoopCore.LOOP);
 
-  /** {@code private singleton Count is Reducer} */
+  /// `private singleton Count is Reducer`
   @Core.Private public static final Singleton COUNT = Core.newSingleton("Count", REDUCER);
 
-  /** {@code function count() = Count} */
+  /// `function count() = Count`
   @Core.Public
   static final VmFunctionBuilder count = VmFunctionBuilder.fromConstant("count", COUNT);
 
-  /** {@code method emptyState(Count) = 0} */
+  /// `method emptyState(Count) = 0`
   @Core.Method("emptyState(Count)")
   static Value emptyStateCount(Value reducer) {
     return NumValue.ZERO;
   }
 
-  /** {@code method nextState(Count, Integer state, _) = state + 1} */
+  /// `method nextState(Count, Integer state, _) = state + 1`
   @Core.Method("nextState(Count, Number, _)")
   static Value nextStateCount(TState tstate, Value reducer, Value state, Value unused)
       throws BuiltinException {
@@ -69,7 +69,7 @@ public final class ReducerCore {
     return result;
   }
 
-  /** {@code method combineStates(Count, Integer state1, Integer state2) = state1 + state2} */
+  /// `method combineStates(Count, Integer state1, Integer state2) = state1 + state2`
   @Core.Method("combineStates(Count, Number, Number)")
   static Value combineStatesCount(TState tstate, Value reducer, Value state1, Value state2)
       throws BuiltinException {
@@ -80,43 +80,39 @@ public final class ReducerCore {
     return result;
   }
 
-  /**
-   * {@code private compound Sum is Reducer}
-   *
-   * <p>Element is the zero value.
-   */
+  /// `private compound Sum is Reducer`
+  ///
+  /// Element is the zero value.
   @Core.Private static final BaseType.Named SUM = Core.newBaseType("Sum", 1, REDUCER);
 
-  /** {@code function sum() = Sum_(0)} */
+  /// `function sum() = Sum_(0)`
   @Core.Public
   static final VmFunctionBuilder sum0 =
       VmFunctionBuilder.fromConstant("sum", SUM.uncountedOf(NumValue.ZERO));
 
-  /** {@code function sum(zero)} */
+  /// `function sum(zero)`
   @Core.Public static final VmFunctionBuilder sum1 = VmFunctionBuilder.create("sum", 1);
 
-  /** {@code method sum(x) = Sum_(x)} */
+  /// `method sum(x) = Sum_(x)`
   @Core.Method("sum(_)")
   static Value sum1(TState tstate, @RC.In Value zero) {
     return tstate.compound(SUM, zero);
   }
 
-  /** {@code method emptyState(Sum reducer) = reducer_} */
+  /// `method emptyState(Sum reducer) = reducer_`
   @Core.Method("emptyState(Sum)")
   static Value emptyStateSum(Value reducer) {
     return reducer.element(0);
   }
 
-  /**
-   * <pre>
-   * method nextState(Sum, state, value) {
-   *   state += value
-   *   return state
-   * }
-   * </pre>
-   *
-   * <p>(Defined using "{@code +=}" instead of "{@code +}" to get the right behavior with matrices.)
-   */
+  /// ```
+  /// method nextState(Sum, state, value) {
+  ///   state += value
+  ///   return state
+  /// }
+  /// ```
+  ///
+  /// (Defined using "`+=`" instead of "`+`" to get the right behavior with matrices.)
   @Core.Method("nextState(Sum, _, _)")
   static void nextStateSum(
       TState tstate,
@@ -127,14 +123,12 @@ public final class ReducerCore {
     tstate.startCall(binaryUpdate, state, Core.add.asLambdaExpr(), value);
   }
 
-  /**
-   * <pre>
-   * method combineStates(Sum, state1, state2) {
-   *   state1 += state2
-   *   return state1
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method combineStates(Sum, state1, state2) {
+  ///   state1 += state2
+  ///   return state1
+  /// }
+  /// ```
   @Core.Method("combineStates(Sum, _, _)")
   static void combineStatesSum(
       TState tstate,
@@ -145,45 +139,41 @@ public final class ReducerCore {
     tstate.startCall(binaryUpdate, state1, Core.add.asLambdaExpr(), state2);
   }
 
-  /**
-   * {@code private compound BooleanReducer is Reducer}
-   *
-   * <p>Elements are {@code initial} and {@code exitOn}.
-   */
+  /// `private compound BooleanReducer is Reducer`
+  ///
+  /// Elements are `initial` and `exitOn`.
   @Core.Private
   static final BaseType.Named BOOLEAN_REDUCER = Core.newBaseType("BooleanReducer", 2, REDUCER);
 
-  /** {@code function allTrue() = BooleanReducer_({initial: True, exitOn: False})} */
+  /// `function allTrue() = BooleanReducer_({initial: True, exitOn: False})`
   @Core.Public
   static final VmFunctionBuilder allTrue =
       VmFunctionBuilder.fromConstant("allTrue", BOOLEAN_REDUCER.uncountedOf(Core.TRUE, Core.FALSE));
 
-  /** {@code function allFalse() = BooleanReducer_({initial: True, exitOn: True})} */
+  /// `function allFalse() = BooleanReducer_({initial: True, exitOn: True})`
   @Core.Public
   static final VmFunctionBuilder allFalse =
       VmFunctionBuilder.fromConstant("allFalse", BOOLEAN_REDUCER.uncountedOf(Core.TRUE, Core.TRUE));
 
-  /** {@code function anyTrue() = BooleanReducer_({initial: False, exitOn: True})} */
+  /// `function anyTrue() = BooleanReducer_({initial: False, exitOn: True})`
   @Core.Public
   static final VmFunctionBuilder anyTrue =
       VmFunctionBuilder.fromConstant("anyTrue", BOOLEAN_REDUCER.uncountedOf(Core.FALSE, Core.TRUE));
 
-  /** {@code function anyFalse() = BooleanReducer_({initial: False, exitOn: False})} */
+  /// `function anyFalse() = BooleanReducer_({initial: False, exitOn: False})`
   @Core.Public
   static final VmFunctionBuilder anyFalse =
       VmFunctionBuilder.fromConstant(
           "anyFalse", BOOLEAN_REDUCER.uncountedOf(Core.FALSE, Core.FALSE));
 
-  /**
-   * <pre>
-   * method nextState(BooleanReducer br, Absent, Boolean value) =
-   *     (value == br_.exitOn) ? loopExit(not br_.initial) : Absent
-   * </pre>
-   *
-   * <p>Note that a BooleanReducer's state is always Absent (the initial state, since we don't
-   * override {@code emptyState}) or a LoopExit. Since {@code nextState} is never called with a
-   * LoopExit, it can only be called with Absent as the current state.
-   */
+  /// ```
+  /// method nextState(BooleanReducer br, Absent, Boolean value) =
+  ///     (value == br_.exitOn) ? loopExit(not br_.initial) : Absent
+  /// ```
+  ///
+  /// Note that a BooleanReducer's state is always Absent (the initial state, since we don't
+  /// override `emptyState`) or a LoopExit. Since `nextState` is never called with a LoopExit, it
+  /// can only be called with Absent as the current state.
   @Core.Method("nextState(BooleanReducer, Absent, Boolean)")
   static Value nextStateBooleanReducer(TState tstate, Value reducer, Value state, Value value) {
     Value exitOn = reducer.peekElement(1);
@@ -196,58 +186,52 @@ public final class ReducerCore {
             () -> Core.ABSENT);
   }
 
-  /**
-   * <pre>
-   * method finalState(BooleanReducer br, state) {
-   *   assert state is Absent
-   *   return br_.initial
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method finalState(BooleanReducer br, state) {
+  ///   assert state is Absent
+  ///   return br_.initial
+  /// }
+  /// ```
   @Core.Method("finalState(BooleanReducer, _)")
   static Value finalStateBooleanReducer(Value reducer, Value state) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(state.is(Core.ABSENT));
     return reducer.element(0);
   }
 
-  /**
-   * {@code private compound Top is Reducer}
-   *
-   * <p>Elements are {@code preferFirst} (a Lambda) and {@code swap} (a Boolean).
-   */
+  /// `private compound Top is Reducer`
+  ///
+  /// Elements are `preferFirst` (a Lambda) and `swap` (a Boolean).
   @Core.Private static final BaseType.Named TOP = Core.newBaseType("Top", 2, REDUCER);
 
   private static final Value MIN_REDUCER =
       TOP.uncountedOf(Core.lessThan.asLambdaExpr(), Core.FALSE);
   private static final Value MAX_REDUCER = TOP.uncountedOf(Core.lessThan.asLambdaExpr(), Core.TRUE);
 
-  /** {@code function min() = Top_([x, y] -> x < y, False)} */
+  /// `function min() = Top_([x, y] -> x < y, False)`
   @Core.Public
   static final VmFunctionBuilder min0 = VmFunctionBuilder.fromConstant("min", MIN_REDUCER);
 
-  /** {@code function max() = Top_([x, y] -> x < y, True)} */
+  /// `function max() = Top_([x, y] -> x < y, True)`
   @Core.Public
   static final VmFunctionBuilder max0 = VmFunctionBuilder.fromConstant("max", MAX_REDUCER);
 
-  /** {@code function top(preferFirst)} */
+  /// `function top(preferFirst)`
   @Core.Public static final VmFunctionBuilder top = VmFunctionBuilder.create("top", 1);
 
-  /** {@code method top(Lambda preferFirst) = Top_(preferFirst, False)} */
+  /// `method top(Lambda preferFirst) = Top_(preferFirst, False)`
   @Core.Method("top(Lambda)")
   static Value top(TState tstate, @RC.In Value preferFirst) {
     return tstate.compound(TOP, preferFirst, Core.FALSE);
   }
 
-  /**
-   * <pre>
-   * method nextState(Top reducer, state, value) {
-   *   if state is Absent or reducer_.preferFirst @ (r_.swap ? [state, value] : [value, state]) {
-   *     return value
-   *   }
-   *   return state
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method nextState(Top reducer, state, value) {
+  ///   if state is Absent or reducer_.preferFirst @ (r_.swap ? [state, value] : [value, state]) {
+  ///     return value
+  ///   }
+  ///   return state
+  /// }
+  /// ```
   static class NextStateTop extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt");
 
@@ -286,13 +270,11 @@ public final class ReducerCore {
     }
   }
 
-  /**
-   * <pre>
-   * method combineStates(Top reducer, state1, state2) {
-   *   return state2 is Absent ? state1 : nextState(reducer, state1, state2)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method combineStates(Top reducer, state1, state2) {
+  ///   return state2 is Absent ? state1 : nextState(reducer, state1, state2)
+  /// }
+  /// ```
   @Core.Method("combineStates(Top, _, _)")
   static void combineStatesTop(
       TState tstate,
@@ -310,28 +292,26 @@ public final class ReducerCore {
             () -> tstate.startCall(nextState, reducer, state1, state2));
   }
 
-  /** {@code method min(collection) default = collection | min} */
+  /// `method min(collection) default = collection | min`
   @Core.Method("min(Collection) default")
   static void minCollection(TState tstate, @RC.In Value collection, @Fn("pipe:2") Caller pipe) {
     tstate.startCall(pipe, collection, MIN_REDUCER);
   }
 
-  /** {@code method max(collection) default = collection | max} */
+  /// `method max(collection) default = collection | max`
   @Core.Method("max(Collection) default")
   static void maxCollection(TState tstate, @RC.In Value collection, @Fn("pipe:2") Caller pipe) {
     tstate.startCall(pipe, collection, MAX_REDUCER);
   }
 
-  /**
-   * {@code private compound ElementLessThan is Lambda}
-   *
-   * <p>Element is {@code key}.
-   */
+  /// `private compound ElementLessThan is Lambda`
+  ///
+  /// Element is `key`.
   @Core.Private
   static final BaseType.Named ELEMENT_LESS_THAN =
       Core.newBaseType("ElementLessThan", 1, Core.LAMBDA);
 
-  /** {@code method at(ElementLessThan elt, [x, y]) = (x @ elt_) < (y @ elt_)} */
+  /// `method at(ElementLessThan elt, [x, y]) = (x @ elt_) < (y @ elt_)`
   static class AtElementLessThan extends BuiltinMethod {
     static final Caller atX = new Caller("at:2", "afterAtX");
     static final Caller atY = new Caller("at:2", "afterAtY");
@@ -357,48 +337,44 @@ public final class ReducerCore {
     }
   }
 
-  /** {@code function minAt(key)} */
+  /// `function minAt(key)`
   @Core.Public static final VmFunctionBuilder minAt = VmFunctionBuilder.create("minAt", 1);
 
-  /** {@code method minAt(key) = Top_(ElementLessThan_(key), False)} */
+  /// `method minAt(key) = Top_(ElementLessThan_(key), False)`
   @Core.Method("minAt(_)")
   static Value minAt(TState tstate, @RC.In Value key) {
     return tstate.compound(TOP, tstate.compound(ELEMENT_LESS_THAN, key), Core.FALSE);
   }
 
-  /** {@code function maxAt(key)} */
+  /// `function maxAt(key)`
   @Core.Public static final VmFunctionBuilder maxAt = VmFunctionBuilder.create("maxAt", 1);
 
-  /** {@code method maxAt(key) = Top_(ElementLessThan_(key), True)} */
+  /// `method maxAt(key) = Top_(ElementLessThan_(key), True)`
   @Core.Method("maxAt(_)")
   static Value maxAt(TState tstate, @RC.In Value key) {
     return tstate.compound(TOP, tstate.compound(ELEMENT_LESS_THAN, key), Core.TRUE);
   }
 
-  /** {@code private singleton SaveUnordered is Reducer} */
+  /// `private singleton SaveUnordered is Reducer`
   @Core.Private
   public static final Singleton SAVE_UNORDERED = Core.newSingleton("SaveUnordered", REDUCER);
 
-  /** {@code function saveUnordered() = SaveUnordered} */
+  /// `function saveUnordered() = SaveUnordered`
   @Core.Public
   static final VmFunctionBuilder saveUnordered =
       VmFunctionBuilder.fromConstant("saveUnordered", SAVE_UNORDERED);
 
-  /**
-   * <pre>
-   * method emptyState(SaveUnordered) = []
-   * </pre>
-   */
+  /// ```
+  /// method emptyState(SaveUnordered) = []
+  /// ```
   @Core.Method("emptyState(SaveUnordered)")
   static Value emptyStateSaveUnordered(Value reducer) {
     return Core.EMPTY_ARRAY;
   }
 
-  /**
-   * <pre>
-   * method nextState(SaveUnordered, state, value) = state &amp; [value]
-   * </pre>
-   */
+  /// ```
+  /// method nextState(SaveUnordered, state, value) = state & [value]
+  /// ```
   @Core.Method("nextState(SaveUnordered, Array, _)")
   static Value nextStateSaveUnordered(
       TState tstate, ResultsInfo results, Value reducer, @RC.In Value state, @RC.In Value value)
@@ -406,11 +382,9 @@ public final class ReducerCore {
     return ValueUtil.appendElement(tstate, state, value, results.result(TProperty.ARRAY_LAYOUT));
   }
 
-  /**
-   * <pre>
-   * method combineStates(SaveUnordered, state1, state2) = state1 &amp; state2
-   * </pre>
-   */
+  /// ```
+  /// method combineStates(SaveUnordered, state1, state2) = state1 & state2
+  /// ```
   static void combineStatesSaveUnordered(
       TState tstate,
       ResultsInfo results,

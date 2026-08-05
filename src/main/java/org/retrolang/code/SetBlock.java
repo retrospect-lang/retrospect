@@ -24,18 +24,16 @@ import org.objectweb.asm.Opcodes;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeValue.Const;
 
-/** A block that sets the value of a register. */
+/// A block that sets the value of a register.
 public class SetBlock extends Block.NonTerminal {
   public final Register lhs;
   private CodeValue rhs;
 
-  /** A cache of {@code rhs.sideEffect()}. */
+  /// A cache of `rhs.sideEffect()`.
   private boolean hasSideEffect;
 
-  /**
-   * Creates a SetBlock that sets {@code lhs} to {@code rhs}. If {@code lhs} is null, evaluates the
-   * {@code rhs} and discards any result.
-   */
+  /// Creates a SetBlock that sets `lhs` to `rhs`. If `lhs` is null, evaluates the `rhs` and
+  /// discards any result.
   public SetBlock(Register lhs, CodeValue rhs) {
     // The rhs must be storable in the register.
     Preconditions.checkArgument(lhs == null || rhs.isCompatible(lhs.type()));
@@ -46,10 +44,8 @@ public class SetBlock extends Block.NonTerminal {
     Preconditions.checkArgument(lhs != null || hasSideEffect);
   }
 
-  /**
-   * Returns true if executing this SetBlock may have a side effect in addition to setting the value
-   * of {@link #lhs}.
-   */
+  /// Returns true if executing this SetBlock may have a side effect in addition to setting the
+  /// value of [#lhs].
   boolean hasSideEffect() {
     return hasSideEffect;
   }
@@ -173,11 +169,9 @@ public class SetBlock extends Block.NonTerminal {
     return super.updateLive();
   }
 
-  /**
-   * A SetBlock whose lhs is only used once immediately after the assignment can usually be
-   * eliminated by just substituting the rhs for the lhs. Calls {@link Block#trySubstitute} on the
-   * following block(s) to see if we can apply that optimization here.
-   */
+  /// A SetBlock whose lhs is only used once immediately after the assignment can usually be
+  /// eliminated by just substituting the rhs for the lhs. Calls [Block#trySubstitute] on the
+  /// following block(s) to see if we can apply that optimization here.
   private boolean tryToEliminateBySubstituting() {
     // If the rhs is a constant or a register any possible substitution will already have happened
     // due to simplification, so we only need to handle SetBlocks where the rhs is an Op.Result.
@@ -270,24 +264,19 @@ public class SetBlock extends Block.NonTerminal {
     return (lhs == null) ? s : (lhs.toString(options) + " ← " + s);
   }
 
-  /**
-   * A Split block that either sets the value of a register and follows the next link, or (if the
-   * rhs throws an exception) follows the alternate link.
-   *
-   * <p>Note that (like a regular SetBlock), if the register is not used the block may be dropped
-   * (so the rhs will not be evaluated, and the alternate link will never be followed).
-   */
+  /// A Split block that either sets the value of a register and follows the next link, or (if the
+  /// rhs throws an exception) follows the alternate link.
+  ///
+  /// Note that (like a regular SetBlock), if the register is not used the block may be dropped (so
+  /// the rhs will not be evaluated, and the alternate link will never be followed).
   public static class WithCatch extends Block.Split {
     public final Register lhs;
     private CodeValue rhs;
 
     public final Class<?> exception;
 
-    /**
-     * Creates a SetBlock.WithCatch that sets {@code lhs} to {@code rhs}. If the evaluation of
-     * {@code rhs} throws {@code exception}, {@code lhs} will not be set and execution will continue
-     * at {@code onThrow}.
-     */
+    /// Creates a SetBlock.WithCatch that sets `lhs` to `rhs`. If the evaluation of `rhs` throws
+    /// `exception`, `lhs` will not be set and execution will continue at `onThrow`.
     public WithCatch(Register lhs, CodeValue rhs, Class<?> exception, FutureBlock onThrow) {
       // TODO: It wouldn't be hard to support lhs == null.
       // We don't currently try to support combining side effects with exceptions.

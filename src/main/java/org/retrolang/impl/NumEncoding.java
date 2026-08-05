@@ -19,28 +19,24 @@ package org.retrolang.impl;
 import com.google.common.base.Ascii;
 import org.retrolang.util.SizeOf;
 
-/**
- * A NumEncoding determines how a NumVar's possible values are represented by a fixed-length
- * sequence of bytes.
- */
+/// A NumEncoding determines how a NumVar's possible values are represented by a fixed-length
+/// sequence of bytes.
 public enum NumEncoding {
   UINT8("b", SizeOf.BYTE),
   INT32("i", SizeOf.INT),
   FLOAT64("d", SizeOf.DOUBLE);
 
-  /** A single-letter prefix ("b", "i", or "d") used for NumVars with this encoding. */
+  /// A single-letter prefix ("b", "i", or "d") used for NumVars with this encoding.
   final String prefix;
 
-  /** The upper-case version of {@link #prefix}. */
+  /// The upper-case version of [#prefix].
   final String upperPrefix;
 
-  /** The number of bytes required for a NumVar with this encoding. */
+  /// The number of bytes required for a NumVar with this encoding.
   final int nBytes;
 
-  /**
-   * The shift required to convert a number of elements with this encoding into a number of bytes; 0
-   * for UINT8, 2 for INT, and 3 for DOUBLE.
-   */
+  /// The shift required to convert a number of elements with this encoding into a number of bytes;
+  /// 0 for UINT8, 2 for INT, and 3 for DOUBLE.
   final int nBytesLog2;
 
   NumEncoding(String prefix, int nBytes) {

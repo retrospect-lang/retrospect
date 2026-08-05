@@ -32,15 +32,14 @@ import org.retrolang.Vm;
 import org.retrolang.util.Bits;
 import org.retrolang.util.Pair;
 
-/**
- * MockVM implements the Retrospect VM interface but isn't able to execute any instructions; instead
- * it simply provides a mostly-readable summary of the VM methods that were called by the compiler.
- *
- * <p>To use: create an instance of MockVM, create a ModuleBuilder with newModule(), call the
- * various new*() methods on the ModuleBuilder, and then call toString() on it. The result will
- * encode all the method calls that were made on that ModuleBuilder, with some canonicalization to
- * simplify tests (e.g. declarations are sorted).
- */
+/// MockVM implements the Retrospect VM interface but isn't able to execute any instructions;
+/// instead it simply provides a mostly-readable summary of the VM methods that were called by the
+/// compiler.
+///
+/// To use: create an instance of MockVM, create a ModuleBuilder with newModule(), call the various
+/// new\*() methods on the ModuleBuilder, and then call toString() on it. The result will encode all
+/// the method calls that were made on that ModuleBuilder, with some canonicalization to simplify
+/// tests (e.g. declarations are sorted).
 class MockVM implements Vm.VirtualMachine {
 
   private static final ImmutableMap<String, Singleton> SINGLETONS;
@@ -89,7 +88,7 @@ class MockVM implements Vm.VirtualMachine {
     INT_TYPE = TYPES.get("Integer");
   }
 
-  /** Maps strings like "add:2" and "sum:0" to the appropriate Core function. */
+  /// Maps strings like "add:2" and "sum:0" to the appropriate Core function.
   private static final ImmutableMap<String, Function> FUNCTIONS;
 
   static {
@@ -339,7 +338,7 @@ class MockVM implements Vm.VirtualMachine {
     throw new AssertionError();
   }
 
-  /** A trivial base class that defines toString() to return the given string. */
+  /// A trivial base class that defines toString() to return the given string.
   abstract static class Named {
     final String name;
 
@@ -374,16 +373,14 @@ class MockVM implements Vm.VirtualMachine {
   }
 
   static class ModuleBuilder extends Named implements Vm.ModuleBuilder {
-    /**
-     * Each call to newSingleton, newCompoundType, newUnionType, newTypeFromUnion, newFunction, or
-     * InstructionBlock.addMethod adds a pair to this list; the first element of the pair is a sort
-     * key, and the second is a textish description of the declaration. Sort keys are chosen so that
-     * they sort in the above order (singletons, then compounds, then both types of unions, then
-     * functions, then methods), and within each kind are sorted by name.
-     */
+    /// Each call to newSingleton, newCompoundType, newUnionType, newTypeFromUnion, newFunction, or
+    /// InstructionBlock.addMethod adds a pair to this list; the first element of the pair is a sort
+    /// key, and the second is a textish description of the declaration. Sort keys are chosen so
+    /// that they sort in the above order (singletons, then compounds, then both types of unions,
+    /// then functions, then methods), and within each kind are sorted by name.
     private List<Pair<String, String>> results = new ArrayList<>();
 
-    /** Calling build() formats the results into a single string. */
+    /// Calling build() formats the results into a single string.
     private String asString;
 
     final Function unCompound;
@@ -395,19 +392,15 @@ class MockVM implements Vm.VirtualMachine {
       updateCompound = new Function("_update", 2, 0, 1);
     }
 
-    /**
-     * Adds a declaration to our output, with the given sort key.
-     *
-     * <p>Sort keys are currently
-     *
-     * <ul>
-     *   <li>"a1" + name: singletons
-     *   <li>"a2" + name: compounds
-     *   <li>"a3" + name: unions
-     *   <li>"b" + name: functions
-     *   <li>"method" + declaration: methods
-     * </ul>
-     */
+    /// Adds a declaration to our output, with the given sort key.
+    ///
+    /// Sort keys are currently
+    ///
+    /// - "a1" + name: singletons
+    /// - "a2" + name: compounds
+    /// - "a3" + name: unions
+    /// - "b" + name: functions
+    /// - "method" + declaration: methods
     private void addResult(String key, String decl) {
       synchronized (this) {
         results.add(new Pair<>(key, decl));
@@ -506,12 +499,10 @@ class MockVM implements Vm.VirtualMachine {
     final int numResults;
     final Value asLambdaExpr;
 
-    /**
-     * Creates a Function.
-     *
-     * @param inOutArgs identifies which args are inOut using a bitmask, i.e. the k-th argument is
-     *     inOut if the k-th bit of inOutArgs is 1.
-     */
+    /// Creates a Function.
+    ///
+    /// @param inOutArgs identifies which args are inOut using a bitmask, i.e. the k-th argument is
+    ///   inOut if the k-th bit of inOutArgs is 1.
     Function(String name, int numArgs, int inOutArgs, int numResults) {
       this(name, numArgs, Bits.fromInt(inOutArgs), numResults);
     }
@@ -583,7 +574,7 @@ class MockVM implements Vm.VirtualMachine {
     }
   }
 
-  /** The only Values we see at compile time are constant expressions. */
+  /// The only Values we see at compile time are constant expressions.
   static class Value extends Expr implements Vm.Value {
     Value(String name) {
       super(name);
@@ -683,37 +674,31 @@ class MockVM implements Vm.VirtualMachine {
     }
   }
 
-  /**
-   * InstructionBlock constructs a toString() result that just records the emit*() methods that were
-   * called on it.
-   *
-   * <p>To better match the behavior of the real VM it does a couple of trivial optimizations:
-   *
-   * <ul>
-   *   <li>Targets that are never branched to are dropped.
-   *   <li>Instructions that are emitted when nextInstructionIsReachable() is false are dropped.
-   * </ul>
-   */
+  /// InstructionBlock constructs a toString() result that just records the emit\*() methods that
+  /// were called on it.
+  ///
+  /// To better match the behavior of the real VM it does a couple of trivial optimizations:
+  ///
+  /// - Targets that are never branched to are dropped.
+  /// - Instructions that are emitted when nextInstructionIsReachable() is false are dropped.
   static class InstructionBlock implements Vm.InstructionBlock {
     final ModuleBuilder module;
     final int numArgs;
     final int numResults;
     final List<String> args = new ArrayList<>();
 
-    /** A list of one-line strings, each ending with "\n"; toString() just appends these. */
+    /// A list of one-line strings, each ending with "\n"; toString() just appends these.
     final List<String> instructions = new ArrayList<>();
 
-    /** The number of calls to newTarget(), for creating distinct labels. */
+    /// The number of calls to newTarget(), for creating distinct labels.
     private int numTargets;
 
     private boolean nextInstructionIsReachable = true;
 
     private boolean done;
 
-    /**
-     * Usually "\n", but set by setLineNumber() to a string that should be appended to the next line
-     * we emit.
-     */
+    /// Usually "\n", but set by setLineNumber() to a string that should be appended to the next
+    /// line we emit.
     private String suffix = "\n";
 
     InstructionBlock(ModuleBuilder module, int numArgs, int numResults) {
@@ -748,7 +733,7 @@ class MockVM implements Vm.VirtualMachine {
       return nextInstructionIsReachable;
     }
 
-    /** Appends one line to our output. */
+    /// Appends one line to our output.
     @FormatMethod
     private void addInst(String fmt, Object... args) {
       assertThat(done).isFalse();
@@ -761,10 +746,8 @@ class MockVM implements Vm.VirtualMachine {
       }
     }
 
-    /**
-     * Calls toString() on each element of objs, and joins them with ", ". Null elements are
-     * displayed as "_".
-     */
+    /// Calls toString() on each element of objs, and joins them with ", ". Null elements are
+    /// displayed as "\_".
     private static String withCommas(Object[] objs) {
       return Arrays.stream(objs)
           .map(x -> (x == null) ? "_" : x.toString())

@@ -27,15 +27,15 @@ import org.retrolang.impl.Template.NumVar;
 @RunWith(JUnit4.class)
 public class CopyPlanTest {
 
-  /** A Constant template for the string {@code "x"}. */
+  /// A Constant template for the string `"x"`.
   private static final Template stringX = Constant.of(StringValue.uncounted("x"));
 
-  /** Returns a template for an array containing the given elements. */
+  /// Returns a template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Converts double quotes to single quotes, to make expected values easier to read. */
+  /// Converts double quotes to single quotes, to make expected values easier to read.
   private static String cleanString(CopyPlan plan) {
     return plan.toString().replace('"', '\'');
   }

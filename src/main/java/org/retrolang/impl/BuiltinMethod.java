@@ -27,119 +27,95 @@ import org.retrolang.impl.BuiltinSupport.BuiltinImpl;
 import org.retrolang.impl.BuiltinSupport.ContinuationMethod;
 import org.retrolang.impl.Err.BuiltinException;
 
-/**
- * Each subclass of BuiltinMethod implements a single built-in method for a Core function.
- *
- * <p>The class itself is currently trivial (it defines no fields or methods); the subclass contract
- * is determined by annotations (@Core.Method) and naming conventions for fields and methods; see
- * builtins.md for details.
- */
+/// Each subclass of BuiltinMethod implements a single built-in method for a Core function.
+///
+/// The class itself is currently trivial (it defines no fields or methods); the subclass contract
+/// is determined by annotations (@Core.Method) and naming conventions for fields and methods; see
+/// builtins.md for details.
 public abstract class BuiltinMethod {
-  /**
-   * A {@code Continuation}, {@link LoopContinuation}, or {@link DetachedContinuation} annotation
-   * must appear on any method that will be the continuation argument to a Caller or the target of a
-   * call to {@link TState#jump}.
-   *
-   * <p>A {@code Continuation} method may only be referenced from the builtin's {@code begin} method
-   * or from a lower-numbered continuation.
-   */
+  /// A `Continuation`, [LoopContinuation], or [DetachedContinuation] annotation must appear on any
+  /// method that will be the continuation argument to a Caller or the target of a call to
+  /// [TState#jump].
+  ///
+  /// A `Continuation` method may only be referenced from the builtin's `begin` method or from a
+  /// lower-numbered continuation.
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Continuation {
     int order() default 1;
   }
 
-  /**
-   * A {@code LoopContinuation} must be used in place of a {@link Continuation} annotation when it
-   * will be referenced from higher-numbered continuations (or from itself).
-   */
+  /// A `LoopContinuation` must be used in place of a [Continuation] annotation when it will be
+  /// referenced from higher-numbered continuations (or from itself).
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface LoopContinuation {
     int order() default 1;
   }
 
-  /**
-   * A {@code DetachedContinuation} must be used in place of a {@link Continuation} annotation for
-   * the continuation of a detached Caller ({@link Caller#detach}).
-   *
-   * <p>The first step of a {@code DetachedContinuation} method should usually be to check {@link
-   * TState#unwindStarted}; if it is true
-   *
-   * <ul>
-   *   <li>the function result arguments that have been passed will be null (since the function call
-   *       has not completed successfully);
-   *   <li>any {@code @Saved arguments} will have the values that were saved by the caller;
-   *   <li>the method should call {@link TState#takeUnwind} and do something appropriate with the
-   *       stack before returning; and
-   *   <li>the method must complete without unwinding or tracing.
-   * </ul>
-   */
+  /// A `DetachedContinuation` must be used in place of a [Continuation] annotation for the
+  /// continuation of a detached Caller ([Caller#detach]).
+  ///
+  /// The first step of a `DetachedContinuation` method should usually be to check
+  /// [TState#unwindStarted]; if it is true
+  ///
+  /// - the function result arguments that have been passed will be null (since the function call
+  ///   has not completed successfully);
+  /// - any `@Saved arguments` will have the values that were saved by the caller;
+  /// - the method should call [TState#takeUnwind] and do something appropriate with the stack
+  ///   before returning; and
+  /// - the method must complete without unwinding or tracing.
   @Target(ElementType.METHOD)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface DetachedContinuation {
     int order() default 1;
   }
 
-  /**
-   * A {@code Saved} annotation should appear on at most one Value parameter of a {@link
-   * Continuation} method. That parameter and any following Value parameters will have their values
-   * provided by a call to {@code saving()} at the {@link TState#startCall} site.
-   */
+  /// A `Saved` annotation should appear on at most one Value parameter of a [Continuation] method.
+  /// That parameter and any following Value parameters will have their values provided by a call to
+  /// `saving()` at the [TState#startCall] site.
   @Target(ElementType.PARAMETER)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Saved {}
 
-  /**
-   * Each Caller parameter of a {@link Continuation} or {@link Core.Method} method must have a
-   * {@code Fn} annotation identifying the function to be called (or a {@link AnyFn} annotation, if
-   * the function to be called will be determined at execution time).
-   */
+  /// Each Caller parameter of a [Continuation] or [Core.Method] method must have a `Fn` annotation
+  /// identifying the function to be called (or a [AnyFn] annotation, if the function to be called
+  /// will be determined at execution time).
   @Target(ElementType.PARAMETER)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface Fn {
     String value();
   }
 
-  /**
-   * An {@code AnyFn} annotation on a Caller indicates that the function to be called will be
-   * determined at execution time. {@code AnyFn} Callers can call any VmFunction that has a single
-   * result, and can only be used with the {@code TState.startCall()} method that takes the
-   * VmFunction as an additional argument.
-   */
+  /// An `AnyFn` annotation on a Caller indicates that the function to be called will be determined
+  /// at execution time. `AnyFn` Callers can call any VmFunction that has a single result, and can
+  /// only be used with the `TState.startCall()` method that takes the VmFunction as an additional
+  /// argument.
   @Target(ElementType.PARAMETER)
   @Retention(RetentionPolicy.RUNTIME)
   public @interface AnyFn {}
 
-  /**
-   * The result of {@link TState#startCall} is a {@code Saver}, enabling the caller to specify
-   * additional values that should be passed to the call's continuation.
-   */
+  /// The result of [TState#startCall] is a `Saver`, enabling the caller to specify additional
+  /// values that should be passed to the call's continuation.
   public interface Saver {
     void saving(Value... args);
   }
 
-  /**
-   * A distinguished Continuation used as the value of {@link Caller#continuation} for Callers that
-   * should return the function result as the result of the builtin. Should never be called.
-   */
+  /// A distinguished Continuation used as the value of [Caller#continuation] for Callers that
+  /// should return the function result as the result of the builtin. Should never be called.
   static final ContinuationMethod TAIL_CALL =
       new ContinuationMethod(null, "(tail call)", -1, false, false, null, new String[0]);
 
-  /**
-   * Subclasses of BuiltinStatic (such as Caller and ExtraValueMemo) are intended for use as static
-   * fields in subclasses of BuiltinMethod and are initialized by {@link
-   * BuiltinSupport#addMethodFromNestedClass}.
-   */
+  /// Subclasses of BuiltinStatic (such as Caller and ExtraValueMemo) are intended for use as static
+  /// fields in subclasses of BuiltinMethod and are initialized by
+  /// [BuiltinSupport#addMethodFromNestedClass].
   abstract static class BuiltinStatic {
-    /** Called once on each instance of a BuiltinStatic subclass to initialize it. */
+    /// Called once on each instance of a BuiltinStatic subclass to initialize it.
     abstract void setup(String where, BuiltinImpl impl, Map<String, VmFunction> functions);
   }
 
-  /**
-   * A Caller pairs a {@link VmFunction} to be called with a {@link Continuation} that will receive
-   * the results (and, optionally, some additional saved values).
-   */
+  /// A Caller pairs a [VmFunction] to be called with a [Continuation] that will receive the results
+  /// (and, optionally, some additional saved values).
   public static final class Caller extends BuiltinStatic {
     final String fnKey;
 
@@ -147,47 +123,39 @@ public abstract class BuiltinMethod {
 
     private boolean detached;
 
-    /** The function to be called; null if this is an {@link AnyFn} Caller. */
+    /// The function to be called; null if this is an [AnyFn] Caller.
     private VmFunction fn;
 
     private CallSite callSite;
 
-    /** The continuation to be called after the function returns successfully. */
+    /// The continuation to be called after the function returns successfully.
     private ContinuationMethod continuation;
 
-    /**
-     * A SimpleStackEntryType that will be used if the stack is unwound during the initial function
-     * call. Has a localName for each value passed to {@link Saver#saving}.
-     */
+    /// A SimpleStackEntryType that will be used if the stack is unwound during the initial function
+    /// call. Has a localName for each value passed to [Saver#saving].
     private SimpleStackEntryType duringCall;
 
-    /**
-     * A new Caller cannot be used until it has been fully initialized by calling {@link #setup}.
-     */
+    /// A new Caller cannot be used until it has been fully initialized by calling [#setup].
     public Caller(String fnKey, String continuationName) {
       this.fnKey = fnKey;
       this.continuationName = continuationName;
     }
 
-    /**
-     * Makes this Caller detached. A detached Caller will always call its continuation promptly, but
-     * the function may not have completed when it does.
-     *
-     * <p>If the function has completed, the continuation will be called normally.
-     *
-     * <p>If the function has not completed, the continuation will be called with null as the
-     * function result(s) and with {@link TState#unwindStarted} true.
-     */
+    /// Makes this Caller detached. A detached Caller will always call its continuation promptly,
+    /// but the function may not have completed when it does.
+    ///
+    /// If the function has completed, the continuation will be called normally.
+    ///
+    /// If the function has not completed, the continuation will be called with null as the function
+    /// result(s) and with [TState#unwindStarted] true.
     public Caller detach() {
       Preconditions.checkState(!detached && callSite == null);
       detached = true;
       return this;
     }
 
-    /**
-     * Returns information about the values that have been passed as one of the arguments to this
-     * Caller.
-     */
+    /// Returns information about the values that have been passed as one of the arguments to this
+    /// Caller.
     public <T> T argInfo(TState tstate, MethodMemo memo, int argIndex, TProperty<T> property) {
       ResultsInfo resultsInfo;
       synchronized (tstate.scope().memoMerger) {
@@ -204,7 +172,7 @@ public abstract class BuiltinMethod {
       return resultsInfo.result(argIndex, property);
     }
 
-    /** Creates a fully-initialized tail-calling Caller. */
+    /// Creates a fully-initialized tail-calling Caller.
     Caller(String where, String fnKey, VmFunction fn, BuiltinImpl impl) {
       this.fnKey = fnKey;
       this.continuationName = null;
@@ -253,10 +221,7 @@ public abstract class BuiltinMethod {
       setup(where, calledFn, impl, continuation);
     }
 
-    /**
-     * If {@code fn} is null this is an {@link AnyFn} caller and {@code continuation} must be {@code
-     * TAIL_CALL}.
-     */
+    /// If `fn` is null this is an [AnyFn] caller and `continuation` must be `TAIL_CALL`.
     private void setup(
         String where, VmFunction fn, BuiltinImpl impl, ContinuationMethod continuation) {
       assert this.continuation == null;
@@ -270,17 +235,17 @@ public abstract class BuiltinMethod {
     }
   }
 
-  /** An ExtraValueMemo allocates a ValueMemo in each instance of this method's memo. */
+  /// An ExtraValueMemo allocates a ValueMemo in each instance of this method's memo.
   public static final class ExtraValueMemo extends BuiltinStatic {
     private int index = -1;
     final int size;
 
-    /** Allocates a ValueMemo of the specified size. */
+    /// Allocates a ValueMemo of the specified size.
     public ExtraValueMemo(int size) {
       this.size = size;
     }
 
-    /** Returns the ValueMemo from the given MethodMemo. */
+    /// Returns the ValueMemo from the given MethodMemo.
     public ValueMemo valueMemo(TState tstate, MethodMemo memo) {
       return memo.valueMemo(tstate, index, size);
     }
@@ -292,7 +257,7 @@ public abstract class BuiltinMethod {
     }
   }
 
-  /** Used to create a stack entry if we unwind during the execution of a Caller's call. */
+  /// Used to create a stack entry if we unwind during the execution of a Caller's call.
   private static class DuringCall extends SimpleStackEntryType {
     final Caller caller;
 
@@ -330,10 +295,8 @@ public abstract class BuiltinMethod {
     }
   }
 
-  /**
-   * A convenience method that converts a Value to a Java boolean. Throws an appropriate {@link
-   * BuiltinException} if the given Value is not {@code True} or {@code False}.
-   */
+  /// A convenience method that converts a Value to a Java boolean. Throws an appropriate
+  /// [BuiltinException] if the given Value is not `True` or `False`.
   public static boolean testBoolean(Value v) throws BuiltinException {
     if (v == Core.TRUE) {
       return true;

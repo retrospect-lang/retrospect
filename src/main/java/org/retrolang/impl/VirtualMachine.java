@@ -19,17 +19,15 @@ package org.retrolang.impl;
 import com.google.common.collect.ImmutableList;
 import org.retrolang.Vm;
 
-/** Implementation of Vm.VirtualMachine. Each instance will have a separate Scope. */
+/// Implementation of Vm.VirtualMachine. Each instance will have a separate Scope.
 public class VirtualMachine implements Vm.VirtualMachine {
 
   final Scope scope = new Scope();
 
   public VirtualMachine() {}
 
-  /**
-   * If {@code enableDebugging()} is called before executing any code, {@link #getDebuggingSummary}
-   * can be called when the computation completes to get a summary of the final FrameLayouts.
-   */
+  /// If `enableDebugging()` is called before executing any code, [#getDebuggingSummary] can be
+  /// called when the computation completes to get a summary of the final FrameLayouts.
   public void enableDebugging() {
     scope.evolver.enableDebugging();
   }

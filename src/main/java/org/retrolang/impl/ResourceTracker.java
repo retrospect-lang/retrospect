@@ -31,80 +31,72 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.retrolang.Vm;
 import org.retrolang.util.SizeOf;
 
-/**
- * A ResourceTracker tracks the total memory use of a Retrospect computation and compares it with a
- * fixed limit. The ResourceTracker is shared among all threads that participate in the computation.
- *
- * <p>Threads may use ResourceTracker as an Allocator directly, or use a MemoryHelper to accumulate
- * multiple updates into a single call. A MemoryHelper must always be used to release objects, since
- * only it has the logic for recursively updating reference counts.
- *
- * <p>A ResourceTracker also supports making a reservation, which effectively increases the "in use"
- * count in anticipation of future allocations; if there is enough available memory, the reservation
- * will succeed and can then be incrementally unreserved as the subsequent allocations are made.
- * Clients are responsible for ensuring that they only unreserve memory which they previously
- * reserved.
- *
- * <p>A ResourceTracker may be allocated with an associated {@link DebugTracker}, which records each
- * allocation and release to help find bugs in the reference-counting logic. This is expensive (in
- * both time and memory), and only intended for use while developing the VM.
- *
- * <p>ResourceTrackers also maintain the storage for stack snapshots saved by trace instructions.
- * Each {@link Instruction.Trace} can have an associated {@link SavedTraces} object, which saves the
- * snapshots created by executing that instruction.
- */
+/// A ResourceTracker tracks the total memory use of a Retrospect computation and compares it with a
+/// fixed limit. The ResourceTracker is shared among all threads that participate in the
+/// computation.
+///
+/// Threads may use ResourceTracker as an Allocator directly, or use a MemoryHelper to accumulate
+/// multiple updates into a single call. A MemoryHelper must always be used to release objects,
+/// since only it has the logic for recursively updating reference counts.
+///
+/// A ResourceTracker also supports making a reservation, which effectively increases the "in use"
+/// count in anticipation of future allocations; if there is enough available memory, the
+/// reservation will succeed and can then be incrementally unreserved as the subsequent allocations
+/// are made. Clients are responsible for ensuring that they only unreserve memory which they
+/// previously reserved.
+///
+/// A ResourceTracker may be allocated with an associated [DebugTracker], which records each
+/// allocation and release to help find bugs in the reference-counting logic. This is expensive (in
+/// both time and memory), and only intended for use while developing the VM.
+///
+/// ResourceTrackers also maintain the storage for stack snapshots saved by trace instructions. Each
+/// [Instruction.Trace] can have an associated [SavedTraces] object, which saves the snapshots
+/// created by executing that instruction.
 public class ResourceTracker implements Allocator, Vm.ResourceTracker {
 
   final Scope scope;
 
   final Coordinator coordinator;
 
-  /** The total memory (in bytes) that this ResourceTracker is allowed to use. */
+  /// The total memory (in bytes) that this ResourceTracker is allowed to use.
   final long limit;
 
-  /**
-   * The maximum number of execution stacks to save for each trace instruction. Must be even; if a
-   * trace instruction is executed more than {@code maxTraces} times we save the first {@code
-   * maxTraces/2} and last {@code maxTraces/2} stacks.
-   *
-   * <p>More control over this policy is probably desirable, but that will be easier to make
-   * decisions about after we've got some experience with it.
-   */
+  /// The maximum number of execution stacks to save for each trace instruction. Must be even; if a
+  /// trace instruction is executed more than `maxTraces` times we save the first `maxTraces/2` and
+  /// last `maxTraces/2` stacks.
+  ///
+  /// More control over this policy is probably desirable, but that will be easier to make decisions
+  /// about after we've got some experience with it.
   final int maxTraces;
 
-  /**
-   * The total number of objects (RefCounted, byte[], or Object[]) that have been allocated by this
-   * ResourceTracker.
-   */
+  /// The total number of objects (RefCounted, byte[], or Object[]) that have been allocated by this
+  /// ResourceTracker.
   @GuardedBy("this")
   private int allocedObjs;
 
-  /** The total number of bytes that have been allocated by this ResourceTracker. */
+  /// The total number of bytes that have been allocated by this ResourceTracker.
   @GuardedBy("this")
   private long allocedBytes;
 
-  /**
-   * The total number of previously-allocated objects that have been released by this
-   * ResourceTracker.
-   */
+  /// The total number of previously-allocated objects that have been released by this
+  /// ResourceTracker.
   @GuardedBy("this")
   private int releasedObjs;
 
-  /**
-   * The total number of previously-allocated bytes that have been released by this ResourceTracker.
-   */
+  /// The total number of previously-allocated bytes that have been released by this
+  /// ResourceTracker.
   @GuardedBy("this")
   private long releasedBytes;
 
-  /** The total number of bytes that have been reserved but not yet allocated. */
+  /// The total number of bytes that have been reserved but not yet allocated.
   @GuardedBy("this")
   private long reservedBytes;
 
-  /** The maximum value of {@link #inUseBytes}. */
+  /// The maximum value of [#inUseBytes].
   @GuardedBy("this")
   private long peakBytes;
 
-  /** Maps each trace instruction that has been executed to a corresponding {@link SavedTraces}. */
+  /// Maps each trace instruction that has been executed to a corresponding [SavedTraces].
   private final ConcurrentHashMap<Instruction.Trace, SavedTraces> savedTraces =
       new ConcurrentHashMap<>();
 
@@ -113,7 +105,7 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
 
   final DebugTracker debugTracker;
 
-  /** The number of escapes from generated code. */
+  /// The number of escapes from generated code.
   private volatile int escapeCount;
 
   private static final VarHandle ESCAPE_COUNT_VAR;
@@ -123,7 +115,7 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     ESCAPE_COUNT_VAR = Handle.forVar(lookup, ResourceTracker.class, "escapeCount", int.class);
   }
 
-  /** Creates a new ResourceTracker with the given limits. */
+  /// Creates a new ResourceTracker with the given limits.
   ResourceTracker(Scope scope, long limit, int maxTraces, boolean debug) {
     Preconditions.checkArgument(limit > 0);
     Preconditions.checkArgument(maxTraces > 1 && (maxTraces & 1) == 0);
@@ -134,7 +126,7 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     this.debugTracker = debug ? new DebugTracker() : null;
   }
 
-  /** Used only for tests. */
+  /// Used only for tests.
   ResourceTracker(Scope scope, long limit, boolean debug) {
     this(scope, limit, 16, debug);
   }
@@ -143,7 +135,7 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return scope;
   }
 
-  /** Returns true if this ResourceTracker has an associated DebugTracker. */
+  /// Returns true if this ResourceTracker has an associated DebugTracker.
   boolean debugTracking() {
     return debugTracker != null;
   }
@@ -154,14 +146,12 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return allocByteArray(size, null);
   }
 
-  /**
-   * Returns a byte[] of at least the given length and records its memory use.
-   *
-   * <p>If {@code helper} is non-null and has a non-zero {@link MemoryHelper#reservedBytes}, this
-   * allocation will reduce that helper's reservation.
-   *
-   * <p>The caller should not assume that the returned byte[] has been zero-filled.
-   */
+  /// Returns a byte[] of at least the given length and records its memory use.
+  ///
+  /// If `helper` is non-null and has a non-zero [MemoryHelper#reservedBytes], this allocation will
+  /// reduce that helper's reservation.
+  ///
+  /// The caller should not assume that the returned byte[] has been zero-filled.
   @RC.Out
   byte[] allocByteArray(int length, MemoryHelper helper) {
     if (length == 0) {
@@ -178,12 +168,10 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return allocObjectArray(size, null);
   }
 
-  /**
-   * Returns a null-filled Object Object[] of at least the given length and records its memory use.
-   *
-   * <p>If {@code helper} is non-null and has a non-zero {@link MemoryHelper#reservedBytes}, this
-   * allocation will reduce that helper's reservation.
-   */
+  /// Returns a null-filled Object Object[] of at least the given length and records its memory use.
+  ///
+  /// If `helper` is non-null and has a non-zero [MemoryHelper#reservedBytes], this allocation will
+  /// reduce that helper's reservation.
   @RC.Out
   Object[] allocObjectArray(int length, MemoryHelper helper) {
     if (length == 0) {
@@ -205,12 +193,10 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return true;
   }
 
-  /**
-   * Records the allocation of the given object.
-   *
-   * <p>If {@code helper} is non-null and has a non-zero {@link MemoryHelper#reservedBytes}, this
-   * allocation will reduce that helper's reservation.
-   */
+  /// Records the allocation of the given object.
+  ///
+  /// If `helper` is non-null and has a non-zero [MemoryHelper#reservedBytes], this allocation will
+  /// reduce that helper's reservation.
   void recordAlloc(Object obj, long size, MemoryHelper helper) {
     synchronized (this) {
       allocedObjs++;
@@ -241,26 +227,22 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     }
   }
 
-  /**
-   * Returns the amount of memory still available (negative if the memory limit has been exceeded).
-   * Does not include reserved memory.
-   *
-   * <p>Inherently racy, so intended primarily for testing purposes.
-   */
+  /// Returns the amount of memory still available (negative if the memory limit has been exceeded).
+  /// Does not include reserved memory.
+  ///
+  /// Inherently racy, so intended primarily for testing purposes.
   synchronized long checkAvailable() {
     return limit - inUseBytes();
   }
 
-  /**
-   * First, if {@code unreserve} is non-zero, it should be positive and less than or equal to the
-   * remaining size of a previous reservation; that much of the previous reservation will be
-   * unreserved.
-   *
-   * <p>Second, if there are at least {@code reserve} available bytes, reserves that much space for
-   * future allocations, and returns true; otherwise does nothing more and returns false. To use the
-   * reserved space, call {@link #allocByteArray(int, long)}, {@link #allocObjectArray(int, long)},
-   * or {@link #recordAlloc(RefCounted, long, long)} passing a positive value for {@code unreserve}.
-   */
+  /// First, if `unreserve` is non-zero, it should be positive and less than or equal to the
+  /// remaining size of a previous reservation; that much of the previous reservation will be
+  /// unreserved.
+  ///
+  /// Second, if there are at least `reserve` available bytes, reserves that much space for future
+  /// allocations, and returns true; otherwise does nothing more and returns false. To use the
+  /// reserved space, call [#allocByteArray(int, long)], [#allocObjectArray(int, long)], or
+  /// [#recordAlloc(RefCounted, long, long)] passing a positive value for `unreserve`.
   @CanIgnoreReturnValue
   synchronized boolean adjustReservation(long unreserve, long reserve) {
     assert unreserve >= 0 && reserve >= 0 && unreserve <= reservedBytes;
@@ -288,11 +270,9 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return VmValue.of(NumValue.of(d, this), this);
   }
 
-  /**
-   * Adds the given values to this ResourceTracker's counters. Returns the amount of memory
-   * remaining after the updates and any requested reservation. If the result is non-negative the
-   * reservation has been made; otherwise the reservation failed.
-   */
+  /// Adds the given values to this ResourceTracker's counters. Returns the amount of memory
+  /// remaining after the updates and any requested reservation. If the result is non-negative the
+  /// reservation has been made; otherwise the reservation failed.
   synchronized long update(
       int allocedObjs,
       long allocedBytes,
@@ -332,12 +312,9 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     peakBytes = Math.max(peakBytes, inUseBytes());
   }
 
-  /**
-   * Returns true if all memory allocated by this ResourceTracker has been released.
-   *
-   * <p>If not all memory has been released, prints the ResourceTracker's counters and returns
-   * false.
-   */
+  /// Returns true if all memory allocated by this ResourceTracker has been released.
+  ///
+  /// If not all memory has been released, prints the ResourceTracker's counters and returns false.
   @Override
   public synchronized boolean allReleased() {
     if (debugTracking() && (!debugTracker.allReleased() || debugTracker.errored())) {
@@ -349,14 +326,12 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return false;
   }
 
-  /** Returns the SavedTraces object that should be used for the given trace instruction. */
+  /// Returns the SavedTraces object that should be used for the given trace instruction.
   SavedTraces tracesFor(Instruction.Trace inst, TState tsate) {
     return savedTraces.computeIfAbsent(inst, i -> new SavedTraces(maxTraces));
   }
 
-  /**
-   * Copies the contents of the given SavedTraces into the given list and clears the SavedTraces.
-   */
+  /// Copies the contents of the given SavedTraces into the given list and clears the SavedTraces.
   private static void takeTraces(TState tstate, SavedTraces saved, List<TStack.ForTrace> out) {
     Object[] array = saved.takeTraces();
     if (array != null) {

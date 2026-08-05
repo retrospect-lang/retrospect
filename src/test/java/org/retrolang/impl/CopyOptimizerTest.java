@@ -33,22 +33,22 @@ import org.retrolang.impl.TemplateBuilder.VarAllocator;
 @RunWith(JUnit4.class)
 public class CopyOptimizerTest {
 
-  /** Returns a Compound template for an array containing the given elements. */
+  /// Returns a Compound template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Returns a Constant template for an int. */
+  /// Returns a Constant template for an int.
   private static Template constant(int i) {
     return Constant.of(NumValue.of(i, Allocator.UNCOUNTED));
   }
 
-  /** Returns a Compound template for a LoopExit containing the given element. */
+  /// Returns a Compound template for a LoopExit containing the given element.
   private static Template loopExit(Template element) {
     return Template.Compound.of(Core.LOOP_EXIT, element);
   }
 
-  /** Converts double quotes to single quotes, to make expected values easier to read. */
+  /// Converts double quotes to single quotes, to make expected values easier to read.
   private static String cleanString(CopyPlan plan) {
     return plan.toString().replace('"', '\'');
   }
@@ -102,12 +102,10 @@ public class CopyOptimizerTest {
                 loopExit(NumVar.INT32.withIndex(7))));
   }
 
-  /**
-   * A simple VarAllocator that simulates how we allocate registers for code generation.
-   *
-   * <p>NumVar and RefVar indices are register numbers, and each register is one of int, double, or
-   * pointer (int registers are used for uint8s).
-   */
+  /// A simple VarAllocator that simulates how we allocate registers for code generation.
+  ///
+  /// NumVar and RefVar indices are register numbers, and each register is one of int, double, or
+  /// pointer (int registers are used for uint8s).
   static class RegisterAllocator implements TemplateBuilder.VarAllocator {
     enum RegisterType {
       INT,
@@ -117,13 +115,11 @@ public class CopyOptimizerTest {
 
     static final int NUM_VAR_TYPES = RegisterType.values().length;
 
-    /**
-     * Maps register number to type; shared when a RegisterAllocator is duplicated, so that each
-     * branch of a union uses the same type for a given register.
-     */
+    /// Maps register number to type; shared when a RegisterAllocator is duplicated, so that each
+    /// branch of a union uses the same type for a given register.
     final List<RegisterType> types;
 
-    /** Indexed by RegisterType.ordinal(). */
+    /// Indexed by RegisterType.ordinal().
     final int[] next;
 
     RegisterAllocator() {

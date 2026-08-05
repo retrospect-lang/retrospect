@@ -29,52 +29,41 @@ import java.util.Queue;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
-/**
- * Each Scope has a MemoMerger which serves as the synchronization point for updates to MethodMemos
- * and CallMemos (ValueMemos are mostly self-synchronized, with one exception: the argsMemo of a
- * heavy or exlined MethodMemo).
- */
+/// Each Scope has a MemoMerger which serves as the synchronization point for updates to MethodMemos
+/// and CallMemos (ValueMemos are mostly self-synchronized, with one exception: the argsMemo of a
+/// heavy or exlined MethodMemo).
 class MemoMerger {
 
-  /** True if the current thread has locked the MemoMerger; only intended for assertions. */
+  /// True if the current thread has locked the MemoMerger; only intended for assertions.
   static boolean isLocked() {
     TState tstate = TState.get();
     return (tstate != null) && Thread.holdsLock(tstate.scope().memoMerger);
   }
 
-  /**
-   * Each MemoMerger has a PerMethod instance for each distinct VmMethod that it has created
-   * MethodMemos for. The MethodMemos all link to the PerMethod instances, which keeps global
-   * information about that method in this scope.
-   *
-   * <p>Methods with fixed (trivial) MethodMemos have a single associated PerMethod instance that is
-   * not associated with any scope -- it has no useful information, but avoids needing special-case
-   * handling for those methods.
-   */
+  /// Each MemoMerger has a PerMethod instance for each distinct VmMethod that it has created
+  /// MethodMemos for. The MethodMemos all link to the PerMethod instances, which keeps global
+  /// information about that method in this scope.
+  ///
+  /// Methods with fixed (trivial) MethodMemos have a single associated PerMethod instance that is
+  /// not associated with any scope -- it has no useful information, but avoids needing special-case
+  /// handling for those methods.
   static class PerMethod {
-    /** The method that this PerMethod stores information for. */
+    /// The method that this PerMethod stores information for.
     final VmMethod method;
 
-    /**
-     * A list of all heavy MethodMemos for this method in this scope.
-     *
-     * <p>Since this is usually empty or has a single element, we minimize memory use in those cases
-     * by storing an ImmutableList; if a longer list is needed we switch to an ArrayList.
-     */
+    /// A list of all heavy MethodMemos for this method in this scope.
+    ///
+    /// Since this is usually empty or has a single element, we minimize memory use in those cases
+    /// by storing an ImmutableList; if a longer list is needed we switch to an ArrayList.
     @VisibleForTesting List<MethodMemo> heavy = ImmutableList.of();
 
-    /**
-     * A list of all exlined MethodMemos for this method in this scope.
-     *
-     * <p>Uses the same ImmutableList/ArrayList strategy as {@link #heavy} in order to minimize
-     * memory use.
-     */
+    /// A list of all exlined MethodMemos for this method in this scope.
+    ///
+    /// Uses the same ImmutableList/ArrayList strategy as [#heavy] in order to minimize memory use.
     @VisibleForTesting List<MethodMemo> exlined = ImmutableList.of();
 
-    /**
-     * If true, all calls to this method should use a single exlined MethodMemo. Used only for
-     * testing.
-     */
+    /// If true, all calls to this method should use a single exlined MethodMemo. Used only for
+    /// testing.
     private final boolean forceExlined;
 
     PerMethod(VmMethod method, boolean forceExlined) {
@@ -87,13 +76,11 @@ class MemoMerger {
       }
     }
 
-    /**
-     * Returns a list containing {@code item} and the elements of {@code list}. If {@code list} is
-     * an ArrayList just adds {@code item} to it; otherwise returns a new ImmutableList (if {@code
-     * list} was empty) or a new ArrayList (if it wasn't).
-     *
-     * <p>Used to update {@link #heavy} and {@link #exlined} in a way that minimizes memory use.
-     */
+    /// Returns a list containing `item` and the elements of `list`. If `list` is an ArrayList just
+    /// adds `item` to it; otherwise returns a new ImmutableList (if `list` was empty) or a new
+    /// ArrayList (if it wasn't).
+    ///
+    /// Used to update [#heavy] and [#exlined] in a way that minimizes memory use.
     private static List<MethodMemo> addToList(MethodMemo item, List<MethodMemo> list) {
       assert !list.contains(item);
       if (!(list instanceof ArrayList)) {
@@ -108,14 +95,12 @@ class MemoMerger {
       return list;
     }
 
-    /**
-     * Returns a list containing the elements of {@code list} except for {@code item}. If {@code
-     * list} is an ArrayList just calls {@link List#remove}; otherwise {@code list} should have
-     * length 0 or 1, and this method returns either {@code list} (if it does not contain {@code
-     * item}) or an empty ImmutableList (if it does).
-     *
-     * <p>Used to update {@link #heavy} and {@link #exlined} in a way that minimizes memory use.
-     */
+    /// Returns a list containing the elements of `list` except for `item`. If `list` is an
+    /// ArrayList just calls [List#remove]; otherwise `list` should have length 0 or 1, and this
+    /// method returns either `list` (if it does not contain `item`) or an empty ImmutableList (if
+    /// it does).
+    ///
+    /// Used to update [#heavy] and [#exlined] in a way that minimizes memory use.
     private static List<MethodMemo> removeFromList(MethodMemo item, List<MethodMemo> list) {
       if (list instanceof ArrayList) {
         list.remove(item);
@@ -128,30 +113,28 @@ class MemoMerger {
       return list;
     }
 
-    /** Adds the given MethodMemo to {@link #heavy}. */
+    /// Adds the given MethodMemo to [#heavy].
     void addHeavy(MethodMemo mm) {
       heavy = addToList(mm, heavy);
     }
 
-    /** Removes the given MethodMemo from {@link #heavy}. */
+    /// Removes the given MethodMemo from [#heavy].
     void removeHeavy(MethodMemo mm) {
       heavy = removeFromList(mm, heavy);
     }
 
-    /** Adds the given MethodMemo to {@link #exlined}. */
+    /// Adds the given MethodMemo to [#exlined].
     void addExlined(MethodMemo mm) {
       exlined = addToList(mm, exlined);
     }
 
-    /** Removes the given MethodMemo from {@link #exlined}. */
+    /// Removes the given MethodMemo from [#exlined].
     void removeExlined(MethodMemo mm) {
       exlined = removeFromList(mm, exlined);
     }
 
-    /**
-     * If a MethodMemo in {@link #exlined} is suitable for the given arguments, return it; otherwise
-     * return null.
-     */
+    /// If a MethodMemo in [#exlined] is suitable for the given arguments, return it; otherwise
+    /// return null.
     MethodMemo findExlined(Object[] args) {
       if (forceExlined) {
         assert exlined.size() == 1;
@@ -165,7 +148,7 @@ class MemoMerger {
       return null;
     }
 
-    /** If a MethodMemo in {@link #exlined} is similar enough to {@code light}, merge them. */
+    /// If a MethodMemo in [#exlined] is similar enough to `light`, merge them.
     void checkForSimilarExlined(MethodMemo light, MemoMerger merger) {
       for (MethodMemo mm : exlined) {
         if (mm.isSimilarEnough(light)) {
@@ -175,18 +158,14 @@ class MemoMerger {
       }
     }
 
-    /**
-     * Returns true if {@link #exlined} contains the given MethodMemo. Intended only for assertions
-     * (should be redundant with {@link MethodMemo#state} == EXLINED).
-     */
+    /// Returns true if [#exlined] contains the given MethodMemo. Intended only for assertions
+    /// (should be redundant with [MethodMemo#state] == EXLINED).
     boolean exlinedContains(MethodMemo mm) {
       return exlined.contains(mm);
     }
 
-    /**
-     * Returns true if {@link #heavy} contains the given MethodMemo. Intended only for assertions
-     * (should be redundant with {@link MethodMemo#state} == HEAVY).
-     */
+    /// Returns true if [#heavy] contains the given MethodMemo. Intended only for assertions (should
+    /// be redundant with [MethodMemo#state] == HEAVY).
     boolean heavyContains(MethodMemo mm) {
       return heavy.contains(mm);
     }
@@ -194,40 +173,33 @@ class MemoMerger {
 
   final Scope scope;
 
-  /** All PerMethod objects that have been allocated for this Scope. */
+  /// All PerMethod objects that have been allocated for this Scope.
   private final Map<VmMethod, PerMethod> perMethods = new HashMap<>();
 
-  /**
-   * All exlined or heavy MethodMemos whose argTypes have changed and need to be re-compared against
-   * other exlined/heavy MethodMemos to see if their argTypes now overlap, and all light MethodMemos
-   * whose weight has increased enough that they should be made heavy.
-   *
-   * <p>In general I think that it would be better to check children before parents (since merging
-   * children, and thereby making them exlined, may reduce the weight of their parents so that they
-   * are no longer considered worth merging). Having this be a queue (rather than a stack) was
-   * intended to make that more likely, but I'm not convinced enough that it matters to make this a
-   * priority queue.
-   */
+  /// All exlined or heavy MethodMemos whose argTypes have changed and need to be re-compared
+  /// against other exlined/heavy MethodMemos to see if their argTypes now overlap, and all light
+  /// MethodMemos whose weight has increased enough that they should be made heavy.
+  ///
+  /// In general I think that it would be better to check children before parents (since merging
+  /// children, and thereby making them exlined, may reduce the weight of their parents so that they
+  /// are no longer considered worth merging). Having this be a queue (rather than a stack) was
+  /// intended to make that more likely, but I'm not convinced enough that it matters to make this a
+  /// priority queue.
   private final Queue<MethodMemo> needsCheck = new ArrayDeque<>();
 
-  /**
-   * All MethodMemos that have transitioned from LIGHT to HEAVY and had overlapping HEAVY
-   * MethodMemos with the same callSite. We delay merging these until the end because there's a good
-   * chance that their parents are making the same transition, and if so we would prefer to merge
-   * them.
-   *
-   * <p>I think there's a clearer benefit here to merging parents before children, since merging
-   * parents may make exlining the children unnecessary. Making this a stack (populated from
-   * needsCheck(), which we try to run on children first) is intended to make that more likely, but
-   * we also make an explicit check when pulling entries from it (see code in {@link
-   * #finishChecks}).
-   */
+  /// All MethodMemos that have transitioned from LIGHT to HEAVY and had overlapping HEAVY
+  /// MethodMemos with the same callSite. We delay merging these until the end because there's a
+  /// good chance that their parents are making the same transition, and if so we would prefer to
+  /// merge them.
+  ///
+  /// I think there's a clearer benefit here to merging parents before children, since merging
+  /// parents may make exlining the children unnecessary. Making this a stack (populated from
+  /// needsCheck(), which we try to run on children first) is intended to make that more likely, but
+  /// we also make an explicit check when pulling entries from it (see code in [#finishChecks]).
   private final Deque<MethodMemo> needsSelfCheck = new ArrayDeque<>();
 
-  /**
-   * If non-null, any method for which this predicate returns true will use a single exlined for all
-   * calls. For testing only.
-   */
+  /// If non-null, any method for which this predicate returns true will use a single exlined for
+  /// all calls. For testing only.
   private Predicate<VmMethod> forceExlined;
 
   MemoMerger(Scope scope) {
@@ -238,11 +210,9 @@ class MemoMerger {
     this.forceExlined = forceExlined;
   }
 
-  /**
-   * Calls the given consumer with each method that was identified by a previous call to {@link
-   * #setForceExlined}. (The MemoMerger is locked throughout these calls, so they should do a
-   * minimal amount of work.)
-   */
+  /// Calls the given consumer with each method that was identified by a previous call to
+  /// [#setForceExlined]. (The MemoMerger is locked throughout these calls, so they should do a
+  /// minimal amount of work.)
   void forEachForcedMethod(Consumer<MethodMemo> consumer) {
     synchronized (this) {
       assert forceExlined != null;
@@ -255,7 +225,7 @@ class MemoMerger {
     }
   }
 
-  /** Returns the PerMethod object for the given method. */
+  /// Returns the PerMethod object for the given method.
   PerMethod perMethod(VmMethod method) {
     // We shouldn't be creating per-scope state for a method with a fixedMemo.
     assert Thread.holdsLock(this) && method.fixedMemo == null;
@@ -266,12 +236,12 @@ class MemoMerger {
     return new PerMethod(method, forceExlined != null && forceExlined.test(method));
   }
 
-  /** For test assertions only. */
+  /// For test assertions only.
   Collection<PerMethod> allPerMethods() {
     return perMethods.values();
   }
 
-  /** Queues a call to {@link #checkForOverlap}. */
+  /// Queues a call to [#checkForOverlap].
   void needsCheck(MethodMemo memo) {
     // If the queue was likely to get long this could get inefficient, but in practice I expect it
     // to have very few elements.
@@ -280,7 +250,7 @@ class MemoMerger {
     }
   }
 
-  /** Queues a call to {@link #checkForSelfOverlap}. */
+  /// Queues a call to [#checkForSelfOverlap].
   private void needsSelfCheck(MethodMemo memo) {
     // If the queue was likely to get long this could get inefficient, but in practice I expect it
     // to have even fewer than the needsCheck queue.
@@ -289,10 +259,8 @@ class MemoMerger {
     }
   }
 
-  /**
-   * Completes all asynchronous checks queued by {@link #needsCheck(MethodMemo)} and any resulting
-   * merges.
-   */
+  /// Completes all asynchronous checks queued by [#needsCheck(MethodMemo)] and any resulting
+  /// merges.
   void finishChecks() {
     assert Thread.holdsLock(this);
     for (; ; ) {
@@ -340,12 +308,10 @@ class MemoMerger {
     assert allSettled();
   }
 
-  /**
-   * The given MethodMemo has just become heavy, or it was already heavy and its argsMemo has
-   * changed so that it might now overlap with another heavy or exlined memo. Compare it with all of
-   * the other heavy and exlined memos. If it is similar enough to one of them, merge it; otherwise
-   * mark it as heavy (if it wasn't already) and save it on our heavy list.
-   */
+  /// The given MethodMemo has just become heavy, or it was already heavy and its argsMemo has
+  /// changed so that it might now overlap with another heavy or exlined memo. Compare it with all
+  /// of the other heavy and exlined memos. If it is similar enough to one of them, merge it;
+  /// otherwise mark it as heavy (if it wasn't already) and save it on our heavy list.
   void checkForOverlap(PerMethod method, MethodMemo mm) {
     // This check is done asynchronously some time after MemoMerger.needsCheck() was called;
     // it's possible that the memo has been merged in the meantime, in which case there's
@@ -401,11 +367,9 @@ class MemoMerger {
     }
   }
 
-  /**
-   * Compare {@code mm} with other heavy memos from the same call site; if we find one that is
-   * similar enough, merge them. These checks were delayed from {@link #checkForOverlap} since other
-   * merges may make them unnecessary.
-   */
+  /// Compare `mm` with other heavy memos from the same call site; if we find one that is similar
+  /// enough, merge them. These checks were delayed from [#checkForOverlap] since other merges may
+  /// make them unnecessary.
   private void checkForSelfOverlap(PerMethod method, MethodMemo mm) {
     for (MethodMemo other : method.heavy) {
       if (other != mm && mm.sameCallSite(other) && mm.isSimilarEnough(other)) {
@@ -415,10 +379,7 @@ class MemoMerger {
     }
   }
 
-  /**
-   * We've decided to merge {@code m1} and {@code m2}; {@code m2} is heavy, and {@code m1} may be
-   * light, heavy, or exlined.
-   */
+  /// We've decided to merge `m1` and `m2`; `m2` is heavy, and `m1` may be light, heavy, or exlined.
   private void mergeWithHeavy(PerMethod method, MethodMemo m1, MethodMemo m2) {
     assert !m1.isForwarded() && m2.isHeavy() && m1.perMethod == method && m2.perMethod == method;
     // If m1 wasn't already exlined, we're going to make it exlined.
@@ -442,10 +403,7 @@ class MemoMerger {
     mergeMemos(m2, m1, true);
   }
 
-  /**
-   * Merge {@code forward} into {@code keep}. If {@code topLevel} is false, this is part of a larger
-   * merge operation.
-   */
+  /// Merge `forward` into `keep`. If `topLevel` is false, this is part of a larger merge operation.
   private void mergeMemos(MethodMemo forward, MethodMemo keep, boolean topLevel) {
     if (topLevel) {
       // This potentially changes the codeGenParent of MethodMemos on either side,
@@ -467,10 +425,8 @@ class MemoMerger {
     mm.codeGenParent(false).invalidateSelfLink(scope.codeGenDebugging());
   }
 
-  /**
-   * This is a moderately expensive consistency check across all of the MemoMerger data structures,
-   * intended for use only in assertions (it always returns true or throws an AssertionError).
-   */
+  /// This is a moderately expensive consistency check across all of the MemoMerger data structures,
+  /// intended for use only in assertions (it always returns true or throws an AssertionError).
   private boolean allSettled() {
     for (PerMethod perMethod : perMethods.values()) {
       for (MethodMemo exlined : perMethod.exlined) {

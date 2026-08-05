@@ -57,7 +57,7 @@ public class VmFunctionTest {
     return new VmMethod(fn, mp, isDefault, new MockImpl(result), 1, MethodMemo.Factory.TRIVIAL);
   }
 
-  /** Returns the "at(x, y)" function defined by Retrospect's core module (aka "x @ y"). */
+  /// Returns the "at(x, y)" function defined by Retrospect's core module (aka "x @ y").
   private static VmFunction.General at() {
     return (VmFunction.General) Core.core().lookupFunction("at", 2);
   }

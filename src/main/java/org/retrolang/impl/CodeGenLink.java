@@ -22,18 +22,14 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.stream.IntStream;
 
-/**
- * Objects (such as exlined methods) that may have generated code use a CodeGenLink to maintain a
- * link to the currently runnable code and to any in-progress-but-not-yet-runnable code.
- */
+/// Objects (such as exlined methods) that may have generated code use a CodeGenLink to maintain a
+/// link to the currently runnable code and to any in-progress-but-not-yet-runnable code.
 class CodeGenLink {
 
-  /**
-   * The relationship between the MethodMemo and the generated code. Currently there is only one
-   * option.
-   */
+  /// The relationship between the MethodMemo and the generated code. Currently there is only one
+  /// option.
   enum Kind {
-    /** The MethodMemo is an exlined method, and the generated code executes the method. */
+    /// The MethodMemo is an exlined method, and the generated code executes the method.
     EXLINED("x") {
       @Override
       ValueMemo argsMemo(MethodMemo mm) {
@@ -62,40 +58,30 @@ class CodeGenLink {
 
   final Kind kind;
 
-  /**
-   * If this is the loopCodeGen of a LoopMethodMemo, a link to the nearest enclosing CodeGenLink.
-   * Null if this is the extra of an exlined MethodMemo.
-   */
+  /// If this is the loopCodeGen of a LoopMethodMemo, a link to the nearest enclosing CodeGenLink.
+  /// Null if this is the extra of an exlined MethodMemo.
   private CodeGenParent cgParent;
 
-  /**
-   * For exlined MethodMemos, incremented each time this method is started or completed; for loops,
-   * incremented on each backward branch to the LoopContinuation. Reset each time some part of the
-   * memo's structure changes in a way that might affect code generation. This serves as a measure
-   * of how long the memo state has remained unchanged; when the counter reaches a threshold we deem
-   * it time to try generating code for the MethodMemo.
-   *
-   * <p>Only used to trigger the initial code generation for this MethodMemo; re-generation is based
-   * on the current CodeGenTarget's stability counter.
-   */
+  /// For exlined MethodMemos, incremented each time this method is started or completed; for loops,
+  /// incremented on each backward branch to the LoopContinuation. Reset each time some part of the
+  /// memo's structure changes in a way that might affect code generation. This serves as a measure
+  /// of how long the memo state has remained unchanged; when the counter reaches a threshold we
+  /// deem it time to try generating code for the MethodMemo.
+  ///
+  /// Only used to trigger the initial code generation for this MethodMemo; re-generation is based
+  /// on the current CodeGenTarget's stability counter.
   private int stabilityCounter;
 
-  /**
-   * If non-null, a BranchTargetCodeGen that is ready to be called. Updated asynchronously, so
-   * should only be read by the {@link #ready()} method or the scope's current codegen thread.
-   */
+  /// If non-null, a BranchTargetCodeGen that is ready to be called. Updated asynchronously, so
+  /// should only be read by the [#ready()] method or the scope's current codegen thread.
   @Keep private CodeGenTarget ready;
 
-  /**
-   * A CodeGenParent that points to this CodeGenLink; used by TStates that are currently executing
-   * the method body and by nested loops.
-   */
+  /// A CodeGenParent that points to this CodeGenLink; used by TStates that are currently executing
+  /// the method body and by nested loops.
   private CodeGenParent selfLink;
 
-  /**
-   * If non-null, this CodeGenLink has been deprecated in favor of another. Only set while holding
-   * the MemoMerger lock.
-   */
+  /// If non-null, this CodeGenLink has been deprecated in favor of another. Only set while holding
+  /// the MemoMerger lock.
   private CodeGenLink forwardedTo;
 
   CodeGenLink(MethodMemo mm, Kind kind) {
@@ -120,14 +106,12 @@ class CodeGenLink {
   private static final VarHandle FORWARDED_TO =
       Handle.forVar(MethodHandles.lookup(), CodeGenLink.class, "forwardedTo", CodeGenLink.class);
 
-  /**
-   * Called when execution of this exlined method or loop body completes; if called enough times
-   * without an intervening call to {@link #resetStabilityCounter} the link will become eligible for
-   * code generation.
-   *
-   * <p>If we have already generated code for this link, the stability counter will only be
-   * incremented if {@code unwoundFrom} matches the most-recently generated code.
-   */
+  /// Called when execution of this exlined method or loop body completes; if called enough times
+  /// without an intervening call to [#resetStabilityCounter] the link will become eligible for code
+  /// generation.
+  ///
+  /// If we have already generated code for this link, the stability counter will only be
+  /// incremented if `unwoundFrom` matches the most-recently generated code.
   boolean incrementStabilityCounter(CodeGenTarget unwoundFrom, CodeGenDebugging debug) {
     CodeGenTarget ready = ready();
     if (ready != null) {
@@ -149,10 +133,8 @@ class CodeGenLink {
     return false;
   }
 
-  /**
-   * Called when execution of this exlined method or loop body modifies the MethodMemo in a way that
-   * might affect code generation.
-   */
+  /// Called when execution of this exlined method or loop body modifies the MethodMemo in a way
+  /// that might affect code generation.
   void resetStabilityCounter(CodeGenDebugging debug) {
     CodeGenTarget ready = ready();
     if (ready == null) {
@@ -172,7 +154,7 @@ class CodeGenLink {
     return (int) STABILITY_COUNTER.getOpaque(this);
   }
 
-  /** Returns the target to be used for this link. May block to generate code if appropriate. */
+  /// Returns the target to be used for this link. May block to generate code if appropriate.
   CodeGenTarget checkReady(TState tstate) {
     CodeGenManager manager = tstate.scope().codeGenManager;
     int threshold = manager.threshold(kind);
@@ -198,10 +180,8 @@ class CodeGenLink {
     return target;
   }
 
-  /**
-   * If this is the loopCodeGen of a LoopMethodMemo, a link to the nearest enclosing CodeGenLink.
-   * Null if this is the extra of an exlined MethodMemo.
-   */
+  /// If this is the loopCodeGen of a LoopMethodMemo, a link to the nearest enclosing CodeGenLink.
+  /// Null if this is the extra of an exlined MethodMemo.
   CodeGenParent cgParent() {
     // Use getAcquire since this pointer may have been written asynchronously by another thread
     return (CodeGenParent) CG_PARENT.getAcquire(this);
@@ -212,19 +192,15 @@ class CodeGenLink {
     CG_PARENT.setRelease(this, newParent);
   }
 
-  /**
-   * Returns the most recently completed target for this link, or null if code generation for this
-   * link has not yet completed.
-   */
+  /// Returns the most recently completed target for this link, or null if code generation for this
+  /// link has not yet completed.
   CodeGenTarget ready() {
     // Use getAcquire since this pointer may have been written asynchronously by another thread
     return (CodeGenTarget) READY.getAcquire(this);
   }
 
-  /**
-   * Returns the most recently completed target for this link, or null if code generation for this
-   * link has not yet completed.
-   */
+  /// Returns the most recently completed target for this link, or null if code generation for this
+  /// link has not yet completed.
   CodeGenParent selfLink() {
     CodeGenLink link = this;
     // If this CodeGenLink has been forwarded, get the selfLink from its replacement.
@@ -238,12 +214,10 @@ class CodeGenLink {
     }
   }
 
-  /**
-   * Called when a new CodeGenLink has been created to own part of the MethodMemo tree we previously
-   * owned (either by exlining a method or by introducing a CodeGenLink for a LoopMethodMemo).
-   * Creates a new {@link #selfLink} and invalidates the previous one, so that anyone that thought
-   * they were a child will re-check. Also resets our stability counter.
-   */
+  /// Called when a new CodeGenLink has been created to own part of the MethodMemo tree we
+  /// previously owned (either by exlining a method or by introducing a CodeGenLink for a
+  /// LoopMethodMemo). Creates a new [#selfLink] and invalidates the previous one, so that anyone
+  /// that thought they were a child will re-check. Also resets our stability counter.
   CodeGenParent invalidateSelfLink(CodeGenDebugging debug) {
     CodeGenParent current = selfLink();
     if (current.link() != this) {
@@ -280,10 +254,8 @@ class CodeGenLink {
     selfLink.clear();
   }
 
-  /**
-   * Called during code generation when we encounter a call to another MethodMemo with a
-   * CodeGenLink; returns null if this is a good time to generate new code for that MethodMemo.
-   */
+  /// Called during code generation when we encounter a call to another MethodMemo with a
+  /// CodeGenLink; returns null if this is a good time to generate new code for that MethodMemo.
   CodeGenTarget checkTarget(CodeGenManager manager) {
     CodeGenTarget ready = ready();
     if (ready != null && ready.stabilityCounter() < manager.threshold(kind)) {
@@ -304,7 +276,7 @@ class CodeGenLink {
     return null;
   }
 
-  /** Creates a new target for this link. */
+  /// Creates a new target for this link.
   CodeGenTarget newTarget(CodeGenGroup group) {
     int counter = group.manager.nextIndex();
     String name = String.format("%s_%s%d", mm.method().function.name, kind.code, counter);
@@ -317,7 +289,7 @@ class CodeGenLink {
         alloc -> build(mm.resultsMemo, alloc));
   }
 
-  /** Build a Template for each of the ValueMemo's elements. */
+  /// Build a Template for each of the ValueMemo's elements.
   private static ImmutableList<Template> build(ValueMemo memo, TemplateBuilder.VarAllocator alloc) {
     TProperty<Template> builder = TProperty.build(alloc);
     return IntStream.range(0, memo.size())
@@ -325,7 +297,7 @@ class CodeGenLink {
         .collect(ImmutableList.toImmutableList());
   }
 
-  /** Called when we have completed code generation for all targets in the group. */
+  /// Called when we have completed code generation for all targets in the group.
   void makeReady(CodeGenTarget next, CodeGenDebugging debug) {
     if (debug != null) {
       debug.append(next, "b");

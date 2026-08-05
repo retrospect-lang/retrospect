@@ -22,111 +22,82 @@ import java.lang.invoke.VarHandle;
 import java.util.function.BiConsumer;
 import org.retrolang.util.StringUtil;
 
-/**
- * A MethodMemo saves information from prior executions of a VmMethod. Its primary state is
- *
- * <ul>
- *   <li>a ValueMemo for the arguments that have been passed to the method;
- *   <li>a CallMemo for each CallSite in the method (which in turn tracks which methods have been
- *       invoked from that CallSite, and a MethodMemo for each of them); and
- *   <li>ValueMemos for the results of calls: for methods defined by InstructionBlocks each CallSite
- *       has its own ValueMemo, while for built-in methods there is a ValueMemo for each
- *       Continuation.
- * </ul>
- *
- * <p>While most MethodMemos are mutable, for the simplest built-in methods (those that make no
- * nested calls and need no other state) we create an immutable MethodMemo that can be re-used at
- * each call site.
- */
+/// A MethodMemo saves information from prior executions of a VmMethod. Its primary state is
+///
+/// - a ValueMemo for the arguments that have been passed to the method;
+/// - a CallMemo for each CallSite in the method (which in turn tracks which methods have been
+///   invoked from that CallSite, and a MethodMemo for each of them); and
+/// - ValueMemos for the results of calls: for methods defined by InstructionBlocks each CallSite
+///   has its own ValueMemo, while for built-in methods there is a ValueMemo for each Continuation.
+///
+/// While most MethodMemos are mutable, for the simplest built-in methods (those that make no nested
+/// calls and need no other state) we create an immutable MethodMemo that can be re-used at each
+/// call site.
 public class MethodMemo {
-  /**
-   * All of the state related to our method that has been collected in our scope. Null if this
-   * MethodMemo was created by an {@link AnonymousFactory} (i.e. this memo is only being used to
-   * execute an anonymous InstructionBlock).
-   *
-   * <p>Most of the PerMethod state is only for use by the MemoMerger, but {@code perMethod.method}
-   * is the way to get the VmMethod that this memo is for. (We don't have a direct link in order to
-   * save a field in these objects, of which there are many.)
-   */
+  /// All of the state related to our method that has been collected in our scope. Null if this
+  /// MethodMemo was created by an [AnonymousFactory] (i.e. this memo is only being used to execute
+  /// an anonymous InstructionBlock).
+  ///
+  /// Most of the PerMethod state is only for use by the MemoMerger, but `perMethod.method` is the
+  /// way to get the VmMethod that this memo is for. (We don't have a direct link in order to save a
+  /// field in these objects, of which there are many.)
   final MemoMerger.PerMethod perMethod;
 
-  /**
-   * One of LIGHT, HEAVY, EXLINED, FIXED, or FORWARDED. Would be an enum except that we're trying to
-   * minimize the size of this object.
-   *
-   * <p>FIXED MethodMemos are immutable.
-   */
+  /// One of LIGHT, HEAVY, EXLINED, FIXED, or FORWARDED. Would be an enum except that we're trying
+  /// to minimize the size of this object.
+  ///
+  /// FIXED MethodMemos are immutable.
   private byte state;
 
-  /**
-   * The (possibly clamped, possibly out-of-date) uint8 value of currentWeight that was used to
-   * compute our parent's current weight.
-   *
-   * <p>Storing this separately from {@link #currentWeight} has two advantages:
-   *
-   * <ul>
-   *   <li>Recomputing our parent's weight may happen asynchronously; keeping track of the last
-   *       weight they've seen simplifies the update logic.
-   *   <li>{@code reportedWeight} is clamped to MAX_WEIGHT, enabling us to skip propagating updates
-   *       that could not have any effect (if a merge isn't triggered by MAX_WEIGHT it won't be
-   *       triggered by any larger value).
-   * </ul>
-   */
+  /// The (possibly clamped, possibly out-of-date) uint8 value of currentWeight that was used to
+  /// compute our parent's current weight.
+  ///
+  /// Storing this separately from [#currentWeight] has two advantages:
+  ///
+  /// - Recomputing our parent's weight may happen asynchronously; keeping track of the last weight
+  ///   they've seen simplifies the update logic.
+  /// - `reportedWeight` is clamped to MAX\_WEIGHT, enabling us to skip propagating updates that
+  ///   could not have any effect (if a merge isn't triggered by MAX\_WEIGHT it won't be triggered
+  ///   by any larger value).
   private byte reportedWeight;
 
-  /**
-   * The largest reportedWeight over all our child MethodMemos; a value greater than MAX_WEIGHT is
-   * used as a flag that this field needs to be recomputed.
-   */
+  /// The largest reportedWeight over all our child MethodMemos; a value greater than MAX\_WEIGHT is
+  /// used as a flag that this field needs to be recomputed.
   private byte maxChildWeight;
 
-  /**
-   * If state is EXLINED, this is the (constant) weight of a call (EXLINE_CALL_WEIGHT); otherwise
-   * should match the result returned by {@link #computeWeight}.
-   */
+  /// If state is EXLINED, this is the (constant) weight of a call (EXLINE\_CALL\_WEIGHT); otherwise
+  /// should match the result returned by [#computeWeight].
   private int currentWeight;
 
-  /**
-   * Records the arguments that have been passed to this method; null if state is FIXED.
-   *
-   * <p>If state is LIGHT, can be modified with just itself locked; if state is EXLINED or HEAVY,
-   * can only be modified while holding the MemoMerger lock.
-   */
+  /// Records the arguments that have been passed to this method; null if state is FIXED.
+  ///
+  /// If state is LIGHT, can be modified with just itself locked; if state is EXLINED or HEAVY, can
+  /// only be modified while holding the MemoMerger lock.
   final ValueMemo argsMemo;
 
-  /**
-   * Records the results that have been returned from this method; null if state is FIXED.
-   *
-   * <p>If state is LIGHT, can be modified with just itself locked; if state is EXLINED or HEAVY,
-   * can only be modified while holding the MemoMerger lock.
-   */
+  /// Records the results that have been returned from this method; null if state is FIXED.
+  ///
+  /// If state is LIGHT, can be modified with just itself locked; if state is EXLINED or HEAVY, can
+  /// only be modified while holding the MemoMerger lock.
   final ValueMemo resultsMemo;
 
-  /**
-   * A CallMemo for each of this method's call sites. Individual elements are null if that call site
-   * has not yet been reached; the whole array is replaced with null if state is FORWARDED.
-   */
+  /// A CallMemo for each of this method's call sites. Individual elements are null if that call
+  /// site has not yet been reached; the whole array is replaced with null if state is FORWARDED.
   private CallMemo[] callMemos;
 
-  /**
-   * A ValueMemo for each of this method's call sites (user methods) or continuations (builtin
-   * methods). Individual elements are null if that call site or continuation has not yet been
-   * reached; the whole array is replaced with null if state is FORWARDED.
-   */
+  /// A ValueMemo for each of this method's call sites (user methods) or continuations (builtin
+  /// methods). Individual elements are null if that call site or continuation has not yet been
+  /// reached; the whole array is replaced with null if state is FORWARDED.
   private ValueMemo[] valueMemos;
 
-  /**
-   * If state is LIGHT or HEAVY, the MethodMemo that contains this one (or null if this is the root
-   * of the computation); if state is FORWARDED, the MethodMemo that should be used in place of this
-   * one. Null if state is EXLINED or FIXED.
-   */
+  /// If state is LIGHT or HEAVY, the MethodMemo that contains this one (or null if this is the root
+  /// of the computation); if state is FORWARDED, the MethodMemo that should be used in place of
+  /// this one. Null if state is EXLINED or FIXED.
   private MethodMemo parent;
 
-  /**
-   * If state is LIGHT or HEAVY, extra is a CallSite identifying the CallMemo in {@link #parent}
-   * that contains this MethodMemo. If state is EXLINED, extra is a CodeGenLink. Otherwise (i.e. if
-   * state is FIXED or FORWARDED) extra is null.
-   */
+  /// If state is LIGHT or HEAVY, extra is a CallSite identifying the CallMemo in [#parent] that
+  /// contains this MethodMemo. If state is EXLINED, extra is a CodeGenLink. Otherwise (i.e. if
+  /// state is FIXED or FORWARDED) extra is null.
   private Object extra;
 
   // Possible values for state.
@@ -154,30 +125,25 @@ public class MethodMemo {
     assert MAX_WEIGHT < 255;
   }
 
-  /** A VarHandle for accessing elements of a {@code ValueMemo[]}. */
+  /// A VarHandle for accessing elements of a `ValueMemo[]`.
   private static final VarHandle VALUE_MEMO_ARRAY_ELEMENT =
       MethodHandles.arrayElementVarHandle(ValueMemo[].class);
 
-  /** A VarHandle for accessing elements of a {@code CallMemo[]}. */
+  /// A VarHandle for accessing elements of a `CallMemo[]`.
   private static final VarHandle CALL_MEMO_ARRAY_ELEMENT =
       MethodHandles.arrayElementVarHandle(CallMemo[].class);
 
   private static final CallMemo[] NO_CALL_MEMOS = new CallMemo[0];
   private static final ValueMemo[] NO_VALUE_MEMOS = new ValueMemo[0];
 
-  /**
-   * The initial weight of a MethodMemo for the given method; returns 1 if {@code perMethod} is null
-   * (i.e. this is for a call to {@link VmInstructionBlock#applyToArgs}). {@link #computeWeight}
-   * adds the weight of all nested CallMemos to this value.
-   */
+  /// The initial weight of a MethodMemo for the given method; returns 1 if `perMethod` is null
+  /// (i.e. this is for a call to [VmInstructionBlock#applyToArgs]). [#computeWeight] adds the
+  /// weight of all nested CallMemos to this value.
   private static int baseWeight(MemoMerger.PerMethod perMethod) {
     return (perMethod == null) ? 1 : perMethod.method.baseWeight;
   }
 
-  /**
-   * If {@code perMethod} is null this MethodMemo is for a call to {@link
-   * VmInstructionBlock#applyToArgs}.
-   */
+  /// If `perMethod` is null this MethodMemo is for a call to [VmInstructionBlock#applyToArgs].
   MethodMemo(MemoMerger.PerMethod perMethod, Factory factory) {
     if (factory == Factory.TRIVIAL) {
       this.argsMemo = null;
@@ -199,7 +165,7 @@ public class MethodMemo {
   }
 
   static class Factory {
-    /** The Factory used to create all FIXED MethodMemos. */
+    /// The Factory used to create all FIXED MethodMemos.
     static final Factory TRIVIAL = new Factory(0, 0, 0, 0);
 
     final int numArgs;
@@ -214,20 +180,16 @@ public class MethodMemo {
       this.numValueMemos = numValueMemos;
     }
 
-    /**
-     * If {@code numCallMemos} and @code numValueMemos} are both zero, returns {@link #TRIVIAL};
-     * otherwise creates a new Factory.
-     */
+    /// If `numCallMemos` and @code numValueMemos} are both zero, returns [#TRIVIAL]; otherwise
+    /// creates a new Factory.
     static Factory create(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
       return (numCallMemos == 0 && numValueMemos == 0)
           ? TRIVIAL
           : new Factory(numArgs, numResults, numCallMemos, numValueMemos);
     }
 
-    /**
-     * True if the memos created by this factory are immutable (and hence there is no reason to
-     * create more than one of them per method).
-     */
+    /// True if the memos created by this factory are immutable (and hence there is no reason to
+    /// create more than one of them per method).
     boolean createsFixedMemos() {
       return this == TRIVIAL;
     }
@@ -237,7 +199,7 @@ public class MethodMemo {
     }
   }
 
-  /** A Factory that creates instances of {@link Extended}. */
+  /// A Factory that creates instances of [Extended].
   static class ExtendedFactory extends Factory {
     ExtendedFactory(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
       super(numArgs, numResults, numCallMemos, numValueMemos);
@@ -249,7 +211,7 @@ public class MethodMemo {
     }
   }
 
-  /** A Factory that creates instances of {@link LoopMethodMemo}. */
+  /// A Factory that creates instances of [LoopMethodMemo].
   static class LoopFactory extends Factory {
     LoopFactory(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
       super(numArgs, numResults, numCallMemos, numValueMemos);
@@ -261,11 +223,9 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * A Factory that makes MethodMemos suitable for {@link InstructionBlock#memoForApply} (i.e. these
-   * memos are only being used to execute an anonymous InstructionBlock; they are not associated
-   * with a VmMethod).
-   */
+  /// A Factory that makes MethodMemos suitable for [InstructionBlock#memoForApply] (i.e. these
+  /// memos are only being used to execute an anonymous InstructionBlock; they are not associated
+  /// with a VmMethod).
   static class AnonymousFactory extends Factory {
     AnonymousFactory(int numArgs, int numResults, int numCallMemos, int numValueMemos) {
       super(numArgs, numResults, numCallMemos, numValueMemos);
@@ -283,49 +243,42 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Returns the VmMethod that this memo is for. Errors if this MethodMemo was created by {@link
-   * AnonymousFactory} (i.e. this memo is only being used to execute an anonymous InstructionBlock).
-   */
+  /// Returns the VmMethod that this memo is for. Errors if this MethodMemo was created by
+  /// [AnonymousFactory] (i.e. this memo is only being used to execute an anonymous
+  /// InstructionBlock).
   VmMethod method() {
     return perMethod.method;
   }
 
-  /** Returns true if this MethodMemo is immutable and shared by all callers of the method. */
+  /// Returns true if this MethodMemo is immutable and shared by all callers of the method.
   boolean isFixed() {
     return state == FIXED;
   }
 
-  /** Returns true if this MethodMemo has been merged into another. */
+  /// Returns true if this MethodMemo has been merged into another.
   boolean isForwarded() {
     return state == FORWARDED;
   }
 
-  /**
-   * Returns true if this MethodMemo is unshared and below the weight threshold to be considered
-   * shareable.
-   */
+  /// Returns true if this MethodMemo is unshared and below the weight threshold to be considered
+  /// shareable.
   boolean isLight() {
     return state == LIGHT;
   }
 
-  /**
-   * Returns true if this MethodMemo is unshared but its weight is high enough to make it a
-   * candidate for sharing.
-   */
+  /// Returns true if this MethodMemo is unshared but its weight is high enough to make it a
+  /// candidate for sharing.
   boolean isHeavy() {
     return state == HEAVY;
   }
 
-  /** Returns true if this MethodMemo is exlined. */
+  /// Returns true if this MethodMemo is exlined.
   boolean isExlined() {
     return state == EXLINED;
   }
 
-  /**
-   * If this MethodMemo has been merged into another, returns the MethodMemo to use in its place;
-   * otherwise returns {@code this}.
-   */
+  /// If this MethodMemo has been merged into another, returns the MethodMemo to use in its place;
+  /// otherwise returns `this`.
   MethodMemo resolve() {
     // To avoid races should only be called while the MemoMerger is locked
     assert MemoMerger.isLocked();
@@ -341,25 +294,21 @@ public class MethodMemo {
     return result;
   }
 
-  /**
-   * Returns true if both MethodMemos are unshared and are called from the same CallSite in their
-   * parents.
-   */
+  /// Returns true if both MethodMemos are unshared and are called from the same CallSite in their
+  /// parents.
   boolean sameCallSite(MethodMemo other) {
     return extra instanceof CallSite && extra == other.extra;
   }
 
-  /** Changes this memo's state from LIGHT to HEAVY. */
+  /// Changes this memo's state from LIGHT to HEAVY.
   void setHeavy() {
     assert isLight() && currentWeight >= LOW_EXLINE_THRESHOLD;
     state = HEAVY;
   }
 
-  /**
-   * Changes this memo's state from LIGHT or HEAVY to EXLINED. Called either before the memo is used
-   * (in {@link AnonymousFactory} or to implement {@link Scope#setForceExlined}) or when the memo is
-   * being merged.
-   */
+  /// Changes this memo's state from LIGHT or HEAVY to EXLINED. Called either before the memo is
+  /// used (in [AnonymousFactory] or to implement [Scope#setForceExlined]) or when the memo is being
+  /// merged.
   void setExlined(MemoMerger merger) {
     assert (state == LIGHT || state == HEAVY);
     assert (merger == null) == (parent == null);
@@ -375,17 +324,17 @@ public class MethodMemo {
     state = EXLINED;
   }
 
-  /** This memo's weight, as seen by its parent. */
+  /// This memo's weight, as seen by its parent.
   int weight() {
     return reportedWeight & 0xff;
   }
 
-  /** The maximum {@link #weight} of any of this memo's children. */
+  /// The maximum [#weight] of any of this memo's children.
   int maxChildWeight() {
     return maxChildWeight & 0xff;
   }
 
-  /** This memo's parent, or null if this memo is exlined. */
+  /// This memo's parent, or null if this memo is exlined.
   MethodMemo parent() {
     // The parent field is also used to store the forwarding pointer when state is FORWARDED;
     // we shouldn't be getting that with this method.
@@ -393,15 +342,13 @@ public class MethodMemo {
     return parent;
   }
 
-  /** This memo's CallSite or CodeGenLink. */
+  /// This memo's CallSite or CodeGenLink.
   Object extra() {
     return extra;
   }
 
-  /**
-   * Moves a MethodMemo from one parent to another; called because the old parent is being merged
-   * into {@code newParent}.
-   */
+  /// Moves a MethodMemo from one parent to another; called because the old parent is being merged
+  /// into `newParent`.
   void updateParent(MethodMemo newParent) {
     assert !isForwarded();
     if (this.parent != null) {
@@ -424,10 +371,8 @@ public class MethodMemo {
     return currentWeight;
   }
 
-  /**
-   * Recomputes this MethodMemo's weight. Should always match currentWeight; intended only for
-   * assertions.
-   */
+  /// Recomputes this MethodMemo's weight. Should always match currentWeight; intended only for
+  /// assertions.
   int computeWeight() {
     int sum = baseWeight(perMethod);
     for (CallMemo cm : callMemos) {
@@ -441,7 +386,7 @@ public class MethodMemo {
     return sum;
   }
 
-  /** Returns true if this MethodMemo's weight exceeds the given limit. */
+  /// Returns true if this MethodMemo's weight exceeds the given limit.
   boolean weightExceeds(Scope scope, int limit) {
     // Once our weight reaches LOW_EXLINE_THRESHOLD we may stop tracking it accurately, so we can't
     // reliably answer this question for high limits.
@@ -455,11 +400,9 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Recomputes this MethodMemo's maximum child weight. Should match maxChildWeight, unless
-   * maxChildWeight > MAX_WEIGHT (the flag value indicating that it needs to be recomputed by this
-   * method).
-   */
+  /// Recomputes this MethodMemo's maximum child weight. Should match maxChildWeight, unless
+  /// maxChildWeight > MAX\_WEIGHT (the flag value indicating that it needs to be recomputed by this
+  /// method).
   int computeMaxChildWeight() {
     int max = 0;
     for (CallMemo cm : callMemos) {
@@ -470,22 +413,18 @@ public class MethodMemo {
     return max;
   }
 
-  /**
-   * Returns the ValueMemo to use for the specified call site or continuation, or null if none has
-   * been created yet.
-   */
+  /// Returns the ValueMemo to use for the specified call site or continuation, or null if none has
+  /// been created yet.
   ValueMemo valueMemo(int index) {
     ValueMemo[] valueMemos = this.valueMemos;
     return (valueMemos == null) ? null : valueMemos[index];
   }
 
-  /**
-   * Returns the ValueMemo to use for the specified call site or continuation; if this is the first
-   * request for that ValueMemo, constructs one of the specified size.
-   *
-   * <p>{@code tstate} is only used to find the MemoMerger lock if needed; it may be null, in which
-   * case {@link TState#get} will be used (with a small performance cost).
-   */
+  /// Returns the ValueMemo to use for the specified call site or continuation; if this is the first
+  /// request for that ValueMemo, constructs one of the specified size.
+  ///
+  /// `tstate` is only used to find the MemoMerger lock if needed; it may be null, in which case
+  /// [TState#get] will be used (with a small performance cost).
   ValueMemo valueMemo(TState tstate, int index, int size) {
     ValueMemo result = valueMemo(index);
     if (result != null) {
@@ -510,18 +449,14 @@ public class MethodMemo {
     return result;
   }
 
-  /**
-   * Returns the CallMemo to use for the given call site; should only be called while holding the
-   * MemoMerger lock.
-   */
+  /// Returns the CallMemo to use for the given call site; should only be called while holding the
+  /// MemoMerger lock.
   CallMemo memoForCall(CallSite callSite) {
     return resolve().callMemos[callSite.cIndex];
   }
 
-  /**
-   * Returns the MethodMemo to use for the given method at the given call site; harmonizes {@code
-   * args} with the result's {@link #argsMemo}.
-   */
+  /// Returns the MethodMemo to use for the given method at the given call site; harmonizes `args`
+  /// with the result's [#argsMemo].
   MethodMemo memoForCall(TState tstate, CallSite callSite, VmMethod method, Object[] args) {
     // First try to find an existing memo without acquiring the scope lock.
     CallMemo[] callMemos = this.callMemos;
@@ -607,10 +542,8 @@ public class MethodMemo {
     return result;
   }
 
-  /**
-   * Called when the weight of one of this memo's children has changed from {@code prev} to {@code
-   * now}, or when a new child has been added ({@code prev == 0}).
-   */
+  /// Called when the weight of one of this memo's children has changed from `prev` to `now`, or
+  /// when a new child has been added (`prev == 0`).
   void updateChildWeight(int prev, int now) {
     assert prev >= 0 && now > 0 && prev <= MAX_WEIGHT && now <= MAX_WEIGHT;
     if (isExlined()) {
@@ -632,9 +565,7 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Returns the chain of memos from this one to its exlined ancestor. Intended only for debugging.
-   */
+  /// Returns the chain of memos from this one to its exlined ancestor. Intended only for debugging.
   String stack() {
     StringBuilder sb = new StringBuilder();
     for (MethodMemo mm = this; ; mm = mm.parent) {
@@ -652,15 +583,13 @@ public class MethodMemo {
     return sb.toString();
   }
 
-  /**
-   * Any code that changes {@link #currentWeight} should (sooner or later) call {@code
-   * propagateWeightChange} to ensure that this memo's ancestors are properly updated.
-   */
+  /// Any code that changes [#currentWeight] should (sooner or later) call `propagateWeightChange`
+  /// to ensure that this memo's ancestors are properly updated.
   void propagateWeightChange(MemoMerger merger) {
     for (MethodMemo mm = this; mm.checkWeight(merger); mm = mm.parent) {}
   }
 
-  /** Returns true if a weight change was propagated to our parent. */
+  /// Returns true if a weight change was propagated to our parent.
   boolean checkWeight(MemoMerger merger) {
     if (isForwarded() || parent == null) {
       return false;
@@ -696,7 +625,7 @@ public class MethodMemo {
     return true;
   }
 
-  /** Returns true if this method should be considered heavy (and thus a candidate for sharing). */
+  /// Returns true if this method should be considered heavy (and thus a candidate for sharing).
   boolean weightOverThreshold() {
     assert isLight() || isHeavy();
     if (currentWeight < LOW_EXLINE_THRESHOLD) {
@@ -716,7 +645,7 @@ public class MethodMemo {
     return currentWeight >= maxChildWeight + MINIMUM_ADD_TO_CHILD;
   }
 
-  /** Replaces the specified child of this memo with another, exlined MethodMemo. */
+  /// Replaces the specified child of this memo with another, exlined MethodMemo.
   void replaceChild(MethodMemo child, MethodMemo replacement) {
     assert child.parent == this
         && child.perMethod == replacement.perMethod
@@ -727,12 +656,12 @@ public class MethodMemo {
     updateChildWeight(child.weight(), replacement.weight());
   }
 
-  /** True if this (exlined) MethodMemo should be used for a new call with the given args. */
+  /// True if this (exlined) MethodMemo should be used for a new call with the given args.
   boolean couldCastArgs(Object[] args) {
     return argsMemo == null || argsMemo.couldCast(args);
   }
 
-  /** Harmonizes the given arguments for this method. */
+  /// Harmonizes the given arguments for this method.
   @CanIgnoreReturnValue
   ValueMemo.Outcome harmonizeArgs(TState tstate, Object[] values, boolean isLocked) {
     if (argsMemo == null) {
@@ -745,7 +674,7 @@ public class MethodMemo {
     return result;
   }
 
-  /** Harmonizes the results that this method is returning. */
+  /// Harmonizes the results that this method is returning.
   void harmonizeResults(TState tstate, Value[] results) {
     ValueMemo.Outcome outcome = resultsMemo.harmonizeAll(tstate, results, 0, false);
     // Extra locking is only required for some args memos, so we shouldn't ever need it here.
@@ -755,11 +684,8 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Returns the nearest enclosing CodeGenLink for this MethodMemo. If this is a LoopMethodMemo the
-   * result will be its {@link LoopMethodMemo#loopCodeGen} if it is non-null and {@code
-   * skipLoopLink} is false.
-   */
+  /// Returns the nearest enclosing CodeGenLink for this MethodMemo. If this is a LoopMethodMemo the
+  /// result will be its [LoopMethodMemo#loopCodeGen] if it is non-null and `skipLoopLink` is false.
   CodeGenLink codeGenParent(boolean skipLoopLink) {
     assert MemoMerger.isLocked();
     assert !skipLoopLink || this instanceof LoopMethodMemo;
@@ -781,22 +707,20 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Returns true if the given MethodMemo (for the same VmMethod as this) is "similar enough" to
-   * this to justify merging them.
-   *
-   * <p>The current test looks only for similarity in the args; a better (but more expensive) test
-   * would be to see if they have similar children at corresponding call sites. Comparing result
-   * memos would be another possibility, although it's not clear if they provide any additional
-   * information.
-   */
+  /// Returns true if the given MethodMemo (for the same VmMethod as this) is "similar enough" to
+  /// this to justify merging them.
+  ///
+  /// The current test looks only for similarity in the args; a better (but more expensive) test
+  /// would be to see if they have similar children at corresponding call sites. Comparing result
+  /// memos would be another possibility, although it's not clear if they provide any additional
+  /// information.
   boolean isSimilarEnough(MethodMemo other) {
     // Neither argsMemo can be null here (argsMemo is null only for a fixedMemo, which is never a
     // candidate for merging).
     return argsMemo.overlaps(other.argsMemo);
   }
 
-  /** Leaves this memo forwarded to {@code other}. */
+  /// Leaves this memo forwarded to `other`.
   void mergeInto(MethodMemo other, MemoMerger merger) {
     assert other != this
         && other.perMethod == this.perMethod
@@ -848,10 +772,8 @@ public class MethodMemo {
     extra = null;
   }
 
-  /**
-   * Calls {@code action} for each of this MethodMemo's children, with the child and the CallMemo
-   * index. Used only for tests.
-   */
+  /// Calls `action` for each of this MethodMemo's children, with the child and the CallMemo index.
+  /// Used only for tests.
   void forEachChild(BiConsumer<Integer, MethodMemo> action) {
     for (int i = 0; i < callMemos.length; ++i) {
       int finalI = i;
@@ -859,15 +781,13 @@ public class MethodMemo {
     }
   }
 
-  /**
-   * Called directly or indirectly from {@link MemoMerger#allSettled} to check that this memo is in
-   * a consistent state.
-   *
-   * <p>If {@code root} is true this is a direct call and we always do the full suite of checks; if
-   * {@code root} is false we're following a link (child or forwarding) to this memo from another
-   * MethodMemo, and if this memo is exlined or heavy we'll verify only that it's on the appropriate
-   * list and then skip the rest of the checks since we know allSettled() will call us directly.
-   */
+  /// Called directly or indirectly from [MemoMerger#allSettled] to check that this memo is in a
+  /// consistent state.
+  ///
+  /// If `root` is true this is a direct call and we always do the full suite of checks; if `root`
+  /// is false we're following a link (child or forwarding) to this memo from another MethodMemo,
+  /// and if this memo is exlined or heavy we'll verify only that it's on the appropriate list and
+  /// then skip the rest of the checks since we know allSettled() will call us directly.
   void checkConsistency(boolean root) {
     if (isForwarded()) {
       assert (parent.isForwarded() || parent.isExlined());
@@ -911,18 +831,14 @@ public class MethodMemo {
     return String.format("%smMemo%s@%s", prefix, suffix, StringUtil.id(this));
   }
 
-  /**
-   * MethodMemo extensions must implement {@code Extension}, enabling values that were set
-   * independently to be combined.
-   */
+  /// MethodMemo extensions must implement `Extension`, enabling values that were set independently
+  /// to be combined.
   public interface Extension {
     Extension combine(Extension other);
   }
 
-  /**
-   * An Extended MethodMemo has an extra field that is available for the method implementation's
-   * use.
-   */
+  /// An Extended MethodMemo has an extra field that is available for the method implementation's
+  /// use.
   public static class Extended extends MethodMemo {
     private volatile Extension extension;
 
@@ -930,16 +846,14 @@ public class MethodMemo {
       super(perMethod, factory);
     }
 
-    /** Returns the current value of this memo's extra field. */
+    /// Returns the current value of this memo's extra field.
     public Extension getExtension() {
       return extension;
     }
 
-    /**
-     * Updates the value of this memo's extra field. If its current value is {@code previous}, it will be
-     * replaced; otherwise (assuming a race with some other thread setting it) the current value
-     * will be combined with the new value.
-     */
+    /// Updates the value of this memo's extra field. If its current value is `previous`, it will be
+    /// replaced; otherwise (assuming a race with some other thread setting it) the current value
+    /// will be combined with the new value.
     public void setExtension(TState tstate, Extension updated, Extension previous) {
       if (updated != previous) {
         synchronized (tstate.scope().memoMerger) {
@@ -967,14 +881,12 @@ public class MethodMemo {
     }
   }
 
-  /** A subclass of MethodMemo used for built-in methods with a LoopContinuation. */
+  /// A subclass of MethodMemo used for built-in methods with a LoopContinuation.
   static class LoopMethodMemo extends Extended {
-    /**
-     * A link that will generate code for the loop part of this method, i.e. starting at the
-     * LoopContinuation. Lazily created the first time we encounter a back branch to the
-     * LoopContinuation. (Some loops may never loop (does this still happen after the iterator
-     * refactoring?), so lazily allocating the CodeGenLink may save some time and memory.)
-     */
+    /// A link that will generate code for the loop part of this method, i.e. starting at the
+    /// LoopContinuation. Lazily created the first time we encounter a back branch to the
+    /// LoopContinuation. (Some loops may never loop (does this still happen after the iterator
+    /// refactoring?), so lazily allocating the CodeGenLink may save some time and memory.)
     private CodeGenLink loopCodeGen;
 
     LoopMethodMemo(MemoMerger.PerMethod perMethod, Factory factory) {
@@ -985,9 +897,7 @@ public class MethodMemo {
         Handle.forVar(
             MethodHandles.lookup(), LoopMethodMemo.class, "loopCodeGen", CodeGenLink.class);
 
-    /**
-     * Returns the CodeGenLink for this loop, or null if no back branches to it have been executed.
-     */
+    /// Returns the CodeGenLink for this loop, or null if no back branches to it have been executed.
     CodeGenLink loopCodeGen() {
       return (CodeGenLink) LOOP_CODE_GEN.getAcquire(this);
     }
@@ -1001,10 +911,8 @@ public class MethodMemo {
       }
     }
 
-    /**
-     * Returns the CodeGenLink for a LoopMethodMemo, creating it if needed. Should only be called
-     * with the MemoMerger locked.
-     */
+    /// Returns the CodeGenLink for a LoopMethodMemo, creating it if needed. Should only be called
+    /// with the MemoMerger locked.
     private static CodeGenLink lockedRequireCodeGenLink(
         LoopMethodMemo loop, CodeGenDebugging debugging) {
       if (loop.loopCodeGen != null) {

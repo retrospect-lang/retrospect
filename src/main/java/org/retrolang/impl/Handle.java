@@ -23,14 +23,14 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import org.retrolang.code.Op;
 
-/** A static utility class with convenience methods for creating MethodHandles and VarHandles. */
+/// A static utility class with convenience methods for creating MethodHandles and VarHandles.
 class Handle {
 
   static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
   private Handle() {}
 
-  /** Returns a MethodHandle for the specified constructor. */
+  /// Returns a MethodHandle for the specified constructor.
   static MethodHandle forConstructor(Class<?> klass, Class<?>... argTypes) {
     try {
       return lookup.unreflectConstructor(klass.getDeclaredConstructor(argTypes));
@@ -39,12 +39,12 @@ class Handle {
     }
   }
 
-  /** Returns a MethodHandle for the specified method. */
+  /// Returns a MethodHandle for the specified method.
   static MethodHandle forMethod(Class<?> klass, String name, Class<?>... argTypes) {
     return forMethod(lookup, klass, name, argTypes);
   }
 
-  /** Returns a MethodHandle for the specified method. */
+  /// Returns a MethodHandle for the specified method.
   static MethodHandle forMethod(
       MethodHandles.Lookup lookup, Class<?> klass, String name, Class<?>... argTypes) {
     try {
@@ -54,7 +54,7 @@ class Handle {
     }
   }
 
-  /** Returns a MethodHandle for the specified method. */
+  /// Returns a MethodHandle for the specified method.
   static MethodHandle forMethod(Method m) {
     try {
       return lookup.unreflect(m);
@@ -63,17 +63,17 @@ class Handle {
     }
   }
 
-  /** Returns an {@link Op.Builder} for the specified method. */
+  /// Returns an [Op.Builder] for the specified method.
   static Op.Builder opForMethod(Class<?> klass, String name, Class<?>... argTypes) {
     return Op.forMethod(lookup, klass, name, argTypes);
   }
 
-  /** Returns a VarHandle for the specified field. */
+  /// Returns a VarHandle for the specified field.
   static VarHandle forVar(Class<?> klass, String name, Class<?> type) {
     return forVar(lookup, klass, name, type);
   }
 
-  /** Returns a VarHandle for the specified field. */
+  /// Returns a VarHandle for the specified field.
   static VarHandle forVar(MethodHandles.Lookup lookup, Class<?> klass, String name, Class<?> type) {
     try {
       return lookup.findVarHandle(klass, name, type);
@@ -82,7 +82,7 @@ class Handle {
     }
   }
 
-  /** Returns a VarHandle for the specified field. */
+  /// Returns a VarHandle for the specified field.
   static VarHandle forVar(Field field) {
     try {
       return lookup.unreflectVarHandle(field);
@@ -91,7 +91,7 @@ class Handle {
     }
   }
 
-  /** Returns {@code c.simpleName()}, but with the names of any containing classes removed. */
+  /// Returns `c.simpleName()`, but with the names of any containing classes removed.
   static String simpleName(Class<?> c) {
     String result = c.getSimpleName();
     int lastDollar = result.lastIndexOf("$");

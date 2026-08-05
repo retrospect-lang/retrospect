@@ -9,12 +9,10 @@ import org.junit.runners.JUnit4;
 import org.retrolang.Vm;
 import org.retrolang.compiler.Compiler;
 
-/**
- * Compiles a trivial program, runs it a couple of times, and prints out the instructions and
- * associated memos as would be available for code generation. Intended to test the {@link
- * InstructionBlock#printInstructions()} code, but might also he useful as a starting point for
- * other tests.
- */
+/// Compiles a trivial program, runs it a couple of times, and prints out the instructions and
+/// associated memos as would be available for code generation. Intended to test the
+/// [InstructionBlock#printInstructions()] code, but might also he useful as a starting point for
+/// other tests.
 @RunWith(JUnit4.class)
 public class InstructionBlockTest {
 

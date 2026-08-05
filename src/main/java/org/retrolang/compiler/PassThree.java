@@ -46,13 +46,11 @@ import org.retrolang.compiler.RetrospectParser.TraceStatementContext;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
 
-/**
- * The final pass emits instructions. Most of the work is done by BlockCompiler and
- * ExpressionCompiler.
- */
+/// The final pass emits instructions. Most of the work is done by BlockCompiler and
+/// ExpressionCompiler.
 class PassThree extends VisitorBase<Void> {
 
-  /** Emits instructions for the given statements using the given BlockCompiler. */
+  /// Emits instructions for the given statements using the given BlockCompiler.
   static void apply(BlockCompiler blockCompiler, BlockContext block) {
     new PassThree(blockCompiler).visitBlock(block);
   }
@@ -200,7 +198,7 @@ class PassThree extends VisitorBase<Void> {
     return null;
   }
 
-  /** Returns the Locals corresponding to each of the given ids. */
+  /// Returns the Locals corresponding to each of the given ids.
   private static Local[] getLocals(List<LowerIdContext> ids) {
     return (ids == null)
         ? new Local[0]
@@ -462,7 +460,7 @@ class PassThree extends VisitorBase<Void> {
     return null;
   }
 
-  /** Emits finalStateHelper calls for all live collected vars. */
+  /// Emits finalStateHelper calls for all live collected vars.
   private void getFinalResults(Loop loop, Bits live, Local[] allRo) {
     Vm.Function helper = vmCore().lookupFunction("finalStateHelper", 2);
     for (CollectedVar cv : loop.collectedVars) {

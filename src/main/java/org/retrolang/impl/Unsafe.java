@@ -22,12 +22,10 @@ import org.retrolang.code.Emitter;
 import org.retrolang.code.Op;
 import org.retrolang.util.SizeOf;
 
-/**
- * A statics-only class providing a simpler API for the parts of sun.misc.Unsafe that we use.
- *
- * <p>THESE METHODS ARE DANGEROUS: the caller is assumed to have done all appropriate checks before
- * calling them.
- */
+/// A statics-only class providing a simpler API for the parts of sun.misc.Unsafe that we use.
+///
+/// THESE METHODS ARE DANGEROUS: the caller is assumed to have done all appropriate checks before
+/// calling them.
 class Unsafe {
 
   private static final sun.misc.Unsafe UNSAFE;
@@ -51,7 +49,7 @@ class Unsafe {
     UNSAFE_AS_CODE_VALUE = CodeValue.of(UNSAFE);
   }
 
-  /** Returns the offset of the specified field from the beginning of the object. */
+  /// Returns the offset of the specified field from the beginning of the object.
   static long fieldOffset(Class<?> cls, String fieldName) {
     try {
       return UNSAFE.objectFieldOffset(cls.getDeclaredField(fieldName));
@@ -60,55 +58,53 @@ class Unsafe {
     }
   }
 
-  /** Returns the offset of the specified field from the beginning of the object. */
+  /// Returns the offset of the specified field from the beginning of the object.
   static long fieldOffset(Field field) {
     return UNSAFE.objectFieldOffset(field);
   }
 
-  /** Returns the contents of a byte field at the specified offset. */
+  /// Returns the contents of a byte field at the specified offset.
   static byte getByte(Object o, long offset) {
     return UNSAFE.getByte(o, offset);
   }
 
-  /** Sets the contents of a byte field at the specified offset. */
+  /// Sets the contents of a byte field at the specified offset.
   static void putByte(Object o, long offset, byte x) {
     UNSAFE.putByte(o, offset, x);
   }
 
-  /** Returns the contents of an int field at the specified offset. */
+  /// Returns the contents of an int field at the specified offset.
   static int getInt(Object o, long offset) {
     return UNSAFE.getInt(o, offset);
   }
 
-  /** Sets the contents of an int field at the specified offset. */
+  /// Sets the contents of an int field at the specified offset.
   static void putInt(Object o, long offset, int x) {
     UNSAFE.putInt(o, offset, x);
   }
 
-  /** Returns the contents of a double field at the specified offset. */
+  /// Returns the contents of a double field at the specified offset.
   static double getDouble(Object o, long offset) {
     return UNSAFE.getDouble(o, offset);
   }
 
-  /** Sets the contents of a double field at the specified offset. */
+  /// Sets the contents of a double field at the specified offset.
   static void putDouble(Object o, long offset, double x) {
     UNSAFE.putDouble(o, offset, x);
   }
 
-  /** Returns the contents of a pointer field at the specified offset. */
+  /// Returns the contents of a pointer field at the specified offset.
   static Object getObject(Object o, long offset) {
     return UNSAFE.getObject(o, offset);
   }
 
-  /** Sets the contents of a pointer field at the specified offset. */
+  /// Sets the contents of a pointer field at the specified offset.
   static void putObject(Object o, long offset, Object x) {
     UNSAFE.putObject(o, offset, x);
   }
 
-  /**
-   * Atomically sets the contents of a pointer field at the specified offset if it currently has the
-   * specified value.
-   */
+  /// Atomically sets the contents of a pointer field at the specified offset if it currently has
+  /// the specified value.
   static boolean compareAndSwapObject(Object o, long offset, Object expected, Object x) {
     return UNSAFE.compareAndSwapObject(o, offset, expected, x);
   }

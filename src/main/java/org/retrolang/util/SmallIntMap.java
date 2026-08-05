@@ -22,22 +22,21 @@ import java.util.function.BinaryOperator;
 import java.util.function.UnaryOperator;
 import java.util.stream.IntStream;
 
-/**
- * An efficient implementation of a map from smallish non-negative integers to (non-null) objects of
- * a given type.
- *
- * <p>A map with k elements is represented by an Object[] of length at least k whose first k
- * elements are the values in key order, and a long[] bitmap with enough elements to identify the
- * keys. Reads are technically linear in the key being looked up, but effectively constant time for
- * smallish keys (the intended use case; "smallish" here could mean < 256, although it should
- * degrade gracefully even with significantly larger keys). Adding a new key to a map is linear in
- * the number of elements already in the map, but again the constant is small enough (a shift of the
- * tail of the values array) that it's likely to be close to constant time for the expected uses.
- *
- * <p>Instances of SmallIntMap are immutable; instances of {@link SmallIntMap.Builder} are mutable.
- * They share all the read-only methods, and have the same implementation internally, so if you just
- * want a mutable map you can use a Builder without ever building it.
- */
+/// An efficient implementation of a map from smallish non-negative integers to (non-null) objects
+/// of a given type.
+///
+/// A map with k elements is represented by an Object[] of length at least k whose first k elements
+/// are the values in key order, and a long[] bitmap with enough elements to identify the keys.
+/// Reads are technically linear in the key being looked up, but effectively constant time for
+/// smallish keys (the intended use case; "smallish" here could mean < 256, although it should
+/// degrade gracefully even with significantly larger keys). Adding a new key to a map is linear in
+/// the number of elements already in the map, but again the constant is small enough (a shift of
+/// the tail of the values array) that it's likely to be close to constant time for the expected
+/// uses.
+///
+/// Instances of SmallIntMap are immutable; instances of [SmallIntMap.Builder] are mutable. They
+/// share all the read-only methods, and have the same implementation internally, so if you just
+/// want a mutable map you can use a Builder without ever building it.
 public class SmallIntMap<E> extends SmallIntMapBase<E> {
   // All the non-static fields and methods of SmallIntMap are inherited from SmallIntBase.
 
@@ -46,13 +45,13 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
 
   private static final SmallIntMap<Object> EMPTY = new SmallIntMap<>(EMPTY_KEYS, EMPTY_VALUES, 0);
 
-  /** Returns an empty SmallIntMap. */
+  /// Returns an empty SmallIntMap.
   @SuppressWarnings("unchecked")
   public static <E> SmallIntMap<E> empty() {
     return (SmallIntMap<E>) EMPTY;
   }
 
-  /** The argument to {@link #forEachEntry}. */
+  /// The argument to [#forEachEntry].
   public interface EntryVisitor<E> extends EntryPredicate<E> {
     void visit(int key, E value);
 
@@ -62,17 +61,17 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
     }
   }
 
-  /** The argument to {@link #allMatch}. */
+  /// The argument to [#allMatch].
   public interface EntryPredicate<E> {
     boolean test(int key, E value);
   }
 
-  /** The argument to {@link Builder#updateEntries}. */
+  /// The argument to [Builder#updateEntries].
   public interface EntryUpdater<E> {
     E apply(int key, E value);
   }
 
-  /** The argument to {@link Builder#innerJoin} or {@link Builder#outerJoin}. */
+  /// The argument to [Builder#innerJoin] or [Builder#outerJoin].
   public interface ValueCombiner<E> {
     E apply(int key, E value1, E value2);
   }
@@ -81,18 +80,14 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
     super(keys, values, numValues);
   }
 
-  /**
-   * A Builder can be used as a mutable map and/or to construct an immutable SmallIntMap instance.
-   */
+  /// A Builder can be used as a mutable map and/or to construct an immutable SmallIntMap instance.
   public static class Builder<E> extends SmallIntMapBase<E> {
-    /** Creates an empty Builder. */
+    /// Creates an empty Builder.
     public Builder() {
       super(EMPTY_KEYS, EMPTY_VALUES, 0);
     }
 
-    /**
-     * Returns a SmallIntMap with the current contents of this Builder. Leaves the Builder empty.
-     */
+    /// Returns a SmallIntMap with the current contents of this Builder. Leaves the Builder empty.
     public SmallIntMap<E> build() {
       if (numValues == 0) {
         return empty();
@@ -128,26 +123,20 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       return new SmallIntMap<>(resultKeys, resultValues, resultNumValues);
     }
 
-    /**
-     * Adds or replaces the value for {@code key}. If {@code value} is null, deletes any existing
-     * value for {@code key}.
-     */
+    /// Adds or replaces the value for `key`. If `value` is null, deletes any existing value for
+    /// `key`.
     public void put(int key, E value) {
       put(key, value, null);
     }
 
-    /**
-     * Adds or updates the value for {@code key}. If {@code value} is null, deletes any existing
-     * value for {@code key}.
-     *
-     * <p>If {@code combiner} is non-null,
-     *
-     * <ul>
-     *   <li>{@code value} must be non-null, and
-     *   <li>if there is an existing value for {@code key}, {@code combiner} will be called to
-     *       determine the new value.
-     * </ul>
-     */
+    /// Adds or updates the value for `key`. If `value` is null, deletes any existing value for
+    /// `key`.
+    ///
+    /// If `combiner` is non-null,
+    ///
+    /// - `value` must be non-null, and
+    /// - if there is an existing value for `key`, `combiner` will be called to determine the new
+    ///   value.
     public void put(int key, E value, BinaryOperator<E> combiner) {
       Preconditions.checkArgument(key >= 0 && (combiner == null || value != null));
       int keyIndex = key / Long.SIZE;
@@ -191,7 +180,7 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       }
     }
 
-    /** Removes all elements from this Builder. */
+    /// Removes all elements from this Builder.
     public void clear() {
       if (numValues != 0) {
         Arrays.fill(keys, 0);
@@ -200,9 +189,7 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       }
     }
 
-    /**
-     * Initializes this builder to contain the same elements as the given SmallIntMap or Builder.
-     */
+    /// Initializes this builder to contain the same elements as the given SmallIntMap or Builder.
     @SuppressWarnings("ReferenceEquality")
     public void setFrom(SmallIntMapBase<E> src) {
       // Trying to set a Builder from itself seems likely to be a bug.
@@ -224,13 +211,11 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       numValues = src.numValues;
     }
 
-    /**
-     * Calls {@code updater.apply()} with each value in this map, and replaces the value with its
-     * result. {@code apply()} must not return null
-     *
-     * <p>Equivalent to {@code updateEntries((i, v) -> updater.apply(v))}, but more efficient if you
-     * don't need the keys and don't need to remove values.
-     */
+    /// Calls `updater.apply()` with each value in this map, and replaces the value with its result.
+    /// `apply()` must not return null
+    ///
+    /// Equivalent to `updateEntries((i, v) -> updater.apply(v))`, but more efficient if you don't
+    /// need the keys and don't need to remove values.
     public void updateValues(UnaryOperator<E> updater) {
       for (int i = 0; i < numValues; i++) {
         @SuppressWarnings("unchecked")
@@ -241,79 +226,58 @@ public class SmallIntMap<E> extends SmallIntMapBase<E> {
       }
     }
 
-    /**
-     * Calls {@code updater.apply()} with each key/value pair in this map, and replaces the value
-     * with its result. If {@code apply()} returns null the entry will be removed.
-     */
+    /// Calls `updater.apply()` with each key/value pair in this map, and replaces the value with
+    /// its result. If `apply()` returns null the entry will be removed.
     public void updateEntries(EntryUpdater<E> updater) {
       visitEntries(null, updater);
     }
 
-    /**
-     * Modifies this Builder by joining its contents with those of {@code other}.
-     *
-     * <p>For each {@code (k, thisVal)} in this builder, let {@code otherVal} be {@code
-     * other.apply(k)}; then:
-     *
-     * <ul>
-     *   <li>If {@code thisVal == otherVal} then the value for {@code k} is unchanged.
-     *   <li>If {@code otherVal} is null then the value for {@code k} is deleted.
-     *   <li>Otherwise the value for {@code k} is replaced with {@code combiner.apply(k, thisVal,
-     *       otherVal)}, or deleted if {@code combiner} returns null.
-     * </ul>
-     *
-     * <p>{@code combiner.apply()} may do read operations on this Builder, but must not modify it.
-     * Such read operations may see some elements modified by the join and others not yet modified.
-     */
+    /// Modifies this Builder by joining its contents with those of `other`.
+    ///
+    /// For each `(k, thisVal)` in this builder, let `otherVal` be `other.apply(k)`; then:
+    ///
+    /// - If `thisVal == otherVal` then the value for `k` is unchanged.
+    /// - If `otherVal` is null then the value for `k` is deleted.
+    /// - Otherwise the value for `k` is replaced with `combiner.apply(k, thisVal, otherVal)`, or
+    ///   deleted if `combiner` returns null.
+    ///
+    /// `combiner.apply()` may do read operations on this Builder, but must not modify it. Such read
+    /// operations may see some elements modified by the join and others not yet modified.
     public void innerJoin(SmallIntMapBase<E> other, ValueCombiner<E> combiner) {
       join(other, false, combiner);
     }
 
-    /**
-     * Modifies this Builder by joining its contents with those of {@code other}.
-     *
-     * <p>For each {@code k} that has a value in {@code this} or {@code other}, let {@code thisVal}
-     * be {@code this.apply(k)} and {@code otherVal} be {@code other.apply(k)}; then
-     *
-     * <ul>
-     *   <li>If {@code thisVal == otherVal} or {@code otherVal} is null, then the value for {@code
-     *       k} is unchanged.
-     *   <li>If {@code thisVal} is null then {@code otherVal} is inserted as the value for {@code
-     *       k}.
-     *   <li>Otherwise ({@code thisVal != otherVal} and neither is null), the value for {@code k} is
-     *       replaced with {@code combiner.apply(k, thisVal, otherVal)}, or deleted if {@code
-     *       combiner} returns null.
-     * </ul>
-     *
-     * <p>{@code combiner.apply()} may do read operations on this Builder, but must not modify it.
-     * Such read operations may see some elements modified by the join and others not yet modified.
-     */
+    /// Modifies this Builder by joining its contents with those of `other`.
+    ///
+    /// For each `k` that has a value in `this` or `other`, let `thisVal` be `this.apply(k)` and
+    /// `otherVal` be `other.apply(k)`; then
+    ///
+    /// - If `thisVal == otherVal` or `otherVal` is null, then the value for `k` is unchanged.
+    /// - If `thisVal` is null then `otherVal` is inserted as the value for `k`.
+    /// - Otherwise (`thisVal != otherVal` and neither is null), the value for `k` is replaced with
+    ///   `combiner.apply(k, thisVal, otherVal)`, or deleted if `combiner` returns null.
+    ///
+    /// `combiner.apply()` may do read operations on this Builder, but must not modify it. Such read
+    /// operations may see some elements modified by the join and others not yet modified.
     public void outerJoin(SmallIntMapBase<E> other, ValueCombiner<E> combiner) {
       join(other, true, combiner);
     }
 
-    /**
-     * Modifies this Builder by joining its contents with those of {@code other}.
-     *
-     * <p>For each {@code k} that has a value in {@code this} or {@code other}, let {@code thisVal}
-     * be {@code this.apply(k)} and {@code otherVal} be {@code other.apply(k)}; then
-     *
-     * <ul>
-     *   <li>If {@code thisVal == otherVal}, or {@code outerJoin} is true and {@code otherVal} is
-     *       null, or {@code outerJoin} is false and {@code thisVal} is null, then the value for
-     *       {@code k} is unchanged.
-     *   <li>If {@code outerJoin} is false and {@code otherVal} is null then the value for {@code k}
-     *       is deleted.
-     *   <li>If {@code outerJoin} is true and {@code thisVal} is null then {@code otherVal} is
-     *       inserted as the value for {@code k}.
-     *   <li>Otherwise ({@code thisVal != otherVal} and neither is null), the value for {@code k} is
-     *       replaced with {@code combiner.apply(k, thisVal, otherVal)}, or deleted if {@code
-     *       combiner} returns null.
-     * </ul>
-     *
-     * <p>{@code combiner.apply()} may do read operations on this Builder, but must not modify it.
-     * Such read operations may see some elements modified by the join and others not yet modified.
-     */
+    /// Modifies this Builder by joining its contents with those of `other`.
+    ///
+    /// For each `k` that has a value in `this` or `other`, let `thisVal` be `this.apply(k)` and
+    /// `otherVal` be `other.apply(k)`; then
+    ///
+    /// - If `thisVal == otherVal`, or `outerJoin` is true and `otherVal` is null, or `outerJoin` is
+    ///   false and `thisVal` is null, then the value for `k` is unchanged.
+    /// - If `outerJoin` is false and `otherVal` is null then the value for `k` is deleted.
+    /// - If `outerJoin` is true and `thisVal` is null then `otherVal` is inserted as the value for
+    ///   `k`.
+    /// - Otherwise (`thisVal != otherVal` and neither is null), the value for `k` is replaced with
+    ///   `combiner.apply(k, thisVal, otherVal)`, or deleted if `combiner` returns null.
+    ///
+    /// `combiner.apply()` may do read operations on this Builder, but must not modify it. Such read
+    /// operations may see some elements modified by the join and others not yet modified.
     @SuppressWarnings({"unchecked", "ReferenceEquality"})
     private void join(SmallIntMapBase<E> other, boolean outerJoin, ValueCombiner<E> combiner) {
       if (other == this) {

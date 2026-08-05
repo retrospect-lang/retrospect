@@ -73,33 +73,30 @@ import org.retrolang.compiler.RetrospectParser.TypeNameExpressionContext;
 import org.retrolang.util.Bits;
 import org.retrolang.util.Bits.Op;
 
-/**
- * The second pass through a statement block <nl>
- * <li>links each variable reference to an appropriate entry in the given scope, adding entries for
- *     variables inherited from the scope's parent if necessary;
- * <li>checks for conflicting reads and writes to the same variable within a single statement;
- * <li>determines which variables are live at the beginning of each statement, and checks for
- *     variables that are set but then never read or read when they could not have been set; and
- * <li>creates a subtask to run PassThree on each nested lambda or loop body. </nl>
- *
- *     <p>PassTwo has two phases. The first visits the statements in order, creating scope entries
- *     and checking for conflicting access or read-without-write; it also constructs a sequence of
- *     LiveCheck objects. The second phase processes the LiveChecks in reverse order, determining
- *     liveness, checking for write-without-read, and creating the PassThree subtasks.
- *
- *     <p>Bits objects are used to represent sets of variables that are read, written, and live,
- *     indexed by Scope.Entry.index. Note that read-only (e.g. inherited) variables have index < 0,
- *     and none of these checks apply to them.
- */
+/// The second pass through a statement block
+///
+/// 1. links each variable reference to an appropriate entry in the given scope, adding entries for
+///    variables inherited from the scope's parent if necessary;
+/// 2. checks for conflicting reads and writes to the same variable within a single statement;
+/// 3. determines which variables are live at the beginning of each statement, and checks for
+///    variables that are set but then never read or read when they could not have been set; and
+/// 4. creates a subtask to run PassThree on each nested lambda or loop body.
+///
+/// PassTwo has two phases. The first visits the statements in order, creating scope entries and
+/// checking for conflicting access or read-without-write; it also constructs a sequence of
+/// LiveCheck objects. The second phase processes the LiveChecks in reverse order, determining
+/// liveness, checking for write-without-read, and creating the PassThree subtasks.
+///
+/// Bits objects are used to represent sets of variables that are read, written, and live, indexed
+/// by Scope.Entry.index. Note that read-only (e.g. inherited) variables have index < 0, and none of
+/// these checks apply to them.
 class PassTwo extends VisitorBase<Void> {
-  /**
-   * Runs PassTwo on a block of statements.
-   *
-   * @param numDefinedAtStart variables in scope with indices less than this are assumed to have
-   *     been assigned a value before the block begins
-   * @param mustNotFallThrough if true, it is an error if the block ends without a `return`,
-   *     'break', or 'continue'
-   */
+  /// Runs PassTwo on a block of statements.
+  ///
+  /// @param numDefinedAtStart variables in scope with indices less than this are assumed to have
+  ///   been assigned a value before the block begins
+  /// @param mustNotFallThrough if true, it is an error if the block ends without a `return`,
+  ///   'break', or 'continue'
   static void apply(
       Scope scope, BlockContext block, int numDefinedAtStart, boolean mustNotFallThrough) {
     PassTwo passTwo = new PassTwo(scope, numDefinedAtStart);
@@ -110,9 +107,7 @@ class PassTwo extends VisitorBase<Void> {
     passTwo.backward();
   }
 
-  /**
-   * Runs PassTwo on a single expression; used for lambdas and expression-only method declarations.
-   */
+  /// Runs PassTwo on a single expression; used for lambdas and expression-only method declarations.
   static void apply(Scope.ForMethod scope, ExpressionContext ctx, boolean argsMustBeUsed) {
     int numDefinedAtStart = scope.nextIndex();
     PassTwo passTwo = new PassTwo(scope, -1);
@@ -124,7 +119,7 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /** Throws a CompileError if any variable with index in [start, end) is unused. */
+  /// Throws a CompileError if any variable with index in [start, end) is unused.
   private static void checkArgsUsed(Scope scope, Bits liveAtStart, int start, int end) {
     Bits notUsed = Op.DIFFERENCE.apply(Bits.forRange(start, end - 1), liveAtStart);
     if (!notUsed.isEmpty()) {
@@ -136,11 +131,9 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /**
-   * A LiveCheck will be called with the variables that are live after the current statement; it can
-   * check for errors, and should update live to reflect which variables are live before the current
-   * statement.
-   */
+  /// A LiveCheck will be called with the variables that are live after the current statement; it
+  /// can check for errors, and should update live to reflect which variables are live before the
+  /// current statement.
   interface LiveCheck {
     void check(Bits.Builder live);
   }
@@ -149,101 +142,82 @@ class PassTwo extends VisitorBase<Void> {
 
   Scope scope;
 
-  /**
-   * Each of the LiveChecks in this list will be executed, in reverse order, during the second phase
-   * of PassTwo.
-   */
+  /// Each of the LiveChecks in this list will be executed, in reverse order, during the second
+  /// phase of PassTwo.
   private final List<LiveCheck> liveChecks = new ArrayList<>();
 
-  /**
-   * The (writable) variables in scope that have been assigned a value before this statement (on at
-   * least one reachable code path). Null if apply() was called with an expression (rather than a
-   * block).
-   *
-   * <p>Any variable not included in this set cannot have a value, so any use of it is an error.
-   */
+  /// The (writable) variables in scope that have been assigned a value before this statement (on at
+  /// least one reachable code path). Null if apply() was called with an expression (rather than a
+  /// block).
+  ///
+  /// Any variable not included in this set cannot have a value, so any use of it is an error.
   private final Bits.Builder maybeDefined;
 
-  /** The (writable) variables in scope that are read by the current statement. */
+  /// The (writable) variables in scope that are read by the current statement.
   private final Bits.Builder varsRead = new Bits.Builder();
 
-  /**
-   * The variables that are updated by the current statement (i.e. read and then written).
-   *
-   * <p>A variable may only appear in both {@code varsRead} and {@code varsUpdated} if the statement
-   * ensures a strict ordering between them (due to the use of "{@code and}", "{@code or}", or
-   * "{@code ?:}"). For example,
-   *
-   * <pre>
-   *   y = pop(x=) + size(x)
-   * </pre>
-   *
-   * is not allowed (the read of {@code x} conflicts with the update of {@code x}), but
-   *
-   * <pre>
-   *   y = pop(x=) is Number and isEmpty(x)
-   * </pre>
-   *
-   * is (the update will complete before the {@code isEmpty(x)} is started).
-   */
+  /// The variables that are updated by the current statement (i.e. read and then written).
+  ///
+  /// A variable may only appear in both `varsRead` and `varsUpdated` if the statement ensures a
+  /// strict ordering between them (due to the use of "`and`", "`or`", or "`?:`"). For example,
+  ///
+  /// `y = pop(x=) + size(x)`
+  ///
+  /// is not allowed (the read of `x` conflicts with the update of `x`), but
+  ///
+  /// `y = pop(x=) is Number and isEmpty(x)`
+  ///
+  /// is (the update will complete before the `isEmpty(x)` is started).
   private final Bits.Builder varsUpdated = new Bits.Builder();
 
-  /**
-   * The variables that are written by the current statement on completion.
-   *
-   * <p>{@code varsUpdated} and {@code varsAssigned} must be disjoint.
-   */
+  /// The variables that are written by the current statement on completion.
+  ///
+  /// `varsUpdated` and `varsAssigned` must be disjoint.
   private final Bits.Builder varsAssigned = new Bits.Builder();
 
-  /** All variables references that have been added to varsAssigned. */
+  /// All variables references that have been added to varsAssigned.
   private final ArrayList<LowerIdContext> assignedAsList = new ArrayList<>();
 
-  /** True if we're in a context where functions with inout args are allowed. */
+  /// True if we're in a context where functions with inout args are allowed.
   private boolean updateAllowed;
 
-  /** True if the next statement is reachable. */
+  /// True if the next statement is reachable.
   private boolean reachable;
 
-  /**
-   * If {@link #reachable} is true, {@code reachableIsUncertain} will be true if the next statement
-   * is only reachable by completion of a loop that might not complete (because it contains a
-   * break). Ignored if reachable is false.
-   *
-   * <p>Put another way, these two booleans encode three possible states:
-   *
-   * <ul>
-   *   <li>{@code reachable=false}: the next statement is not reachable
-   *   <li>{@code reachable=true}, {@code reachableIsUncertain=false}: the next statement is
-   *       reachable (assuming that all conditionals could go either way)
-   *   <li>{@code reachable=true}, {@code reachableIsUncertain=true}: the next statement might or
-   *       might not be reachable
-   * </ul>
-   *
-   * <p>Some functions look like
-   *
-   * <pre>
-   *   function foo(x) {
-   *     for a in something {
-   *       if whatever {
-   *         break { return a }
-   *       }
-   *     }
-   *   }
-   * </pre>
-   *
-   * where the {@code break} will always be reached before the collection is exhausted. We don't
-   * want the compiler to report a "Missing return" error (forcing the author to add a {@code
-   * return} that would never be executed). Instead we let the code compile as-is, and throw the
-   * "Missing return" error at runtime if the loop ever completes.
-   */
+  /// If [#reachable] is true, `reachableIsUncertain` will be true if the next statement is only
+  /// reachable by completion of a loop that might not complete (because it contains a break).
+  /// Ignored if reachable is false.
+  ///
+  /// Put another way, these two booleans encode three possible states:
+  ///
+  /// - `reachable=false`: the next statement is not reachable
+  /// - `reachable=true`, `reachableIsUncertain=false`: the next statement is reachable (assuming
+  ///   that all conditionals could go either way)
+  /// - `reachable=true`, `reachableIsUncertain=true`: the next statement might or might not be
+  ///   reachable
+  ///
+  /// Some functions look like
+  ///
+  /// ```
+  ///   function foo(x) {
+  ///     for a in something {
+  ///       if whatever {
+  ///         break { return a }
+  ///       }
+  ///     }
+  ///   }
+  /// ```
+  ///
+  /// where the `break` will always be reached before the collection is exhausted. We don't want the
+  /// compiler to report a "Missing return" error (forcing the author to add a `return` that would
+  /// never be executed). Instead we let the code compile as-is, and throw the "Missing return"
+  /// error at runtime if the loop ever completes.
   private boolean reachableIsUncertain;
 
-  /**
-   * Creates a PassTwo visitor using the given scope. If {@code numDefinedAtStart} is negative it
-   * will skip checking for read-without-write (used when e.g. compiling lambdas, since there are no
-   * assignments); otherwise all variables with index less than numDefinedAtStart are assumed to
-   * have initial values.
-   */
+  /// Creates a PassTwo visitor using the given scope. If `numDefinedAtStart` is negative it will
+  /// skip checking for read-without-write (used when e.g. compiling lambdas, since there are no
+  /// assignments); otherwise all variables with index less than numDefinedAtStart are assumed to
+  /// have initial values.
   private PassTwo(Scope scope, int numDefinedAtStart) {
     this.scope = scope;
     if (numDefinedAtStart < 0) {
@@ -254,7 +228,7 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /** Visits each statement in the given block. */
+  /// Visits each statement in the given block.
   private void forward(BlockContext block) {
     reachable = true;
     reachableIsUncertain = false;
@@ -273,10 +247,8 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /**
-   * Runs all the LiveChecks that were created in a previous forward pass. Returns the variables
-   * that are live at the beginning of the block.
-   */
+  /// Runs all the LiveChecks that were created in a previous forward pass. Returns the variables
+  /// that are live at the beginning of the block.
   @CanIgnoreReturnValue
   private Bits backward() {
     Bits.Builder live = new Bits.Builder();
@@ -286,15 +258,13 @@ class PassTwo extends VisitorBase<Void> {
     return live.build();
   }
 
-  /** Runs the LiveChecks in the given list in reverse order. */
+  /// Runs the LiveChecks in the given list in reverse order.
   private static void backward(List<LiveCheck> liveChecks, Bits.Builder live) {
     Lists.reverse(liveChecks).forEach(c -> c.check(live));
   }
 
-  /**
-   * Save any LiveChecks that have been created since a given start point as a stand-alone LiveCheck
-   * (this is used when processing conditional control paths).
-   */
+  /// Save any LiveChecks that have been created since a given start point as a stand-alone
+  /// LiveCheck (this is used when processing conditional control paths).
   private LiveCheck saveChecks(int start) {
     int end = liveChecks.size();
     if (start == end) {
@@ -307,10 +277,8 @@ class PassTwo extends VisitorBase<Void> {
     return live -> backward(saved, live);
   }
 
-  /**
-   * Called with a variable that is read by the current statement. Throws a CompileError if the
-   * variable is also updated by this statement or could not have been assigned to yet.
-   */
+  /// Called with a variable that is read by the current statement. Throws a CompileError if the
+  /// variable is also updated by this statement or could not have been assigned to yet.
   private void addRead(LowerIdContext id, String name) {
     Scope.Entry entry = scope.getEntryForRead(name, id.start);
     if (entry == null) {
@@ -319,18 +287,14 @@ class PassTwo extends VisitorBase<Void> {
     addReadImpl(id.start, entry, maybeDefined);
   }
 
-  /**
-   * Called with a variable that is read by the current statement. Throws a CompileError if the
-   * variable is also updated by this statement or could not have been assigned to yet.
-   */
+  /// Called with a variable that is read by the current statement. Throws a CompileError if the
+  /// variable is also updated by this statement or could not have been assigned to yet.
   private void addRead(Token token, Scope.Entry entry) {
     addReadImpl(token, entry, maybeDefined);
   }
 
-  /**
-   * Called with each variable in a child scope (lambda or loop) that inherits from this scope, at
-   * the point the child is instantiated.
-   */
+  /// Called with each variable in a child scope (lambda or loop) that inherits from this scope, at
+  /// the point the child is instantiated.
   private void addReadForClosure(Scope.Entry childEntry) {
     // We don't check maybeDefined; the scope already did that when creating the inheritance link,
     // and when compiling loops we've already changed maybeDefined by the time this is called.
@@ -351,11 +315,9 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /**
-   * Called with each variable that is updated (i.e. passed as an inout argument) by the current
-   * statement; adds it to both the updated and assigned sets. Throws a CompileError if the variable
-   * is read-only, is updated more than once, or is also read by this statement.
-   */
+  /// Called with each variable that is updated (i.e. passed as an inout argument) by the current
+  /// statement; adds it to both the updated and assigned sets. Throws a CompileError if the
+  /// variable is read-only, is updated more than once, or is also read by this statement.
   private void addUpdate(LowerIdContext id, String name) {
     Scope.Entry entry = scope.getExistingEntryForWrite(id, name);
     int index = entry.index;
@@ -370,16 +332,15 @@ class PassTwo extends VisitorBase<Void> {
     }
   }
 
-  /**
-   * Called with each variable that appears on the left hand side of an assignment statement. Throws
-   * a CompileError if the variable is read-only or the assignment conflicts with another assignment
-   * or update, or if the assignment reads first but the variable has never been assigned to.
-   *
-   * <p>Note that {@code addAssign} with {@code readsFirst} true is different from {@link
-   * #addUpdate}; the latter conflicts with reads, while the former doesn't. For example, "{@code
-   * size(a) > pop(a=)}" is an error (the read conflicts with the update), while "{@code a += a}"
-   * isn't (the assignment happens after all reads).
-   */
+  /// Called with each variable that appears on the left hand side of an assignment statement.
+  /// Throws a CompileError if the variable is read-only or the assignment conflicts with another
+  /// assignment or update, or if the assignment reads first but the variable has never been
+  /// assigned to.
+  ///
+  /// Note that `addAssign` with `readsFirst` true is different from [#addUpdate]; the latter
+  /// conflicts with reads, while the former doesn't. For example, " `size(a) > pop(a=)`" is an
+  /// error (the read conflicts with the update), while "`a += a`" isn't (the assignment happens
+  /// after all reads).
   private void addAssign(LowerIdContext id, boolean readsFirst) {
     Scope.Entry entry = id.entry;
     if (entry == null) {
@@ -402,16 +363,12 @@ class PassTwo extends VisitorBase<Void> {
     assignedAsList.add(id);
   }
 
-  /**
-   * Called after all calls to {@link #addAssign}, {@link #addRead} and {@link #addUpdate} for the
-   * current statement. Adds LiveChecks to
-   *
-   * <ul>
-   *   <li>verify that all assigned-to variables are live after this statement;
-   *   <li>clear liveness for any assigned-to variables that aren't read first; and
-   *   <li>add all read or updated variables to the live set.
-   * </ul>
-   */
+  /// Called after all calls to [#addAssign], [#addRead] and [#addUpdate] for the current statement.
+  /// Adds LiveChecks to
+  ///
+  /// - verify that all assigned-to variables are live after this statement;
+  /// - clear liveness for any assigned-to variables that aren't read first; and
+  /// - add all read or updated variables to the live set.
   private void checkStatement() {
     Op.UNION.into(varsRead, varsUpdated);
     Bits savedRead = varsRead.build();
@@ -570,10 +527,8 @@ class PassTwo extends VisitorBase<Void> {
     return null;
   }
 
-  /**
-   * After a {@code return} or {@code continue}, only the inouts are live and the next statement is
-   * not reachable.
-   */
+  /// After a `return` or `continue`, only the inouts are live and the next statement is not
+  /// reachable.
   private void checkReturn() {
     Bits inouts = scope.inouts();
     liveChecks.add(live -> live.setAll(inouts));
@@ -618,11 +573,9 @@ class PassTwo extends VisitorBase<Void> {
     return null;
   }
 
-  /**
-   * Runs PassTwo on one branch of a conditional, with the given test and block. Assumes that {@link
-   * #maybeDefined} and {@link #reachable} are the union of any previously visited branches, and
-   * unions this branch into them. Combines the resulting LiveCheck(s) with the given elseCheck.
-   */
+  /// Runs PassTwo on one branch of a conditional, with the given test and block. Assumes that
+  /// [#maybeDefined] and [#reachable] are the union of any previously visited branches, and unions
+  /// this branch into them. Combines the resulting LiveCheck(s) with the given elseCheck.
   LiveCheck visitBranch(
       ExpressionContext test, BlockContext block, Bits initiallyDefined, LiveCheck elseCheck) {
     return addBranch(
@@ -651,16 +604,13 @@ class PassTwo extends VisitorBase<Void> {
         });
   }
 
-  /**
-   * Process an alternative code path leading to the current point. Combines {@link #maybeDefined}
-   * and {@link #reachable} with the effects of running {@code branch} (which is expected to visit
-   * something) starting from {@code initiallyDefined}. Returns the result of {@code branch}.
-   *
-   * <p>More precisely, saves the current values of {@link #maybeDefined} and {@link #reachable},
-   * then sets them to the given {@code initiallyDefined} and {@code true}, and runs {@code branch}.
-   * The resulting values of {@link #maybeDefined} and {@link #reachable} are combined with the
-   * original values.
-   */
+  /// Process an alternative code path leading to the current point. Combines [#maybeDefined] and
+  /// [#reachable] with the effects of running `branch` (which is expected to visit something)
+  /// starting from `initiallyDefined`. Returns the result of `branch`.
+  ///
+  /// More precisely, saves the current values of [#maybeDefined] and [#reachable], then sets them
+  /// to the given `initiallyDefined` and `true`, and runs `branch`. The resulting values of
+  /// [#maybeDefined] and [#reachable] are combined with the original values.
   private LiveCheck addBranch(Bits initiallyDefined, Supplier<LiveCheck> branch) {
     boolean wasReachable = reachable;
     boolean wasUncertain = reachableIsUncertain;
@@ -691,7 +641,7 @@ class PassTwo extends VisitorBase<Void> {
     return result;
   }
 
-  /** Adds an inherited variable to the given live set. */
+  /// Adds an inherited variable to the given live set.
   private static void addInherited(Scope.Entry childEntry, Bits.Builder live) {
     Scope.Entry entry = childEntry.fromParent;
     int index = entry.index;
@@ -821,12 +771,10 @@ class PassTwo extends VisitorBase<Void> {
     return null;
   }
 
-  /**
-   * Called with a {@code break} statement in a loop in the current block, and the variables that
-   * are defined in the scope outside the loop at the beginning of the break. Updates {@link
-   * #maybeDefined} and {@link #reachable} to reflect this additional code path to the instructions
-   * after the loop, and returns a LiveCheck for the break body.
-   */
+  /// Called with a `break` statement in a loop in the current block, and the variables that are
+  /// defined in the scope outside the loop at the beginning of the break. Updates [#maybeDefined]
+  /// and [#reachable] to reflect this additional code path to the instructions after the loop, and
+  /// returns a LiveCheck for the break body.
   private LiveCheck checkBreak(Loop.Break brk, Bits definedOnBreak) {
     LiveCheck finishClosure = live -> brk.finishClosure(live.build());
     if (brk.block == null) {
@@ -857,14 +805,11 @@ class PassTwo extends VisitorBase<Void> {
     return null;
   }
 
-  /**
-   * If {@code okIfNotFound} is false, we're in a context where {@code lowerId} must be the name of
-   * a variable defined in this scope (e.g. the "{@code a}" in "{@code trace a}" or "{@code
-   * foo({a})}").
-   *
-   * <p>If {@code okIfNotFound} is true, we assume that if no variable is found then it's a
-   * zero-argument function call (PassThree will throw an error if that turns out to not be true).
-   */
+  /// If `okIfNotFound` is false, we're in a context where `lowerId` must be the name of a variable
+  /// defined in this scope (e.g. the "`a`" in "`trace a`" or " `foo({a})`").
+  ///
+  /// If `okIfNotFound` is true, we assume that if no variable is found then it's a zero-argument
+  /// function call (PassThree will throw an error if that turns out to not be true).
   private void visitLowerId(LowerIdContext lowerId, boolean okIfNotFound) {
     // I don't think that there's currently any way we'll visit a LowerIdContext
     // more than once, but that might change?
@@ -1018,10 +963,7 @@ class PassTwo extends VisitorBase<Void> {
     return null;
   }
 
-  /**
-   * Returns the current contents of {@code builder}, and resets {@code builder} to {@code
-   * previous}.
-   */
+  /// Returns the current contents of `builder`, and resets `builder` to `previous`.
   private static Bits saveAndReset(Bits.Builder builder, Bits previous) {
     Bits result = builder.build();
     builder.setAll(previous);

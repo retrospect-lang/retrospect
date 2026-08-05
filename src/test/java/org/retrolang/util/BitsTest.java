@@ -37,15 +37,13 @@ import org.retrolang.util.Bits.Op;
 @RunWith(JUnitParamsRunner.class)
 public class BitsTest {
 
-  /**
-   * {@link #setAndClear} will test setting and clearing elements with each subset of these
-   * elements. These values were chosen to try to hit all the likely boundary conditions. They'll be
-   * added to the Builder in the order they appear here, so having them unsorted tests a few more
-   * code paths.
-   */
+  /// [#setAndClear] will test setting and clearing elements with each subset of these elements.
+  /// These values were chosen to try to hit all the likely boundary conditions. They'll be added to
+  /// the Builder in the order they appear here, so having them unsorted tests a few more code
+  /// paths.
   private static final int[] ELEMENTS = new int[] {256, 32, 0, 15, 31, 63, 64, 127, 128, 255};
 
-  /** Maps each value in ELEMENTS to its position in ELEMENTS, or -1 if absent. */
+  /// Maps each value in ELEMENTS to its position in ELEMENTS, or -1 if absent.
   private static final int[] ELEMENT_INDEX;
 
   static {
@@ -57,15 +55,13 @@ public class BitsTest {
     }
   }
 
-  /** Returns an IntFunction that returns true if the corresponding bit {@code iteration} is set. */
+  /// Returns an IntFunction that returns true if the corresponding bit `iteration` is set.
   private static IntPredicate includedInIteration(int iteration) {
     return j -> (iteration & (1 << j)) != 0;
   }
 
-  /**
-   * Returns an array containing all {@code [i, includedInIteration(i)]} pairs for {@code i} in
-   * {@code 0..(2^limit - 1)}.
-   */
+  /// Returns an array containing all `[i, includedInIteration(i)]` pairs for `i` in `0..(2^limit -
+  /// 1)`.
   private static Object[] allSubsets(int limit) {
     int numSubsets = 1 << limit;
     return IntStream.range(0, numSubsets)
@@ -73,15 +69,13 @@ public class BitsTest {
         .toArray();
   }
 
-  /** Returns all possible arguments tuples for {@link #setAndClear}. */
+  /// Returns all possible arguments tuples for [#setAndClear].
   private static Object[] allElementSubsets() {
     return allSubsets(ELEMENTS.length);
   }
 
-  /**
-   * Systematically tests setting and clearing individual bits in Bits and Builders. Also tests
-   * Builder.test(), Bits.test(), Bits.stream() and Bits.of().
-   */
+  /// Systematically tests setting and clearing individual bits in Bits and Builders. Also tests
+  /// Builder.test(), Bits.test(), Bits.stream() and Bits.of().
   @Test
   @Parameters(method = "allElementSubsets")
   @TestCaseName("setAndClear_{0}")
@@ -163,17 +157,13 @@ public class BitsTest {
     iteratorChecker.checkExpected(subset);
   }
 
-  /**
-   * A helper class to verify that iterators produce the expected values in the expected order. To
-   * use,
-   *
-   * <ul>
-   *   <li>call {@link #checkNext} with each element produced by the iterator, together with the
-   *       predicate that was used to subset {@link #ELEMENTS}; and
-   *   <li>when the iterator completes, call {@link #checkExpected} with the Bits that should have
-   *       been returned.
-   * </ul>
-   */
+  /// A helper class to verify that iterators produce the expected values in the expected order. To
+  /// use,
+  ///
+  /// - call [#checkNext] with each element produced by the iterator, together with the predicate
+  ///   that was used to subset [#ELEMENTS]; and
+  /// - when the iterator completes, call [#checkExpected] with the Bits that should have been
+  ///   returned.
   private static class StreamChecker {
     int count;
     int min = Integer.MAX_VALUE;
@@ -202,12 +192,12 @@ public class BitsTest {
     }
   }
 
-  /** Returns all possible arguments tuples for {@link #fromIntAndfromBooleans}. */
+  /// Returns all possible arguments tuples for [#fromIntAndfromBooleans].
   private static Object[] subsetsUpTo4() {
     return allSubsets(4);
   }
 
-  /** Compare Bits.fromInt(), Bits.fromBooleans(), and Bits.fromPredicate(). */
+  /// Compare Bits.fromInt(), Bits.fromBooleans(), and Bits.fromPredicate().
   @Test
   @Parameters(method = "subsetsUpTo4")
   @TestCaseName("fromIntAndfromBooleans_{0}")
@@ -230,7 +220,7 @@ public class BitsTest {
     final int min;
     final int max;
 
-    /** Represents the integers from min to max, inclusive. */
+    /// Represents the integers from min to max, inclusive.
     Range(int min, int max) {
       this.min = min;
       this.max = max;
@@ -240,22 +230,22 @@ public class BitsTest {
       return i >= min && i <= max;
     }
 
-    /** Returns Bits.forRange(min, max). */
+    /// Returns Bits.forRange(min, max).
     Bits asBits() {
       return Bits.forRange(min, max);
     }
 
-    /** Returns the number of values in this range. */
+    /// Returns the number of values in this range.
     int count() {
       return max + 1 - min;
     }
 
-    /** Returns this range clipped to values less than the given value. */
+    /// Returns this range clipped to values less than the given value.
     Range keepLessThan(int i) {
       return max < i ? this : new Range(min, Math.max(min - 1, i - 1));
     }
 
-    /** Returns this range clipped to values that are greater than or equal to the given value. */
+    /// Returns this range clipped to values that are greater than or equal to the given value.
     Range keepGreaterThanOrEq(int i) {
       return min >= i ? this : new Range(Math.min(i, max + 1), max);
     }
@@ -266,9 +256,7 @@ public class BitsTest {
     }
   }
 
-  /**
-   * Ranges for partialClearAndCount() and rangeOps(). The order they appear here doesn't matter.
-   */
+  /// Ranges for partialClearAndCount() and rangeOps(). The order they appear here doesn't matter.
   private static final ImmutableList<Range> RANGES =
       ImmutableList.of(
           new Range(0, 0),
@@ -281,12 +269,12 @@ public class BitsTest {
           new Range(128, 128),
           new Range(100, 99));
 
-  /** Returns all possible arguments tuples for {@link #partialClearAndCount}. */
+  /// Returns all possible arguments tuples for [#partialClearAndCount].
   private static Object[] allRanges() {
     return RANGES.stream().map(r -> new Object[] {r}).toArray();
   }
 
-  /** Test clearLessThan(), clearGreaterThanOrEq(), and countGreaterThanOrEq(). */
+  /// Test clearLessThan(), clearGreaterThanOrEq(), and countGreaterThanOrEq().
   @Parameters(method = "allRanges")
   @TestCaseName("partialClearAndCount_{0}")
   @Test
@@ -318,10 +306,8 @@ public class BitsTest {
     assertEquals(range.keepGreaterThanOrEq(97).count(), b.countGreaterThanOrEq(97));
   }
 
-  /**
-   * Given an IntPredicate for each argument, returns an IntPredicate for the result of applying the
-   * given op to those arguments.
-   */
+  /// Given an IntPredicate for each argument, returns an IntPredicate for the result of applying
+  /// the given op to those arguments.
   private static IntPredicate apply(Op op, IntPredicate x, IntPredicate y) {
     return switch (op) {
       case UNION -> x.or(y);
@@ -331,7 +317,7 @@ public class BitsTest {
     };
   }
 
-  /** Returns all possible (Op, Range, Range) argument tuples for {@link #rangeOps}. */
+  /// Returns all possible (Op, Range, Range) argument tuples for [#rangeOps].
   private static Object[] allRangeOpTests() {
     return Arrays.stream(Op.values())
         .flatMap(
@@ -340,10 +326,8 @@ public class BitsTest {
         .toArray();
   }
 
-  /**
-   * Systematically tests combining Builders, Bits, and ranges with Ops. Also checks testAll() and
-   * testAny().
-   */
+  /// Systematically tests combining Builders, Bits, and ranges with Ops. Also checks testAll() and
+  /// testAny().
   @Parameters(method = "allRangeOpTests")
   @TestCaseName("rangeOps_{1}_{0}_{2}")
   @Test

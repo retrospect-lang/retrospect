@@ -40,7 +40,7 @@ public class ValueMemoTest {
     tstate.bindTo(tracker);
   }
 
-  /** Call this once at the end of each test. */
+  /// Call this once at the end of each test.
   private void dropAndCheckAllReleased(Value... values) {
     Arrays.stream(values).forEach(tstate::dropValue);
     // Doing this in an @After method had the drawback that any real error during a test got buried

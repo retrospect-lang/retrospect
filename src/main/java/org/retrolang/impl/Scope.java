@@ -22,18 +22,16 @@ import java.util.HashMap;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-/**
- * A Scope stores information that has been inferred by the VM during the execution of a
- * computation. This information is not required for correct execution but may enable more efficient
- * execution choices.
- *
- * <p>Each Retrospect computation executes relative to a Scope. Computations that share code should
- * typically share a Scope so that they can benefit from optimizations based on their cumulative
- * history.
- *
- * <p>Since reference counted objects are associated with a single ResourceTracker and Scopes may be
- * shared by multiple ResourceTrackers, Scopes may not hold pointers to reference counted objects.
- */
+/// A Scope stores information that has been inferred by the VM during the execution of a
+/// computation. This information is not required for correct execution but may enable more
+/// efficient execution choices.
+///
+/// Each Retrospect computation executes relative to a Scope. Computations that share code should
+/// typically share a Scope so that they can benefit from optimizations based on their cumulative
+/// history.
+///
+/// Since reference counted objects are associated with a single ResourceTracker and Scopes may be
+/// shared by multiple ResourceTrackers, Scopes may not hold pointers to reference counted objects.
 public class Scope {
   final Evolver evolver = new Evolver();
 
@@ -60,13 +58,11 @@ public class Scope {
     }
   }
 
-  /**
-   * StructTypes that aren't shared with the Core are saved per-Scope.
-   *
-   * <p>A ConcurrentHashMap would have worked, but since I expect it to be rare for there to be
-   * multiple threads (this is only accessed when during compilation, not during execution) I just
-   * went with locking the whole HashMap.
-   */
+  /// StructTypes that aren't shared with the Core are saved per-Scope.
+  ///
+  /// A ConcurrentHashMap would have worked, but since I expect it to be rare for there to be
+  /// multiple threads (this is only accessed when during compilation, not during execution) I just
+  /// went with locking the whole HashMap.
   private final HashMap<ImmutableList<String>, StructType> structs = new HashMap<>();
 
   final CodeGenManager codeGenManager = new CodeGenManager(this);
@@ -85,18 +81,14 @@ public class Scope {
     return codeGenManager.debugging();
   }
 
-  /**
-   * Any method created after this call for which the given predicate returns true will use a single
-   * exlined memo for all calls. For testing only.
-   */
+  /// Any method created after this call for which the given predicate returns true will use a
+  /// single exlined memo for all calls. For testing only.
   void setForceExlined(Predicate<VmMethod> methods) {
     memoMerger.setForceExlined(methods);
   }
 
-  /**
-   * Forces code generation for each method that was matched by the predicate in a previous call to
-   * {@link #setForceExlined}.
-   */
+  /// Forces code generation for each method that was matched by the predicate in a previous call to
+  /// [#setForceExlined].
   void generateCodeForForcedMethods() {
     synchronized (codeGenManager) {
       CodeGenGroup group = new CodeGenGroup(codeGenManager);

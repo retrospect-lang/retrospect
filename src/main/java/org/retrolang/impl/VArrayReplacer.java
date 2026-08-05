@@ -29,72 +29,58 @@ import org.retrolang.impl.Template.RefVar;
 import org.retrolang.util.ArrayUtil;
 import org.retrolang.util.Bits;
 
-/**
- * VArrayReplacer provides an optimized implementation of {@link Evolver.FrameReplacer} for copying
- * Frames from one varray layout to another.
- *
- * <p>The optimization comes in 3 stages:
- *
- * <ul>
- *   <li>First, construct a CopyPlan to initialize each row of the destination from the
- *       corresponding row of the source. Since we will often be copying varrays with hundreds or
- *       thousands of rows, constructing and using a CopyPlan is already likely to be much more
- *       efficient that the naive approach of {@link FrameLayout#simpleReplace}.
- *   <li>Second, use CopyOptimizer to move as many assignments as possible from inside Switches to
- *       the top level of the plan. Assignments at the top level of the plan can be implemented as a
- *       batch operation over the element array rather than by repeated calls to {@link
- *       CopyPlan.Step#execute}.
- *   <li>Third, in many cases a bulk copy operation can be further optimized by just sharing the
- *       element array between the source and destination varray. Since element arrays don't have
- *       their own reference counts we can't normally share them, but with a little care (to ensure
- *       that the shared array isn't deleted when we clear the original) this enables us to save
- *       both time (we don't need to allocate and initialize another element array) and memory.
- * </ul>
- *
- * <p>As a concrete example, consider a varray whose layout has evolved from {@code i0} to {@code
- * b0⸨0:i1; 1:None⸩} (i.e. from an array of integers to an array whose elements are either integers
- * or None). The initial CopyPlan (to be executed once per row) is {@code set(0, b0), copy(i0, i1)},
- * but we can optimize this to
- *
- * <ul>
- *   <li>Bulk set all elements of {@code b0} to 0.
- *   <li>Share {@code i0} in the source frame as {@code i1} in the new frame.
- * </ul>
- *
- * At this point the remaining CopyPlan is empty, so we don't need any per-row execution.
- *
- * <p>(In more complex cases we may not be able to eliminate the per-row execution, but may still
- * benefit if some of the operations can be done in bulk.)
- */
+/// VArrayReplacer provides an optimized implementation of [Evolver.FrameReplacer] for copying
+/// Frames from one varray layout to another.
+///
+/// The optimization comes in 3 stages:
+///
+/// - First, construct a CopyPlan to initialize each row of the destination from the corresponding
+///   row of the source. Since we will often be copying varrays with hundreds or thousands of rows,
+///   constructing and using a CopyPlan is already likely to be much more efficient that the naive
+///   approach of [FrameLayout#simpleReplace].
+/// - Second, use CopyOptimizer to move as many assignments as possible from inside Switches to the
+///   top level of the plan. Assignments at the top level of the plan can be implemented as a batch
+///   operation over the element array rather than by repeated calls to [CopyPlan.Step#execute].
+/// - Third, in many cases a bulk copy operation can be further optimized by just sharing the
+///   element array between the source and destination varray. Since element arrays don't have their
+///   own reference counts we can't normally share them, but with a little care (to ensure that the
+///   shared array isn't deleted when we clear the original) this enables us to save both time (we
+///   don't need to allocate and initialize another element array) and memory.
+///
+/// As a concrete example, consider a varray whose layout has evolved from `i0` to `b0⸨0:i1;
+/// 1:None⸩` (i.e. from an array of integers to an array whose elements are either integers or
+/// None). The initial CopyPlan (to be executed once per row) is `set(0, b0), copy(i0, i1)`, but we
+/// can optimize this to
+///
+/// - Bulk set all elements of `b0` to 0.
+/// - Share `i0` in the source frame as `i1` in the new frame.
+///
+/// At this point the remaining CopyPlan is empty, so we don't need any per-row execution.
+///
+/// (In more complex cases we may not be able to eliminate the per-row execution, but may still
+/// benefit if some of the operations can be done in bulk.)
 class VArrayReplacer implements Evolver.FrameReplacer {
   final VArrayLayout srcLayout;
   final VArrayLayout dstLayout;
 
-  /**
-   * The indices of the element arrays in {@link #srcLayout} that will be shared with the
-   * destination frame.
-   */
+  /// The indices of the element arrays in [#srcLayout] that will be shared with the destination
+  /// frame.
   final Bits sharedInSrc;
 
-  /**
-   * The indices of the element arrays in {@link #dstLayout} that will be shared with the source
-   * frame.
-   */
+  /// The indices of the element arrays in [#dstLayout] that will be shared with the source frame.
   final Bits sharedInDst;
 
-  /** The per-row steps that could not be optimized into {@link #batchOps} or {@link #shares}. */
+  /// The per-row steps that could not be optimized into [#batchOps] or [#shares].
   final CopyPlan perRowPlan;
 
-  /**
-   * COPY_NUM, COPY_REF, SET_NUM, and SET_REF steps that can be done in batch. Does not include any
-   * steps that were put in {@link #shares}.
-   */
+  /// COPY\_NUM, COPY\_REF, SET\_NUM, and SET\_REF steps that can be done in batch. Does not include
+  /// any steps that were put in [#shares].
   final ImmutableList<Basic> batchOps;
 
-  /** COPY_NUM and COPY_REF steps that can be implemented by sharing element arrays. */
+  /// COPY\_NUM and COPY\_REF steps that can be implemented by sharing element arrays.
   final ImmutableList<Basic> shares;
 
-  /** Use {@link #create} to construct a VArrayReplacer. */
+  /// Use [#create] to construct a VArrayReplacer.
   private VArrayReplacer(
       VArrayLayout srcLayout,
       VArrayLayout dstLayout,
@@ -113,10 +99,8 @@ class VArrayReplacer implements Evolver.FrameReplacer {
     this.shares = shares;
   }
 
-  /**
-   * Constructs a VArrayReplacer when no optimizations (beyond the construction of a CopyPlan) are
-   * available.
-   */
+  /// Constructs a VArrayReplacer when no optimizations (beyond the construction of a CopyPlan) are
+  /// available.
   private VArrayReplacer(VArrayLayout srcLayout, VArrayLayout dstLayout, CopyPlan perRowPlan) {
     this(
         srcLayout,
@@ -186,11 +170,9 @@ class VArrayReplacer implements Evolver.FrameReplacer {
     return dst;
   }
 
-  /**
-   * Copies {@code length} numbers from {@code src} (using {@code srcEncoding}) to {@code dst}
-   * (using {@code dstEncoding}). {@code dstEncoding} must include all values of {@code srcEncoding}
-   * (e.g. you can copy INT32 values to FLOAT64 but not vice versa).
-   */
+  /// Copies `length` numbers from `src` (using `srcEncoding`) to `dst` (using `dstEncoding`).
+  /// `dstEncoding` must include all values of `srcEncoding` (e.g. you can copy INT32 values to
+  /// FLOAT64 but not vice versa).
   private static void copyNums(
       byte[] src, NumEncoding srcEncoding, byte[] dst, NumEncoding dstEncoding, int length) {
     if (srcEncoding == dstEncoding) {
@@ -216,10 +198,8 @@ class VArrayReplacer implements Evolver.FrameReplacer {
     }
   }
 
-  /**
-   * Stores {@code length} copies of {@code src} in {@code dst}, using {@code dstEncoding}. Caller
-   * is responsible for ensuring that {@code src} can be represented in {@code dstEncoding}.
-   */
+  /// Stores `length` copies of `src` in `dst`, using `dstEncoding`. Caller is responsible for
+  /// ensuring that `src` can be represented in `dstEncoding`.
   private static void fillNums(NumValue src, byte[] dst, NumEncoding dstEncoding, int length) {
     // If the non-byte cases here were a bottleneck they could be rewritten using
     // Unsafe.setMemory() but I don't expect that to be worth the effort.
@@ -246,7 +226,7 @@ class VArrayReplacer implements Evolver.FrameReplacer {
         "OptimizedReplacer{shares: %s, batchOps: %s, perRow: %s}", shares, batchOps, perRowPlan);
   }
 
-  /** Returns a VArrayReplacer for the given source and destination layouts. */
+  /// Returns a VArrayReplacer for the given source and destination layouts.
   static VArrayReplacer create(VArrayLayout srcLayout, VArrayLayout dstLayout) {
     CopyPlan plan = CopyPlan.create(srcLayout.template, dstLayout.template, true);
     plan = CopyOptimizer.optimize(plan, dstLayout, Policy.VARRAY_REPLACE);
@@ -299,14 +279,14 @@ class VArrayReplacer implements Evolver.FrameReplacer {
         srcLayout, dstLayout, sharedInSrc, sharedInDst, perRowPlan, batchOps, shares);
   }
 
-  /** Returns true if {@code step} is a COPY_REF, or a COPY_NUM with matching encodings. */
+  /// Returns true if `step` is a COPY\_REF, or a COPY\_NUM with matching encodings.
   private static boolean isShareableCopy(Basic step) {
     return (step.type == StepType.COPY_REF)
         || (step.type == StepType.COPY_NUM
             && ((NumVar) step.src).encoding == ((NumVar) step.dst).encoding);
   }
 
-  /** Calls {@link Bits.Builder#set} and verifies that it returns true. */
+  /// Calls [Bits.Builder#set] and verifies that it returns true.
   static void mustSet(Bits.Builder builder, int index) {
     // The reason I'm not using assert here: it's non-trivial to prove that this will never fail
     // (although I believe it's possible to do so), and if it *did* fail (because our sharing

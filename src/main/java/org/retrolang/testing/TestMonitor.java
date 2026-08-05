@@ -10,10 +10,8 @@ import org.retrolang.impl.CodeGenManager;
 import org.retrolang.impl.Template;
 import org.retrolang.util.StringUtil;
 
-/**
- * An implementation of {@link CodeGenManager.Monitor} that enables call counting and saves the
- * values passed to {@link #loaded} so that they can be checked later.
- */
+/// An implementation of [CodeGenManager.Monitor] that enables call counting and saves the values
+/// passed to [#loaded] so that they can be checked later.
 public class TestMonitor implements CodeGenManager.Monitor {
   private static final boolean LOG_BYTECODES = false;
 
@@ -25,7 +23,7 @@ public class TestMonitor implements CodeGenManager.Monitor {
     this.verbose = verbose;
   }
 
-  /** Summarizes the call counters for each target loaded with this Monitor. */
+  /// Summarizes the call counters for each target loaded with this Monitor.
   public synchronized String counters() {
     return counters.stream().map(Supplier::get).collect(Collectors.joining(", "));
   }

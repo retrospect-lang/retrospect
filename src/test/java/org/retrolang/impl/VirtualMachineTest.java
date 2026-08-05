@@ -44,46 +44,39 @@ import org.retrolang.testing.TestdataScanner;
 import org.retrolang.testing.TestdataScanner.TestProgram;
 import org.retrolang.util.Pair;
 
-/**
- * Compiles and executes Retrospect source code from each of the .r8t files in the testdata
- * directory, based on comments in the files.
- */
+/// Compiles and executes Retrospect source code from each of the .r8t files in the testdata
+/// directory, based on comments in the files.
 @RunWith(TestParameterInjector.class)
 public class VirtualMachineTest {
 
   private static final Path TESTDATA = Path.of("src/test/java/org/retrolang/impl/testdata");
   private static final Path TEST_INPUTS = TESTDATA.resolve("inputs");
 
-  /**
-   * Each .r8t file is expected to have source code followed by a comment that begins "{@code /* RUN
-   * (...)}". The parentheses enclose argument names (if any) for the code block, with a value for
-   * each, followed by RETURNS or ERRORS (e.g. {@code RUN (x=3, y="foo") RETURNS}).
-   *
-   * <ul>
-   *   <li>RETURNS: The following lines contain a printed representation of the expected return
-   *       value, and the test passes if the execution returns a matching value.
-   *   <li>ERRORS: The following lines contain a printed representation of the expected
-   *       RuntimeError, and the test passes if the execution fails with a matching exception.
-   * </ul>
-   *
-   * <p>In either case those lines are terminated by a line containing just "---". If the program
-   * contains any trace instructions, the expected output from the traces comes next, again
-   * terminated by a line containing just "---". The last line of the comment should look like
-   * "allocated=xx/yy", where xx is the number of bytes that are allocated during execution, and yy
-   * is the number of objects.
-   *
-   * <p>RETURNS or ERRORS may optionally be followed by RC_DEBUG to enable reference count debugging
-   * while running the test.
-   *
-   * <p>For convenience a single file may contain multiple source programs, each followed by a RUN
-   * comment.
-   */
+  /// Each .r8t file is expected to have source code followed by a comment that begins "`/* RUN
+  /// (...)`". The parentheses enclose argument names (if any) for the code block, with a value for
+  /// each, followed by RETURNS or ERRORS (e.g. `RUN (x=3, y="foo") RETURNS`).
+  ///
+  /// - RETURNS: The following lines contain a printed representation of the expected return value,
+  ///   and the test passes if the execution returns a matching value.
+  /// - ERRORS: The following lines contain a printed representation of the expected RuntimeError,
+  ///   and the test passes if the execution fails with a matching exception.
+  ///
+  /// In either case those lines are terminated by a line containing just "---". If the program
+  /// contains any trace instructions, the expected output from the traces comes next, again
+  /// terminated by a line containing just "---". The last line of the comment should look like
+  /// "allocated=xx/yy", where xx is the number of bytes that are allocated during execution, and yy
+  /// is the number of objects.
+  ///
+  /// RETURNS or ERRORS may optionally be followed by RC\_DEBUG to enable reference count debugging
+  /// while running the test.
+  ///
+  /// For convenience a single file may contain multiple source programs, each followed by a RUN
+  /// comment.
   private static final Pattern COMMENT_PATTERN =
       Pattern.compile("\n/\\* RUN (.*?)\\*/\\n*", Pattern.DOTALL);
 
-  /**
-   * A pattern to parse the first line of a RUN comment (beginning immediately after the "/* RUN ").
-   */
+  /// A pattern to parse the first line of a RUN comment (beginning immediately after the "/\* RUN
+  /// ").
   private static final Pattern FIRST_LINE_PATTERN =
       Pattern.compile(
           """
@@ -227,7 +220,7 @@ public class VirtualMachineTest {
     }
   }
 
-  /** If any async threads are still executing, let them complete before we check anything else. */
+  /// If any async threads are still executing, let them complete before we check anything else.
   private static void waitForThreadCompletion() {
     assertThat(ForkJoinPool.commonPool().awaitQuiescence(2, TimeUnit.SECONDS)).isTrue();
   }
@@ -261,23 +254,19 @@ public class VirtualMachineTest {
     }
   }
 
-  /**
-   * Removes all whitespace at the beginning and end of lines in the given output, and removes all
-   * completely blank lines.
-   */
+  /// Removes all whitespace at the beginning and end of lines in the given output, and removes all
+  /// completely blank lines.
   private static String cleanLines(String output) {
     return output.replaceAll(" *\n[ \n]*", "\n").trim();
   }
 
-  /** Removes whitespace at the beginning and end of lines, and replaces newlines with spaces. */
+  /// Removes whitespace at the beginning and end of lines, and replaces newlines with spaces.
   private static String cleanValue(String output) {
     return output.replaceAll(" *\n *", " ").trim();
   }
 
-  /**
-   * Replaces unpredictable hex strings following "RThread@" or a future symbol ("□", "⊡", or "⊠")
-   * with "xxxx".
-   */
+  /// Replaces unpredictable hex strings following "RThread@" or a future symbol ("□", "⊡", or "⊠")
+  /// with "xxxx".
   private static String cleanIds(String output) {
     return output.replaceAll("(RThread@|[□⊡⊠])[0-9a-f]+\\b", "$1xxxx");
   }
@@ -286,16 +275,14 @@ public class VirtualMachineTest {
   // you'll probably need to copy & paste it.
   private static final Pattern NUMERIC_RANGE = Pattern.compile("(\\d+)‥(\\d+)");
 
-  /**
-   * If {@code expected} contains ranges (i.e. pairs of non-negative integers separated by "‥"
-   * (that's a single unicode character)), verifies that {@code actual} matches the rest of the
-   * string and has in-range integers in those places.
-   *
-   * <p>If {@code expected} contains no ranges, or has ranges but {@code actual} doesn't match,
-   * returns false; otherwise returns true. The caller is expected to handle a false return by
-   * asserting that the two strings are equals, which both handles the no-ranges case and produces a
-   * useful failure message when there are ranges.
-   */
+  /// If `expected` contains ranges (i.e. pairs of non-negative integers separated by "‥" (that's a
+  /// single unicode character)), verifies that `actual` matches the rest of the string and has
+  /// in-range integers in those places.
+  ///
+  /// If `expected` contains no ranges, or has ranges but `actual` doesn't match, returns false;
+  /// otherwise returns true. The caller is expected to handle a false return by asserting that the
+  /// two strings are equals, which both handles the no-ranges case and produces a useful failure
+  /// message when there are ranges.
   private static boolean checkForRanges(String actual, String expected) {
     Matcher matcher = NUMERIC_RANGE.matcher(expected);
     if (!matcher.find()) {

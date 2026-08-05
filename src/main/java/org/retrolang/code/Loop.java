@@ -27,80 +27,62 @@ import java.util.stream.Stream;
 import org.retrolang.code.CodeBuilder.Phase;
 import org.retrolang.util.Bits;
 
-/**
- * A Loop provides a controlled way to override the usual limitation that blocks can only branch
- * forward.
- */
+/// A Loop provides a controlled way to override the usual limitation that blocks can only branch
+/// forward.
 public final class Loop {
-  /**
-   * A Loop is not itself a Block, but it has some associated processing to be done during forward
-   * and reverse propagation.
-   */
+  /// A Loop is not itself a Block, but it has some associated processing to be done during forward
+  /// and reverse propagation.
   final Processor processor = new Processor();
 
-  /** The registers whose values may be updated from one loop iteration to the next. */
+  /// The registers whose values may be updated from one loop iteration to the next.
   private Bits registers;
 
-  /**
-   * The union of this Loop's initial registers and those of all its parents.
-   *
-   * <p>Note that for simplicity we don't currently update these when a loop's registers are reduced
-   * by optimization; if there were some benefit that could be done with a modest additional hassle.
-   */
+  /// The union of this Loop's initial registers and those of all its parents.
+  ///
+  /// Note that for simplicity we don't currently update these when a loop's registers are reduced
+  /// by optimization; if there were some benefit that could be done with a modest additional
+  /// hassle.
   final Bits allRegisters;
 
-  /**
-   * Each Loop contains one or more BackRef blocks; these are the only blocks that are allowed to
-   * violate the forward-linking constraint.
-   */
+  /// Each Loop contains one or more BackRef blocks; these are the only blocks that are allowed to
+  /// violate the forward-linking constraint.
   final List<BackRef> backRefs = new ArrayList<>();
 
-  /**
-   * All Links whose origin is not in this loop, and whose target is.
-   *
-   * <p>Initially these will be the links that pointed to {@link CodeBuilder#nextBlock} when the
-   * loop was created, but subsequent optimizations may add or remove entries.
-   */
+  /// All Links whose origin is not in this loop, and whose target is.
+  ///
+  /// Initially these will be the links that pointed to [CodeBuilder#nextBlock] when the loop was
+  /// created, but subsequent optimizations may add or remove entries.
   private final List<Link> entries = new ArrayList<>();
 
-  /** All Links whose origin is in this loop, and whose target is not. */
+  /// All Links whose origin is in this loop, and whose target is not.
   private final List<Link> exits = new ArrayList<>();
 
-  /**
-   * This Loop's position in {@code cb().loops}. Loops are never removed from the list or reordered,
-   * so the index can be final.
-   */
+  /// This Loop's position in `cb().loops`. Loops are never removed from the list or reordered, so
+  /// the index can be final.
   final int index;
 
-  /** The loop that this loop is immediately nested in, or null if this is a top-level loop. */
+  /// The loop that this loop is immediately nested in, or null if this is a top-level loop.
   private Loop nestedIn;
 
-  /**
-   * All zones directly or indirectly contained in this loop are sequential in {@code cb().zones}.
-   * The first is {@code processor.zone}; the last is {@code lastZone}, or null if this loop has not
-   * yet been completed.
-   */
+  /// All zones directly or indirectly contained in this loop are sequential in `cb().zones`. The
+  /// first is `processor.zone`; the last is `lastZone`, or null if this loop has not yet been
+  /// completed.
   private Zone lastZone;
 
-  /** The union of LinkInfos from this Loop's entries, with the updated registers set to ANY. */
+  /// The union of LinkInfos from this Loop's entries, with the updated registers set to ANY.
   private LinkInfo entryInfo = new LinkInfo();
 
-  /**
-   * The live sets of blocks contained in a loop are incomplete; they only include registers that
-   * are live without traversing a BackRef. (In particular, a BackRef's live set contains only the
-   * loop's updated registers, and not any other registers set before the loop was started that may
-   * be referenced in the loop body or after the loop exit).
-   *
-   * <p>{@code extraLive} is the set of additional registers that are live at the start of the loop
-   * (i.e. at the target of the BackRef(s)); these should be added to the live set of any block in
-   * the loop.
-   */
+  /// The live sets of blocks contained in a loop are incomplete; they only include registers that
+  /// are live without traversing a BackRef. (In particular, a BackRef's live set contains only the
+  /// loop's updated registers, and not any other registers set before the loop was started that may
+  /// be referenced in the loop body or after the loop exit).
+  ///
+  /// `extraLive` is the set of additional registers that are live at the start of the loop (i.e. at
+  /// the target of the BackRef(s)); these should be added to the live set of any block in the loop.
   private Bits extraLive;
 
-  /**
-   * Creates a new Loop, and a new Zone for blocks contained in it. The loop's BackRef will link to
-   * the next block added to {@code cb}.
-   */
+  /// Creates a new Loop, and a new Zone for blocks contained in it. The loop's BackRef will link to
+  /// the next block added to `cb`.
   Loop(CodeBuilder cb, int index, Bits registers) {
     this.index = index;
     this.registers = registers;
@@ -128,34 +110,32 @@ public final class Loop {
     backRef.next.setTarget(cb.nextBlock);
   }
 
-  /** The first zone contained in this loop. */
+  /// The first zone contained in this loop.
   Zone firstZone() {
     return processor.zone();
   }
 
-  /** This loop's position in {@code cb().loops}. */
+  /// This loop's position in `cb().loops`.
   public int index() {
     return index;
   }
 
-  /** Returns the registers that are updated by this Loop. */
+  /// Returns the registers that are updated by this Loop.
   public Bits registers() {
     return registers;
   }
 
-  /** Returns true if {@link #complete} or {@link #disable} has been called on this loop. */
+  /// Returns true if [#complete] or [#disable] has been called on this loop.
   boolean isCompleted() {
     return lastZone != null;
   }
 
-  /**
-   * Returns the loop that this loop is immediately nested in, or null if this is a top-level loop.
-   */
+  /// Returns the loop that this loop is immediately nested in, or null if this is a top-level loop.
   public Loop nestedIn() {
     return nestedIn;
   }
 
-  /** Returns the Links that go from outside this Loop to inside it. */
+  /// Returns the Links that go from outside this Loop to inside it.
   public Stream<Link> entries() {
     return entries.stream();
   }
@@ -176,10 +156,8 @@ public final class Loop {
     return exits.get(i);
   }
 
-  /**
-   * Should be called once on each Loop, when the Loop body is complete; adds a {@code BackRef}
-   * block that branches back to the first block in the Loop.
-   */
+  /// Should be called once on each Loop, when the Loop body is complete; adds a `BackRef` block
+  /// that branches back to the first block in the Loop.
   public void complete() {
     CodeBuilder cb = processor.cb();
     Preconditions.checkState(cb.currentLoop() == this);
@@ -199,10 +177,8 @@ public final class Loop {
     cb.newZone(nestedIn);
   }
 
-  /**
-   * Should be called if the Loop's back reference is determined to be unreachable (i.e. you are
-   * never going to call {@link #complete}, so this isn't actually a loop).
-   */
+  /// Should be called if the Loop's back reference is determined to be unreachable (i.e. you are
+  /// never going to call [#complete], so this isn't actually a loop).
   public void disable() {
     CodeBuilder cb = processor.cb();
     Preconditions.checkState(cb.currentLoop() == this);
@@ -221,10 +197,8 @@ public final class Loop {
     return entries.isEmpty();
   }
 
-  /**
-   * Called when a Loop is determined to not actually be a loop, because none of its BackRefs are
-   * reachable. Moves all Zones and contained Loops to this Loop's parent.
-   */
+  /// Called when a Loop is determined to not actually be a loop, because none of its BackRefs are
+  /// reachable. Moves all Zones and contained Loops to this Loop's parent.
   void makeEmpty() {
     CodeBuilder cb = processor.cb();
     int lastZoneIndex = lastZoneIndex();
@@ -240,12 +214,10 @@ public final class Loop {
     entryInfo = null;
   }
 
-  /**
-   * If this loop is directly or indirectly contained in {@code from}, updates the loop that was
-   * directly contained in {@code from} to instead be in {@code from}'s parent (which may be null).
-   * If the promotion has already happened (i.e. this loop is contained in {@code from.nestedIn} but
-   * not in {@code from}), does nothing.
-   */
+  /// If this loop is directly or indirectly contained in `from`, updates the loop that was directly
+  /// contained in `from` to instead be in `from`'s parent (which may be null). If the promotion has
+  /// already happened (i.e. this loop is contained in `from.nestedIn` but not in `from`), does
+  /// nothing.
   void promoteFrom(Loop from) {
     Loop newParent = from.nestedIn;
     for (Loop loop = this; loop != newParent; loop = loop.nestedIn) {
@@ -262,12 +234,12 @@ public final class Loop {
     return isCompleted() ? lastZone.index : processor.cb().finalZone.index - 1;
   }
 
-  /** Returns true if the Zone with the given index is part of this loop's body. */
+  /// Returns true if the Zone with the given index is part of this loop's body.
   boolean zoneIndexInRange(int zi) {
     return zi >= firstZone().index && zi <= lastZoneIndex();
   }
 
-  /** Returns true if the given Zone is part of this loop's body. */
+  /// Returns true if the given Zone is part of this loop's body.
   public boolean contains(Zone z) {
     boolean result = zoneIndexInRange(z.index);
     // That check should be equivalent to a loop containment check (but avoids the need for a loop).
@@ -275,11 +247,9 @@ public final class Loop {
     return result;
   }
 
-  /**
-   * Returns true if {@code other} is this Loop, or is nested (directly or indirectly) in this Loop.
-   *
-   * <p>Only used for assertions.
-   */
+  /// Returns true if `other` is this Loop, or is nested (directly or indirectly) in this Loop.
+  ///
+  /// Only used for assertions.
   boolean contains(Loop other) {
     // Look through other's parent chain until we this or hit null.
     for (; other != this; other = other.nestedIn) {
@@ -314,10 +284,8 @@ public final class Loop {
             .allMatch(link -> contains(link.origin.zone()) && !contains(link.targetBlock().zone()));
   }
 
-  /**
-   * If any of our registers aren't actually updated by any of the blocks in this loop we can remove
-   * them from our set.
-   */
+  /// If any of our registers aren't actually updated by any of the blocks in this loop we can
+  /// remove them from our set.
   private void checkForUnmodifiedRegisters() {
     // We could use a Bits.Builder with initializeForIntersection to do this, but since there's
     // almost always only a single BackRef, and even when there's more than one the intersection
@@ -331,11 +299,9 @@ public final class Loop {
     }
   }
 
-  /**
-   * If any of this loop's backRefs no longer link backwards, remove them (they are no longer
-   * needed, since their inlinks can just go directly to the next block without violating the
-   * forward-linking-only rule). If the loop no longer has any backrefs, remove it completely.
-   */
+  /// If any of this loop's backRefs no longer link backwards, remove them (they are no longer
+  /// needed, since their inlinks can just go directly to the next block without violating the
+  /// forward-linking-only rule). If the loop no longer has any backrefs, remove it completely.
   void removeNonBackRefs() {
     for (int i = 0; i < backRefs.size(); i++) {
       BackRef backRef = backRefs.get(i);
@@ -354,21 +320,17 @@ public final class Loop {
     }
   }
 
-  /**
-   * This method checks for three potential optimizations related to a loop's entry links:
-   *
-   * <ul>
-   *   <li>If the target of an entry link is a BackRef, the link can be changed to skip the BackRef
-   *       (since the link origin is before the loop it can always link to the BackRef's target
-   *       directly).
-   *   <li>If all of a block's inlinks are entry links (i.e. it has no inlinks from within the loop)
-   *       the block can be moved to before the loop.
-   *   <li>If the loop is nested in another loop and none of its entry links come from within the
-   *       containing loop, it can be moved to before its containing loop.
-   * </ul>
-   *
-   * <p>(Moving a block or a loop from within a loop to outside it may enable other optimizations.)
-   */
+  /// This method checks for three potential optimizations related to a loop's entry links:
+  ///
+  /// - If the target of an entry link is a BackRef, the link can be changed to skip the BackRef
+  ///   (since the link origin is before the loop it can always link to the BackRef's target
+  ///   directly).
+  /// - If all of a block's inlinks are entry links (i.e. it has no inlinks from within the loop)
+  ///   the block can be moved to before the loop.
+  /// - If the loop is nested in another loop and none of its entry links come from within the
+  ///   containing loop, it can be moved to before its containing loop.
+  ///
+  /// (Moving a block or a loop from within a loop to outside it may enable other optimizations.)
   void optimizeEntries() {
     for (int i = 0; i < entries.size(); i++) {
       Link entry = entries.get(i);
@@ -435,15 +397,11 @@ public final class Loop {
     assert consistencyCheck();
   }
 
-  /**
-   * This method checks for two potential optimizations related to a loop's exit links:
-   *
-   * <ul>
-   *   <li>If all of a block's outlinks are exit links the block can be moved after the loop.
-   *   <li>If the loop is nested in another loop and all of its exit links also exit the containing
-   *       loop, it can be moved to after its containing loop.
-   * </ul>
-   */
+  /// This method checks for two potential optimizations related to a loop's exit links:
+  ///
+  /// - If all of a block's outlinks are exit links the block can be moved after the loop.
+  /// - If the loop is nested in another loop and all of its exit links also exit the containing
+  ///   loop, it can be moved to after its containing loop.
   void optimizeExits() {
     for (int i = 0; i < exits.size(); i++) {
       Link exit = exits.get(i);
@@ -497,20 +455,15 @@ public final class Loop {
     assert consistencyCheck();
   }
 
-  /**
-   * Calls {@code links.removeIf(toRemove)}, and asserts that {@code expectedCount} elements were
-   * removed.
-   */
+  /// Calls `links.removeIf(toRemove)`, and asserts that `expectedCount` elements were removed.
   private static void removeIf(List<Link> links, Predicate<Link> toRemove, int expectedCount) {
     int prevSize = links.size();
     links.removeIf(toRemove);
     assert links.size() == prevSize - expectedCount;
   }
 
-  /**
-   * Adjust the zone & order of {@code toFix}, to move it out of the loop it is currently in while
-   * preserving the validity of its link to (if delta == -1) or from (if delta == 1) {@code linked}.
-   */
+  /// Adjust the zone and order of `toFix`, to move it out of the loop it is currently in while
+  /// preserving the validity of its link to (if delta == -1) or from (if delta == 1) `linked`.
   private static void fixZone(Block toFix, Block linked, int delta) {
     ++toFix.cb().numOutOfLoop;
     // Our first choice is to move it to the same zone as linked...
@@ -548,17 +501,15 @@ public final class Loop {
     extraLive = null;
   }
 
-  /**
-   * Returns the registers that are live in the loop body but not updated by the loop (these
-   * registers must be set before the loop is entered, and are used either in the loop body or after
-   * it exits). These may be missing from {@link Block#live} for blocks contained in the loop.
-   */
+  /// Returns the registers that are live in the loop body but not updated by the loop (these
+  /// registers must be set before the loop is entered, and are used either in the loop body or
+  /// after it exits). These may be missing from [Block#live] for blocks contained in the loop.
   public Bits extraLive() {
     assert extraLive != null;
     return extraLive;
   }
 
-  /** Returns a string listing this Loop's registers. */
+  /// Returns a string listing this Loop's registers.
   private String printRegisters(CodeBuilder.PrintOptions options) {
     CodeBuilder cb = processor.cb();
     return registers.stream()
@@ -571,15 +522,11 @@ public final class Loop {
     return "loop" + index;
   }
 
-  /**
-   * A Loop's Processor implements the forward and reverse propagation steps that are done before
-   * (for forward) and after (for reverse) the loop body is processed.
-   */
+  /// A Loop's Processor implements the forward and reverse propagation steps that are done before
+  /// (for forward) and after (for reverse) the loop body is processed.
   class Processor extends Zone.Ordered {
-    /**
-     * Before we process any of the blocks in this loop, compute its {@link #entryInfo} and use that
-     * to set the info on each BackRef link.
-     */
+    /// Before we process any of the blocks in this loop, compute its [#entryInfo] and use that to
+    /// set the info on each BackRef link.
     @Override
     void runForwardProp(boolean incremental) {
       if (isDisabled()) {
@@ -609,16 +556,14 @@ public final class Loop {
       }
     }
 
-    /**
-     * Computes the set of registers that are live at the start of the loop. If any of the loop's
-     * updated registers are missing from this set, they can be removed from the updated set (which
-     * will cause us to recompute liveness within the loop body, since that was done assuming that
-     * all of the updated registers were live at the BackRefs).
-     *
-     * <p>If all of the loop's updated registers are live at the start of the loop, we compute
-     * {@link #extraLive} as the additional registers that are live at the start; these will be
-     * added to the live set of every block in the loop.
-     */
+    /// Computes the set of registers that are live at the start of the loop. If any of the loop's
+    /// updated registers are missing from this set, they can be removed from the updated set (which
+    /// will cause us to recompute liveness within the loop body, since that was done assuming that
+    /// all of the updated registers were live at the BackRefs).
+    ///
+    /// If all of the loop's updated registers are live at the start of the loop, we compute
+    /// [#extraLive] as the additional registers that are live at the start; these will be added to
+    /// the live set of every block in the loop.
     @Override
     void runReverseProp(boolean incremental) {
       // Union the live sets from each of the blocks reachable from a BackRef (i.e. the beginning(s)
@@ -647,14 +592,12 @@ public final class Loop {
     }
   }
 
-  /**
-   * Each Loop has one or more BackRef blocks at the end of the loop body, linking back to its
-   * beginning (these are the only blocks that are allowed to violate the forward-linking-only
-   * rule).
-   *
-   * <p>Each Loop initially has a single BackRef, but some optimization steps can split the control
-   * flow to introduce additional BackRefs.
-   */
+  /// Each Loop has one or more BackRef blocks at the end of the loop body, linking back to its
+  /// beginning (these are the only blocks that are allowed to violate the forward-linking-only
+  /// rule).
+  ///
+  /// Each Loop initially has a single BackRef, but some optimization steps can split the control
+  /// flow to introduce additional BackRefs.
   public class BackRef extends Block.NonTerminal {
     // The subset of registers that were unmodified when we reached this BackRef
     private Bits unmodified = Bits.EMPTY;
@@ -691,13 +634,11 @@ public final class Loop {
       return result;
     }
 
-    /**
-     * Called on a new duplicate BackRef to adjust its outlink infos.
-     *
-     * <p>For other block types we can just rely on forward propagation to ensure that the block's
-     * outlink infos are updated before they're read, but a BackRef's target will be visited before
-     * the BackRef so we can't wait for that.
-     */
+    /// Called on a new duplicate BackRef to adjust its outlink infos.
+    ///
+    /// For other block types we can just rely on forward propagation to ensure that the block's
+    /// outlink infos are updated before they're read, but a BackRef's target will be visited before
+    /// the BackRef so we can't wait for that.
     void fixDuplicateInfo(CodeBuilder cb, IntFunction<ValueInfo> inlinkInfos) {
       for (int r : registers) {
         ValueInfo info = inlinkInfos.apply(r);

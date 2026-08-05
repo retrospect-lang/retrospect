@@ -26,39 +26,33 @@ import java.util.List;
 import java.util.Map;
 import org.retrolang.util.SizeOf;
 
-/**
- * Used by a debug ResourceTracker to save information about each live object and do additional
- * checks. This is much too expensive to do during regular operation, but helpful when trying to
- * find bugs in the reference-counting logic.
- */
+/// Used by a debug ResourceTracker to save information about each live object and do additional
+/// checks. This is much too expensive to do during regular operation, but helpful when trying to
+/// find bugs in the reference-counting logic.
 class DebugTracker {
 
-  /**
-   * Maps each live tracked object (RefCounted, byte[], or Object[]) to a record of its allocation.
-   */
+  /// Maps each live tracked object (RefCounted, byte[], or Object[]) to a record of its allocation.
   @GuardedBy("this")
   private final IdentityHashMap<Object, AllocationInfo> live = new IdentityHashMap<>();
 
-  /** The total number of objects allocated so far. */
+  /// The total number of objects allocated so far.
   @GuardedBy("this")
   private int counter;
 
-  /** True if any of our checks have failed. */
+  /// True if any of our checks have failed.
   @GuardedBy("this")
   private boolean errored;
 
   private static class AllocationInfo {
 
-    /** A simple identifier for this object. */
+    /// A simple identifier for this object.
     final int id;
 
-    /**
-     * The size declared at object creation time, or as of the last call to {@link
-     * Allocator#adjustAlloc}.
-     */
+    /// The size declared at object creation time, or as of the last call to
+    /// [Allocator#adjustAlloc].
     long size;
 
-    /** The stack captured at the time of allocation. */
+    /// The stack captured at the time of allocation.
     final Throwable throwable;
 
     AllocationInfo(int counter, long size) {
@@ -78,7 +72,7 @@ class DebugTracker {
     }
   }
 
-  /** Returns {@code obj.toString())} preceded with the name of its class. */
+  /// Returns `obj.toString())` preceded with the name of its class.
   private static String toString(Object obj) {
     return String.format("(%s) %s", obj.getClass().getSimpleName(), obj);
   }
@@ -90,7 +84,7 @@ class DebugTracker {
     errored = true;
   }
 
-  /** Records the allocation of a new object with the given size. */
+  /// Records the allocation of a new object with the given size.
   synchronized void recordAlloc(Object obj, long size) {
     assert obj != null && SizeOf.isValidSize(size);
     AllocationInfo prev = live.putIfAbsent(obj, new AllocationInfo(counter, size));
@@ -101,7 +95,7 @@ class DebugTracker {
     }
   }
 
-  /** Records the release of a previously-allocated object with the given size. */
+  /// Records the release of a previously-allocated object with the given size.
   synchronized void recordRelease(Object obj, long size) {
     assert obj != null && SizeOf.isValidSize(size);
     AllocationInfo cs = live.remove(obj);
@@ -113,7 +107,7 @@ class DebugTracker {
     }
   }
 
-  /** Records a change in the size of a previously-allocated object with the given size. */
+  /// Records a change in the size of a previously-allocated object with the given size.
   synchronized void adjustAlloc(Object obj, long sizeDelta) {
     AllocationInfo entry = live.get(obj);
     if (entry == null) {
@@ -128,15 +122,13 @@ class DebugTracker {
     }
   }
 
-  /** Returns true if any errors have been detected by this DebugTracker. */
+  /// Returns true if any errors have been detected by this DebugTracker.
   synchronized boolean errored() {
     return errored;
   }
 
-  /**
-   * Returns true if all allocated objects have been released. Any unallocated objects are
-   * considered to be errors.
-   */
+  /// Returns true if all allocated objects have been released. Any unallocated objects are
+  /// considered to be errors.
   synchronized boolean allReleased() {
     if (live.isEmpty()) {
       return true;
@@ -155,27 +147,25 @@ class DebugTracker {
   private static class ObjectSet {
     private final IdentityHashMap<Object, Boolean> elements = new IdentityHashMap<>();
 
-    /** Adds {@code obj} to this set, and returns true if it had not previously been added. */
+    /// Adds `obj` to this set, and returns true if it had not previously been added.
     boolean addIfNew(Object obj) {
       return elements.putIfAbsent(obj, true) == null;
     }
   }
 
-  /**
-   * Used by {@link #getSizes(Object, int, ObjectSet, List)} to visit all the direct and indirectly
-   * reachable objects from a given root and sum their sizes.
-   */
+  /// Used by [#getSizes(Object, int, ObjectSet, List)] to visit all the direct and indirectly
+  /// reachable objects from a given root and sum their sizes.
   static class Visitor implements RefVisitor {
-    /** All objects that have had their size added to {@link #sum}. */
+    /// All objects that have had their size added to [#sum].
     final ObjectSet visited = new ObjectSet();
 
-    /** The sum of the sizes of the objects we have visited. */
+    /// The sum of the sizes of the objects we have visited.
     long sum;
 
-    /** The immediate children of the first object we visited. */
+    /// The immediate children of the first object we visited.
     List<Object> topLevel = new ArrayList<>();
 
-    /** The number of links followed to reach the current object. */
+    /// The number of links followed to reach the current object.
     int level;
 
     @Override
@@ -213,13 +203,11 @@ class DebugTracker {
     }
   }
 
-  /** Result type for {@link #getSizes}. */
+  /// Result type for [#getSizes].
   record Size(Object obj, long totalSize) {}
 
-  /**
-   * Returns a list containing counted objects reachable from obj and larger than threshold, sorted
-   * by totalSize.
-   */
+  /// Returns a list containing counted objects reachable from obj and larger than threshold, sorted
+  /// by totalSize.
   static List<Size> getSizes(Object obj, int threshold) {
     List<Size> result = new ArrayList<>();
     getSizes(obj, threshold, new ObjectSet(), result);
@@ -227,10 +215,8 @@ class DebugTracker {
     return result;
   }
 
-  /**
-   * Compute the size of {@code obj}; if it is over {@code threshold} add it to {@code result} and
-   * then recursively check each of its immediate children.
-   */
+  /// Compute the size of `obj`; if it is over `threshold` add it to `result` and then recursively
+  /// check each of its immediate children.
   private static void getSizes(Object obj, int threshold, ObjectSet checked, List<Size> result) {
     Visitor visitor = new Visitor();
     visitor.visit(obj);
@@ -244,7 +230,7 @@ class DebugTracker {
     }
   }
 
-  /** Print the 100 largest objects found by {@link #getSizes}. */
+  /// Print the 100 largest objects found by [#getSizes].
   static void printLargest(Object obj, int threshold) {
     List<Size> result = getSizes(obj, threshold);
     if (result.size() > 100) {

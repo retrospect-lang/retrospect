@@ -27,7 +27,7 @@ import org.retrolang.Vm;
 import org.retrolang.compiler.Compiler;
 import org.retrolang.impl.VirtualMachine;
 
-/** A simple command-line tool for running a single Retrospect program. */
+/// A simple command-line tool for running a single Retrospect program.
 public class Run {
   private Run() {}
 
@@ -38,7 +38,7 @@ public class Run {
     }
   }
 
-  /** If any async threads are still executing, let them complete before we check anything else. */
+  /// If any async threads are still executing, let them complete before we check anything else.
   private static void waitForThreadCompletion() {
     if (!ForkJoinPool.commonPool().awaitQuiescence(2, TimeUnit.SECONDS)) {
       System.err.println("Threads still running!");

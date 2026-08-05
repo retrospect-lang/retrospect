@@ -37,17 +37,17 @@ import org.retrolang.util.SizeOf;
 @RunWith(JUnit4.class)
 public class TemplateBuilderTest {
 
-  /** Returns a Compound template for an array containing the given elements. */
+  /// Returns a Compound template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Template.Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Returns a Constant template for an int. */
+  /// Returns a Constant template for an int.
   private static Template constant(int i) {
     return Constant.of(NumValue.of(i, Allocator.UNCOUNTED));
   }
 
-  /** Returns a Constant template for an int. */
+  /// Returns a Constant template for an int.
   private static Template constant(double d) {
     return Constant.of(NumValue.of(d, Allocator.UNCOUNTED));
   }
@@ -67,7 +67,7 @@ public class TemplateBuilderTest {
     tstate.bindTo(tracker);
   }
 
-  /** Call this once at the end of each test. */
+  /// Call this once at the end of each test.
   private void dropAndCheckAllReleased(Value... values) {
     Arrays.stream(values).forEach(tstate::dropValue);
     // Doing this in an @After method had the drawback that any real error during a test got buried
@@ -83,20 +83,18 @@ public class TemplateBuilderTest {
     assertWithMessage(s).that(withoutIds).isEqualTo(expected);
   }
 
-  /** Builds a template using VArrayLayout.VarAllocator. */
+  /// Builds a template using VArrayLayout.VarAllocator.
   private Template toArrayTemplate(TemplateBuilder builder) {
     return builder.build(new VArrayLayout.VarAllocator());
   }
 
-  /** Builds a template using RecordLayout.VarAllocator. */
+  /// Builds a template using RecordLayout.VarAllocator.
   private Template toRecordTemplate(TemplateBuilder builder) {
     return builder.build(RecordLayout.VarAllocator.newForRecordLayout());
   }
 
-  /**
-   * Since we don't have real Frames yet, this provides a Value with a specified layout(), and
-   * delegates element access to another Value.
-   */
+  /// Since we don't have real Frames yet, this provides a Value with a specified layout(), and
+  /// delegates element access to another Value.
   private static class FakeValue extends RefCounted implements Value {
     private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + 2 * SizeOf.PTR);
 
@@ -137,13 +135,11 @@ public class TemplateBuilderTest {
     }
   }
 
-  /**
-   * Verifies that t1 and t2 are equivalent, i.e. that they're {@code equals()} if FrameLayouts with
-   * equivalent templates are considered {@code equals()}.
-   *
-   * <p>(We don't want to define {@code equals()} on FrameLayouts that way, since FrameLayouts will
-   * be mutable in the future.)
-   */
+  /// Verifies that t1 and t2 are equivalent, i.e. that they're `equals()` if FrameLayouts with
+  /// equivalent templates are considered `equals()`.
+  ///
+  /// (We don't want to define `equals()` on FrameLayouts that way, since FrameLayouts will be
+  /// mutable in the future.)
   private static void assertEquiv(Template t1, Template t2) {
     if (!t1.equals(t2)) {
       if (t1 instanceof Template.Compound c1) {
@@ -178,26 +174,22 @@ public class TemplateBuilderTest {
     }
   }
 
-  /**
-   * Adds the three given values to an empty TemplateBuilder, then builds it with VarAllocators for
-   * both VArrayLayout and RecordLayout, and verifies that the result templates match the given
-   * strings.
-   *
-   * <p>Also tests
-   *
-   * <ul>
-   *   <li>that adding the values in a different order returns equivalent results;
-   *   <li>that building each of the resulting templates with the same type of VarAllocator returns
-   *       the template unchanged;
-   *   <li>that building with one type of VarAllocator and then building the result with the second
-   *       type of VarAllocator returns an equivalent result to just building with the second type
-   *       of VarAllocator; and
-   *   <li>that building templates with different pairs of the given values and then merging the
-   *       resulting templates returns equivalent results.
-   * </ul>
-   *
-   * <p>Returns the resulting array template.
-   */
+  /// Adds the three given values to an empty TemplateBuilder, then builds it with VarAllocators for
+  /// both VArrayLayout and RecordLayout, and verifies that the result templates match the given
+  /// strings.
+  ///
+  /// Also tests
+  ///
+  /// - that adding the values in a different order returns equivalent results;
+  /// - that building each of the resulting templates with the same type of VarAllocator returns the
+  ///   template unchanged;
+  /// - that building with one type of VarAllocator and then building the result with the second
+  ///   type of VarAllocator returns an equivalent result to just building with the second type of
+  ///   VarAllocator; and
+  /// - that building templates with different pairs of the given values and then merging the
+  ///   resulting templates returns equivalent results.
+  ///
+  /// Returns the resulting array template.
   @CanIgnoreReturnValue
   private Template runTest(
       Value v1, Value v2, Value v3, String expectedArray, String expectedRecord) {

@@ -22,26 +22,20 @@ import org.retrolang.code.Register;
 import org.retrolang.impl.Template.NumVar;
 import org.retrolang.impl.TemplateBuilder.VarAllocator;
 
-/** A VarAllocator that allocates registers in a given CodeBuilder to represent values. */
+/// A VarAllocator that allocates registers in a given CodeBuilder to represent values.
 class RegisterAllocator implements VarAllocator {
   final CodeBuilder cb;
 
-  /**
-   * If true, registers will be allocated with {@link CodeBuilder#newArg}; otherwise they will be
-   * allocated with {@link CodeBuilder#newRegister}.
-   */
+  /// If true, registers will be allocated with [CodeBuilder#newArg]; otherwise they will be
+  /// allocated with [CodeBuilder#newRegister].
   final boolean allocateArgs;
 
-  /**
-   * Indexed by (ordinal) VarType; all registers of that type with indices less than this are
-   * already in use.
-   */
+  /// Indexed by (ordinal) VarType; all registers of that type with indices less than this are
+  /// already in use.
   private final int[] next;
 
-  /**
-   * The three types of registers we can allocate. Note that the JVM doesn't have registers smaller
-   * than an int32, so uint8 values are stored as ints.
-   */
+  /// The three types of registers we can allocate. Note that the JVM doesn't have registers smaller
+  /// than an int32, so uint8 values are stored as ints.
   enum VarType {
     INT(int.class, NumVar.INT32),
     DOUBLE(double.class, NumVar.FLOAT64),
@@ -58,10 +52,8 @@ class RegisterAllocator implements VarAllocator {
 
   static final int NUM_VAR_TYPES = VarType.values().length;
 
-  /**
-   * Creates a new RegisterAllocator. This allocator must be used before any other operations that
-   * might allocate registers are called.
-   */
+  /// Creates a new RegisterAllocator. This allocator must be used before any other operations that
+  /// might allocate registers are called.
   RegisterAllocator(CodeBuilder cb, boolean allocateArgs) {
     this.cb = cb;
     this.allocateArgs = allocateArgs;
@@ -76,7 +68,7 @@ class RegisterAllocator implements VarAllocator {
     next = Arrays.copyOf(toCopy.next, NUM_VAR_TYPES);
   }
 
-  /** Finds the next available register of the given type, or creates a new one. */
+  /// Finds the next available register of the given type, or creates a new one.
   private int allocVar(VarType varType) {
     int n = next[varType.ordinal()];
     // Scan the already allocated registers with indices >= n; if we find one with the

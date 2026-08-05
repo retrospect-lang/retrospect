@@ -57,14 +57,14 @@ public class MemoMergerTest {
     var unused = Core.core();
   }
 
-  /** Uses multiple threads for this test if concurrent is true. */
+  /// Uses multiple threads for this test if concurrent is true.
   private void enableMultiThreadsIf(boolean concurrent) {
     if (concurrent) {
       enableMultiThreads(7);
     }
   }
 
-  /** Sets up this test to use a thread pool of the specified size. */
+  /// Sets up this test to use a thread pool of the specified size.
   private void enableMultiThreads(int poolSize) {
     inProgress = new Phaser(1);
     threadPool =
@@ -79,10 +79,8 @@ public class MemoMergerTest {
                         }));
   }
 
-  /**
-   * If we're running multi-threaded, wait for all queued tasks to complete and then shut down the
-   * thread pool.
-   */
+  /// If we're running multi-threaded, wait for all queued tasks to complete and then shut down the
+  /// thread pool.
   private void shutdownMultiThreads() {
     if (threadPool != null) {
       inProgress.awaitAdvance(inProgress.getPhase());
@@ -91,10 +89,8 @@ public class MemoMergerTest {
     }
   }
 
-  /**
-   * If we're running single-threaded just run {@code doCall}. If we're running multi-threaded,
-   * queue it for concurrent execution after incrementing the "number of calls in progress" counter.
-   */
+  /// If we're running single-threaded just run `doCall`. If we're running multi-threaded, queue it
+  /// for concurrent execution after incrementing the "number of calls in progress" counter.
   private void startCall(Runnable doCall) {
     if (threadPool == null) {
       doCall.run();
@@ -104,10 +100,8 @@ public class MemoMergerTest {
     }
   }
 
-  /**
-   * If we're running multi-threaded, decrement the "number of calls in progress" counter; the
-   * awaitAdvance() in shutdownMultiThreads() waits for it to get to zero.
-   */
+  /// If we're running multi-threaded, decrement the "number of calls in progress" counter; the
+  /// awaitAdvance() in shutdownMultiThreads() waits for it to get to zero.
   private void endCall() {
     if (threadPool != null) {
       inProgress.arrive();
@@ -137,43 +131,33 @@ public class MemoMergerTest {
     }
   }
 
-  /**
-   * A helper class to emulate the pattern of memo construction resulting from a call graph of n
-   * distinct methods, where the method at level i calls the method at level i+1 a fixed number of
-   * times.
-   *
-   * <p>To use this class:
-   *
-   * <ul>
-   *   <li>Create a new {@code NestedCaller}, specifying the maximum depth and the number of calls
-   *       at each level.
-   *   <li>Call {@code makeRootMemo()} to get a new root MethodMemo.
-   *   <li>Call {@code simulateExecution(0, rootMemo)} to emulate execution of all the nested calls.
-   *   <li>Call {@code checkSummary(...)} to verify the results.
-   * </ul>
-   */
+  /// A helper class to emulate the pattern of memo construction resulting from a call graph of n
+  /// distinct methods, where the method at level i calls the method at level i+1 a fixed number of
+  /// times.
+  ///
+  /// To use this class:
+  ///
+  /// - Create a new `NestedCaller`, specifying the maximum depth and the number of calls at each
+  ///   level.
+  /// - Call `makeRootMemo()` to get a new root MethodMemo.
+  /// - Call `simulateExecution(0, rootMemo)` to emulate execution of all the nested calls.
+  /// - Call `checkSummary(...)` to verify the results.
   class NestedCaller {
-    /** The depth of the call graph. */
+    /// The depth of the call graph.
     final int maxDepth;
 
-    /**
-     * A distinct method is created for each level. These are all defined as methods of the size()
-     * function, but that's irrelevant since none of them are actually executed through normal VM
-     * operation.
-     */
+    /// A distinct method is created for each level. These are all defined as methods of the size()
+    /// function, but that's irrelevant since none of them are actually executed through normal VM
+    /// operation.
     final VmMethod[] methods;
 
-    /**
-     * We need a separate CallSite for each of the calls from level i to level i+1. It's easiest to
-     * just reuse the same CallSites at each level, although in practice separate methods would have
-     * separate CallSites.
-     */
+    /// We need a separate CallSite for each of the calls from level i to level i+1. It's easiest to
+    /// just reuse the same CallSites at each level, although in practice separate methods would
+    /// have separate CallSites.
     final CallSite[] callSites;
 
-    /**
-     * A lambda that returns the args for each call at level n; called for 0 <= i < maxDepth. The
-     * length of the returned array determines the number of nested calls.
-     */
+    /// A lambda that returns the args for each call at level n; called for 0 <= i < maxDepth. The
+    /// length of the returned array determines the number of nested calls.
     final IntFunction<Object[][]> nestedCallArgs;
 
     NestedCaller(int maxDepth, IntFunction<Object[][]> nestedCallArgs) {
@@ -199,7 +183,7 @@ public class MemoMergerTest {
           Core.size.fn(), null, false, new MockImpl("method" + level), baseWeight, factory);
     }
 
-    /** Returns a MethodMemo suitable for calling the root method. */
+    /// Returns a MethodMemo suitable for calling the root method.
     MethodMemo makeRootMemo() {
       MemoMerger merger = tracker.scope.memoMerger;
       synchronized (merger) {
@@ -211,18 +195,14 @@ public class MemoMergerTest {
       }
     }
 
-    /**
-     * When running a test in multi-threaded mode, we emulate each top-level nested call this many
-     * times in parallel (with the same MethodMemo and args); this shouldn't change the final
-     * weights, but increases the chances that we'll stumble over a race condition.
-     */
+    /// When running a test in multi-threaded mode, we emulate each top-level nested call this many
+    /// times in parallel (with the same MethodMemo and args); this shouldn't change the final
+    /// weights, but increases the chances that we'll stumble over a race condition.
     private static final int NUM_CONCURRENT = 11;
 
-    /**
-     * Simulates a call to the method at the specified depth, including all of its nested calls. If
-     * multi-threaded execution is enabled the calls will be done in parallel and may not have
-     * completed when this method returns.
-     */
+    /// Simulates a call to the method at the specified depth, including all of its nested calls. If
+    /// multi-threaded execution is enabled the calls will be done in parallel and may not have
+    /// completed when this method returns.
     void simulateExecution(int depth, MethodMemo mm) {
       if (depth < maxDepth) {
         Object[][] args = nestedCallArgs.apply(depth);
@@ -248,15 +228,13 @@ public class MemoMergerTest {
       endCall();
     }
 
-    /**
-     * Returns a string summarizing the MethodMemos created by previous calls to {@link
-     * #simulateExecution}.
-     *
-     * <p>The summary has an entry for each level, of the form "h/x{w,...}" where "h" is the number
-     * of heavy MethodMemos, "x" is the number of exlined MethodMemos, and the "w"s are weights
-     * (e.g. "0/1{3, 8}" would indicate that at that level there were no heavy MethodMemos, there
-     * was one exlined MethodMemo, and all MethodMemos had a weight of 3 or 8).
-     */
+    /// Returns a string summarizing the MethodMemos created by previous calls to
+    /// [#simulateExecution].
+    ///
+    /// The summary has an entry for each level, of the form "h/x{w,...}" where "h" is the number of
+    /// heavy MethodMemos, "x" is the number of exlined MethodMemos, and the "w"s are weights (e.g.
+    /// "0/1{3, 8}" would indicate that at that level there were no heavy MethodMemos, there was one
+    /// exlined MethodMemo, and all MethodMemos had a weight of 3 or 8).
     String summarize(MethodMemo root) {
       MemoMerger merger = tracker.scope.memoMerger;
       synchronized (merger) {
@@ -283,29 +261,24 @@ public class MemoMergerTest {
       }
     }
 
-    /**
-     * Walks the MethodMemo tree starting from {@code mm}, and records the weights seen at each
-     * level.
-     *
-     * <p>This makes no attempt to avoid re-entering shared MethodMemos, and would not work if we
-     * were emulating recursive calls.
-     */
+    /// Walks the MethodMemo tree starting from `mm`, and records the weights seen at each level.
+    ///
+    /// This makes no attempt to avoid re-entering shared MethodMemos, and would not work if we were
+    /// emulating recursive calls.
     private void getWeights(MethodMemo mm, int level, Bits.Builder[] weights) {
       assertThat(mm.method()).isSameInstanceAs(methods[level]);
       weights[level].set(mm.currentWeight());
       mm.forEachChild((cIndex, nested) -> getWeights(nested, level + 1, weights));
     }
 
-    /**
-     * Summarizes the results of this test and compares it with the expected result.
-     *
-     * <p>If the test was run sequentially the results are deterministic and should match exactly.
-     *
-     * <p>If the test was run multi-threaded the results are less predictable; we may exline a
-     * method at an upper level, then exline at a lower level in a way that makes the upper exlining
-     * unnecessary. We should still end up exlining at the same lowest level as in the sequential
-     * case, but the levels above that may vary.
-     */
+    /// Summarizes the results of this test and compares it with the expected result.
+    ///
+    /// If the test was run sequentially the results are deterministic and should match exactly.
+    ///
+    /// If the test was run multi-threaded the results are less predictable; we may exline a method
+    /// at an upper level, then exline at a lower level in a way that makes the upper exlining
+    /// unnecessary. We should still end up exlining at the same lowest level as in the sequential
+    /// case, but the levels above that may vary.
     void checkSummary(MethodMemo root, boolean concurrent, String expected) {
       String summary = summarize(root);
       if (!concurrent) {
@@ -323,35 +296,31 @@ public class MemoMergerTest {
     }
   }
 
-  /**
-   * Matches the tail of the summary beginning with the last (deepest) level that includes at least
-   * one exlined MethodMemo.
-   */
+  /// Matches the tail of the summary beginning with the last (deepest) level that includes at least
+  /// one exlined MethodMemo.
   private static final Pattern LAST_EXLINED = Pattern.compile(".*(\\b\\d+/[1-9].*)");
 
   private static final Object[] ARGS_NONE = new Object[] {Core.NONE};
   private static final Object[] ARGS_TRUE = new Object[] {Core.TRUE};
   private static final Object[] ARGS_FALSE = new Object[] {Core.FALSE};
 
-  /** A single nested call, with argument None. */
+  /// A single nested call, with argument None.
   private static final Object[][] ONE_NONE = new Object[][] {ARGS_NONE};
 
-  /** Two nested calls, both with argument None. */
+  /// Two nested calls, both with argument None.
   private static final Object[][] TWO_NONES = new Object[][] {ARGS_NONE, ARGS_NONE};
 
-  /** Three nested calls, all with argument None. */
+  /// Three nested calls, all with argument None.
   private static final Object[][] THREE_NONES = new Object[][] {ARGS_NONE, ARGS_NONE, ARGS_NONE};
 
-  /** Two nested calls, one passing True and the other False. */
+  /// Two nested calls, one passing True and the other False.
   private static final Object[][] TRUE_FALSE = new Object[][] {ARGS_TRUE, ARGS_FALSE};
 
-  /**
-   * Creates a simple five-level call graph, with each method calling the next method twice (so the
-   * fifth method is called 32 times).
-   *
-   * <p>This is (just) enough to make the level 1 methodMemos heavy, and because there are two of
-   * them they'll be merged & exlined.
-   */
+  /// Creates a simple five-level call graph, with each method calling the next method twice (so the
+  /// fifth method is called 32 times).
+  ///
+  /// This is (just) enough to make the level 1 methodMemos heavy, and because there are two of them
+  /// they will be merged and exlined.
   @Test
   @Parameters({"false", "true"})
   public void twoCalls(boolean concurrent) {
@@ -366,11 +335,9 @@ public class MemoMergerTest {
     caller.checkSummary(root, concurrent, "0/0{1}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
-  /**
-   * Creates a five-level call graph, with each method calling the next method three times.
-   *
-   * <p>This is enough to make the level 2 methodMemos heavy.
-   */
+  /// Creates a five-level call graph, with each method calling the next method three times.
+  ///
+  /// This is enough to make the level 2 methodMemos heavy.
   @Test
   @Parameters({"false", "true"})
   public void threeCalls(boolean concurrent) {
@@ -382,11 +349,9 @@ public class MemoMergerTest {
     caller.checkSummary(root, concurrent, "0/0{1}, 0/0{10}, 0/1{3}, 0/0{22}, 0/0{7}");
   }
 
-  /**
-   * Creates a ten-level call graph, with each method calling the next method twice.
-   *
-   * <p>This is enough to cause exlining at levels 2 and 6.
-   */
+  /// Creates a ten-level call graph, with each method calling the next method twice.
+  ///
+  /// This is enough to cause exlining at levels 2 and 6.
   @Test
   @Parameters({"false", "true"})
   public void deepTwoCalls(boolean concurrent) {
@@ -401,14 +366,12 @@ public class MemoMergerTest {
         "0/0{1}, 0/0{7}, 0/1{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/1{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
-  /**
-   * Creates a 42-level call graph, with the root method calling level 1 twice, and each method
-   * after that calling the next method once.
-   *
-   * <p>Since there's no benefit to exlining a method that's only called from a single call site,
-   * level 1 is the only level that will be exlined, even though the six levels below it exceed the
-   * heavy threshold.
-   */
+  /// Creates a 42-level call graph, with the root method calling level 1 twice, and each method
+  /// after that calling the next method once.
+  ///
+  /// Since there's no benefit to exlining a method that's only called from a single call site,
+  /// level 1 is the only level that will be exlined, even though the six levels below it exceed the
+  /// heavy threshold.
   @Test
   @Parameters({"false", "true"})
   public void oneCall(boolean concurrent) {
@@ -429,13 +392,11 @@ public class MemoMergerTest {
         """);
   }
 
-  /**
-   * Creates a ten-level call graph, with each method calling the next method twice but with
-   * distinct args.
-   *
-   * <p>As in {@link #deepTwoCalls} we get exlining at levels 2 and 6, but this time we exline two
-   * methods for each, one for each arg pattern.
-   */
+  /// Creates a ten-level call graph, with each method calling the next method twice but with
+  /// distinct args.
+  ///
+  /// As in [#deepTwoCalls] we get exlining at levels 2 and 6, but this time we exline two methods
+  /// for each, one for each arg pattern.
   @Test
   @Parameters({"false", "true"})
   public void deepTwoCallsDifferentArgs(boolean concurrent) {
@@ -450,12 +411,12 @@ public class MemoMergerTest {
         "0/0{1}, 0/0{7}, 0/2{3}, 0/0{31}, 0/0{15}, 0/0{7}, 0/2{3}, 0/0{23}, 0/0{11}, 0/0{5}");
   }
 
-  /** Creates an uncounted array of NumValue objects representing the given ints. */
+  /// Creates an uncounted array of NumValue objects representing the given ints.
   private static final Object[] intArray(int... args) {
     return Arrays.stream(args).mapToObj(arg -> NumValue.of(arg, Allocator.UNCOUNTED)).toArray();
   }
 
-  /** Emulates a simple recursive factorial function. */
+  /// Emulates a simple recursive factorial function.
   @Test
   public void factorial() throws VmFunction.MultipleMethodsException {
     // function factorial(n) = (n < 3) ? n : n * factorial(n - 1)

@@ -18,15 +18,13 @@ package org.retrolang.code;
 
 import org.objectweb.asm.Opcodes;
 
-/**
- * Each ConditionalBranch instance corresponds to a JVM instruction (with the same name) that pops
- * one or two values from the stack and conditionally branches based on their values.
- *
- * <p>In addition to emitting the instruction, ConditionalBranch instances make it easy to find the
- * inverse instruction (all these instructions have a matching instruction that branches in exactly
- * the opposite conditions) and, for instructions that compare two integers from the stack, the
- * instructions that makes the same comparison between a single integer and zero.
- */
+/// Each ConditionalBranch instance corresponds to a JVM instruction (with the same name) that pops
+/// one or two values from the stack and conditionally branches based on their values.
+///
+/// In addition to emitting the instruction, ConditionalBranch instances make it easy to find the
+/// inverse instruction (all these instructions have a matching instruction that branches in exactly
+/// the opposite conditions) and, for instructions that compare two integers from the stack, the
+/// instructions that makes the same comparison between a single integer and zero.
 public enum ConditionalBranch {
   // The ordering here matters!  Instructions are paired with their inverses, and the integer
   // comparisons with and without implied zero are grouped together and in the same order.
@@ -57,22 +55,20 @@ public enum ConditionalBranch {
     this.opcode = opcode;
   }
 
-  /** Returns the ConditionalBranch that will branch under the opposite conditions to this one. */
+  /// Returns the ConditionalBranch that will branch under the opposite conditions to this one.
   public ConditionalBranch invert() {
     return VALUES[ordinal() ^ 1];
   }
 
   private static final int ICMP_OFFSET = IF_ICMPEQ.ordinal() - IFEQ.ordinal();
 
-  /** Returns true if this an IF_ICMP* branch, i.e. it takes two integers from the stack. */
+  /// Returns true if this an IF\_ICMP\* branch, i.e. it takes two integers from the stack.
   public boolean isIcmp() {
     return ordinal() >= IF_ICMPEQ.ordinal() && ordinal() <= IF_ICMPGT.ordinal();
   }
 
-  /**
-   * This must be an IF_ICMP* branch; returns the equivalent ConditionalBranch with an implied
-   * second argument of zero (e.g. {@code IF_ICMPLT.withZero()} returns {@code IFLT}).
-   */
+  /// This must be an IF\_ICMP\* branch; returns the equivalent ConditionalBranch with an implied
+  /// second argument of zero (e.g. `IF_ICMPLT.withZero()` returns `IFLT`).
   public ConditionalBranch withZero() {
     assert isIcmp();
     return VALUES[ordinal() - ICMP_OFFSET];

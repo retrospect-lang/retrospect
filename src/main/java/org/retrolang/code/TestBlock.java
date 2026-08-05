@@ -28,20 +28,16 @@ import org.retrolang.code.ValueInfo.IntRange;
 import org.retrolang.code.ValueInfo.SmallIntSet;
 import org.retrolang.util.Bits;
 
-/**
- * A TestBlock is a Split that just evaluates some condition and chooses one of the outlinks; it has
- * no other effect. Each subclass of TestBlock has either one or two CodeValues that determine the
- * outcome.
- */
+/// A TestBlock is a Split that just evaluates some condition and chooses one of the outlinks; it
+/// has no other effect. Each subclass of TestBlock has either one or two CodeValues that determine
+/// the outcome.
 public abstract class TestBlock extends Block.Split {
 
   protected CodeValue value1;
   protected CodeValue value2;
 
-  /**
-   * Creates a TestBlock on the given values. {@code value2} may be null, if this TestBlock only
-   * uses one value; {@code value1} may not be null. The values may not have side effects.
-   */
+  /// Creates a TestBlock on the given values. `value2` may be null, if this TestBlock only uses one
+  /// value; `value1` may not be null. The values may not have side effects.
   protected TestBlock(CodeValue value1, CodeValue value2) {
     Preconditions.checkArgument(!value1.hasSideEffect());
     Preconditions.checkArgument(value2 == null || !value2.hasSideEffect());
@@ -49,21 +45,17 @@ public abstract class TestBlock extends Block.Split {
     this.value2 = value2;
   }
 
-  /**
-   * Set one branch of a (newly-created) TestBlock block. Must be called at least once before
-   * calling {@link Block#addTo}. If only one branch has been set before calling {@link
-   * Block#addTo}, the other will be linked to the following block.
-   */
+  /// Set one branch of a (newly-created) TestBlock block. Must be called at least once before
+  /// calling [Block#addTo]. If only one branch has been set before calling [Block#addTo], the other
+  /// will be linked to the following block.
   @CanIgnoreReturnValue
   public TestBlock setBranch(boolean ifTrue, FutureBlock links) {
     (ifTrue ? next : alternate).setTarget(links);
     return this;
   }
 
-  /**
-   * Returns a TestBlock that checks if the given CodeValue is zero (intended for use with Java
-   * booleans, where a zero value means false).
-   */
+  /// Returns a TestBlock that checks if the given CodeValue is zero (intended for use with Java
+  /// booleans, where a zero value means false).
   public static TestBlock isFalse(CodeValue cv) {
     return new IsEq(OpCodeType.INT, CodeValue.ZERO, cv);
   }
@@ -90,44 +82,33 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /**
-   * Returns True if this test will always succeed given values consistent with these ValueInfos,
-   * False if it will always fail, and null otherwise.
-   *
-   * <p>Neither info will be a {@link Register}.
-   */
+  /// Returns True if this test will always succeed given values consistent with these ValueInfos,
+  /// False if it will always fail, and null otherwise.
+  ///
+  /// Neither info will be a [Register].
   protected abstract Boolean test(ValueInfo info1, ValueInfo info2);
 
-  /**
-   * Called to implement {@link Split#updateInfo}; should update {@code next.info} and/or {@code
-   * alternate.info} with any additional information that can be inferred from the TestBlock
-   * succeeding or failing.
-   *
-   * @param info1 what is known about {@link #value1} before the block is executed
-   * @param info2 what is known about {@link #value2} before the block is executed (or null for
-   *     unary TestBlocks)
-   */
+  /// Called to implement [Split#updateInfo]; should update `next.info` and/or `alternate.info` with
+  /// any additional information that can be inferred from the TestBlock succeeding or failing.
+  ///
+  /// @param info1 what is known about [#value1] before the block is executed
+  /// @param info2 what is known about [#value2] before the block is executed (or null for unary
+  ///   TestBlocks)
   protected abstract void updateInfos(ValueInfo info1, ValueInfo info2);
 
-  /**
-   * Emits bytecode to push this TestBlock's values on the stack and then returns the appropriate
-   * ConditionalBranch.
-   */
+  /// Emits bytecode to push this TestBlock's values on the stack and then returns the appropriate
+  /// ConditionalBranch.
   protected abstract ConditionalBranch emitTest(Emitter emitter);
 
-  /**
-   * For binary TestBlocks, returns true if this test will always succeed given identical values or
-   * false if it will always fail. Not called on unary TestBlocks.
-   */
+  /// For binary TestBlocks, returns true if this test will always succeed given identical values or
+  /// false if it will always fail. Not called on unary TestBlocks.
   protected boolean isReflexive() {
     // Must be overridden by binary TestBlocks
     throw new AssertionError();
   }
 
-  /**
-   * Called on binary TestBlocks after each of the values has been independently simplified; may
-   * perform additional simplification using both values. Not called on unary TestBlocks.
-   */
+  /// Called on binary TestBlocks after each of the values has been independently simplified; may
+  /// perform additional simplification using both values. Not called on unary TestBlocks.
   protected void binarySimplify() {}
 
   @Override
@@ -171,10 +152,8 @@ public abstract class TestBlock extends Block.Split {
     return super.updateLive();
   }
 
-  /**
-   * Checks whether this TestBlock is immediately preceded by a SetBlock that sets a register only
-   * used on one branch of the test; if so, we can move the set after the test.
-   */
+  /// Checks whether this TestBlock is immediately preceded by a SetBlock that sets a register only
+  /// used on one branch of the test; if so, we can move the set after the test.
   private boolean tryMoveSetAfterTest(CodeBuilder cb) {
     // This optimization only applies to TestBlocks that have a single inlink, where that inlink is
     // from a SetBlock
@@ -318,10 +297,8 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /**
-   * See if this test's result is known given the info associated with the given inlink. If so, move
-   * the link to skip the test.
-   */
+  /// See if this test's result is known given the info associated with the given inlink. If so,
+  /// move the link to skip the test.
   private void checkInlink(Link link) {
     assert link.target() == this;
     Link outLink = chooseOutlink(link.info.registers());
@@ -330,10 +307,8 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /**
-   * Returns {@link #next} or {@link #alternate} if the outcome of this TestBlock is determined for
-   * an inlink with the given infos, otherwise null.
-   */
+  /// Returns [#next] or [#alternate] if the outcome of this TestBlock is determined for an inlink
+  /// with the given infos, otherwise null.
   @Nullable Link chooseOutlink(IntFunction<ValueInfo> infos) {
     CodeValue v1 = value1.simplify(infos);
     ValueInfo info2 = null;
@@ -353,11 +328,11 @@ public abstract class TestBlock extends Block.Split {
     return null;
   }
 
-  /** A TestBlock that does the equivalent of a Java == comparison. */
+  /// A TestBlock that does the equivalent of a Java == comparison.
   public static class IsEq extends TestBlock {
     public final OpCodeType opCodeType;
 
-    /** Creates an IsEq block comparing the given values after casting them to the given type. */
+    /// Creates an IsEq block comparing the given values after casting them to the given type.
     public IsEq(OpCodeType opCodeType, CodeValue value1, CodeValue value2) {
       super(value1, value2);
       Preconditions.checkArgument(value2 != null);
@@ -465,10 +440,8 @@ public abstract class TestBlock extends Block.Split {
       }
     }
 
-    /**
-     * This TestBlock is comparing {@code r} (currently {@code info}) with {@code value}; update our
-     * outlink infos accordingly.
-     */
+    /// This TestBlock is comparing `r` (currently `info`) with `value`; update our outlink infos
+    /// accordingly.
     private void updateForEqConst(Register r, ValueInfo info, Const value) {
       // If the test succeeds, we know exactly what r is.
       next.info.updateInfo(r, value);
@@ -517,7 +490,7 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /** A TestBlock that does the equivalent of a Java < comparison. */
+  /// A TestBlock that does the equivalent of a Java < comparison.
   public static class IsLessThan extends TestBlock {
     final OpCodeType opCodeType;
 
@@ -616,7 +589,7 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /** A TestBlock that checks if an int's value is in 0..255. */
+  /// A TestBlock that checks if an int's value is in 0..255.
   public static class IsUint8 extends TestBlock {
     public IsUint8(CodeValue value) {
       super(value, null);
@@ -678,32 +651,26 @@ public abstract class TestBlock extends Block.Split {
     }
   }
 
-  /** A TestBlock that checks if a small int's value is in a given set. */
+  /// A TestBlock that checks if a small int's value is in a given set.
   public static class TagCheck extends TestBlock {
 
-    /** The tested value is assumed to be between zero (inclusive) and {@code limit} (exclusive). */
+    /// The tested value is assumed to be between zero (inclusive) and `limit` (exclusive).
     final int limit;
 
-    /** The possible values if the test passes. */
+    /// The possible values if the test passes.
     final ValueInfo trueInfo;
 
-    /** The possible values if the test fails. */
+    /// The possible values if the test fails.
     final ValueInfo falseInfo;
 
-    /**
-     * The intersection of {@link #trueInfo} with what is currently known about the tested value.
-     */
+    /// The intersection of [#trueInfo] with what is currently known about the tested value.
     private ValueInfo ifTrueLatest;
 
-    /**
-     * The intersection of {@link #falseInfo} with what is currently known about the tested value.
-     */
+    /// The intersection of [#falseInfo] with what is currently known about the tested value.
     private ValueInfo ifFalseLatest;
 
-    /**
-     * Creates a test that succeeds if {@code value1} (which is assumed to be in {@code 0..limit-1})
-     * has one of the values in {@code trueBits}.
-     */
+    /// Creates a test that succeeds if `value1` (which is assumed to be in `0..limit-1`) has one of
+    /// the values in `trueBits`.
     public TagCheck(CodeValue value1, int limit, Bits trueBits) {
       super(value1, null);
       Preconditions.checkArgument(trueBits.max() < limit && limit <= SmallIntSet.LIMIT + 1);

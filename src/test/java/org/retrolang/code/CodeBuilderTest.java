@@ -49,21 +49,17 @@ public class CodeBuilderTest {
     cb.verbose = true;
   }
 
-  /**
-   * Each test compares the CodeBuilder's results to a {@code ".out"} golden file. The results are
-   * captured at three stages:
-   *
-   * <ul>
-   *   <li>the block graph after optimizations are completed;
-   *   <li>the finalized block graph just before bytecode is emitted, using Java locals in place of
-   *       register ids; and
-   *   <li>the emitted bytecode, together with any constants that it references.
-   * </ul>
-   *
-   * <p>The golden files contain each of these results, separated by "---\n" (the final set of
-   * results has two sections -- constants followed by bytecodes -- so the files actually have four
-   * sections).
-   */
+  /// Each test compares the CodeBuilder's results to a `".out"` golden file. The results are
+  /// captured at three stages:
+  ///
+  /// - the block graph after optimizations are completed;
+  /// - the finalized block graph just before bytecode is emitted, using Java locals in place of
+  ///   register ids; and
+  /// - the emitted bytecode, together with any constants that it references.
+  ///
+  /// The golden files contain each of these results, separated by "---\n" (the final set of results
+  /// has two sections -- constants followed by bytecodes -- so the files actually have four
+  /// sections).
   private void checkOutput(String filename) {
     String source;
     try {
@@ -90,23 +86,21 @@ public class CodeBuilderTest {
     assertThat(byteCode).isEqualTo(parts[3]);
   }
 
-  /**
-   * Construct a function that counts the number of values other than 1 in the Collatz sequence
-   * starting from a given value (https://en.wikipedia.org/wiki/Collatz_conjecture).
-   *
-   * <pre>{@code
-   * int collatz(int n) {
-   *   int count = 0
-   *   for sequential n, count {
-   *     if n == 1 {
-   *       return count
-   *     }
-   *     n = (n % 2 == 0) ? n / 2 : 3 * n + 1
-   *     count += 1
-   *   }
-   * }
-   * }</pre>
-   */
+  /// Construct a function that counts the number of values other than 1 in the Collatz sequence
+  /// starting from a given value (https://en.wikipedia.org/wiki/Collatz\_conjecture).
+  ///
+  /// ```
+  /// int collatz(int n) {
+  ///   int count = 0
+  ///   for sequential n, count {
+  ///     if n == 1 {
+  ///       return count
+  ///     }
+  ///     n = (n % 2 == 0) ? n / 2 : 3 * n + 1
+  ///     count += 1
+  ///   }
+  /// }
+  /// ```
   @Test
   public void collatz() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -151,21 +145,19 @@ public class CodeBuilderTest {
     checkOutput("collatz.out");
   }
 
-  /**
-   * Construct a function that computes factorials recursively.
-   *
-   * <pre>{@code
-   * double factorial(n) {
-   *   if n < 2 {
-   *     return 1
-   *   }
-   *   int t0 = n - 1
-   *   double t1 = factorial(t0)
-   *   double t2 = n * t1
-   *   return t2
-   * }
-   * }</pre>
-   */
+  /// Construct a function that computes factorials recursively.
+  ///
+  /// ```
+  /// double factorial(n) {
+  ///   if n < 2 {
+  ///     return 1
+  ///   }
+  ///   int t0 = n - 1
+  ///   double t1 = factorial(t0)
+  ///   double t2 = n * t1
+  ///   return t2
+  /// }
+  /// ```
   @Test
   public void recursiveFactorial() throws Throwable {
     // Rather than having this function call itself directly (by name), we have it call indirectly
@@ -204,26 +196,24 @@ public class CodeBuilderTest {
     checkOutput("recursive_factorial.out");
   }
 
-  /**
-   * Construct a function that computes factorials recursively, using ints and returning -1 on
-   * overflow.
-   *
-   * <pre>{@code
-   * int factorial(int n) {
-   *   if n < 2 {
-   *     return 1
-   *   }
-   *   int t0 = n - 1
-   *   int t1 = factorial(t0)
-   *   if t1 >= 0 {
-   *     int t2 = multiplyExact(n, t1); on ArithmeticException goto overflow
-   *     return t2
-   *   }
-   * overflow:
-   *   return -1
-   * }
-   * }</pre>
-   */
+  /// Construct a function that computes factorials recursively, using ints and returning -1 on
+  /// overflow.
+  ///
+  /// ```
+  /// int factorial(int n) {
+  ///   if n < 2 {
+  ///     return 1
+  ///   }
+  ///   int t0 = n - 1
+  ///   int t1 = factorial(t0)
+  ///   if t1 >= 0 {
+  ///     int t2 = multiplyExact(n, t1); on ArithmeticException goto overflow
+  ///     return t2
+  ///   }
+  /// overflow:
+  ///   return -1
+  /// }
+  /// ```
   @Test
   public void intFactorial() throws Throwable {
     MutableCallSite recurse = new MutableCallSite(MethodType.methodType(int.class, int.class));
@@ -270,21 +260,19 @@ public class CodeBuilderTest {
     checkOutput("int_factorial.out");
   }
 
-  /**
-   * Exercise the substitution logic.
-   *
-   * <pre>{@code
-   * int subs(int n) {
-   *   int n1 = n + 1
-   *   int n2 = n + 2
-   *   int n3 = n2 + 1
-   *   if n1 > 0 {
-   *     return n3
-   *   }
-   *   return n2
-   * }
-   * }</pre>
-   */
+  /// Exercise the substitution logic.
+  ///
+  /// ```
+  /// int subs(int n) {
+  ///   int n1 = n + 1
+  ///   int n2 = n + 2
+  ///   int n3 = n2 + 1
+  ///   if n1 > 0 {
+  ///     return n3
+  ///   }
+  ///   return n2
+  /// }
+  /// ```
   @Test
   public void substitutions() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -315,20 +303,18 @@ public class CodeBuilderTest {
     checkOutput("substitutions.out");
   }
 
-  /**
-   * Test an edge case: an Op that always throws an exception.
-   *
-   * <pre>{@code
-   * int bomb(int m, int n) {
-   *   if n == 1_000_000 {
-   *     m = multiplyExact(n, n); on ArithmeticException goto overflow
-   *   }
-   *   return m
-   * overflow:
-   *   return -1
-   * }
-   * }</pre>
-   */
+  /// Test an edge case: an Op that always throws an exception.
+  ///
+  /// ```
+  /// int bomb(int m, int n) {
+  ///   if n == 1_000_000 {
+  ///     m = multiplyExact(n, n); on ArithmeticException goto overflow
+  ///   }
+  ///   return m
+  /// overflow:
+  ///   return -1
+  /// }
+  /// ```
   @Test
   public void bomb() throws Throwable {
     Register m = cb.newArg(int.class);
@@ -360,64 +346,62 @@ public class CodeBuilderTest {
     checkOutput("bomb.out");
   }
 
-  /**
-   * Another implementation of the collatz function, but this time with lots of inefficiencies for
-   * the optimizer to work on.
-   *
-   * <pre>{@code
-   * int collatz(int n) {
-   *   if n == 1 {
-   *     return 0
-   *   }
-   *   int count = 0
-   *   int useless = n
-   *   n = useless
-   *   int done = 0
-   *   for sequential n, count, useless, done {
-   *     int t0 = n mod 2
-   *     int t5
-   *     if done == 1 {
-   *       if done < 1 {
-   *         t5 = 7
-   *       } else {
-   *         t5 = count
-   *       }
-   *       return t5
-   *     } else {
-   *       int t3 = count + 1
-   *       int isEven
-   *       if t0 == 0 {
-   *         isEven = 1
-   *       } else {
-   *         isEven = 0
-   *       }
-   *       int isEven2 = isEven
-   *       int t2
-   *       if isEven2 == 1 {
-   *         t2 = n / 2
-   *       } else {
-   *         t2 = 3 * n
-   *       }
-   *       int t4 = t2 + 1
-   *       int t1
-   *       if isEven == 1 {
-   *         t1 = t2
-   *       } else {
-   *         t1 = t4
-   *       }
-   *       n = t1
-   *       count = t3
-   *       useless = isEven
-   *     }
-   *     if n == 1 {
-   *       done = 1
-   *     } else {
-   *       done = 0
-   *     }
-   *   }
-   * }
-   * }</pre>
-   */
+  /// Another implementation of the collatz function, but this time with lots of inefficiencies for
+  /// the optimizer to work on.
+  ///
+  /// ```
+  /// int collatz(int n) {
+  ///   if n == 1 {
+  ///     return 0
+  ///   }
+  ///   int count = 0
+  ///   int useless = n
+  ///   n = useless
+  ///   int done = 0
+  ///   for sequential n, count, useless, done {
+  ///     int t0 = n mod 2
+  ///     int t5
+  ///     if done == 1 {
+  ///       if done < 1 {
+  ///         t5 = 7
+  ///       } else {
+  ///         t5 = count
+  ///       }
+  ///       return t5
+  ///     } else {
+  ///       int t3 = count + 1
+  ///       int isEven
+  ///       if t0 == 0 {
+  ///         isEven = 1
+  ///       } else {
+  ///         isEven = 0
+  ///       }
+  ///       int isEven2 = isEven
+  ///       int t2
+  ///       if isEven2 == 1 {
+  ///         t2 = n / 2
+  ///       } else {
+  ///         t2 = 3 * n
+  ///       }
+  ///       int t4 = t2 + 1
+  ///       int t1
+  ///       if isEven == 1 {
+  ///         t1 = t2
+  ///       } else {
+  ///         t1 = t4
+  ///       }
+  ///       n = t1
+  ///       count = t3
+  ///       useless = isEven
+  ///     }
+  ///     if n == 1 {
+  ///       done = 1
+  ///     } else {
+  ///       done = 0
+  ///     }
+  ///   }
+  /// }
+  /// ```
   @Test
   public void optimizations() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -537,39 +521,37 @@ public class CodeBuilderTest {
     checkOutput("optimizations.out");
   }
 
-  /**
-   * A function that given an int[], decrements the largest element(s) by one and returns the number
-   * of other elements. Intentionally implemented a little awkwardly to exercise some loop
-   * optimizations.
-   *
-   * <pre>{@code
-   * int decrementMax(int[] nums) {
-   *   int n = nums.length
-   *   int isInitialized = 0
-   *   int max = 0
-   *   int count = 0
-   *   int j = 0
-   *   for sequential isInitialized, max, count, j {
-   *     if isInitialized == 0 {
-   *       max = -1
-   *       for (int i = 0; i != n; i++) {
-   *         max = Math.max(max, nums[i])
-   *       }
-   *     }
-   *     isInitialized = 1
-   *     if j == n {
-   *       result = n - count
-   *       return result
-   *     }
-   *     if nums[j] == max {
-   *       count += 1
-   *       nums[j] = max - 1
-   *     }
-   *     j += 1
-   *   }
-   * }
-   * }</pre>
-   */
+  /// A function that given an int[], decrements the largest element(s) by one and returns the
+  /// number of other elements. Intentionally implemented a little awkwardly to exercise some loop
+  /// optimizations.
+  ///
+  /// ```
+  /// int decrementMax(int[] nums) {
+  ///   int n = nums.length
+  ///   int isInitialized = 0
+  ///   int max = 0
+  ///   int count = 0
+  ///   int j = 0
+  ///   for sequential isInitialized, max, count, j {
+  ///     if isInitialized == 0 {
+  ///       max = -1
+  ///       for (int i = 0; i != n; i++) {
+  ///         max = Math.max(max, nums[i])
+  ///       }
+  ///     }
+  ///     isInitialized = 1
+  ///     if j == n {
+  ///       result = n - count
+  ///       return result
+  ///     }
+  ///     if nums[j] == max {
+  ///       count += 1
+  ///       nums[j] = max - 1
+  ///     }
+  ///     j += 1
+  ///   }
+  /// }
+  /// ```
   @Test
   public void loopOptimizationsOne() throws Throwable {
     Register nums = cb.newArg(int[].class);
@@ -651,37 +633,35 @@ public class CodeBuilderTest {
     checkOutput("loop_optimizations_1.out");
   }
 
-  /**
-   * Another version of the same method as {@link #loopOptimizationsOne}; this version has the loop
-   * nesting inverted to exercise a different set of optimizations.
-   *
-   * <pre>{@code
-   * int decrementMax(int[] nums) {
-   *   int n = nums.length
-   *   int max = -1
-   *   int i = 0
-   *   for sequential i, max {
-   *     if i == n {
-   *       int count = 0
-   *       int j = 0
-   *       for sequential count, j {
-   *         if j == n {
-   *           result = n - count
-   *           return result
-   *         }
-   *         if nums[j] == max {
-   *           count += 1
-   *           nums[j] = max - 1
-   *         }
-   *         j += 1
-   *       }
-   *     }
-   *     max = Math.max(max, nums[i])
-   *     i += 1
-   *   }
-   * }
-   * }</pre>
-   */
+  /// Another version of the same method as [#loopOptimizationsOne]; this version has the loop
+  /// nesting inverted to exercise a different set of optimizations.
+  ///
+  /// ```
+  /// int decrementMax(int[] nums) {
+  ///   int n = nums.length
+  ///   int max = -1
+  ///   int i = 0
+  ///   for sequential i, max {
+  ///     if i == n {
+  ///       int count = 0
+  ///       int j = 0
+  ///       for sequential count, j {
+  ///         if j == n {
+  ///           result = n - count
+  ///           return result
+  ///         }
+  ///         if nums[j] == max {
+  ///           count += 1
+  ///           nums[j] = max - 1
+  ///         }
+  ///         j += 1
+  ///       }
+  ///     }
+  ///     max = Math.max(max, nums[i])
+  ///     i += 1
+  ///   }
+  /// }
+  /// ```
   @Test
   public void loopOptimizationsTwo() throws Throwable {
     Register nums = cb.newArg(int[].class);
@@ -752,32 +732,30 @@ public class CodeBuilderTest {
     checkOutput("loop_optimizations_2.out");
   }
 
-  /**
-   * A simple loop to test more optimizations.
-   *
-   * <pre>{@code
-   * int loopOp3(int n) {
-   *   int i = 0
-   *   if n < 0 {
-   *     n = -n
-   *   }
-   *   for sequential i {
-   *     if i == 0 {
-   *       i = 1
-   *     } else {
-   *       i += 1
-   *       if i <= 0 or i > n {
-   *         if n > 10 {
-   *           return n
-   *         } else {
-   *           return i
-   *         }
-   *       }
-   *     }
-   *   }
-   * }
-   * }</pre>
-   */
+  /// A simple loop to test more optimizations.
+  ///
+  /// ```
+  /// int loopOp3(int n) {
+  ///   int i = 0
+  ///   if n < 0 {
+  ///     n = -n
+  ///   }
+  ///   for sequential i {
+  ///     if i == 0 {
+  ///       i = 1
+  ///     } else {
+  ///       i += 1
+  ///       if i <= 0 or i > n {
+  ///         if n > 10 {
+  ///           return n
+  ///         } else {
+  ///           return i
+  ///         }
+  ///       }
+  ///     }
+  ///   }
+  /// }
+  /// ```
   @Test
   public void loopOptimizationsThree() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -834,25 +812,23 @@ public class CodeBuilderTest {
     checkOutput("loop_optimizations_3.out");
   }
 
-  /**
-   * A loop that doesn't actually loop.
-   *
-   * <pre>{@code
-   * int trivial(int n) {
-   *   int i = 0
-   *   for sequential i {
-   *     if i == 0 {
-   *       i = 1
-   *     } else {
-   *       if n < 0 {
-   *         n = -n
-   *       }
-   *       return i + n
-   *     }
-   *   }
-   * }
-   * }</pre>
-   */
+  /// A loop that doesn't actually loop.
+  ///
+  /// ```
+  /// int trivial(int n) {
+  ///   int i = 0
+  ///   for sequential i {
+  ///     if i == 0 {
+  ///       i = 1
+  ///     } else {
+  ///       if n < 0 {
+  ///         n = -n
+  ///       }
+  ///       return i + n
+  ///     }
+  ///   }
+  /// }
+  /// ```
   @Test
   public void trivialLoop() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -888,24 +864,22 @@ public class CodeBuilderTest {
     checkOutput("trivial_loop.out");
   }
 
-  /**
-   * Test setting argument info. This function is only intended to be called with 0 or 1, and
-   * inverts its argument in a rather awkward way. The redundant test should be optimized away.
-   *
-   * <pre>{@code
-   * int argInfo(bool n) {
-   *   if n == 1 {
-   *     n = 0
-   *     goto label
-   *   }
-   *   if n == 0 {
-   *     n = 1
-   *   }
-   * label:
-   *   return n
-   * }
-   * }</pre>
-   */
+  /// Test setting argument info. This function is only intended to be called with 0 or 1, and
+  /// inverts its argument in a rather awkward way. The redundant test should be optimized away.
+  ///
+  /// ```
+  /// int argInfo(bool n) {
+  ///   if n == 1 {
+  ///     n = 0
+  ///     goto label
+  ///   }
+  ///   if n == 0 {
+  ///     n = 1
+  ///   }
+  /// label:
+  ///   return n
+  /// }
+  /// ```
   @Test
   public void argInfo() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -946,31 +920,29 @@ public class CodeBuilderTest {
     checkOutput("arg_info.out");
   }
 
-  /**
-   * Another variant on collatz, to test propagation of variable information through BackRefs.
-   * (Everything involving setting and testing "{@code firstTime}" can be optimized away.)
-   *
-   * <pre>{@code
-   * int backRefInfo(int n, int m) {
-   *   int count = 0
-   *   int firstTime = 1
-   *   for sequential n, count, firstTime {
-   *     if firstTime != 0 {
-   *       count = 0
-   *     }
-   *     if m < 0 {
-   *       return m
-   *     }
-   *     if n == 1 {
-   *       return count
-   *     }
-   *     n = (n % 2 == 0) ? n / 2 : 3 * n + 1
-   *     count += 1
-   *     firstTime = 0
-   *   }
-   * }
-   * }</pre>
-   */
+  /// Another variant on collatz, to test propagation of variable information through BackRefs.
+  /// (Everything involving setting and testing "`firstTime`" can be optimized away.)
+  ///
+  /// ```
+  /// int backRefInfo(int n, int m) {
+  ///   int count = 0
+  ///   int firstTime = 1
+  ///   for sequential n, count, firstTime {
+  ///     if firstTime != 0 {
+  ///       count = 0
+  ///     }
+  ///     if m < 0 {
+  ///       return m
+  ///     }
+  ///     if n == 1 {
+  ///       return count
+  ///     }
+  ///     n = (n % 2 == 0) ? n / 2 : 3 * n + 1
+  ///     count += 1
+  ///     firstTime = 0
+  ///   }
+  /// }
+  /// ```
   @Test
   public void backRefInfo() throws Throwable {
     Register n = cb.newArg(int.class);
@@ -1028,37 +1000,35 @@ public class CodeBuilderTest {
     checkOutput("backref_info.out");
   }
 
-  /**
-   * Test the TagCheck block.
-   *
-   * <pre>{@code
-   * int tagCheck(int n) {
-   *   // All the tests below are TagChecks, with limit 9 (i.e. assuming n ∈ 0..8)
-   *   if n ∈ {0, 1, 4, 5, 6} {
-   *     // It's more efficient to test the inverse of that condition
-   *     if n ∈ {2, 3} {
-   *       // Not reachable
-   *     } else if n ∈ {0, 1, 7} {
-   *       // n can't be 7, so that can be implemented as n <= 1
-   *       return 1
-   *     } else if n ∈ {4, 5, 8} {
-   *       // That's equivalent to n != 6
-   *       return 2
-   *     } else {
-   *       return n / 2
-   *     }
-   *   } else if n ∈ {0, 1, 7, 8} {
-   *     // n can't be 0 or 1, so that can be implemented as n >= 7
-   *     return 4
-   *   } else if n == 2 {
-   *     return 5
-   *   } else {
-   *     // n is 3
-   *     return n * 2
-   *   }
-   * }
-   * }</pre>
-   */
+  /// Test the TagCheck block.
+  ///
+  /// ```
+  /// int tagCheck(int n) {
+  ///   // All the tests below are TagChecks, with limit 9 (i.e. assuming n ∈ 0..8)
+  ///   if n ∈ {0, 1, 4, 5, 6} {
+  ///     // It's more efficient to test the inverse of that condition
+  ///     if n ∈ {2, 3} {
+  ///       // Not reachable
+  ///     } else if n ∈ {0, 1, 7} {
+  ///       // n can't be 7, so that can be implemented as n <= 1
+  ///       return 1
+  ///     } else if n ∈ {4, 5, 8} {
+  ///       // That's equivalent to n != 6
+  ///       return 2
+  ///     } else {
+  ///       return n / 2
+  ///     }
+  ///   } else if n ∈ {0, 1, 7, 8} {
+  ///     // n can't be 0 or 1, so that can be implemented as n >= 7
+  ///     return 4
+  ///   } else if n == 2 {
+  ///     return 5
+  ///   } else {
+  ///     // n is 3
+  ///     return n * 2
+  ///   }
+  /// }
+  /// ```
   @Test
   public void tagCheck() throws Throwable {
     Register n = cb.newArg(int.class);

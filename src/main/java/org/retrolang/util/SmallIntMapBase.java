@@ -23,23 +23,19 @@ import java.util.function.Function;
 import java.util.function.IntFunction;
 import java.util.stream.Stream;
 
-/**
- * The common superclass of {@link SmallIntMap} and {@link SmallIntMap.Builder}; includes all the
- * non-mutating methods.
- */
+/// The common superclass of [SmallIntMap] and [SmallIntMap.Builder]; includes all the non-mutating
+/// methods.
 public abstract class SmallIntMapBase<E> implements IntFunction<E> {
-  /** This map contains key {@code k} (>= 0) if bit {@code k%64} of {@code keys[k/64]} is 1. */
+  /// This map contains key `k` (>= 0) if bit `k%64` of `keys[k/64]` is 1.
   long[] keys;
 
-  /**
-   * The (non-null) values stored in this map, in ascending key order.
-   *
-   * <p>Any unused elements at the end of the array are null, i.e. {@code Arrays.stream(values,
-   * numValues, values.length).allMatch(v -> v == null)}.
-   */
+  /// The (non-null) values stored in this map, in ascending key order.
+  ///
+  /// Any unused elements at the end of the array are null, i.e. `Arrays.stream(values, numValues,
+  /// values.length).allMatch(v -> v == null)`.
   Object[] values;
 
-  /** The total number of bits set in {@link #keys}. */
+  /// The total number of bits set in [#keys].
   int numValues;
 
   SmallIntMapBase(long[] keys, Object[] values, int numValues) {
@@ -48,17 +44,17 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     this.numValues = numValues;
   }
 
-  /** Returns true if this map contains no entries. */
+  /// Returns true if this map contains no entries.
   public boolean isEmpty() {
     return numValues == 0;
   }
 
-  /** Returns the number of keys with non-null values. */
+  /// Returns the number of keys with non-null values.
   public int size() {
     return numValues;
   }
 
-  /** Returns true if {@link #get} would return a non-null value for the given key. */
+  /// Returns true if [#get] would return a non-null value for the given key.
   public boolean containsKey(int key) {
     Preconditions.checkArgument(key >= 0);
     int keyIndex = key / Long.SIZE;
@@ -70,11 +66,9 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return (keyElement & mask) != 0;
   }
 
-  /**
-   * Returns the smallest key for which {@link #get} would return a non-null value.
-   *
-   * <p>{@code isEmpty()} must be false.
-   */
+  /// Returns the smallest key for which [#get] would return a non-null value.
+  ///
+  /// `isEmpty()` must be false.
   public int minKey() {
     for (int i = 0; ; i++) {
       long keyElement = keys[i];
@@ -84,11 +78,9 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     }
   }
 
-  /**
-   * Returns the largest key for which {@link #get} would return a non-null value.
-   *
-   * <p>{@code isEmpty()} must be false.
-   */
+  /// Returns the largest key for which [#get] would return a non-null value.
+  ///
+  /// `isEmpty()` must be false.
   public int maxKey() {
     for (int i = keys.length - 1; ; i--) {
       long keyElement = keys[i];
@@ -99,10 +91,8 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     }
   }
 
-  /**
-   * Returns the value corresponding to the given key, which must be non-negative. Returns null if
-   * the given key is not present.
-   */
+  /// Returns the value corresponding to the given key, which must be non-negative. Returns null if
+  /// the given key is not present.
   @SuppressWarnings("unchecked")
   public E get(int key) {
     Preconditions.checkArgument(key >= 0);
@@ -120,24 +110,24 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return (E) values[valuePos];
   }
 
-  /** A synonym for {@link #get}, so that a SmallIntMap can be used as an {@link IntFunction}. */
+  /// A synonym for [#get], so that a SmallIntMap can be used as an [IntFunction].
   @Override
   public E apply(int value) {
     return get(value);
   }
 
-  /** Returns a Stream of this map's current values, in key order. */
+  /// Returns a Stream of this map's current values, in key order.
   @SuppressWarnings("unchecked")
   public Stream<E> streamValues() {
     return (Stream<E>) Arrays.stream(values, 0, numValues);
   }
 
-  /** Calls {@code visitor.visit()} with each key/value pair in this map. */
+  /// Calls `visitor.visit()` with each key/value pair in this map.
   public void forEachEntry(SmallIntMap.EntryVisitor<E> visitor) {
     visitEntries(visitor, null);
   }
 
-  /** Returns true if {@code predicate.test()} returns true for each key/value pair in this map. */
+  /// Returns true if `predicate.test()` returns true for each key/value pair in this map.
   public boolean allMatch(SmallIntMap.EntryPredicate<E> predicate) {
     return visitEntries(predicate, null);
   }
@@ -166,16 +156,14 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return (other instanceof SmallIntMapBase<?>) && equals((SmallIntMapBase<?>) other);
   }
 
-  /** Returns true if {@code other} contains the same entries as this map. */
+  /// Returns true if `other` contains the same entries as this map.
   @SuppressWarnings("NonOverridingEquals")
   public boolean equals(SmallIntMapBase<?> other) {
     return matches(other, Object::equals);
   }
 
-  /**
-   * Returns true if {@code other} contains entries with the same keys as this map, and each pair of
-   * corresponding values is identical or returns true from {@code matcher}.
-   */
+  /// Returns true if `other` contains entries with the same keys as this map, and each pair of
+  /// corresponding values is identical or returns true from `matcher`.
   @SuppressWarnings("ReferenceEquality")
   public boolean matches(SmallIntMapBase<?> other, BiPredicate<E, E> matcher) {
     if (other == this) {
@@ -206,10 +194,8 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return true;
   }
 
-  /**
-   * Returns true if for each {@code (k, v2)} in {@code other}, there is a corresponding {@code (k,
-   * v)} in this map and {@code valueContains(v, v2)} returns true.
-   */
+  /// Returns true if for each `(k, v2)` in `other`, there is a corresponding `(k, v)` in this map
+  /// and `valueContains(v, v2)` returns true.
   @SuppressWarnings({"unchecked", "ReferenceEquality"})
   public boolean contains(SmallIntMapBase<E> other, BiPredicate<E, E> valueContains) {
     if (other == this || other.numValues == 0) {
@@ -250,7 +236,7 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return true;
   }
 
-  /** Formats the contents as a string, using the given functions to format each key and value. */
+  /// Formats the contents as a string, using the given functions to format each key and value.
   public String toString(IntFunction<String> keyToString, Function<E, String> valueToString) {
     if (numValues == 0) {
       return "{}";
@@ -273,11 +259,8 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return toString(String::valueOf, String::valueOf);
   }
 
-  /**
-   * The shared implementation of {@link #forEachEntry}, {@link #allMatch}, and {@link
-   * SmallIntMap.Builder#updateEntries}. Exactly one of {@code predicate} or {@code updater} must be
-   * non-null.
-   */
+  /// The shared implementation of [#forEachEntry], [#allMatch], and
+  /// [SmallIntMap.Builder#updateEntries]. Exactly one of `predicate` or `updater` must be non-null.
   boolean visitEntries(
       SmallIntMap.EntryPredicate<E> predicate, SmallIntMap.EntryUpdater<E> updater) {
     assert (predicate == null) != (updater == null);
@@ -307,15 +290,13 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     return true;
   }
 
-  /**
-   * Returns the number of bits set in elements of {@link #keys} from {@code start} (inclusive) to
-   * {@code end} (exclusive).
-   */
+  /// Returns the number of bits set in elements of [#keys] from `start` (inclusive) to `end`
+  /// (exclusive).
   int countKeys(int start, int end) {
     return (int) Arrays.stream(keys, start, end).map(Long::bitCount).sum();
   }
 
-  /** Removes the value at the given position; caller is responsible for updating {@link #keys}. */
+  /// Removes the value at the given position; caller is responsible for updating [#keys].
   void deleteValue(int pos) {
     assert this instanceof SmallIntMap.Builder<?>;
     --numValues;
@@ -323,10 +304,8 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     values[numValues] = null;
   }
 
-  /**
-   * Removes the values between start (inclusive) and end (exclusive); caller is responsible for
-   * updating {@link #keys}.
-   */
+  /// Removes the values between start (inclusive) and end (exclusive); caller is responsible for
+  /// updating [#keys].
   void deleteValueRange(int start, int end) {
     assert this instanceof SmallIntMap.Builder<?>;
     int prevNumValues = numValues;
@@ -335,17 +314,15 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
     Arrays.fill(values, numValues, prevNumValues, null);
   }
 
-  /** Chooses a size for the {@code #values} array that can store at least {@code size} elements. */
+  /// Chooses a size for the `#values` array that can store at least `size` elements.
   static int roundUpValuesSize(int size) {
     // We might as well round up to next multiple of 2, since Java allocates arrays in units of 8
     // bytes anyway.
     return (size + 1) & ~1;
   }
 
-  /**
-   * Returns a mask with all bits below the lowest one bit of x set. Returns -1 (all bits set) if x
-   * is 0.
-   */
+  /// Returns a mask with all bits below the lowest one bit of x set. Returns -1 (all bits set) if x
+  /// is 0.
   static long bitsBelowLowestOneBit(long x) {
     // Or, equivalently: return (x - 1) & ~x;
     return Long.lowestOneBit(x) - 1;

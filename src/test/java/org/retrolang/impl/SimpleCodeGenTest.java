@@ -38,23 +38,23 @@ import org.retrolang.impl.Template.Constant;
 import org.retrolang.impl.Template.NumVar;
 import org.retrolang.impl.Template.Union;
 
-/** Some minimal tests for the components of code generation. */
+/// Some minimal tests for the components of code generation.
 @RunWith(JUnit4.class)
 public final class SimpleCodeGenTest {
 
   private static final Template BOOLEAN = union(Core.FALSE.asTemplate, Core.TRUE.asTemplate);
 
-  /** Returns a Compound template for an array containing the given elements. */
+  /// Returns a Compound template for an array containing the given elements.
   private static Template arrayOf(Template... elements) {
     return Compound.of(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Returns a Constant template for a number. */
+  /// Returns a Constant template for a number.
   private static Template constant(Number num) {
     return Constant.of(NumValue.of(num, Allocator.UNCOUNTED));
   }
 
-  /** Returns a Union template. The tag always has index 0, so likely only useful as a builder */
+  /// Returns a Union template. The tag always has index 0, so likely only useful as a builder
   private static Union union(Template... choices) {
     return new Union(NumVar.UINT8, null, choices);
   }
@@ -95,7 +95,7 @@ public final class SimpleCodeGenTest {
     args = target.args.stream().map(RValue::fromTemplate).collect(ImmutableList.toImmutableList());
   }
 
-  /** Build a Template for each of the List's elements. */
+  /// Build a Template for each of the List's elements.
   private static ImmutableList<Template> build(
       List<Template> templates, TemplateBuilder.VarAllocator alloc) {
     return templates.stream()
@@ -112,7 +112,7 @@ public final class SimpleCodeGenTest {
     new ReturnBlock(CodeValue.of(value)).addTo(codeGen.cb);
   }
 
-  /** Sets codeGen's escape to return the given value. */
+  /// Sets codeGen's escape to return the given value.
   private void setEscapeToReturn(int value) {
     codeGen.setNewEscape(() -> emitReturnBlock(value));
   }
@@ -120,7 +120,7 @@ public final class SimpleCodeGenTest {
   private static final Op PUSH_UNWIND =
       RcOp.forRcMethod(lookup, TState.class, "pushUnwind", Value.class).build();
 
-  /** Sets codeGen's escape to start unwinding with the given stack entry. */
+  /// Sets codeGen's escape to start unwinding with the given stack entry.
   private void setEscapeToUnwind(StackEntryType entryType, Value... args) {
     codeGen.setNewEscape(
         () -> {
@@ -130,10 +130,8 @@ public final class SimpleCodeGenTest {
         });
   }
 
-  /**
-   * Calls codeGen.emit() with the given runnable, and asserts that it doesn't actually throw an
-   * exception.
-   */
+  /// Calls codeGen.emit() with the given runnable, and asserts that it doesn't actually throw an
+  /// exception.
   private void emit(Condition.RunnableExcept runnable) {
     codeGen.emit(
         () -> {
@@ -339,10 +337,8 @@ public final class SimpleCodeGenTest {
             """);
   }
 
-  /**
-   * Runs the given MethodHandle with args, and verifies that it returned -1 and pushed a single
-   * unwind entry. Returns the stack entry.
-   */
+  /// Runs the given MethodHandle with args, and verifies that it returned -1 and pushed a single
+  /// unwind entry. Returns the stack entry.
   private Value getUnwind(MethodHandle mh, Object... args) throws Throwable {
     tstate.setStackRest(TStack.BASE);
     int result1 = (int) mh.invokeWithArguments(args);

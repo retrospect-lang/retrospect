@@ -16,25 +16,21 @@
 
 package org.retrolang.impl;
 
-/**
- * A RefVisitor is passed to {@link RefCounted#visitRefs}, which should call the visitor with each
- * RefCounted, byte[], or Object[] that the RefCounted has a counted reference to.
- */
+/// A RefVisitor is passed to [RefCounted#visitRefs], which should call the visitor with each
+/// RefCounted, byte[], or Object[] that the RefCounted has a counted reference to.
 public interface RefVisitor {
-  /** Called with a RefCounted that is directly reachable from the RefCounted being visited. */
+  /// Called with a RefCounted that is directly reachable from the RefCounted being visited.
   void visitRefCounted(RefCounted obj);
 
-  /** Called with a byte[] that is directly reachable from the RefCounted being visited. */
+  /// Called with a byte[] that is directly reachable from the RefCounted being visited.
   void visitByteArray(byte[] bytes);
 
-  /** Called with an Object[] that is directly reachable from the RefCounted being visited. */
+  /// Called with an Object[] that is directly reachable from the RefCounted being visited.
   void visitObjArray(Object[] objs);
 
-  /**
-   * A convenience method that calls {@link #visitRefCounted} if {@code obj} is RefCounted, {@link
-   * #visitByteArray} if {@code obj} is a byte[], {@link #visitObjArray} if {@code obj} is an
-   * Object[], and does nothing if it is none of those.
-   */
+  /// A convenience method that calls [#visitRefCounted] if `obj` is RefCounted, [#visitByteArray]
+  /// if `obj` is a byte[], [#visitObjArray] if `obj` is an Object[], and does nothing if it is none
+  /// of those.
   default void visit(Object obj) {
     assert !(obj instanceof Value.NotStorable || obj instanceof RValue);
     if (obj instanceof RefCounted rc) {

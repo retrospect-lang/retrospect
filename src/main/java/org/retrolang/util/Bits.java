@@ -30,21 +30,19 @@ import java.util.function.IntPredicate;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
-/**
- * A Bits represents an immutable, finite set of non-negative integers.
- *
- * <p>They are designed to use minimal memory: as cheap as Integers when the maximum element is less
- * than 32, and always less than a BitSet with the same contents.
- */
+/// A Bits represents an immutable, finite set of non-negative integers.
+///
+/// They are designed to use minimal memory: as cheap as Integers when the maximum element is less
+/// than 32, and always less than a BitSet with the same contents.
 public abstract class Bits implements IntPredicate, Iterable<Integer> {
 
-  /** We define two subclasses (Small and Large), and that's it. */
+  /// We define two subclasses (Small and Large), and that's it.
   private Bits() {}
 
-  /** A Bits value containing no integers. */
+  /// A Bits value containing no integers.
   public static final Bits EMPTY;
 
-  /** Returns true if this Bits contains no integers. */
+  /// Returns true if this Bits contains no integers.
   @SuppressWarnings("ReferenceEquality")
   public boolean isEmpty() {
     // We canonicalize small Bits, so this is trivial.
@@ -53,11 +51,9 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return this == EMPTY;
   }
 
-  /**
-   * Returns a Bits containing only the given integer.
-   *
-   * <p>{@code element} must be non-negative.
-   */
+  /// Returns a Bits containing only the given integer.
+  ///
+  /// `element` must be non-negative.
   public static Bits of(int element) {
     Preconditions.checkArgument(element >= 0);
     if (element < Integer.SIZE) {
@@ -67,12 +63,10 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /**
-   * Returns a Bits containing all integers greater than or equal to min and less than or equal to
-   * max.
-   *
-   * <p>{@code min} must be non-negative.
-   */
+  /// Returns a Bits containing all integers greater than or equal to min and less than or equal to
+  /// max.
+  ///
+  /// `min` must be non-negative.
   public static Bits forRange(int min, int max) {
     Preconditions.checkArgument(min >= 0);
     if (min > max) {
@@ -85,35 +79,29 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /**
-   * Returns a Bits containing the bits that are set in the given int, i.e. the result contains
-   * {@code i} if {@code i < 32 && (bits & (1 << i)) != 0}.
-   */
+  /// Returns a Bits containing the bits that are set in the given int, i.e. the result contains `i`
+  /// if `i < 32 && (bits & (1 << i)) != 0`.
   public static Bits fromInt(int bits) {
     return Small.make(bits);
   }
 
-  /** Returns a Bits containing 0 if {@code contains0} is true, otherwise EMPTY. */
+  /// Returns a Bits containing 0 if `contains0` is true, otherwise EMPTY.
   public static Bits fromBooleans(boolean contains0) {
     return Small.make(contains0 ? 1 : 0);
   }
 
-  /**
-   * Returns a Bits containing 0 if {@code contains0} is true and 1 if {@code contains1} is true.
-   */
+  /// Returns a Bits containing 0 if `contains0` is true and 1 if `contains1` is true.
   public static Bits fromBooleans(boolean contains0, boolean contains1) {
     return Small.make((contains0 ? 1 : 0) + (contains1 ? 2 : 0));
   }
 
-  /** Returns a Bits containing {@code i} if {@code contains[i]} is true. */
+  /// Returns a Bits containing `i` if `contains[i]` is true.
   public static Bits fromBooleans(boolean... contains) {
     return fromPredicate(contains.length - 1, i -> contains[i]);
   }
 
-  /**
-   * Returns a Bits containing the values less than or equal to {@code max} for which the given
-   * IntPredicate returns true.
-   */
+  /// Returns a Bits containing the values less than or equal to `max` for which the given
+  /// IntPredicate returns true.
   public static Bits fromPredicate(int max, IntPredicate include) {
     if (include instanceof Bits bits && max >= 0) {
       return bits.clearGreaterThanOrEq(max + 1);
@@ -144,21 +132,21 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /** Returns an IntStream of the values in this Bits, in ascending order. */
+  /// Returns an IntStream of the values in this Bits, in ascending order.
   public IntStream stream() {
     return StreamSupport.intStream(iterator(), false);
   }
 
-  /** Returns an int[] of the values in this Bits, in ascending order. */
+  /// Returns an int[] of the values in this Bits, in ascending order.
   public int[] toArray() {
     return stream().toArray();
   }
 
-  /** Returns an iterator for the values in this Bits, in ascending order. */
+  /// Returns an iterator for the values in this Bits, in ascending order.
   @Override
   public BitsIterator iterator() {
     return new BitsIterator() {
-      /** The next element to be returned, or -1 if this iterator is exhausted. */
+      /// The next element to be returned, or -1 if this iterator is exhausted.
       private int next = nextSetBit(0);
 
       @Override
@@ -197,11 +185,9 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return StringHelper.toString(iterator());
   }
 
-  /**
-   * A helper class to construct a compact string representation from a BitsIterator. When more than
-   * two consecutive integers are returned by the iterator, they will be represented using min..max
-   * notation.
-   */
+  /// A helper class to construct a compact string representation from a BitsIterator. When more
+  /// than two consecutive integers are returned by the iterator, they will be represented using
+  /// min..max notation.
   private static class StringHelper implements IntConsumer {
     private final StringBuilder sb = new StringBuilder("{");
 
@@ -244,15 +230,13 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /** An Op is an elementwise binary operation on Bits. */
+  /// An Op is an elementwise binary operation on Bits.
   public enum Op implements BinaryOperator<Bits> {
     // Note that some of the logic in subsequent methods assumes that there are only these
     // four Ops; if you add another one, plan to look carefully at each method that takes an Op.
 
-    /**
-     * The UNION of two Bits contains the elements that are in either of the arguments (or,
-     * equivalently, bitwise OR).
-     */
+    /// The UNION of two Bits contains the elements that are in either of the arguments (or,
+    /// equivalently, bitwise OR).
     UNION {
       @Override
       int apply(int x, int y) {
@@ -292,10 +276,8 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     },
 
-    /**
-     * The INTERSECTION of two Bits contains the elements that are in both of the arguments (or,
-     * equivalently, bitwise AND).
-     */
+    /// The INTERSECTION of two Bits contains the elements that are in both of the arguments (or,
+    /// equivalently, bitwise AND).
     INTERSECTION {
       @Override
       int apply(int x, int y) {
@@ -337,10 +319,8 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     },
 
-    /**
-     * The DIFFERENCE of two Bits contains the elements that are in the first argument but not the
-     * second (or, equivalently, bitwise AND NOT).
-     */
+    /// The DIFFERENCE of two Bits contains the elements that are in the first argument but not the
+    /// second (or, equivalently, bitwise AND NOT).
     DIFFERENCE {
       @Override
       int apply(int x, int y) {
@@ -371,10 +351,8 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     },
 
-    /**
-     * The SYMM_DIFF (symmetric difference) of two Bits contains the elements that are in one
-     * argument but not in both (or, equivalently, bitwise XOR).
-     */
+    /// The SYMM\_DIFF (symmetric difference) of two Bits contains the elements that are in one
+    /// argument but not in both (or, equivalently, bitwise XOR).
     SYMM_DIFF {
       @Override
       int apply(int x, int y) {
@@ -399,7 +377,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     };
 
-    /** Applies this Op to the given Bits and returns the result. */
+    /// Applies this Op to the given Bits and returns the result.
     @Override
     public final Bits apply(Bits x, Bits y) {
       if (x instanceof Small xSmall) {
@@ -491,16 +469,12 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return new Large(result);
     }
 
-    /**
-     * Applies this Op to the current contents of the given Builder and a Bits, and stores the
-     * result back in the Builder.
-     */
+    /// Applies this Op to the current contents of the given Builder and a Bits, and stores the
+    /// result back in the Builder.
     public abstract void into(Builder dst, Bits src);
 
-    /**
-     * Applies this Op to the current contents of two Builders and stores the result in the first
-     * Builder.
-     */
+    /// Applies this Op to the current contents of two Builders and stores the result in the first
+    /// Builder.
     public final void into(Builder dst, Builder src) {
       Preconditions.checkArgument(!src.isInitializedForIntersection());
       if (dst.isInitializedForIntersection()) {
@@ -513,7 +487,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Equivalent to into(dst, forRange(min, max)), but more efficient. */
+    /// Equivalent to into(dst, forRange(min, max)), but more efficient.
     public final void rangeInto(Builder dst, int min, int max) {
       Preconditions.checkArgument(min >= 0);
       if (dst.isInitializedForIntersection()) {
@@ -527,97 +501,75 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /** Returns the number of elements (set bits) in this Bits. */
+  /// Returns the number of elements (set bits) in this Bits.
   public abstract int count();
 
-  /**
-   * Returns the number of elements (set bits) in this Bits that are greater than or equal to {@code
-   * i}.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns the number of elements (set bits) in this Bits that are greater than or equal to `i`.
+  ///
+  /// `i` must be non-negative.
   public abstract int countGreaterThanOrEq(int i);
 
-  /**
-   * Returns the smallest element of this Bits.
-   *
-   * <p>{@code isEmpty()} must be false.
-   */
+  /// Returns the smallest element of this Bits.
+  ///
+  /// `isEmpty()` must be false.
   public abstract int min();
 
-  /**
-   * Returns the largest element of this Bits.
-   *
-   * <p>{@code isEmpty()} must be false.
-   */
+  /// Returns the largest element of this Bits.
+  ///
+  /// `isEmpty()` must be false.
   public abstract int max();
 
-  /** Returns true if this Bits contains {@code i}. Returns false if {@code i} is negative. */
+  /// Returns true if this Bits contains `i`. Returns false if `i` is negative.
   @Override
   public boolean test(int i) {
     return i >= 0 && contains(i);
   }
 
-  /** Returns true if every element of the given Bits is also in this Bits. */
+  /// Returns true if every element of the given Bits is also in this Bits.
   public abstract boolean testAll(Bits other);
 
-  /** Returns true if the given Bits contains at least one element in common with this Bits. */
+  /// Returns true if the given Bits contains at least one element in common with this Bits.
   public abstract boolean testAny(Bits other);
 
-  /**
-   * Returns the smallest element of this Bits that is greater than or equal to {@code i}.
-   *
-   * <p>{@code i} must be non-negative.
-   *
-   * <p>Equivalent to {@code countGreaterThanOrEq(i) == 0 ? -1 : clearLessThan(i).min()}.
-   */
+  /// Returns the smallest element of this Bits that is greater than or equal to `i`.
+  ///
+  /// `i` must be non-negative.
+  ///
+  /// Equivalent to `countGreaterThanOrEq(i) == 0 ? -1 : clearLessThan(i).min()`.
   public abstract int nextSetBit(int i);
 
-  /**
-   * Returns a Bits that contains the same elements as this, and {@code i}.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns a Bits that contains the same elements as this, and `i`.
+  ///
+  /// `i` must be non-negative.
   public abstract Bits set(int i);
 
-  /**
-   * Returns a Bits that contains the same elements as this, except for {@code i}.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns a Bits that contains the same elements as this, except for `i`.
+  ///
+  /// `i` must be non-negative.
   public abstract Bits clear(int i);
 
-  /**
-   * Returns a Bits that contains the elements of this that are greater than or equal to {@code i}.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns a Bits that contains the elements of this that are greater than or equal to `i`.
+  ///
+  /// `i` must be non-negative.
   public abstract Bits clearLessThan(int i);
 
-  /**
-   * Returns a Bits that contains the elements of this that are less than {@code i}.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns a Bits that contains the elements of this that are less than `i`.
+  ///
+  /// `i` must be non-negative.
   public abstract Bits clearGreaterThanOrEq(int i);
 
-  /** Returns the subset of this Bits for which the given IntPredicate returns true. */
+  /// Returns the subset of this Bits for which the given IntPredicate returns true.
   public abstract Bits filter(IntPredicate predicate);
 
-  /**
-   * Returns true if this Bits contains the given int.
-   *
-   * <p>{@code i} must be non-negative.
-   */
+  /// Returns true if this Bits contains the given int.
+  ///
+  /// `i` must be non-negative.
   abstract boolean contains(int i);
 
-  /**
-   * Allocates a new long[] and copies this Bits into it. The result will have length {@code
-   * minLength} or the number of longs necessary to hold all the elements of this Bits, whichever is
-   * greater.
-   *
-   * <p>{@code i} must be greater than zero.
-   */
+  /// Allocates a new long[] and copies this Bits into it. The result will have length `minLength`
+  /// or the number of longs necessary to hold all the elements of this Bits, whichever is greater.
+  ///
+  /// `i` must be greater than zero.
   abstract long[] copyBits(int minLength);
 
   @Override
@@ -626,67 +578,55 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
   @Override
   public abstract int hashCode();
 
-  /**
-   * A Builder is a mutable object whose current state is a Bits. A newly-created Builder is empty.
-   *
-   * <p>Calling {@link #build} returns the current value, but leaves the Builder state otherwise
-   * unchanged so additional mutations can be made to it.
-   *
-   * <p>Calling {@link #build} multiple times without intervening mutations is guaranteed to return
-   * the same Bits without additional allocations.
-   *
-   * <p>Calling {@link #initializeForIntersection} puts the Builder in a special state so that a
-   * subsequent call to {@code Op.INTERSECTION.apply(builder, x)} is equivalent to calling {@code
-   * builder.setAll(x)}; this makes it simpler to write code that intersects a variable number of
-   * {@code Bits} (or {@code Builder}) objects. Note that if no sets are intersected into the
-   * Builder a call to {@link #build} will fail (since there is no Bits that contains all possible
-   * ints). You can detect whether a Builder is in this state with {@link
-   * #isInitializedForIntersection}, and clear it by calling {@link #clearAll} or {@link #setAll}.
-   */
+  /// A Builder is a mutable object whose current state is a Bits. A newly-created Builder is empty.
+  ///
+  /// Calling [#build] returns the current value, but leaves the Builder state otherwise unchanged
+  /// so additional mutations can be made to it.
+  ///
+  /// Calling [#build] multiple times without intervening mutations is guaranteed to return the same
+  /// Bits without additional allocations.
+  ///
+  /// Calling [#initializeForIntersection] puts the Builder in a special state so that a subsequent
+  /// call to `Op.INTERSECTION.apply(builder, x)` is equivalent to calling `builder.setAll(x)`; this
+  /// makes it simpler to write code that intersects a variable number of `Bits` (or `Builder`)
+  /// objects. Note that if no sets are intersected into the Builder a call to [#build] will fail
+  /// (since there is no Bits that contains all possible ints). You can detect whether a Builder is
+  /// in this state with [#isInitializedForIntersection], and clear it by calling [#clearAll] or
+  /// [#setAll].
   public static class Builder implements IntPredicate, Iterable<Integer> {
 
-    /**
-     * True if {@link #initializeForIntersection} was the last operation to modify the state of this
-     * Builder.
-     */
+    /// True if [#initializeForIntersection] was the last operation to modify the state of this
+    /// Builder.
     private boolean isInitializedForIntersection;
 
-    /**
-     * The current state of a Builder may be represented as a long[] ({@code bits}), a Bits ({@code
-     * built}), or both. At least one will be non-null; if both are are non-null they represent the
-     * same set.
-     *
-     * <p>If {@code bits} is non-null its length is non-zero.
-     */
+    /// The current state of a Builder may be represented as a long[] (`bits`), a Bits (`built`), or
+    /// both. At least one will be non-null; if both are are non-null they represent the same set.
+    ///
+    /// If `bits` is non-null its length is non-zero.
     private long[] bits;
 
-    /** Null if {@link #isInitializedForIntersection} is true. */
+    /// Null if [#isInitializedForIntersection] is true.
     private Bits built = EMPTY;
 
-    /**
-     * Sets this Builder to a special state equivalent to containing all possible bits; the intended
-     * use is to follow this with one or more calls to intersect other Builders or Bits into this
-     * Builder.
-     *
-     * <p>Many operations on a Builder in this state will error (including {@link #stream}, {@link
-     * #iterator}, {@link #clear}, {@link #countGreaterThanOrEq}, {@link #nextSetBit}, and {@link
-     * #build}), as will attempting to {@link Op#UNION}, {@link Op#DIFFERENCE}, or {@link
-     * Op#SYMM_DIFF} into it.
-     */
+    /// Sets this Builder to a special state equivalent to containing all possible bits; the
+    /// intended use is to follow this with one or more calls to intersect other Builders or Bits
+    /// into this Builder.
+    ///
+    /// Many operations on a Builder in this state will error (including [#stream], [#iterator],
+    /// [#clear], [#countGreaterThanOrEq], [#nextSetBit], and [#build]), as will attempting to
+    /// [Op#UNION], [Op#DIFFERENCE], or [Op#SYMM_DIFF] into it.
     public void initializeForIntersection() {
       isInitializedForIntersection = true;
       built = null;
     }
 
-    /**
-     * Returns true if {@link #initializeForIntersection} was the last operation to modify the state
-     * of this Builder.
-     */
+    /// Returns true if [#initializeForIntersection] was the last operation to modify the state of
+    /// this Builder.
     public boolean isInitializedForIntersection() {
       return isInitializedForIntersection;
     }
 
-    /** Returns true if this Builder's state contains {@code i}. */
+    /// Returns true if this Builder's state contains `i`.
     @Override
     public boolean test(int i) {
       if (i < 0) {
@@ -702,7 +642,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Returns true if this Builder's state is empty. */
+    /// Returns true if this Builder's state is empty.
     public boolean isEmpty() {
       if (built != null) {
         return built.isEmpty();
@@ -717,17 +657,15 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return true;
     }
 
-    /** Returns an IntStream of the values in this Builder, in ascending order. */
+    /// Returns an IntStream of the values in this Builder, in ascending order.
     public IntStream stream() {
       return StreamSupport.intStream(iterator(), false);
     }
 
-    /**
-     * Returns false if this Builder's state already contains {@code i}. Otherwise adds {@code i} to
-     * this Builder's state and returns true.
-     *
-     * <p>{@code i} must be non-negative.
-     */
+    /// Returns false if this Builder's state already contains `i`. Otherwise adds `i` to this
+    /// Builder's state and returns true.
+    ///
+    /// `i` must be non-negative.
     @CanIgnoreReturnValue
     public boolean set(int i) {
       Preconditions.checkArgument(i >= 0 && !isInitializedForIntersection);
@@ -742,12 +680,10 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return b != bNew;
     }
 
-    /**
-     * Returns false if this Builder's state does not contain {@code i}. Otherwise removes {@code i}
-     * from this Builder's state and returns true.
-     *
-     * <p>{@code i} must be non-negative.
-     */
+    /// Returns false if this Builder's state does not contain `i`. Otherwise removes `i` from this
+    /// Builder's state and returns true.
+    ///
+    /// `i` must be non-negative.
     @CanIgnoreReturnValue
     public boolean clear(int i) {
       Preconditions.checkArgument(i >= 0 && !isInitializedForIntersection);
@@ -765,12 +701,12 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return b != bNew;
     }
 
-    /** Sets this Builder's state to the given Bits. */
+    /// Sets this Builder's state to the given Bits.
     public void setAll(Bits built) {
       this.built = built;
       isInitializedForIntersection = false;
       if (bits != null) {
-        // We could just discard {@code bits}, but keeping it might save an allocation later.
+        // We could just discard `bits`, but keeping it might save an allocation later.
         if (built instanceof Large largeBuilt) {
           int builtLength = largeBuilt.bits.length;
           if (bits.length >= builtLength) {
@@ -786,7 +722,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Sets this Builder's state to be the same as the given Builder. */
+    /// Sets this Builder's state to be the same as the given Builder.
     public void setAll(Builder other) {
       if (other.built != null) {
         setAll(other.built);
@@ -803,7 +739,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Equivalent to {@code setAll(Bits.EMPTY)}. */
+    /// Equivalent to `setAll(Bits.EMPTY)`.
     public void clearAll() {
       built = Bits.EMPTY;
       isInitializedForIntersection = false;
@@ -812,7 +748,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Equivalent to {@code setAll(Bits.forRange(min, max)}. */
+    /// Equivalent to `setAll(Bits.forRange(min, max)`.
     public void setToRange(int min, int max) {
       Preconditions.checkArgument(min >= 0);
       if (min > max) {
@@ -824,23 +760,19 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /**
-     * Returns the number of elements in this Builder's state that are greater than or equal to
-     * {@code i}.
-     *
-     * <p>{@code i} must be non-negative.
-     */
+    /// Returns the number of elements in this Builder's state that are greater than or equal to
+    /// `i`.
+    ///
+    /// `i` must be non-negative.
     public int countGreaterThanOrEq(int i) {
       Preconditions.checkArgument(!isInitializedForIntersection);
       return (built != null) ? built.countGreaterThanOrEq(i) : countGreaterThanOrEqHelper(i, bits);
     }
 
-    /**
-     * Returns the smallest element of this Builder's state that is greater than or equal to {@code
-     * i}, or -1 if there is none.
-     *
-     * <p>{@code i} must be non-negative.
-     */
+    /// Returns the smallest element of this Builder's state that is greater than or equal to `i`,
+    /// or -1 if there is none.
+    ///
+    /// `i` must be non-negative.
     public int nextSetBit(int i) {
       // Returning i when isInitializedForIntersection() is true would be technically correct, but
       // in practice this method is only used to iterate through the Builder's elements and that's
@@ -849,7 +781,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return (built != null) ? built.nextSetBit(i) : nextSetBitHelper(i, bits);
     }
 
-    /** Returns true if this Builder contains every element of the given Bits. */
+    /// Returns true if this Builder contains every element of the given Bits.
     public boolean testAll(Bits other) {
       if (isInitializedForIntersection) {
         return true;
@@ -862,7 +794,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Returns true if this Builder contains every element of the given Builder. */
+    /// Returns true if this Builder contains every element of the given Builder.
     public boolean testAll(Bits.Builder other) {
       if (isInitializedForIntersection) {
         return true;
@@ -880,7 +812,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Returns true if this Builder contains at least one element of the given Bits. */
+    /// Returns true if this Builder contains at least one element of the given Bits.
     public boolean testAny(Bits other) {
       if (isInitializedForIntersection) {
         return !other.isEmpty();
@@ -893,7 +825,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /** Returns true if this Builder contains at least one element of the given Builder. */
+    /// Returns true if this Builder contains at least one element of the given Builder.
     public boolean testAny(Bits.Builder other) {
       if (isInitializedForIntersection) {
         return !other.isEmpty();
@@ -908,11 +840,9 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /**
-     * Combine the given Bits with our state, using the given Op.
-     *
-     * <p>Used to implement {@link Op#into(Builder, Bits)}.
-     */
+    /// Combine the given Bits with our state, using the given Op.
+    ///
+    /// Used to implement [Op#into(Builder, Bits)].
     void apply(Op op, Bits src) {
       if (src instanceof Small smallSrc) {
         ensureBits(1);
@@ -925,11 +855,9 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /**
-     * Combine the given long[] with our state, using the given Op.
-     *
-     * <p>Used to implement {@link #apply(Op, Bits)} and {@link Op#into(Builder, Builder)}.
-     */
+    /// Combine the given long[] with our state, using the given Op.
+    ///
+    /// Used to implement [#apply(Op, Bits)] and [Op#into(Builder, Builder)].
     void apply(Op op, long[] srcBits) {
       int limit = srcBits.length;
       if (op == Op.UNION || op == Op.SYMM_DIFF) {
@@ -946,11 +874,9 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
     }
 
-    /**
-     * Combine Bits.forRange(min, max) with our state, using the given Op.
-     *
-     * <p>Used to implement {@link Op#rangeInto(Builder, int, int)}.
-     */
+    /// Combine Bits.forRange(min, max) with our state, using the given Op.
+    ///
+    /// Used to implement [Op#rangeInto(Builder, int, int)].
     void applyRange(Op op, int min, int max) {
       int minWord = min / Long.SIZE;
       int maxWord = max / Long.SIZE;
@@ -1003,7 +929,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       bits[minWord] = op.apply(bits[minWord], minMask);
     }
 
-    /** Returns the current state of this Builder. */
+    /// Returns the current state of this Builder.
     public Bits build() {
       Preconditions.checkState(!isInitializedForIntersection);
       if (built != null) {
@@ -1031,13 +957,11 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return built;
     }
 
-    /**
-     * Returns an iterator for the values in this Builder, in ascending order.
-     *
-     * <p>Modifying the Builder during iteration has well-defined behavior: adding or removing an
-     * element less than or equal to the last value returned does not affect iteration, while adding
-     * or removing an element greater than the last value returned does.
-     */
+    /// Returns an iterator for the values in this Builder, in ascending order.
+    ///
+    /// Modifying the Builder during iteration has well-defined behavior: adding or removing an
+    /// element less than or equal to the last value returned does not affect iteration, while
+    /// adding or removing an element greater than the last value returned does.
     @Override
     public BitsIterator iterator() {
       Preconditions.checkState(!isInitializedForIntersection);
@@ -1082,12 +1006,10 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       };
     }
 
-    /**
-     * Called when we are about to mutate {@code bits}.
-     *
-     * <p>Ensures that this Builder's state is in {@code bits}, that {@code bits} has length greater
-     * than or equal to {@code minLength}, and that {@code built} is null.
-     */
+    /// Called when we are about to mutate `bits`.
+    ///
+    /// Ensures that this Builder's state is in `bits`, that `bits` has length greater than or equal
+    /// to `minLength`, and that `built` is null.
     private void ensureBits(int minLength) {
       assert !isInitializedForIntersection;
       if (bits == null) {
@@ -1108,10 +1030,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /**
-   * Bits with {@code max()} less than 6 are prebuilt and cached, so they never need to be
-   * allocated.
-   */
+  /// Bits with `max()` less than 6 are prebuilt and cached, so they never need to be allocated.
   private static final Small[] SMALLS;
 
   static {
@@ -1123,55 +1042,47 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     EMPTY = SMALLS[0];
   }
 
-  /**
-   * Returns an int with bits less than {@code i} set to zero, and bits greater than or equal to
-   * {@code i} set to one.
-   */
+  /// Returns an int with bits less than `i` set to zero, and bits greater than or equal to `i` set
+  /// to one.
   private static int intBitsGreaterOrEq(int i) {
     assert i >= 0;
     return (i > 31) ? 0 : (-1 << i);
   }
 
-  /**
-   * Returns long with bits less than {@code i} set to zero, and bits greater than or equal to
-   * {@code i} set to one.
-   */
+  /// Returns long with bits less than `i` set to zero, and bits greater than or equal to `i` set to
+  /// one.
   private static long longBitsGreaterOrEq(int i) {
     assert i >= 0 && i < Long.SIZE;
     return -1L << i;
   }
 
-  /**
-   * Returns long with bits less than or equal to {@code i} set to zero, and bits greater than
-   * {@code i} set to one.
-   */
+  /// Returns long with bits less than or equal to `i` set to zero, and bits greater than `i` set to
+  /// one.
   private static long longBitsGreaterThan(int i) {
     assert i >= 0 && i < Long.SIZE;
     return -2L << i;
   }
 
-  /** Returns true if bits is non-negative and less than 2^32. */
+  /// Returns true if bits is non-negative and less than 2^32.
   private static boolean fitsInSmall(long bits) {
     return (bits & (-1L << 32)) == 0;
   }
 
-  /** Sets the specified bit in the given long[]. */
+  /// Sets the specified bit in the given long[].
   private static void setBit(int i, long[] bits) {
     assert i >= 0;
     bits[i / Long.SIZE] |= 1L << (i % Long.SIZE);
   }
 
-  /** Returns true if the specified bit in the given long[] is set. */
+  /// Returns true if the specified bit in the given long[] is set.
   private static boolean getBit(int i, long[] bits) {
     assert i >= 0;
     int word = i / Long.SIZE;
     return word < bits.length && (bits[word] & (1L << (i % Long.SIZE))) != 0;
   }
 
-  /**
-   * Returns a long[] with bits min through max set. Uses the given long[] if it is non-null and
-   * large enough, otherwise allocates a new one.
-   */
+  /// Returns a long[] with bits min through max set. Uses the given long[] if it is non-null and
+  /// large enough, otherwise allocates a new one.
   private static long[] setLongsToRange(int min, int max, long[] bits) {
     int minWord = min / Long.SIZE;
     int maxWord = max / Long.SIZE;
@@ -1195,7 +1106,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return bits;
   }
 
-  /** Returns the index of the smallest bit that is greater than or equal to {@code i}. */
+  /// Returns the index of the smallest bit that is greater than or equal to `i`.
   private static int nextSetBitHelper(int i, long[] bits) {
     Preconditions.checkArgument(i >= 0);
     long mask = longBitsGreaterOrEq(i % Long.SIZE);
@@ -1209,7 +1120,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return -1;
   }
 
-  /** Returns the number of bits set with indices greater than or equal to {@code i}. */
+  /// Returns the number of bits set with indices greater than or equal to `i`.
   private static int countGreaterThanOrEqHelper(int i, long[] bits) {
     Preconditions.checkArgument(i >= 0);
     int word = i / Long.SIZE;
@@ -1220,12 +1131,12 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return partial + countFrom(word + 1, bits);
   }
 
-  /** Returns the number of bits set in {@code bits[start..]}. */
+  /// Returns the number of bits set in `bits[start..]`.
   private static int countFrom(int start, long[] bits) {
     return Arrays.stream(bits, start, bits.length).mapToInt(Long::bitCount).sum();
   }
 
-  /** Returns true if every bit set in y is also set in x. */
+  /// Returns true if every bit set in y is also set in x.
   private static boolean testAllHelper(long[] x, long[] y) {
     for (int i = y.length - 1; i >= 0; i--) {
       long xi = (i >= x.length) ? 0 : x[i];
@@ -1236,7 +1147,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return true;
   }
 
-  /** Returns true if x and y have at least one set bit in common. */
+  /// Returns true if x and y have at least one set bit in common.
   private static boolean testAnyHelper(long[] x, long[] y) {
     int limit = Math.min(x.length, y.length);
     for (int i = 0; i < limit; i++) {
@@ -1247,7 +1158,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     return false;
   }
 
-  /** Small is a very cheap implementation of Bits used when {@code max()} is less than 32. */
+  /// Small is a very cheap implementation of Bits used when `max()` is less than 32.
   private static class Small extends Bits {
     private final int bits;
 
@@ -1255,7 +1166,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       this.bits = bits;
     }
 
-    /** Returns a Small containing the given bits. */
+    /// Returns a Small containing the given bits.
     static Small make(int bits) {
       if (bits >= 0 && bits < SMALLS.length) {
         return SMALLS[bits];
@@ -1320,7 +1231,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return (otherBits & bits) != 0;
     }
 
-    /** Returns the contents of this Small as a long. */
+    /// Returns the contents of this Small as a long.
     private long bitsAsLong() {
       // We don't want sign extension
       return bits & 0xffffffffL;
@@ -1333,7 +1244,7 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       return longs;
     }
 
-    /** Returns a Small containing the given bits, using this if possible. */
+    /// Returns a Small containing the given bits, using this if possible.
     private Bits makeIfChanged(int b) {
       return (b == bits) ? this : make(b);
     }
@@ -1391,16 +1302,14 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /** Large is an implementation of Bits used when {@code max()} is greater than or equal to 32. */
+  /// Large is an implementation of Bits used when `max()` is greater than or equal to 32.
   private static class Large extends Bits {
     private final long[] bits;
 
-    /**
-     * Takes ownership of the given array, which caller must not mutate after this call.
-     *
-     * <p>The last element of {@code bits} must be non-zero, and the resulting Bits must not be
-     * representable with a Small.
-     */
+    /// Takes ownership of the given array, which caller must not mutate after this call.
+    ///
+    /// The last element of `bits` must be non-zero, and the resulting Bits must not be
+    /// representable with a Small.
     Large(long[] bits) {
       // A null bits is used to represent ALL_BITS.  Almost all operations on it will throw
       // exceptions.
@@ -1596,10 +1505,8 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
   }
 
-  /**
-   * A base class that makes it easier to implement both iterator() and stream() with a single
-   * class.
-   */
+  /// A base class that makes it easier to implement both iterator() and stream() with a single
+  /// class.
   private abstract static class BitsIterator implements PrimitiveIterator.OfInt, Spliterator.OfInt {
     @Override
     public void forEachRemaining(Consumer<? super Integer> action) {

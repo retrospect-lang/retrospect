@@ -5,41 +5,35 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.function.Function;
 
-/** Records a simple log of code generation events for debugging and testing. */
+/// Records a simple log of code generation events for debugging and testing.
 class CodeGenDebugging {
-  /**
-   * The event log. Most events are a single character, which makes it cryptic but easier to scan
-   * and compare when there are many similar events. Digits in the log are references to
-   * CodeGenTargets or CodeGenLinks that will be appended at the end of the log.
-   */
+  /// The event log. Most events are a single character, which makes it cryptic but easier to scan
+  /// and compare when there are many similar events. Digits in the log are references to
+  /// CodeGenTargets or CodeGenLinks that will be appended at the end of the log.
   private StringBuilder log;
 
-  /**
-   * Maps each CodeGenTarget or CodeGenLink that has been previously referenced to the id that was
-   * assigned to it.
-   */
+  /// Maps each CodeGenTarget or CodeGenLink that has been previously referenced to the id that was
+  /// assigned to it.
   private IdentityHashMap<Object, Integer> refMap;
 
-  /** A readable(ish) record of the CodeGenTargets and CodeGenLinks that have been referenced. */
+  /// A readable(ish) record of the CodeGenTargets and CodeGenLinks that have been referenced.
   private StringBuilder refs;
 
-  /**
-   * We create a CallTracker for each referenced CodeGenTarget, and use it to notice (and log) when
-   * there have been intervening calls to that target.
-   */
+  /// We create a CallTracker for each referenced CodeGenTarget, and use it to notice (and log) when
+  /// there have been intervening calls to that target.
   private List<CallTracker> callTrackers;
 
-  /** The most recently referenced CodeGenLink. */
+  /// The most recently referenced CodeGenLink.
   private CodeGenLink link;
 
-  /** The most recently referenced CodeGenTarget. */
+  /// The most recently referenced CodeGenTarget.
   private CodeGenTarget target;
 
   CodeGenDebugging() {
     initialize();
   }
 
-  /** Clears all of the recorded state. */
+  /// Clears all of the recorded state.
   private void initialize() {
     log = new StringBuilder();
     refMap = new IdentityHashMap<>();
@@ -49,16 +43,14 @@ class CodeGenDebugging {
     target = null;
   }
 
-  /**
-   * Appends a record to the log. If any tracked targets have been called since the log was last
-   * updated their counts will be noted first.
-   */
+  /// Appends a record to the log. If any tracked targets have been called since the log was last
+  /// updated their counts will be noted first.
   synchronized void append(String s) {
     checkTrackers();
     log.append(s);
   }
 
-  /** Appends a record to the log that is associated with the given CodeGenLink. */
+  /// Appends a record to the log that is associated with the given CodeGenLink.
   synchronized void append(CodeGenLink link, String s) {
     checkTrackers();
     if (link != this.link && link != null) {
@@ -68,7 +60,7 @@ class CodeGenDebugging {
     log.append(s);
   }
 
-  /** Appends a record to the log that is associated with the given CodeGenTarget. */
+  /// Appends a record to the log that is associated with the given CodeGenTarget.
   synchronized void append(CodeGenTarget target, String s) {
     checkTrackers();
     if (target != this.target && target != null) {
@@ -85,11 +77,8 @@ class CodeGenDebugging {
     }
   }
 
-  /**
-   * Appends an id for {@code obj} to the log. If this is the first reference to {@code obj},
-   * assigns a new id and records it in {@link #refs} and {@link #refMap}; otherwise just appends
-   * the previously-assigned id.
-   */
+  /// Appends an id for `obj` to the log. If this is the first reference to `obj`, assigns a new id
+  /// and records it in [#refs] and [#refMap]; otherwise just appends the previously-assigned id.
   private <T> void appendId(T obj, Function<T, String> format) {
     assert Thread.holdsLock(this);
     int nextId = refMap.size();
@@ -114,7 +103,7 @@ class CodeGenDebugging {
     log.append(id);
   }
 
-  /** Returns a description of a CodeGenLink. */
+  /// Returns a description of a CodeGenLink.
   private static String formatLink(CodeGenLink link) {
     String code = link.kind.code;
     MethodMemo mm = link.mm;
@@ -133,10 +122,8 @@ class CodeGenDebugging {
     return result.toString();
   }
 
-  /**
-   * If any of the tracked targets have been called since our previous log entry, note that with the
-   * number of calls.
-   */
+  /// If any of the tracked targets have been called since our previous log entry, note that with
+  /// the number of calls.
   private void checkTrackers() {
     assert Thread.holdsLock(this);
     boolean first = true;
@@ -152,7 +139,7 @@ class CodeGenDebugging {
     }
   }
 
-  /** Increment the start count of the tracker for the given target. */
+  /// Increment the start count of the tracker for the given target.
   private void incrementTrackerStarts(CodeGenTarget target) {
     // Linear search might look bad, but we're already doing a full scan of the trackers before
     // writing each record.  We're only doing this for debugging and testing.
@@ -165,7 +152,7 @@ class CodeGenDebugging {
     throw new AssertionError();
   }
 
-  /** Returns a full dump of the final log and clears all state. */
+  /// Returns a full dump of the final log and clears all state.
   synchronized String takeLog() {
     checkTrackers();
     String result = log.toString() + refs.toString();
@@ -173,10 +160,8 @@ class CodeGenDebugging {
     return result;
   }
 
-  /**
-   * A CallTracker saves the last observed call count for a CodeGenTarget, so that we can determine
-   * whether there have been additional calls.
-   */
+  /// A CallTracker saves the last observed call count for a CodeGenTarget, so that we can determine
+  /// whether there have been additional calls.
   private static class CallTracker {
     final CodeGenTarget target;
     final int id;
@@ -189,10 +174,8 @@ class CodeGenDebugging {
       this.last = last;
     }
 
-    /**
-     * Updates the CallTracker's state to match {@link CodeGenTarget#callCount} and returns the
-     * increase, if any.
-     */
+    /// Updates the CallTracker's state to match [CodeGenTarget#callCount] and returns the increase,
+    /// if any.
     int update() {
       int prev = last;
       last = target.callCount();

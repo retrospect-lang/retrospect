@@ -34,58 +34,52 @@ import org.retrolang.impl.Template.Union;
 import org.retrolang.impl.Template.VarSink;
 import org.retrolang.impl.Template.VarSource;
 
-/**
- * A CopyPlan is used to optimize repeated calls of the form
- *
- * <pre>
- * dstTemplate.setValue(tstate, srcTemplate.peekValue(varSource), varSink);
- * </pre>
- *
- * with the same {@code srcTemplate} and {@code dstTemplate}. For example, to copy values between
- * vArrays with different layouts we could make such a call for each element (with the varSource and
- * varSink adjusted to identify the source index and destination index), but it would usually be
- * more efficient to use a CopyPlan:
- *
- * <pre>
- * CopyPlan plan = CopyPlan.create(srcTemplate, dstTemplate);
- * // for each (varSource, varSink):
- * plan.execute(tstate, varSource, varSink);
- * </pre>
- *
- * (like {@link Template#setValue}, {@link #execute} returns a boolean indicating whether the
- * destination template is able to represent the source value).
- *
- * <p>The CopyPlan is just a sequence of steps ("copy input var v1 to output var v2", "set output
- * var v to constant", etc.); in some situations it may be possible to examine the steps and
- * optimize them further rather than simply executing them.
- */
+/// A CopyPlan is used to optimize repeated calls of the form
+///
+/// ```
+/// dstTemplate.setValue(tstate, srcTemplate.peekValue(varSource), varSink);
+/// ```
+///
+/// with the same `srcTemplate` and `dstTemplate`. For example, to copy values between vArrays with
+/// different layouts we could make such a call for each element (with the varSource and varSink
+/// adjusted to identify the source index and destination index), but it would usually be more
+/// efficient to use a CopyPlan:
+///
+/// ```
+/// CopyPlan plan = CopyPlan.create(srcTemplate, dstTemplate);
+/// // for each (varSource, varSink):
+/// plan.execute(tstate, varSource, varSink);
+/// ```
+///
+/// (like [Template#setValue], [#execute] returns a boolean indicating whether the destination
+/// template is able to represent the source value).
+///
+/// The CopyPlan is just a sequence of steps ("copy input var v1 to output var v2", "set output var
+/// v to constant", etc.); in some situations it may be possible to examine the steps and optimize
+/// them further rather than simply executing them.
 class CopyPlan {
 
-  /** A CopyPlan that does nothing but return {@code false} when executed. */
+  /// A CopyPlan that does nothing but return `false` when executed.
   static final CopyPlan FAIL = new CopyPlan(null);
 
-  /** A CopyPlan that does nothing but return {@code true} when executed. */
+  /// A CopyPlan that does nothing but return `true` when executed.
   static final CopyPlan EMPTY = new CopyPlan(ImmutableList.of());
 
-  /** The steps that will be executed by this plan; null for {@link #FAIL}. */
+  /// The steps that will be executed by this plan; null for [#FAIL].
   final ImmutableList<Step> steps;
 
   CopyPlan(ImmutableList<Step> steps) {
     this.steps = steps;
   }
 
-  /**
-   * Executes this plan with the given {@code src} and {@code dst}. If
-   *
-   * <pre>
-   * dstTemplate.setValue(tstate, srcTemplate.peekValue(src), dst)
-   * </pre>
-   *
-   * would return true (where {@code srcTemplate} and {@code dstTemplate} are the templates used to
-   * construct this plan) then {@code execute()} will also return true and will make the same calls
-   * to set values in {@code dst}. If that call would return false then {@code execute()} will also
-   * return false (although it may set different values in {@code dst} before doing so).
-   */
+  /// Executes this plan with the given `src` and `dst`. If
+  ///
+  /// `dstTemplate.setValue(tstate, srcTemplate.peekValue(src), dst)`
+  ///
+  /// would return true (where `srcTemplate` and `dstTemplate` are the templates used to construct
+  /// this plan) then `execute()` will also return true and will make the same calls to set values
+  /// in `dst`. If that call would return false then `execute()` will also return false (although it
+  /// may set different values in `dst` before doing so).
   boolean execute(TState tstate, VarSource src, VarSink dst) {
     if (isFail()) {
       return false;
@@ -94,7 +88,7 @@ class CopyPlan {
     }
   }
 
-  /** Returns true if this plan will always fail. */
+  /// Returns true if this plan will always fail.
   public boolean isFail() {
     return steps == null;
   }
@@ -124,29 +118,23 @@ class CopyPlan {
     abstract boolean execute(TState tstate, VarSource src, VarSink dst);
   }
 
-  /**
-   * All Steps except {@link Switch}es are instances of {@code Basic} (although two step types,
-   * FRAME_TO_COMPOUND and COMPOUND_TO_FRAME, use the {@link FrameVsCompound} subclass).
-   *
-   * <p>There are nine different types of Basic steps (see {@link StepType}); while it would be
-   * possible to define a separate subclass of Step for each of them, doing it this way required a
-   * lot less boilerplate.
-   */
+  /// All Steps except [Switch]es are instances of `Basic` (although two step types,
+  /// FRAME\_TO\_COMPOUND and COMPOUND\_TO\_FRAME, use the [FrameVsCompound] subclass).
+  ///
+  /// There are nine different types of Basic steps (see [StepType]); while it would be possible to
+  /// define a separate subclass of Step for each of them, doing it this way required a lot less
+  /// boilerplate.
   static class Basic extends Step {
 
-    /** The type of this Step. */
+    /// The type of this Step.
     final StepType type;
 
-    /**
-     * For most step types this is a NumVar, RefVar, or Compound from the source template; for
-     * SET_NUM and SET_REF it is a Value.
-     */
+    /// For most step types this is a NumVar, RefVar, or Compound from the source template; for
+    /// SET\_NUM and SET\_REF it is a Value.
     final Object src;
 
-    /**
-     * For most step types this is a NumVar, RefVar, or Compound from the destination template; for
-     * VERIFY_NUM and VERIFY_REF it is a Value, and for VERIFY_REF_TYPE it is a BaseType.
-     */
+    /// For most step types this is a NumVar, RefVar, or Compound from the destination template; for
+    /// VERIFY\_NUM and VERIFY\_REF it is a Value, and for VERIFY\_REF\_TYPE it is a BaseType.
     final Object dst;
 
     Basic(StepType type, Object src, Object dst) {
@@ -217,11 +205,9 @@ class CopyPlan {
       return Objects.hash(type, toHashable(src), toHashable(dst));
     }
 
-    /**
-     * Many Values are not hashable, so if this is a Value (other than NumValue) we settle for
-     * hashing its baseType (unless it's an array, in which case we hash VARRAY since frame
-     * replacement can change the baseType of an array value).
-     */
+    /// Many Values are not hashable, so if this is a Value (other than NumValue) we settle for
+    /// hashing its baseType (unless it's an array, in which case we hash VARRAY since frame
+    /// replacement can change the baseType of an array value).
     private static Object toHashable(Object x) {
       if (x instanceof Value v && !(v instanceof NumValue)) {
         BaseType baseType = v.baseType();
@@ -240,10 +226,8 @@ class CopyPlan {
       return false;
     }
 
-    /**
-     * We don't depend on the type information of a RefVar, so don't test it (note that
-     * RefVar.hashCode() doesn't depend on it either, so this is consistent with hashCode()).
-     */
+    /// We don't depend on the type information of a RefVar, so don't test it (note that
+    /// RefVar.hashCode() doesn't depend on it either, so this is consistent with hashCode()).
     private static boolean equalsEnough(Object x, Object y) {
       return (x instanceof RefVar rv) ? rv.equalsIgnoringType(y) : x.equals(y);
     }
@@ -254,19 +238,14 @@ class CopyPlan {
     }
   }
 
-  /**
-   * If {@code obj} is anything other than a RefVar, returns {@code obj.toString()}. For RefVars
-   * just returns {@code "x"} followed by the RefVar index, without the type information that {@code
-   * toString()} would append (step execution ignores the types of RefVars, and they clutter the
-   * output).
-   */
+  /// If `obj` is anything other than a RefVar, returns `obj.toString()`. For RefVars just returns
+  /// `"x"` followed by the RefVar index, without the type information that `toString()` would
+  /// append (step execution ignores the types of RefVars, and they clutter the output).
   private static String cleanRefVars(Object obj) {
     return (obj instanceof RefVar rv) ? "x" + rv.index : String.valueOf(obj);
   }
 
-  /**
-   * If {@code d} can be stored in {@code dstVar}, do so and return true; otherwise return false.
-   */
+  /// If `d` can be stored in `dstVar`, do so and return true; otherwise return false.
   private static boolean setD(double d, NumVar dstVar, VarSink sink) {
     if (dstVar.encoding == NumEncoding.FLOAT64) {
       sink.setD(dstVar.index, d);
@@ -285,9 +264,7 @@ class CopyPlan {
     return true;
   }
 
-  /**
-   * If {@code i} can be stored in {@code dstVar}, do so and return true; otherwise return false.
-   */
+  /// If `i` can be stored in `dstVar`, do so and return true; otherwise return false.
   private static boolean setI(int i, NumVar dstVar, VarSink sink) {
     switch (dstVar.encoding) {
       case UINT8:
@@ -307,45 +284,37 @@ class CopyPlan {
   }
 
   enum StepType {
-    /** Copies the value from a NumVar in the source to a NumVar in the destination. */
+    /// Copies the value from a NumVar in the source to a NumVar in the destination.
     COPY_NUM("copy"),
 
-    /** Copies the value from a RefVar in the source to a RefVar in the destination. */
+    /// Copies the value from a RefVar in the source to a RefVar in the destination.
     COPY_REF("copy"),
 
-    /** Sets a NumVar in the destination to a constant value. */
+    /// Sets a NumVar in the destination to a constant value.
     SET_NUM("set"),
 
-    /** Sets a RefVar in the destination to a constant value. */
+    /// Sets a RefVar in the destination to a constant value.
     SET_REF("set"),
 
-    /** Fails unless a NumVar in the source has the specified value. */
+    /// Fails unless a NumVar in the source has the specified value.
     VERIFY_NUM("verify"),
 
-    /** Fails unless a RefVar in the source has the specified value. */
+    /// Fails unless a RefVar in the source has the specified value.
     VERIFY_REF("verify"),
 
-    /**
-     * Fails unless a RefVar in the source has the specified BaseType (or a BaseType with the same
-     * sortOrder).
-     */
+    /// Fails unless a RefVar in the source has the specified BaseType (or a BaseType with the same
+    /// sortOrder).
     VERIFY_REF_TYPE("verifyType"),
 
-    /**
-     * Copies the contents of a Frame from a RefVar in the source into a Compound from the
-     * destination.
-     *
-     * <p>{@code FRAME_TO_COMPOUND} steps are always allocated using the FrameVsCompound subclass of
-     * Basic.
-     */
+    /// Copies the contents of a Frame from a RefVar in the source into a Compound from the
+    /// destination.
+    ///
+    /// `FRAME_TO_COMPOUND` steps are always allocated using the FrameVsCompound subclass of Basic.
     FRAME_TO_COMPOUND("fromFrame"),
 
-    /**
-     * Sets a RefVar in the destination to a new Frame initialized from a Compound in the source.
-     *
-     * <p>{@code COMPOUND_TO_FRAME} steps are always allocated using the FrameVsCompound subclass of
-     * Basic.
-     */
+    /// Sets a RefVar in the destination to a new Frame initialized from a Compound in the source.
+    ///
+    /// `COMPOUND_TO_FRAME` steps are always allocated using the FrameVsCompound subclass of Basic.
     COMPOUND_TO_FRAME("toFrame");
 
     final String label;
@@ -355,9 +324,7 @@ class CopyPlan {
     }
   }
 
-  /**
-   * Returns true if {@code src} and {@code dst} are valid arguments for a step of the given type.
-   */
+  /// Returns true if `src` and `dst` are valid arguments for a step of the given type.
   private static boolean validArgs(StepType type, Object src, Object dst) {
     return switch (type) {
       case COPY_NUM -> src instanceof NumVar && dst instanceof NumVar;
@@ -407,10 +374,8 @@ class CopyPlan {
     };
   }
 
-  /**
-   * A subclass of Basic used for FRAME_TO_COMPOUND and COMPOUND_TO_FRAME steps. Adds a cache whose
-   * contents are computed from the current layout of the RefVar.
-   */
+  /// A subclass of Basic used for FRAME\_TO\_COMPOUND and COMPOUND\_TO\_FRAME steps. Adds a cache
+  /// whose contents are computed from the current layout of the RefVar.
   static class FrameVsCompound extends Basic {
     @Keep private Cached cached;
 
@@ -421,15 +386,13 @@ class CopyPlan {
       super(type, src, dst);
     }
 
-    /**
-     * Returns the current layout of this step's RefVar and a value computed from it. If this is the
-     * first call to {@code getCached()} on this FrameVsCompound or the RefVar's layout has changed,
-     * {@code producer.apply()} will be called to compute the result; otherwise the
-     * previously-computed value will be returned.
-     *
-     * <p>Note that all callers to {@code getCached()} on a single FrameVsCompound should pass the
-     * same producer; callers that need different results will need a separate copy of the plan.
-     */
+    /// Returns the current layout of this step's RefVar and a value computed from it. If this is
+    /// the first call to `getCached()` on this FrameVsCompound or the RefVar's layout has changed,
+    /// `producer.apply()` will be called to compute the result; otherwise the previously-computed
+    /// value will be returned.
+    ///
+    /// Note that all callers to `getCached()` on a single FrameVsCompound should pass the same
+    /// producer; callers that need different results will need a separate copy of the plan.
     Cached getCached(BiFunction<Template, FrameLayout, Object> producer) {
       // For FRAME_TO_COMPOUND, src is a RefVar; for COMPOUND_TO_FRAME, dst is a RefVar
       RefVar.ForFrame refVar = (src instanceof RefVar.ForFrame rv) ? rv : (RefVar.ForFrame) dst;
@@ -511,10 +474,8 @@ class CopyPlan {
     }
   }
 
-  /**
-   * The most-recently-seen FrameLayout of a FrameVsCompound's RefVar, and the cached value that was
-   * computed based on it.
-   */
+  /// The most-recently-seen FrameLayout of a FrameVsCompound's RefVar, and the cached value that
+  /// was computed based on it.
   static class Cached {
     final FrameLayout layout;
     final Object result;
@@ -525,12 +486,10 @@ class CopyPlan {
     }
   }
 
-  /**
-   * A {@code Switch} step corresponds to a Union in the source template, and has a CopyPlan
-   * corresponding to each of the Union's choices.
-   */
+  /// A `Switch` step corresponds to a Union in the source template, and has a CopyPlan
+  /// corresponding to each of the Union's choices.
   static class Switch extends Step {
-    /** A Union from the source template; may be tagged or untagged. */
+    /// A Union from the source template; may be tagged or untagged.
     final Union union;
 
     private final CopyPlan[] choices;
@@ -541,10 +500,8 @@ class CopyPlan {
       this.choices = choices;
     }
 
-    /**
-     * Returns the CopyPlan that should be used when the source uses the specified choice of the
-     * Union.
-     */
+    /// Returns the CopyPlan that should be used when the source uses the specified choice of the
+    /// Union.
     CopyPlan choice(int i) {
       return choices[i];
     }
@@ -600,14 +557,11 @@ class CopyPlan {
     }
   }
 
-  /**
-   * Returns a CopyPlan to transfer values described by {@code src} to values described by {@code
-   * dst}.
-   *
-   * <p>If {@code skipToBeSet} is true, instances of ToBeSet in {@code src} will not be copied; the
-   * destination may left unchanged or set to arbitrary values; this is only used when the
-   * destination is a frame (where the layout templates exclude ToBeSet values).
-   */
+  /// Returns a CopyPlan to transfer values described by `src` to values described by `dst`.
+  ///
+  /// If `skipToBeSet` is true, instances of ToBeSet in `src` will not be copied; the destination
+  /// may left unchanged or set to arbitrary values; this is only used when the destination is a
+  /// frame (where the layout templates exclude ToBeSet values).
   static CopyPlan create(Template src, Template dst, boolean skipToBeSet) {
     ImmutableList.Builder<Step> builder = ImmutableList.builder();
     if (!create(src, dst, skipToBeSet, builder)) {
@@ -617,11 +571,9 @@ class CopyPlan {
     return steps.isEmpty() ? EMPTY : new CopyPlan(steps);
   }
 
-  /**
-   * Determines the steps necessary to copy {@code src} to {@code dst}, appends them to {@code
-   * steps}, and returns true. If such a copy would always fail, returns false ({@code steps} will
-   * be ignored if this method returns false).
-   */
+  /// Determines the steps necessary to copy `src` to `dst`, appends them to `steps`, and returns
+  /// true. If such a copy would always fail, returns false (`steps` will be ignored if this method
+  /// returns false).
   private static boolean create(
       Template src, Template dst, boolean skipToBeSet, ImmutableList.Builder<Step> steps) {
     // If skipToBeSet is true, dst should never be a union with a ToBeSet choice
@@ -799,10 +751,8 @@ class CopyPlan {
     }
   }
 
-  /**
-   * {@code src} and {@code dst} are each a Constant or Compound, and they have the same baseType
-   * with the given size, so we can just copy element-by-element.
-   */
+  /// `src` and `dst` are each a Constant or Compound, and they have the same baseType with the
+  /// given size, so we can just copy element-by-element.
   private static boolean copyElements(
       int size,
       Template src,
@@ -813,7 +763,7 @@ class CopyPlan {
         .allMatch(i -> create(src.element(i), dst.element(i), skipToBeSet, steps));
   }
 
-  /** Returns a step that verifies the specified branch of the source Union applies. */
+  /// Returns a step that verifies the specified branch of the source Union applies.
   private static Step requireChoice(Union src, int choice) {
     if (src.tag != null) {
       return new Basic(StepType.VERIFY_NUM, src.tag, NumValue.of(choice, Allocator.UNCOUNTED));
@@ -823,7 +773,7 @@ class CopyPlan {
     }
   }
 
-  /** Implements {@link #create} when both {@code src} and {@code dst} are Unions. */
+  /// Implements [#create] when both `src` and `dst` are Unions.
   private static boolean createSwitch(
       Union src, Union dst, boolean skipToBeSet, ImmutableList.Builder<Step> steps) {
     CopyPlan[] choices = new CopyPlan[src.numChoices()];
@@ -879,7 +829,7 @@ class CopyPlan {
     return true;
   }
 
-  /** True if all of src's choices are Constants and match the corresponding choices in dst. */
+  /// True if all of src's choices are Constants and match the corresponding choices in dst.
   private static boolean hasMatchingConstants(Union src, Union dst, int numSrcChoices) {
     if (numSrcChoices > dst.numChoices()) {
       return false;
@@ -893,10 +843,8 @@ class CopyPlan {
     return true;
   }
 
-  /**
-   * True if each of src's choices has a corresponding choice in dst (i.e. one with the same
-   * sortOrder).
-   */
+  /// True if each of src's choices has a corresponding choice in dst (i.e. one with the same
+  /// sortOrder).
   private static boolean hasAllOrders(Union src, Union dst, int numSrcChoices) {
     int numExtra = dst.numChoices() - numSrcChoices;
     if (numExtra < 0) {
@@ -921,10 +869,8 @@ class CopyPlan {
     return true;
   }
 
-  /**
-   * Creates a new CopyPlan by applying the given transformation to each Basic step of this
-   * CopyPlan. If the transformation returns null, the step is dropped.
-   */
+  /// Creates a new CopyPlan by applying the given transformation to each Basic step of this
+  /// CopyPlan. If the transformation returns null, the step is dropped.
   CopyPlan transformSteps(UnaryOperator<Basic> transformStep) {
     if (isFail() || steps.isEmpty()) {
       return this;
@@ -999,7 +945,7 @@ class CopyPlan {
     }
   }
 
-  /** Instances of CompoundToFrame are cached by {@link #execute} for COMPOUND_TO_FRAME steps. */
+  /// Instances of CompoundToFrame are cached by [#execute] for COMPOUND\_TO\_FRAME steps.
   private abstract static class CompoundToFrame {
 
     final Template compound;
@@ -1010,14 +956,12 @@ class CopyPlan {
       this.layout = layout;
     }
 
-    /** Initializes the newly-allocated frame {@code dst} from {@code src}. */
+    /// Initializes the newly-allocated frame `dst` from `src`.
     abstract boolean initialize(TState tstate, VarSource src, Frame dst);
 
-    /**
-     * Allocates a new Frame (with a previously-determined layout) and initializes it from {@code
-     * src}. If the current layout cannot store the source value, evolves the layout appropriately
-     * and returns null.
-     */
+    /// Allocates a new Frame (with a previously-determined layout) and initializes it from `src`.
+    /// If the current layout cannot store the source value, evolves the layout appropriately and
+    /// returns null.
     @RC.Out
     Frame newFrame(TState tstate, VarSource src) {
       Frame result = layout.alloc(tstate, compound.baseType().size());
@@ -1034,10 +978,8 @@ class CopyPlan {
       return null;
     }
 
-    /**
-     * Returns a {@link CompoundToFrame} that allocates a new Frame with the given layout and
-     * initializes it using the given template.
-     */
+    /// Returns a [CompoundToFrame] that allocates a new Frame with the given layout and initializes
+    /// it using the given template.
     static CompoundToFrame create(Template compound, FrameLayout layout) {
       if (layout instanceof RecordLayout rLayout) {
         CopyPlan plan = CopyPlan.create(compound, rLayout.template, true);
@@ -1066,7 +1008,7 @@ class CopyPlan {
     }
   }
 
-  /** Instances of FrameToCompound are cached by {@link #execute} for FRAME_TO_COMPOUND steps. */
+  /// Instances of FrameToCompound are cached by [#execute] for FRAME\_TO\_COMPOUND steps.
   private abstract static class FrameToCompound {
 
     final FrameLayout layout;
@@ -1075,14 +1017,12 @@ class CopyPlan {
       this.layout = layout;
     }
 
-    /** Extracts the values of {@code src} to {@code dst}. */
+    /// Extracts the values of `src` to `dst`.
     abstract boolean extract(TState tstate, Frame src, VarSink dst);
 
-    /**
-     * Sets variables in {@code dst} from {@code src}. Returns {@link Boolean#TRUE} if it succeeded,
-     * {@link Boolean#FALSE} if the value of {@code src} cannot be represented by the destination
-     * template, and {@code null} if {@code src} does not have the expected layout.
-     */
+    /// Sets variables in `dst` from `src`. Returns [Boolean#TRUE] if it succeeded, [Boolean#FALSE]
+    /// if the value of `src` cannot be represented by the destination template, and `null` if `src`
+    /// does not have the expected layout.
     Boolean fromFrame(TState tstate, Frame src, VarSink dst) {
       if (src.layoutOrReplacement != layout) {
         // Like src = Frame.latest(src), but without the RC.In/Rc.Out
@@ -1100,10 +1040,8 @@ class CopyPlan {
       return extract(tstate, src, dst);
     }
 
-    /**
-     * Returns a {@link FrameToCompound} that sets the variables in {@code compound} from a Frame
-     * with the given layout.
-     */
+    /// Returns a [FrameToCompound] that sets the variables in `compound` from a Frame with the
+    /// given layout.
     static FrameToCompound create(Template compound, FrameLayout layout) {
       if (layout instanceof RecordLayout rLayout) {
         CopyPlan plan = CopyPlan.create(rLayout.template, compound, false);

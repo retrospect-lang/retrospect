@@ -20,33 +20,29 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import org.jspecify.annotations.Nullable;
 
-/** The target of a Link. LinkTarget has two subclasses: Block and FutureBlock. */
+/// The target of a Link. LinkTarget has two subclasses: Block and FutureBlock.
 public abstract class LinkTarget {
-  /**
-   * Null if this is not the target of any Links. Otherwise {@code inLink} is one of the Links with
-   * {@code this} as its target, and any other such links are reachable as its siblings.
-   */
+  /// Null if this is not the target of any Links. Otherwise `inLink` is one of the Links with
+  /// `this` as its target, and any other such links are reachable as its siblings.
   Link inLink;
 
-  /** Returns one of this target's inlinks, or null if it has none. */
+  /// Returns one of this target's inlinks, or null if it has none.
   public Link firstInlink() {
     return inLink;
   }
 
-  /** Returns true if this target has at least one inlink. */
+  /// Returns true if this target has at least one inlink.
   public boolean hasInLink() {
     return inLink != null;
   }
 
-  /** Returns true if this target has more than one inlink. */
+  /// Returns true if this target has more than one inlink.
   public boolean hasMultipleInlinks() {
     return inLink != null && inLink.hasSibling();
   }
 
-  /**
-   * Changes all inlinks to this target to point to the given target; on return {@link #hasInLink}
-   * will be false.
-   */
+  /// Changes all inlinks to this target to point to the given target; on return [#hasInLink] will
+  /// be false.
   void moveAllInLinks(LinkTarget other) {
     assert other != null;
     if (other != this && inLink != null) {
@@ -55,20 +51,18 @@ public abstract class LinkTarget {
     }
   }
 
-  /** Returns true if the given predicate returns true for at least one of this target's inlinks. */
+  /// Returns true if the given predicate returns true for at least one of this target's inlinks.
   public boolean anyInlink(Predicate<Link> test) {
     return findInlink(test) != null;
   }
 
-  /** Returns true if the given predicate returns true for all of this target's inlinks. */
+  /// Returns true if the given predicate returns true for all of this target's inlinks.
   public boolean allInlinks(Predicate<Link> test) {
     return !anyInlink(test.negate());
   }
 
-  /**
-   * If the given predicate returns true for one of this target's inlinks, returns it; otherwise
-   * returns null.
-   */
+  /// If the given predicate returns true for one of this target's inlinks, returns it; otherwise
+  /// returns null.
   public @Nullable Link findInlink(Predicate<Link> test) {
     Link x = inLink;
     if (x != null) {
@@ -82,12 +76,10 @@ public abstract class LinkTarget {
     return null;
   }
 
-  /**
-   * Calls {@code consumer.accept()} with each of this target's inlinks.
-   *
-   * <p>The consumer may {@link Link#detach} (and otherwise modify) the given link, but must not
-   * make any other changes to this target's links.
-   */
+  /// Calls `consumer.accept()` with each of this target's inlinks.
+  ///
+  /// The consumer may [Link#detach] (and otherwise modify) the given link, but must not make any
+  /// other changes to this target's links.
   public void forEachInLink(Consumer<Link> consumer) {
     for (Link link = inLink; link != null; ) {
       // Find the next link before we potentially detach this one
@@ -101,7 +93,7 @@ public abstract class LinkTarget {
     }
   }
 
-  /** Sets {@code result} to the union of the LinkInfos from each of this target's inLinks. */
+  /// Sets `result` to the union of the LinkInfos from each of this target's inLinks.
   void unionInlinkInfo(LinkInfo result, LinkInfo.Unioner unioner, Loop containingLoop) {
     result.setFrom(inLink.info);
     unioner.start(result, containingLoop);
@@ -111,11 +103,9 @@ public abstract class LinkTarget {
     unioner.finish();
   }
 
-  /**
-   * Gets the info for the given register from each of this target's inLinks and unions the results;
-   * returns null if any of those calls returns null. If {@code resolveRegisters} is true, will not
-   * return a Register as an info.
-   */
+  /// Gets the info for the given register from each of this target's inLinks and unions the
+  /// results; returns null if any of those calls returns null. If `resolveRegisters` is true, will
+  /// not return a Register as an info.
   @Nullable ValueInfo getInLinkInfo(
       int index, ValueInfo.BinaryOps binaryOps, boolean resolveRegisters) {
     ValueInfo result = inLink.info.register(index);

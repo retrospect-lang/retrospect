@@ -30,10 +30,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
-/**
- * A {@link TestParameterValuesProvider} that provides {@link TestProgram} arguments to tests
- * consisting of each Retrospect source fragment in a directory of test files.
- */
+/// A [TestParameterValuesProvider] that provides [TestProgram] arguments to tests consisting of
+/// each Retrospect source fragment in a directory of test files.
 public abstract class TestdataScanner extends TestParameterValuesProvider {
 
   private static final Path outputDir;
@@ -59,7 +57,7 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
     this.endComment = endComment;
   }
 
-  /** A test program written in Retrospect. */
+  /// A test program written in Retrospect.
   public record TestProgram(String name, String code, String comment, Consumer<String> writer) {
     @Override
     public final String toString() {
@@ -67,22 +65,18 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
     }
   }
 
-  /**
-   * Matches one or more blank lines and/or comments at the beginning of the program; we discard
-   * these so that changes to them won't affect line numbers in generated code.
-   */
+  /// Matches one or more blank lines and/or comments at the beginning of the program; we discard
+  /// these so that changes to them won't affect line numbers in generated code.
   private static final Pattern LEADING_COMMENTS_PATTERN =
       Pattern.compile("(?:[ \\t]*(?:\\n|//[^\\n]*|/\\*.*?\\*/))+", Pattern.DOTALL);
 
-  /**
-   * Returns a list of {@link TestProgram}, each a [name, code, comment] tuple corresponding to a
-   * code chunk from a ".r8t" file in our testdata directory.
-   *
-   * <p>Each code chunk must be followed by a chunk that matches {@code endComment}. The name is the
-   * file name suffixed with the line number of the first non-comment line. The code is everything
-   * from the first non-comment line up to the chunk matching {@code endComment}. The comment is the
-   * first group of the {@code endComment} match.
-   */
+  /// Returns a list of [TestProgram], each a [name, code, comment] tuple corresponding to a code
+  /// chunk from a ".r8t" file in our testdata directory.
+  ///
+  /// Each code chunk must be followed by a chunk that matches `endComment`. The name is the file
+  /// name suffixed with the line number of the first non-comment line. The code is everything from
+  /// the first non-comment line up to the chunk matching `endComment`. The comment is the first
+  /// group of the `endComment` match.
   @Override
   public final ImmutableList<TestProgram> provideValues(Context context) {
     Pattern runOnly = Pattern.compile(System.getProperty("runOnly", ".*"));
@@ -105,10 +99,8 @@ public abstract class TestdataScanner extends TestParameterValuesProvider {
     }
   }
 
-  /**
-   * Returns a list of {@link TestProgram}, each a [name, code, comment] tuple corresponding to a
-   * code chunk from the given file. See {@link #provideValues()} for details.
-   */
+  /// Returns a list of [TestProgram], each a [name, code, comment] tuple corresponding to a code
+  /// chunk from the given file. See [#provideValues()] for details.
   private ImmutableList<TestProgram> allProgramsInFile(Path path) {
     String name = path.getFileName().toString();
     if (!name.endsWith(".r8t")) {

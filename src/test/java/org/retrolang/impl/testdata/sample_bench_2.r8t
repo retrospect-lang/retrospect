@@ -42,7 +42,7 @@ function feature(xy, bands) = bands | b -> b @ xy | save
 // given a feature with properties b0, b1, and b2, adds
 // - a "distance<i>" property with the squared distance to each centroid
 // - a "class" property with the index of the closest centroid
-// - a "filter" property that will be 0 for 1 in <keep> of the features
+// - a "filter" property that will be 0 for 1 / keep of the features
 function classify(f, centroids, keep) {
   b0 = f.b0
   b1 = f.b1

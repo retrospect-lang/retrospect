@@ -44,60 +44,48 @@ import org.retrolang.impl.Template.RefVar;
 import org.retrolang.util.ArrayUtil;
 import org.retrolang.util.Bits;
 
-/**
- * A CodeGen instance manages the process of generating one Java method corresponding to one
- * Retrospect MethodMemo. Its life cycle is
- *
- * <ul>
- *   <li>a CodeGen is created as part of a Scope's current CodeGenGroup, for a single CodeGenTarget;
- *   <li>some initial setup is done at creation time (to determine the signature of the Java method,
- *       by choosing the templates that will represent the arguments) and the target is then queued
- *       in the {@link CodeGenGroup#targets} list;
- *   <li>{@link CodeGenGroup#generateCode} will eventually call the CodeGen's {@link #emit} method,
- *       which walks the Retrospect method definition adding blocks to the CodeGen's CodeBuilder;
- *   <li>{@link CodeBuilder#load} is called, causing it to optimize the blocks and construct a
- *       MethodHandle for the resulting bytecodes; and finally
- *   <li>the MethodHandle is saved in the CodeGenTarget and the CodeGen discarded.
- * </ul>
- *
- * <p>Most of the heavy lifting is done by the CodeBuilder, but the CodeGen maintains some
- * additional state:
- *
- * <ul>
- *   <li>{@link #atEnd}, a stack of code fragments (mostly escape handlers) that will be placed at
- *       the end of emitted blocks (to comply with CodeBuilder's restriction to forward branches);
- *   <li>the current {@link #escape} handler; and
- *   <li>{@link CurrentCall} objects that maintain state while inlining method calls.
- * </ul>
- */
+/// A CodeGen instance manages the process of generating one Java method corresponding to one
+/// Retrospect MethodMemo. Its life cycle is
+///
+/// - a CodeGen is created as part of a Scope's current CodeGenGroup, for a single CodeGenTarget;
+/// - some initial setup is done at creation time (to determine the signature of the Java method, by
+///   choosing the templates that will represent the arguments) and the target is then queued in the
+///   [CodeGenGroup#targets] list;
+/// - [CodeGenGroup#generateCode] will eventually call the CodeGen's [#emit] method, which walks the
+///   Retrospect method definition adding blocks to the CodeGen's CodeBuilder;
+/// - [CodeBuilder#load] is called, causing it to optimize the blocks and construct a MethodHandle
+///   for the resulting bytecodes; and finally
+/// - the MethodHandle is saved in the CodeGenTarget and the CodeGen discarded.
+///
+/// Most of the heavy lifting is done by the CodeBuilder, but the CodeGen maintains some additional
+/// state:
+///
+/// - [#atEnd], a stack of code fragments (mostly escape handlers) that will be placed at the end of
+///   emitted blocks (to comply with CodeBuilder's restriction to forward branches);
+/// - the current [#escape] handler; and
+/// - [CurrentCall] objects that maintain state while inlining method calls.
 public class CodeGen {
   final CodeGenGroup group;
   final CodeGenTarget target;
 
   public final RcCodeBuilder cb;
 
-  /**
-   * For the duration of the {@link #emit} call the CodeGen is bound to the thread's TState, so that
-   * either can be accessed from the other (see {@link #tstate()} and {@link TState#codeGen()}).
-   */
+  /// For the duration of the [#emit] call the CodeGen is bound to the thread's TState, so that
+  /// either can be accessed from the other (see [#tstate()] and [TState#codeGen()]).
   private TState tstate;
 
-  /** TState is always the first argument to the methods we emit, so always in register 0. */
+  /// TState is always the first argument to the methods we emit, so always in register 0.
   static final int TSTATE_REGISTER_INDEX = 0;
 
-  /**
-   * The active CurrentCall. We swap in a new CurrentCall instance while emitting code for an
-   * inlined method.
-   */
+  /// The active CurrentCall. We swap in a new CurrentCall instance while emitting code for an
+  /// inlined method.
   private CurrentCall currentCall;
 
   private Boolean emittingUnwindHandler;
 
-  /**
-   * TStack-valued registers that were allocated as {@link CurrentCall#stackRest} for a
-   * now-completed call. We could just allocate a new one for each call, but we emit a lot of calls
-   * and it's easy to reuse them so we do.
-   */
+  /// TStack-valued registers that were allocated as [CurrentCall#stackRest] for a now-completed
+  /// call. We could just allocate a new one for each call, but we emit a lot of calls and it's easy
+  /// to reuse them so we do.
   private final Deque<Register> spareStackRests = new ArrayDeque<>();
 
   CodeGen(CodeGenGroup group, CodeGenTarget target) {
@@ -110,51 +98,49 @@ public class CodeGen {
     assert tstateRegister.index == TSTATE_REGISTER_INDEX;
   }
 
-  /** Returns a stand-alone CodeBuilder; used for emitting helper methods. */
+  /// Returns a stand-alone CodeBuilder; used for emitting helper methods.
   static CodeBuilder newCodeBuilder() {
     return new CodeBuilder(BINARY_OPS);
   }
 
-  /** Returns the TState of the thread that is running {@link #emit}. */
+  /// Returns the TState of the thread that is running [#emit].
   public TState tstate() {
     assert tstate != null;
     return tstate;
   }
 
-  /** Returns the register that will hold the TState of the thread running the emitted code. */
+  /// Returns the register that will hold the TState of the thread running the emitted code.
   public Register tstateRegister() {
     return tstateRegister(cb);
   }
 
-  /** Returns the tstate register for the given CodeBuilder. */
+  /// Returns the tstate register for the given CodeBuilder.
   static Register tstateRegister(CodeBuilder cb) {
     return cb.register(TSTATE_REGISTER_INDEX);
   }
 
-  /** Returns the register corresponding to a NumVar that was allocated by a RegisterAllocator. */
+  /// Returns the register corresponding to a NumVar that was allocated by a RegisterAllocator.
   public Register register(NumVar v) {
     return cb.register(v.index);
   }
 
-  /** Returns the register corresponding to a RefVar that was allocated by a RegisterAllocator. */
+  /// Returns the register corresponding to a RefVar that was allocated by a RegisterAllocator.
   public Register register(RefVar v) {
     return cb.register(v.index);
   }
 
-  /** The given template must be a NumVar or a RefVar; returns the corresponding register. */
+  /// The given template must be a NumVar or a RefVar; returns the corresponding register.
   public Register register(Template v) {
     return cb.register((v instanceof NumVar nv) ? nv.index : ((RefVar) v).index);
   }
 
-  /**
-   * The given value must be an RValue wrapping a NumVar or a RefVar; returns the corresponding
-   * register.
-   */
+  /// The given value must be an RValue wrapping a NumVar or a RefVar; returns the corresponding
+  /// register.
   public Register register(Value v) {
     return register(((RValue) v).template);
   }
 
-  /** Given a register containing a numeric value, returns the corresponding RValue. */
+  /// Given a register containing a numeric value, returns the corresponding RValue.
   public Value toValue(Register r) {
     Template t;
     if (r.type() == int.class) {
@@ -166,25 +152,21 @@ public class CodeGen {
     return RValue.fromTemplate(t);
   }
 
-  /** Given a numeric register or constant, returns the corresponding Value. */
+  /// Given a numeric register or constant, returns the corresponding Value.
   public Value toValue(CodeValue cv) {
     return (cv instanceof Register r)
         ? toValue(r)
         : NumValue.of(cv.numberValue(), Allocator.UNCOUNTED);
   }
 
-  /**
-   * Given a register containing a value of the given (non-compositional) baseType, returns the
-   * corresponding RValue.
-   */
+  /// Given a register containing a value of the given (non-compositional) baseType, returns the
+  /// corresponding RValue.
   public Value toValue(Register r, BaseType.NonCompositional baseType) {
     return RValue.fromTemplate(baseType.asRefVar.withIndex(r.index));
   }
 
-  /**
-   * Given a register or constant containing a value of the given (non-compositional) baseType,
-   * returns the corresponding RValue.
-   */
+  /// Given a register or constant containing a value of the given (non-compositional) baseType,
+  /// returns the corresponding RValue.
   public Value toValue(CodeValue cv, BaseType.NonCompositional baseType) {
     assert cv.isPtr();
     if (cv instanceof Register r) {
@@ -195,15 +177,13 @@ public class CodeGen {
     return result;
   }
 
-  /** Given an int-valued CodeValue, returns the corresponding Value. */
+  /// Given an int-valued CodeValue, returns the corresponding Value.
   public Value intToValue(CodeValue cv) {
     return toValue(materialize(cv, int.class));
   }
 
-  /**
-   * Returns a CodeValue representing the given Value. After simplification {@code v} must be
-   * representable by a simple CodeValue, i.e. it may not be a compound or union RValue.
-   */
+  /// Returns a CodeValue representing the given Value. After simplification `v` must be
+  /// representable by a simple CodeValue, i.e. it may not be a compound or union RValue.
   public CodeValue asCodeValue(Value v) {
     v = simplify(v);
     if (v instanceof RValue) {
@@ -213,25 +193,19 @@ public class CodeGen {
     }
   }
 
-  /**
-   * A DelayedBlocks maintains a stack of Runnables, each of which will add one or more blocks to
-   * the CodeBuilder and each of which has an associated FutureBLock that can be used to branch to
-   * the first of those blocks. A call to {@link #emit(int)} will check each FutureBlock, see if it
-   * has incoming links, and if so call the Runnable to emit them; this is done in the reverse of
-   * the order the Runnables were added, since the {@code run()} method from a later call to {@link
-   * #add} may refer to a FutureBlock returned by an earlier call.
-   */
+  /// A DelayedBlocks maintains a stack of Runnables, each of which will add one or more blocks to
+  /// the CodeBuilder and each of which has an associated FutureBLock that can be used to branch to
+  /// the first of those blocks. A call to [#emit(int)] will check each FutureBlock, see if it has
+  /// incoming links, and if so call the Runnable to emit them; this is done in the reverse of the
+  /// order the Runnables were added, since the `run()` method from a later call to [#add] may refer
+  /// to a FutureBlock returned by an earlier call.
   class DelayedBlocks {
-    /**
-     * Each of these will be run later, in reverse order. Any blocks they emit must either end with
-     * a Terminal or branch to a not-yet emitted FutureBlock.
-     */
+    /// Each of these will be run later, in reverse order. Any blocks they emit must either end with
+    /// a Terminal or branch to a not-yet emitted FutureBlock.
     private final List<Runnable> delayed = new ArrayList<>();
 
-    /**
-     * The given Runnable should emit code that will be executed following a branch to the returned
-     * FutureBlock. If no branches to the FutureBlock are emitted, the Runnable will not be called.
-     */
+    /// The given Runnable should emit code that will be executed following a branch to the returned
+    /// FutureBlock. If no branches to the FutureBlock are emitted, the Runnable will not be called.
     FutureBlock add(Runnable addBlocks, boolean isEscape) {
       // Tagging escapes makes it easier to stop in the debugger when a branch to them is created
       FutureBlock link = new FutureBlock(isEscape ? true : null);
@@ -250,10 +224,8 @@ public class CodeGen {
       return delayed.size();
     }
 
-    /**
-     * Emits all the blocks that have been queued by calls to {@link #add} since {@link #size}
-     * returned the given value.
-     */
+    /// Emits all the blocks that have been queued by calls to [#add] since [#size] returned the
+    /// given value.
     void emit(int savedSize) {
       List<Runnable> toEmit = delayed.subList(savedSize, delayed.size());
       toEmit.reversed().forEach(Runnable::run);
@@ -261,22 +233,18 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Each of these will be run when the rest of code generation is completed, in reverse order. That
-   * means that any blocks they emit must either end with a Terminal or branch to a FutureBlock that
-   * will be filled in by a previously-added Runnable.
-   */
+  /// Each of these will be run when the rest of code generation is completed, in reverse order.
+  /// That means that any blocks they emit must either end with a Terminal or branch to a
+  /// FutureBlock that will be filled in by a previously-added Runnable.
   final DelayedBlocks atEnd = new DelayedBlocks();
 
-  /**
-   * If v refers to one or more registers whose values are known (or perhaps even partly known) we
-   * can simplify it.
-   */
+  /// If v refers to one or more registers whose values are known (or perhaps even partly known) we
+  /// can simplify it.
   public Value simplify(Value v) {
     return (v instanceof RValue rv) ? rv.simplify(cb::nextInfoResolved) : v;
   }
 
-  /** Top-level driver for code generation. */
+  /// Top-level driver for code generation.
   void emit(Runnable addBlocks) {
     // Bind this thread's TState to this CodeGen for the duration of this call.
     assert tstate == null;
@@ -295,7 +263,7 @@ public class CodeGen {
     }
   }
 
-  /** Top-level call to emit the body of a method. */
+  /// Top-level call to emit the body of a method.
   void emit(MethodMemo initialMethod, MethodImpl impl, CodeGenTarget target) {
     assert currentCall == null;
     // This Destination will be passed the method's results, and emit the code to return them
@@ -338,18 +306,14 @@ public class CodeGen {
     currentCall = null;
   }
 
-  /**
-   * A CopyEmitter that writes numeric values to a byte[] and Value objects to an Object[], for
-   * saving an exlined method's results in the TState.
-   */
+  /// A CopyEmitter that writes numeric values to a byte[] and Value objects to an Object[], for
+  /// saving an exlined method's results in the TState.
   static class ToFnResults extends CopyEmitter {
     final Register fnResults;
     final Register fnResultBytes;
 
-    /**
-     * Prepares to write results using the result templates of the given target, and creates a
-     * suitable CopyEmitter.
-     */
+    /// Prepares to write results using the result templates of the given target, and creates a
+    /// suitable CopyEmitter.
     ToFnResults(CodeGen codeGen, CodeGenTarget target) {
       TState.SET_RESULT_TEMPLATES_OP
           .block(codeGen.tstateRegister(), CodeValue.of(target.results))
@@ -383,9 +347,7 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Emit blocks to write this method's results into the TState, using the chosen result templates.
-   */
+  /// Emit blocks to write this method's results into the TState, using the chosen result templates.
   void emitSaveResults(Value[] results) {
     CopyEmitter saveResult = new ToFnResults(this, target);
     for (int i = 0; i < target.results.size(); i++) {
@@ -395,9 +357,7 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Returns an Object[]-valued Register initialized from a call to {@link TState#fnResults(int)}.
-   */
+  /// Returns an Object[]-valued Register initialized from a call to [TState#fnResults(int)].
   Register fnResults(int minSize) {
     // We only use this for writing the method's results, not for reading the results of methods
     // we call, so there's no opportunity for reusing it.
@@ -407,12 +367,10 @@ public class CodeGen {
     return fnResults;
   }
 
-  /** A byte[]-valued Register used to cache the result of {@link TState#fnResultBytes(int)}. */
+  /// A byte[]-valued Register used to cache the result of [TState#fnResultBytes(int)].
   private Register fnResultBytes;
 
-  /**
-   * Returns a byte[]-valued Register initialized from a call to {@link TState#fnResultBytes(int)}.
-   */
+  /// Returns a byte[]-valued Register initialized from a call to [TState#fnResultBytes(int)].
   Register fnResultBytes(int minSize) {
     // This is called after each exlined call, as well as by emitSaveResults(); reusing the same
     // register (very) slightly reduces the work for CodeBuilder.
@@ -426,22 +384,18 @@ public class CodeGen {
     return fnResultBytes;
   }
 
-  /**
-   * A description of the instruction currently being emitted; attached to blocks (via {@link
-   * CodeBuilder#setNextSrc}) as an aid to debugging code generation.
-   */
+  /// A description of the instruction currently being emitted; attached to blocks (via
+  /// [CodeBuilder#setNextSrc]) as an aid to debugging code generation.
   private CodeBuilder.Printable currentInstruction;
 
-  /** Called each time we start emitting an instruction. */
+  /// Called each time we start emitting an instruction.
   void setCurrentInstruction(Value stackEntry) {
     currentInstruction = printStackEntry(stackEntry);
     cb.setNextSrc(currentInstruction);
   }
 
-  /**
-   * Called each time we start emitting the next step of a builtin method, to add clues for
-   * debugging code generation.
-   */
+  /// Called each time we start emitting the next step of a builtin method, to add clues for
+  /// debugging code generation.
   void setCurrentBuiltinStep(Value stackEntry) {
     CodeBuilder.Printable src = printStackEntry(stackEntry);
     // Both the builtin step and the instruction that invoked it are useful to know.
@@ -453,10 +407,8 @@ public class CodeGen {
     cb.setNextSrc(src);
   }
 
-  /**
-   * Convert a StackEntry value to something that can be included as an annotation to our generated
-   * code for debugging purposes.
-   */
+  /// Convert a StackEntry value to something that can be included as an annotation to our generated
+  /// code for debugging purposes.
   private CodeBuilder.Printable printStackEntry(Value stackEntry) {
     return options -> {
       BaseType type = stackEntry.baseType();
@@ -508,10 +460,8 @@ public class CodeGen {
     };
   }
 
-  /**
-   * Allocates a register to store {@link TState#stackRest} for the duration of one function call
-   * and emits an instruction to initialize it to null.
-   */
+  /// Allocates a register to store [TState#stackRest] for the duration of one function call and
+  /// emits an instruction to initialize it to null.
   private Register allocateStackRest() {
     Register result = spareStackRests.poll();
     if (result == null) {
@@ -521,48 +471,39 @@ public class CodeGen {
     return result;
   }
 
-  /**
-   * Each CurrentCall instance saves information about a function call that we are currently
-   * emitting; each call to {@link #emitCall} creates a new CurrentCall object and sets it as {@link
-   * #currentCall} for the duration of that call.
-   */
+  /// Each CurrentCall instance saves information about a function call that we are currently
+  /// emitting; each call to [#emitCall] creates a new CurrentCall object and sets it as
+  /// [#currentCall] for the duration of that call.
   class CurrentCall {
-    /**
-     * A TStack-valued register that will be set to null before emitting the function call, and
-     * during the call may be set to an empty TStack to indicate that a duringCall stack entry is
-     * needed. Used in place of {@link TState#stackRest}, for efficiency.
-     *
-     * <p>Null if this is a call with a {@link BuiltinMethod.DetachedContinuation}.
-     */
+    /// A TStack-valued register that will be set to null before emitting the function call, and
+    /// during the call may be set to an empty TStack to indicate that a duringCall stack entry is
+    /// needed. Used in place of [TState#stackRest], for efficiency.
+    ///
+    /// Null if this is a call with a [BuiltinMethod.DetachedContinuation].
     private Register stackRest;
 
-    /** The CallSite of this call. */
+    /// The CallSite of this call.
     final CallSite callSite;
 
-    /** Returns from this call are implemented by branching to this Destination. */
+    /// Returns from this call are implemented by branching to this Destination.
     final Destination done;
 
-    /** The ValueMemo that will be pushed on the TStack if this call is interrupted. */
+    /// The ValueMemo that will be pushed on the TStack if this call is interrupted.
     final ValueMemo resultsInfo;
 
-    /**
-     * A link to code that should be executed if we start unwinding the stack during execution of
-     * this function. If this is the base of the stack it will save {@link #stackRest} in the TState
-     * and exit the generated code; otherwise it will populate {@link #stackRest} appropriately for
-     * the current nested call and then branch to the enclosing CurrentCall's continueUnwinding
-     * block.
-     */
+    /// A link to code that should be executed if we start unwinding the stack during execution of
+    /// this function. If this is the base of the stack it will save [#stackRest] in the TState and
+    /// exit the generated code; otherwise it will populate [#stackRest] appropriately for the
+    /// current nested call and then branch to the enclosing CurrentCall's continueUnwinding block.
     private FutureBlock handleUnwind;
 
     private int atEndLength = -1;
 
-    /** The MethodMemo for the method currently being emitted for this call. */
+    /// The MethodMemo for the method currently being emitted for this call.
     private MethodMemo methodMemo;
 
-    /**
-     * Used by {@link BuiltinSupport.BuiltinImpl#emit} to save additional state while it runs. Null
-     * if we are emitting any other type of method.
-     */
+    /// Used by [BuiltinSupport.BuiltinImpl#emit] to save additional state while it runs. Null if we
+    /// are emitting any other type of method.
     private BuiltinSupport.EmitState builtinEmitState;
 
     CurrentCall(CallSite callSite, Destination done, ValueMemo resultsInfo) {
@@ -597,11 +538,8 @@ public class CodeGen {
       return handleUnwind;
     }
 
-    /**
-     * Emits blocks to initialize {@code tstack} (or a new TStack, saved as {@link
-     * TState#stackHead}, if {@code tstack} is null), with this call's {@link #stackRest} as its
-     * tail.
-     */
+    /// Emits blocks to initialize `tstack` (or a new TStack, saved as [TState#stackHead], if
+    /// `tstack` is null), with this call's [#stackRest] as its tail.
     void emitFillStackEntry(CodeValue tstack, Value stackEntry, MethodMemo mMemo) {
       CodeValue entryArg = StackEntryBlock.create(stackEntry, cb);
       CodeValue restArg = (stackRest != null) ? stackRest : CodeValue.of(TStack.BASE);
@@ -618,26 +556,24 @@ public class CodeGen {
     }
   }
 
-  /** Returns information about the (innermost) in-progress function call. */
+  /// Returns information about the (innermost) in-progress function call.
   CurrentCall currentCall() {
     return currentCall;
   }
 
-  /** Sets {@link CurrentCall#builtinEmitState} for the in-progress function call. */
+  /// Sets [CurrentCall#builtinEmitState] for the in-progress function call.
   void setBuiltinEmitState(BuiltinSupport.EmitState builtinEmitState) {
     assert currentCall.builtinEmitState == null;
     currentCall.builtinEmitState = builtinEmitState;
   }
 
-  /**
-   * Implements {@link TState#jump} during code generation, by emitting a branch to the code for the
-   * specified continuation.
-   */
+  /// Implements [TState#jump] during code generation, by emitting a branch to the code for the
+  /// specified continuation.
   void jump(String continuationName, Value... args) {
     currentCall.builtinEmitState.getDestination(this, continuationName).addBranch(this, args);
   }
 
-  /** Emits the blocks to allocate a stack entry and call {@link TState#trace} with it. */
+  /// Emits the blocks to allocate a stack entry and call [TState#trace] with it.
   void emitTrace(Instruction.Trace inst, Value stackEntry) {
     CodeValue entryCv = StackEntryBlock.create(stackEntry, cb);
     CodeValue[] traceArgs =
@@ -645,11 +581,9 @@ public class CodeGen {
     new SetBlock(currentCall.stackRest, TState.TRACE_OP.result(traceArgs)).addTo(cb);
   }
 
-  /**
-   * Emits a call to {@code fn} passing {@code args}. {@code stackEntry} represents this call site
-   * and the saved locals, and will be pushed if the stack is unwound during the call. Returns the
-   * Destination that will receive the results.
-   */
+  /// Emits a call to `fn` passing `args`. `stackEntry` represents this call site and the saved
+  /// locals, and will be pushed if the stack is unwound during the call. Returns the Destination
+  /// that will receive the results.
   @CanIgnoreReturnValue
   Destination emitCall(
       VmFunction fn,
@@ -749,7 +683,7 @@ public class CodeGen {
     return done;
   }
 
-  /** Called from {@link VmFunction#emitCall} to emit the body of the specified method. */
+  /// Called from [VmFunction#emitCall] to emit the body of the specified method.
   void emitMethodCall(MethodImpl impl, MethodMemo mMemo, Object[] args) {
     // There may be ConditionalValues in args; this is the time to resolve them.
     int numArgs = mMemo.method().function.numArgs;
@@ -778,14 +712,12 @@ public class CodeGen {
     }
   }
 
-  /**
-   * If non-null, a FutureBlock that should be branched to if generated code encounters an
-   * unexpected situation; will push one or more stack entries representing the current state of
-   * execution and exit the generated code.
-   */
+  /// If non-null, a FutureBlock that should be branched to if generated code encounters an
+  /// unexpected situation; will push one or more stack entries representing the current state of
+  /// execution and exit the generated code.
   private FutureBlock escape;
 
-  /** If true, we would prefer to set a new escape rather than reusing the current one. */
+  /// If true, we would prefer to set a new escape rather than reusing the current one.
   private boolean preferNewEscape;
 
   record EscapeState(FutureBlock escape, boolean preferNewEscape) {
@@ -798,47 +730,47 @@ public class CodeGen {
 
   static final EscapeState NO_ESCAPE = new EscapeState(null, true);
 
-  /** Returns the current escape state. */
+  /// Returns the current escape state.
   EscapeState escapeState() {
     return (escape == null) ? NO_ESCAPE : new EscapeState(escape, preferNewEscape);
   }
 
-  /** Requests that a new escaper be created at the next opportunity. */
+  /// Requests that a new escaper be created at the next opportunity.
   void setPreferNewEscape() {
     preferNewEscape = true;
   }
 
-  /** Returns true if this is a good time to call {@link #setNewEscape}. */
+  /// Returns true if this is a good time to call [#setNewEscape].
   boolean needNewEscape() {
     return escape == null || preferNewEscape;
   }
 
-  /** Restores a previously-saved escape handler. */
+  /// Restores a previously-saved escape handler.
   void restore(EscapeState escapeState) {
     this.escape = escapeState.escape;
     this.preferNewEscape = escapeState.preferNewEscape;
   }
 
-  /** Equivalent to {@code restore(getEscape().combine(escapeState))}. */
+  /// Equivalent to `restore(getEscape().combine(escapeState))`.
   void merge(EscapeState escapeState) {
     if (escapeState.escape != escape || escapeState.preferNewEscape) {
       escape = null;
     }
   }
 
-  /** Returns the current escape handler. */
+  /// Returns the current escape handler.
   FutureBlock escapeLink() {
     assert escape != null;
     return escape;
   }
 
-  /** Defines an escape handler that will be emitted by the given Runnable. */
+  /// Defines an escape handler that will be emitted by the given Runnable.
   void setNewEscape(Runnable addBlocks) {
     escape = atEnd.add(addBlocks, /* isEscape= */ true);
     preferNewEscape = false;
   }
 
-  /** Defines an escape handler that starts unwinding with the given stack entry. */
+  /// Defines an escape handler that starts unwinding with the given stack entry.
   void setNewEscape(Value stackEntry) {
     // Save these when setNewEscape is called, since they will probably change before our Runnable
     // is run.
@@ -852,29 +784,29 @@ public class CodeGen {
         });
   }
 
-  /** Invalidates the current escape handler. */
+  /// Invalidates the current escape handler.
   void invalidateEscape() {
     this.escape = null;
   }
 
-  /** Emits a branch to the current escape handler. */
+  /// Emits a branch to the current escape handler.
   public void escape() {
     cb.branchTo(escape);
   }
 
-  /** Emits a branch to the current escape handler unless the given condition is true. */
+  /// Emits a branch to the current escape handler unless the given condition is true.
   public void escapeUnless(Condition check) {
     if (cb.nextIsReachable()) {
       check.addTest(this, escape);
     }
   }
 
-  /** Emits a branch to the current escape handler if the given condition is true. */
+  /// Emits a branch to the current escape handler if the given condition is true.
   public void escapeWhen(Condition check) {
     escapeUnless(check.not());
   }
 
-  /** Implements {@link TState#getArraySizeAndReserveForChange} when generating code. */
+  /// Implements [TState#getArraySizeAndReserveForChange] when generating code.
   Value getArraySizeAndReserveForChange(
       VArrayLayout layout, CodeValue array, CodeValue sizeDelta, CodeValue parent) {
     CodeValue size = materialize(layout.numElements(array), int.class);
@@ -911,7 +843,7 @@ public class CodeGen {
     emittingUnwindHandler = state;
   }
 
-  /** Emits a return from the current function call. */
+  /// Emits a return from the current function call.
   public void setResults(Value... results) {
     if (cb.nextIsReachable()) {
       if (currentCall.callSite != null) {
@@ -921,13 +853,11 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Emits a return from the current function call.
-   *
-   * <p>{@code result} must be numeric-valued. If it is a constant or register, returns it as-is.
-   * Otherwise (i.e. it is an Op.Result) emits a block to check whether it is NaN, and if so returns
-   * None instead.
-   */
+  /// Emits a return from the current function call.
+  ///
+  /// `result` must be numeric-valued. If it is a constant or register, returns it as-is. Otherwise
+  /// (i.e. it is an Op.Result) emits a block to check whether it is NaN, and if so returns None
+  /// instead.
   public void setResultWithNaNCheck(CodeValue rhs) {
     Value v;
     if (rhs instanceof CodeValue.Const) {
@@ -952,7 +882,7 @@ public class CodeGen {
     setResults(v);
   }
 
-  /** Emits a block to set {@code lhs}. */
+  /// Emits a block to set `lhs`.
   public void emitSet(Register lhs, CodeValue rhs) {
     // An assignment of a register to itself would be optimized away later,
     // but we might as well just skip it now.
@@ -961,10 +891,8 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Emits a block to set {@code lhs}, wrapped in try/catch(ArithmeticException) that escapes if the
-   * exception is thrown.
-   */
+  /// Emits a block to set `lhs`, wrapped in try/catch(ArithmeticException) that escapes if the
+  /// exception is thrown.
   public void emitSetCatchingArithmeticException(Register lhs, CodeValue rhs) {
     // If we've somehow already optimized rhs to no longer call any method that could throw
     // we can skip adding the try/catch
@@ -976,10 +904,8 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Evaluates a supplier and returns its result as an Optional. If the evaluation throws a
-   * BuiltinException, emits an escape and returns an empty optional.
-   */
+  /// Evaluates a supplier and returns its result as an Optional. If the evaluation throws a
+  /// BuiltinException, emits an escape and returns an empty optional.
   Optional<Value> escapeOnErr(Condition.ValueSupplier supplier) {
     try {
       return Optional.of(supplier.get());
@@ -989,12 +915,10 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Emits blocks to set the registers in {@code dst} (whose indices must be in the range {@code
-   * registerStart..registerEnd}) from {@code v}. After the new blocks have executed, either {@code
-   * RValue.fromTemplate(dst)} will have the same value as {@code v} or we will have branched to the
-   * current escape handler.
-   */
+  /// Emits blocks to set the registers in `dst` (whose indices must be in the range
+  /// `registerStart..registerEnd`) from `v`. After the new blocks have executed, either
+  /// `RValue.fromTemplate(dst)` will have the same value as `v` or we will have branched to the
+  /// current escape handler.
   void emitStore(Value v, Template dst, int registerStart, int registerEnd) {
     if (cb.nextIsReachable()) {
       if (v instanceof ConditionalValue cv) {
@@ -1005,22 +929,18 @@ public class CodeGen {
     }
   }
 
-  /**
-   * Emits blocks to set the registers in {@code dst} (whose indices must be in the range {@code
-   * registerStart..registerEnd} from {@code src}; after the new blocks have executed, either {@code
-   * RValue.fromTemplate(dst)} will have the same value as {@code RValue.fromTemplate(src)} or we
-   * will have branched to the current escape handler.
-   */
+  /// Emits blocks to set the registers in `dst` (whose indices must be in the range
+  /// `registerStart..registerEnd` from `src`; after the new blocks have executed, either
+  /// `RValue.fromTemplate(dst)` will have the same value as `RValue.fromTemplate(src)` or we will
+  /// have branched to the current escape handler.
   void emitStore(Template src, Template dst, int registerStart, int registerEnd) {
     CopyPlan plan = CopyPlan.create(src, dst, false);
     plan = CopyOptimizer.toRegisters(plan, registerStart, registerEnd, dst);
     CopyEmitter.REGISTER_TO_REGISTER.emit(this, plan, escape);
   }
 
-  /**
-   * Returns an int CodeValue equal to {@code v}, or escapes if {@code v} is not an int. Throws a
-   * BuiltInException if {@code v} could never be an int.
-   */
+  /// Returns an int CodeValue equal to `v`, or escapes if `v` is not an int. Throws a
+  /// BuiltInException if `v` could never be an int.
   public CodeValue verifyInt(Value v) throws BuiltinException {
     Err.ESCAPE.unless(v.isa(Core.NUMBER));
     v = simplify(v);
@@ -1037,20 +957,18 @@ public class CodeGen {
     return asInt;
   }
 
-  /**
-   * Given a register containing a pointer to a Frame and the layout of the frame, returns a Value.
-   */
+  /// Given a register containing a pointer to a Frame and the layout of the frame, returns a Value.
   public static Value asValue(Register register, FrameLayout layout) {
     int resultIndex = register.index;
     return RValue.fromTemplate(new RefVar.ForFrame(resultIndex, layout.baseType(), layout, false));
   }
 
-  /** Returns a CodeValue for the length of the given varray. */
+  /// Returns a CodeValue for the length of the given varray.
   CodeValue vArrayLength(Value array) {
     return vArrayLength((RefVar.ForFrame) ((RValue) array).template);
   }
 
-  /** Returns a CodeValue for the length of the given varray. */
+  /// Returns a CodeValue for the length of the given varray.
   CodeValue vArrayLength(RefVar.ForFrame refVar) {
     VArrayLayout layout = (VArrayLayout) refVar.frameLayout();
     Register vArray = register(refVar);
@@ -1058,11 +976,8 @@ public class CodeGen {
     return layout.numElements(vArray);
   }
 
-  /**
-   * Emits a test comparing {@code index} with each value in {@code toTest}; if {@code index}
-   * matches, it executes the blocks emitted by {@code emitter} for that value. Falls through if
-   * none of the values match.
-   */
+  /// Emits a test comparing `index` with each value in `toTest`; if `index` matches, it executes
+  /// the blocks emitted by `emitter` for that value. Falls through if none of the values match.
   public void emitSwitch(CodeValue index, Bits toTest, IntConsumer emitter) {
     if (index instanceof CodeValue.Const) {
       int i = index.iValue();
@@ -1086,11 +1001,9 @@ public class CodeGen {
         });
   }
 
-  /**
-   * Emits a test comparing {@code iReg} with each value in {@code min..max-1}; if {@code iReg}
-   * matches, it executes the blocks emitted by {@code emitter} for that value. If none match it
-   * executes the blocks emitted by {@code emitter.accept(max)}.
-   */
+  /// Emits a test comparing `iReg` with each value in `min..max-1`; if `iReg` matches, it executes
+  /// the blocks emitted by `emitter` for that value. If none match it executes the blocks emitted
+  /// by `emitter.accept(max)`.
   public void emitSwitch(CodeValue index, int min, int max, IntConsumer emitter) {
     emitSwitch(index, Bits.forRange(min, max - 1), emitter);
     if (cb.nextIsReachable()) {
@@ -1098,10 +1011,8 @@ public class CodeGen {
     }
   }
 
-  /**
-   * If {@code v} is an Op.Result, allocates a new register of the specified type, stores {@code v}
-   * there, and returns it; otherwise ({@code v} is a register or constant) just returns {@code v}.
-   */
+  /// If `v` is an Op.Result, allocates a new register of the specified type, stores `v` there, and
+  /// returns it; otherwise (`v` is a register or constant) just returns `v`.
   public CodeValue materialize(CodeValue v, Class<?> type) {
     if (v instanceof Op.Result) {
       Register register = cb.newRegister(type);
@@ -1112,10 +1023,8 @@ public class CodeGen {
     }
   }
 
-  /**
-   * If {@code v} is an Op.Result, allocates a new int register and stores {@code v} there, escaping
-   * if an ArithmeticException is thrown. If {@code v} is a register or constant just returns it.
-   */
+  /// If `v` is an Op.Result, allocates a new int register and stores `v` there, escaping if an
+  /// ArithmeticException is thrown. If `v` is a register or constant just returns it.
   public CodeValue materializeCatchingArithmeticException(CodeValue v) throws BuiltinException {
     if (v instanceof Op.Result) {
       Register register = cb.newRegister(int.class);
@@ -1133,16 +1042,14 @@ public class CodeGen {
   private static final Op NEW_ASSERTION_ERROR =
       Op.forMethodHandle("new AssertionError", Handle.forConstructor(AssertionError.class)).build();
 
-  /**
-   * Emits a block that throws an AssertionError. Intended for when the next block should be
-   * unreachable but the JVM may not realize that.
-   */
+  /// Emits a block that throws an AssertionError. Intended for when the next block should be
+  /// unreachable but the JVM may not realize that.
   public void emitAssertionFailed(String source) {
     cb.setNextSrc(source);
     new ThrowBlock(NEW_ASSERTION_ERROR.result()).addTo(cb);
   }
 
-  /** Emits a test to escape unless {@code frame} has the specified layout. */
+  /// Emits a test to escape unless `frame` has the specified layout.
   void ensureLayout(CodeValue frame, FrameLayout layout) {
     if (frame instanceof Register r) {
       // Small optimization: I expect that most calls to ensureLayout are redundant, and we can
@@ -1155,21 +1062,19 @@ public class CodeGen {
     escapeUnless(Condition.fromTest(() -> checkLayout(frame, layout)));
   }
 
-  /** Returns a new test that checks if {@code frame} has the specified layout. */
+  /// Returns a new test that checks if `frame` has the specified layout.
   static TestBlock checkLayout(CodeValue frame, FrameLayout layout) {
     return new PtrInfo.TestLayout(frame, Frame.GET_LAYOUT_OR_REPLACEMENT.result(frame), layout);
   }
 
-  /** Returns a new (non-argument) RegisterAllocator. */
+  /// Returns a new (non-argument) RegisterAllocator.
   RegisterAllocator newAllocator() {
     return new RegisterAllocator(cb, false);
   }
 
-  /**
-   * Emits a block that will compare {@code v1} and {@code v2} (both numbers) for equality.
-   * Continues if they are equal ({@code nextIfTrue=true}) or not equal ({@code nextIfTrue=false}),
-   * and branches to {@code elseBranch} otherwise.
-   */
+  /// Emits a block that will compare `v1` and `v2` (both numbers) for equality. Continues if they
+  /// are equal (`nextIfTrue=true`) or not equal (`nextIfTrue=false`), and branches to `elseBranch`
+  /// otherwise.
   void testEqualsNum(CodeValue v1, CodeValue v2, boolean nextIfTrue, FutureBlock elseBranch) {
     assert !v1.isPtr() && !v2.isPtr();
     boolean asDouble = v1.type() == double.class || v2.type() == double.class;
@@ -1178,20 +1083,15 @@ public class CodeGen {
         .addTo(cb);
   }
 
-  /**
-   * Emits a block that tests if {@code v} (a double) is NaN. Continues if it is ({@code
-   * nextIfTrue=true}) or is not ({@code nextIfTrue=false}), and branches to {@code elseBranch}
-   * otherwise.
-   */
+  /// Emits a block that tests if `v` (a double) is NaN. Continues if it is (`nextIfTrue=true`) or
+  /// is not (`nextIfTrue=false`), and branches to `elseBranch` otherwise.
   public void testIsNaN(CodeValue v, boolean nextIfTrue, FutureBlock elseBranch) {
     TestBlock.isFalse(IS_NAN_OP.result(v)).setBranch(nextIfTrue, elseBranch).addTo(cb);
   }
 
-  /**
-   * Emits a block that will compare {@code v1} and {@code v2} (both pointers) for equality.
-   * Continues if they are equal ({@code nextIfTrue=true}) or not equal ({@code nextIfTrue=false}),
-   * and branches to {@code elseBranch} otherwise.
-   */
+  /// Emits a block that will compare `v1` and `v2` (both pointers) for equality. Continues if they
+  /// are equal (`nextIfTrue=true`) or not equal (`nextIfTrue=false`), and branches to `elseBranch`
+  /// otherwise.
   void testEqualsObj(CodeValue v1, CodeValue v2, boolean nextIfTrue, FutureBlock elseBranch) {
     assert v1.isPtr() && v2.isPtr();
     if (isEmptyArray(v1) && testIsEmptyArray(v2, nextIfTrue, elseBranch)) {
@@ -1206,15 +1106,13 @@ public class CodeGen {
     }
   }
 
-  /** True if the given CodeValue is a constant empty array. */
+  /// True if the given CodeValue is a constant empty array.
   static boolean isEmptyArray(CodeValue v) {
     return (v instanceof CodeValue.Const c) && (c.value == Core.EMPTY_ARRAY);
   }
 
-  /**
-   * If {@code v} is a register with a VArray layout, emits a test for the varray's length being
-   * zero and returns true; otherwise returns false.
-   */
+  /// If `v` is a register with a VArray layout, emits a test for the varray's length being zero and
+  /// returns true; otherwise returns false.
   private boolean testIsEmptyArray(CodeValue v, boolean nextIfTrue, FutureBlock elseBranch) {
     if (v instanceof Register r) {
       ValueInfo info = cb.nextInfoResolved(r.index);
@@ -1228,10 +1126,8 @@ public class CodeGen {
     return false;
   }
 
-  /**
-   * True if an equality comparison with {@code v} can use {@code ==} rather than {@code equals()},
-   * i.e. {@code v} is null or a singleton other than EMPTY_ARRAY.
-   */
+  /// True if an equality comparison with `v` can use `==` rather than `equals()`, i.e. `v` is null
+  /// or a singleton other than EMPTY\_ARRAY.
   private static boolean canTestEq(CodeValue v) {
     if (v instanceof CodeValue.Const c) {
       Object x = c.value;

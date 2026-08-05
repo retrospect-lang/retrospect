@@ -23,44 +23,40 @@ import org.retrolang.impl.Evolver.Evolution;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
 
-/**
- * Frame is the base class for a set of generic subclasses (defined in Frames) of varying sizes,
- * which can be used to create more space-efficient representations of Values.
- *
- * <p>Frame subclasses have two fixed fields: a ref count (inherited from RefCounted) and a
- * FrameLayout. The FrameLayout determines the interpretation of the remaining fields; it serves a
- * similar purpose to the virtual method table in Java or C++ objects. All Frame instances that
- * share a FrameLayout have the same baseType and structure. If a Frame's FrameLayout evolves, the
- * {@link #layoutOrReplacement} field may be repurposed to point to a replacement Frame with the new
- * layout.
- *
- * <p>The remaining fields of a Frame instance can be used to store bytes, ints, doubles, and
- * pointers as required by the FrameLayout (Frame subclasses only define int fields, but Unsafe
- * methods are used to reinterpret them as bytes or doubles). Each Frame subclass provides a
- * different combination of pointer and non-pointer fields, so that each FrameLayout can be paired
- * with a Frame subclass that best matches its requirements.
- *
- * <p>If a FrameLayout requires more pointer or non-pointer fields than are available in any Frame
- * subclass, each instance will use a byte[] and/or Object[] overflow array to store the extras; to
- * simplify the logic any overflow arrays are always stored in the first one or two pointer fields
- * (with the byte[] overflow first, if both are required).
- *
- * <p>Most of the standard methods (from Value, RefCounted, and Object) are implemented by
- * redirecting to a corresponding method on the FrameLayout.
- */
+/// Frame is the base class for a set of generic subclasses (defined in Frames) of varying sizes,
+/// which can be used to create more space-efficient representations of Values.
+///
+/// Frame subclasses have two fixed fields: a ref count (inherited from RefCounted) and a
+/// FrameLayout. The FrameLayout determines the interpretation of the remaining fields; it serves a
+/// similar purpose to the virtual method table in Java or C++ objects. All Frame instances that
+/// share a FrameLayout have the same baseType and structure. If a Frame's FrameLayout evolves, the
+/// [#layoutOrReplacement] field may be repurposed to point to a replacement Frame with the new
+/// layout.
+///
+/// The remaining fields of a Frame instance can be used to store bytes, ints, doubles, and pointers
+/// as required by the FrameLayout (Frame subclasses only define int fields, but Unsafe methods are
+/// used to reinterpret them as bytes or doubles). Each Frame subclass provides a different
+/// combination of pointer and non-pointer fields, so that each FrameLayout can be paired with a
+/// Frame subclass that best matches its requirements.
+///
+/// If a FrameLayout requires more pointer or non-pointer fields than are available in any Frame
+/// subclass, each instance will use a byte[] and/or Object[] overflow array to store the extras; to
+/// simplify the logic any overflow arrays are always stored in the first one or two pointer fields
+/// (with the byte[] overflow first, if both are required).
+///
+/// Most of the standard methods (from Value, RefCounted, and Object) are implemented by redirecting
+/// to a corresponding method on the FrameLayout.
 public abstract class Frame extends RefCounted implements Value {
   static final long BASE_SIZE = RefCounted.BASE_SIZE + SizeOf.PTR;
 
-  /** A superclass shared by FrameLayout and Replacement. */
+  /// A superclass shared by FrameLayout and Replacement.
   abstract static class LayoutOrReplacement {
-    /** Implements RefCounted.visitRefs() for a Frame that uses this LayoutOrReplacement. */
+    /// Implements RefCounted.visitRefs() for a Frame that uses this LayoutOrReplacement.
     abstract long visitRefs(Frame f, RefVisitor visitor);
   }
 
-  /**
-   * The FrameLayout that determines how the remaining fields are interpreted, or a Replacement if
-   * this Frame has been replaced.
-   */
+  /// The FrameLayout that determines how the remaining fields are interpreted, or a Replacement if
+  /// this Frame has been replaced.
   LayoutOrReplacement layoutOrReplacement;
 
   private static final VarHandle LAYOUT_OR_REPLACEMENT =
@@ -70,18 +66,16 @@ public abstract class Frame extends RefCounted implements Value {
       Op.getField(Frame.class, "layoutOrReplacement", LayoutOrReplacement.class);
   static final Op SET_LAYOUT_OR_REPLACEMENT = GET_LAYOUT_OR_REPLACEMENT.setter().build();
 
-  /** Returns the index of this Frame's subclass. */
+  /// Returns the index of this Frame's subclass.
   abstract int frameClassIndex();
 
-  /**
-   * Returns true if this Frame has been replaced. May transition from false to true asynchronously,
-   * but will never transition from true to false.
-   */
+  /// Returns true if this Frame has been replaced. May transition from false to true
+  /// asynchronously, but will never transition from true to false.
   boolean isReplaced() {
     return layoutOrReplacement instanceof Replacement;
   }
 
-  /** Called from the Coordinator to link this frame to its replacement. */
+  /// Called from the Coordinator to link this frame to its replacement.
   void setReplacement(Replacement replacement) {
     assert !isReplaced();
     // Other threads will read this without having synchronized, so use setRelease() to ensure that
@@ -89,11 +83,9 @@ public abstract class Frame extends RefCounted implements Value {
     LAYOUT_OR_REPLACEMENT.setRelease(this, replacement);
   }
 
-  /**
-   * If this frame's layout has not evolved, return null. Otherwise return a {@link Replacement}
-   * that points to its replacement. If there has been a sequence of replacements the Replacement
-   * returned will point to the most recent version of this frame.
-   */
+  /// If this frame's layout has not evolved, return null. Otherwise return a [Replacement] that
+  /// points to its replacement. If there has been a sequence of replacements the Replacement
+  /// returned will point to the most recent version of this frame.
   static Replacement getReplacement(Frame f) {
     Replacement result = null;
     for (; ; ) {
@@ -132,10 +124,8 @@ public abstract class Frame extends RefCounted implements Value {
     }
   }
 
-  /**
-   * If this frame's layout has not evolved, return it; otherwise returns its most recent
-   * replacement.
-   */
+  /// If this frame's layout has not evolved, return it; otherwise returns its most recent
+  /// replacement.
   @RC.Out
   static Frame latest(@RC.In Frame f) {
     Replacement replacement = getReplacement(f);
@@ -236,14 +226,12 @@ public abstract class Frame extends RefCounted implements Value {
 
     static final long OBJ_SIZE = SizeOf.object(2 * SizeOf.PTR + SizeOf.INT);
 
-    /**
-     * The Evolution that prompted this replacement. Used primarily to recover the original
-     * FrameLayout. Set to null after all of the tracker's threads have synced past this
-     * replacement's clock and the original Frame has been cleared.
-     */
+    /// The Evolution that prompted this replacement. Used primarily to recover the original
+    /// FrameLayout. Set to null after all of the tracker's threads have synced past this
+    /// replacement's clock and the original Frame has been cleared.
     private Evolution evolution;
 
-    /** The Frame that should be used in place of the original. */
+    /// The Frame that should be used in place of the original.
     @RC.Counted final Frame newFrame;
 
     static final VarHandle EVOLUTION =
@@ -254,20 +242,16 @@ public abstract class Frame extends RefCounted implements Value {
       this.newFrame = newFrame;
     }
 
-    /**
-     * True if the original frame has been cleared and all threads are required to use the
-     * replacement.
-     */
+    /// True if the original frame has been cleared and all threads are required to use the
+    /// replacement.
     boolean isComplete() {
       return EVOLUTION.getVolatile(this) == null;
     }
 
-    /**
-     * Usually called twice: once from visitRefs when the original frame's refCount goes to zero,
-     * and once from Coordinator once all of the ResourceTracker's active threads have synchronized
-     * past our clock value. The first call will clear the original Frame; the second call will have
-     * no effect.
-     */
+    /// Usually called twice: once from visitRefs when the original frame's refCount goes to zero,
+    /// and once from Coordinator once all of the ResourceTracker's active threads have synchronized
+    /// past our clock value. The first call will clear the original Frame; the second call will
+    /// have no effect.
     void clearOriginal(Frame f, RefVisitor releaseVisitor) {
       Evolution evolution = (Evolution) EVOLUTION.getAndSet(this, null);
       if (evolution != null) {

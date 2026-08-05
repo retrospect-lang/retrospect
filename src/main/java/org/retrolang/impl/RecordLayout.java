@@ -33,56 +33,45 @@ import org.retrolang.util.ArrayUtil;
 import org.retrolang.util.Bits;
 import org.retrolang.util.SizeOf;
 
-/**
- * Frames using this FrameLayout represent the compound value described by the template, with
- * variable values supplied by the Frame's fields.
- *
- * <p>When possible we choose a FrameClass that allows each of the template's NumVars and RefVars to
- * be stored directly in the frame. But since it's possible that there may not be a FrameClass with
- * as many int or pointer fields as our template requires, we have to be prepared to allocate a
- * byte[] and/or Object[] to hold the overflow (and since any overflow arrays will require slots in
- * the frame, they have to be considered when assigning slots).
- */
+/// Frames using this FrameLayout represent the compound value described by the template, with
+/// variable values supplied by the Frame's fields.
+///
+/// When possible we choose a FrameClass that allows each of the template's NumVars and RefVars to
+/// be stored directly in the frame. But since it's possible that there may not be a FrameClass with
+/// as many int or pointer fields as our template requires, we have to be prepared to allocate a
+/// byte[] and/or Object[] to hold the overflow (and since any overflow arrays will require slots in
+/// the frame, they have to be considered when assigning slots).
 public class RecordLayout extends FrameLayout {
   public final Template.Compound template;
 
-  /**
-   * The value of {@code alloc.ptrSize()} after our VarAllocator finished visiting each top-level
-   * element.
-   *
-   * <p>For each refVar {@code r} in {@code template.element(i)}, {@code r.index < ptrEnd[i]} and
-   * {@code r.index >= (i == 0) ? 0 : ptrEnd[i - 1]}.
-   *
-   * <p>Null if {@link #baseType} is a StackEntryType (those templates use a special allocation
-   * process).
-   */
+  /// The value of `alloc.ptrSize()` after our VarAllocator finished visiting each top-level
+  /// element.
+  ///
+  /// For each refVar `r` in `template.element(i)`, `r.index < ptrEnd[i]` and `r.index >= (i == 0) ?
+  /// 0 : ptrEnd[i - 1]`.
+  ///
+  /// Null if [#baseType] is a StackEntryType (those templates use a special allocation process).
   private final int[] ptrEnd;
 
-  /** The number of ints required to store this layout's non-pointer fields. */
+  /// The number of ints required to store this layout's non-pointer fields.
   private final int intSize;
 
-  /**
-   * The length (in bytes) of any non-pointer overflow array required, or zero if this layout's
-   * non-pointer fields fit in the chosen FrameClass.
-   */
+  /// The length (in bytes) of any non-pointer overflow array required, or zero if this layout's
+  /// non-pointer fields fit in the chosen FrameClass.
   @VisibleForTesting final int byteOverflowSize;
 
-  /**
-   * The length of any pointer overflow array required, or zero if this layout's pointer fields fit
-   * in the chosen FrameClass.
-   */
+  /// The length of any pointer overflow array required, or zero if this layout's pointer fields fit
+  /// in the chosen FrameClass.
   @VisibleForTesting final int ptrOverflowSize;
 
-  /** The number of overflow arrays for bytes and/or pointers: 0, 1, or 2. */
+  /// The number of overflow arrays for bytes and/or pointers: 0, 1, or 2.
   private final int numOverflow;
 
-  /**
-   * The total number of bytes required for each instance of this RecordLayout, counting the Frame
-   * and any required overflow arrays.
-   */
+  /// The total number of bytes required for each instance of this RecordLayout, counting the Frame
+  /// and any required overflow arrays.
   final int totalBytes;
 
-  /** Builds a template with the given builder, and creates a RecordLayout using the result. */
+  /// Builds a template with the given builder, and creates a RecordLayout using the result.
   static RecordLayout newFromBuilder(Scope scope, TemplateBuilder builder) {
     VarAllocator allocator = VarAllocator.newForRecordLayout();
     Template.Compound template = (Template.Compound) builder.build(allocator);
@@ -91,12 +80,9 @@ public class RecordLayout extends FrameLayout {
     return result;
   }
 
-  /**
-   * Creates a RecordLayout from a template and the allocator that was used to build it.
-   *
-   * <p>Should only be called directly by the Evolver; other callers should use {@link
-   * #newFromBuilder}.
-   */
+  /// Creates a RecordLayout from a template and the allocator that was used to build it.
+  ///
+  /// Should only be called directly by the Evolver; other callers should use [#newFromBuilder].
   static RecordLayout newWithAllocator(
       Scope scope, Template.Compound template, VarAllocator alloc) {
     FrameClass frameClass = FrameClass.select(alloc.intSize(), alloc.ptrSize());
@@ -110,10 +96,8 @@ public class RecordLayout extends FrameLayout {
     return new RecordLayout(scope, frameClass, template, alloc, ptrEnd);
   }
 
-  /**
-   * Creates a RecordLayout for a StackEntryType. A frame with this layout cannot be used as a
-   * Retrospect-language value, will never be evolved, and does not support modification.
-   */
+  /// Creates a RecordLayout for a StackEntryType. A frame with this layout cannot be used as a
+  /// Retrospect-language value, will never be evolved, and does not support modification.
   static RecordLayout newForStackEntry(Template.Compound template, VarAllocator alloc) {
     assert template.baseType instanceof StackEntryType;
     FrameClass frameClass = FrameClass.select(alloc.intSize(), alloc.ptrSize());
@@ -152,20 +136,18 @@ public class RecordLayout extends FrameLayout {
     this.totalBytes = Math.toIntExact(totalBytes);
   }
 
-  /** Determine how many of this FrameClass's pointer fields we'll actually use. */
+  /// Determine how many of this FrameClass's pointer fields we'll actually use.
   private static int ptrsUsed(FrameClass frameClass, VarAllocator alloc) {
     boolean hasByteOverflow = (alloc.intSize() > frameClass.nInts);
     int totalPtrs = alloc.ptrSize() + (hasByteOverflow ? 1 : 0);
     return Math.min(totalPtrs, frameClass.nPtrs);
   }
 
-  /** If we have a byte overflow array, it's always stored in the first pointer field. */
+  /// If we have a byte overflow array, it's always stored in the first pointer field.
   private static final int BYTE_OVERFLOW_INDEX = 0;
 
-  /**
-   * If we have a pointer overflow array, it's stored in the first pointer field if there is no byte
-   * overflow array, or the second pointer field if there is.
-   */
+  /// If we have a pointer overflow array, it's stored in the first pointer field if there is no
+  /// byte overflow array, or the second pointer field if there is.
   private int ptrOverflowIndex() {
     return (byteOverflowSize == 0) ? 0 : 1;
   }
@@ -226,10 +208,8 @@ public class RecordLayout extends FrameLayout {
     return (newTemplate == template) ? this : scope.evolver.evolve(this, newTemplate, false);
   }
 
-  /**
-   * Evolves this RecordLayout to a new VArrayLayout that can store the elements of this layout's
-   * template and the given element.
-   */
+  /// Evolves this RecordLayout to a new VArrayLayout that can store the elements of this layout's
+  /// template and the given element.
   FrameLayout evolveToVArray(TemplateBuilder element) {
     return scope.evolver.evolve(this, element, true);
   }
@@ -256,12 +236,12 @@ public class RecordLayout extends FrameLayout {
     return result;
   }
 
-  /** Returns a CodeValue that calls {@link #alloc} on this RecordLayout. */
+  /// Returns a CodeValue that calls [#alloc] on this RecordLayout.
   CodeValue emitAlloc(CodeGen codeGen) {
     return emitAlloc(codeGen.cb);
   }
 
-  /** Returns a CodeValue that calls {@link #alloc} on this RecordLayout. */
+  /// Returns a CodeValue that calls [#alloc] on this RecordLayout.
   CodeValue emitAlloc(CodeBuilder cb) {
     // The size argument is ignored, so we just pass zero.
     return ALLOC_OP.result(CodeValue.of(this), CodeGen.tstateRegister(cb), CodeValue.ZERO);
@@ -425,7 +405,7 @@ public class RecordLayout extends FrameLayout {
     };
   }
 
-  /** Returns a CopyEmitter that sets fields in a frame with this layout. */
+  /// Returns a CopyEmitter that sets fields in a frame with this layout.
   CopyEmitter copyTo(CodeValue f) {
     return new CopyEmitter() {
       @Override
@@ -435,19 +415,15 @@ public class RecordLayout extends FrameLayout {
     };
   }
 
-  /**
-   * Returns an optimized {@link CopyPlan} that sets the fields referred to by {@code dst} from the
-   * registers referred to by {@code src}.
-   */
+  /// Returns an optimized [CopyPlan] that sets the fields referred to by `dst` from the registers
+  /// referred to by `src`.
   CopyPlan storePlan(Template src, Template dst) {
     CopyPlan plan = CopyPlan.create(src, dst, true);
     return CopyOptimizer.optimize(plan, this, CopyOptimizer.Policy.NUM_VARS_ARE_BYTE_OFFSETS);
   }
 
-  /**
-   * Given a NumVar or RefVar in this layout's template and a CodeValue for a Frame with this
-   * layout, return a CodeValue for the NumVar or RefVar's value.
-   */
+  /// Given a NumVar or RefVar in this layout's template and a CodeValue for a Frame with this
+  /// layout, return a CodeValue for the NumVar or RefVar's value.
   private CodeValue codeValue(Template t, CodeValue frame) {
     if (t instanceof NumVar numVar) {
       int pos = numVar.index;
@@ -495,7 +471,7 @@ public class RecordLayout extends FrameLayout {
     return template.element(i).peekValue(asVarSource(f, mayBeUninitialized));
   }
 
-  /** Copy the specified range of pointers from one instance of this RecordLayout to another. */
+  /// Copy the specified range of pointers from one instance of this RecordLayout to another.
   private void copyPtrs(Frame fSrc, Frame fDst, int start, int end) {
     if (start == end) {
       return;
@@ -519,7 +495,7 @@ public class RecordLayout extends FrameLayout {
     }
   }
 
-  /** Copy Values from one array to another, incrementing refcounts appropriately. */
+  /// Copy Values from one array to another, incrementing refcounts appropriately.
   private static void copyPtrs(Object[] src, Object[] dst, int start, int end) {
     for (int i = start; i < end; i++) {
       assert dst[i] == null;
@@ -530,10 +506,8 @@ public class RecordLayout extends FrameLayout {
     }
   }
 
-  /**
-   * Given a NumVar or RefVar from this RecordLayout's template, returns a Block that will set that
-   * field in the given frame to {@code v}.
-   */
+  /// Given a NumVar or RefVar from this RecordLayout's template, returns a Block that will set that
+  /// field in the given frame to `v`.
   Block setCodeValue(Template t, CodeValue frame, CodeValue v) {
     if (t instanceof NumVar) {
       NumVar numVar = (NumVar) t;
@@ -679,11 +653,9 @@ public class RecordLayout extends FrameLayout {
     };
   }
 
-  /**
-   * Returns the largest index of any RefVar in the given template, or {@code start - 1} if there is
-   * none. Assumes that the RefVar indices were assigned by our VarAllocator (i.e. that they are in
-   * increasing order) and that they are all greater than or equal to {@code start}.
-   */
+  /// Returns the largest index of any RefVar in the given template, or `start - 1` if there is
+  /// none. Assumes that the RefVar indices were assigned by our VarAllocator (i.e. that they are in
+  /// increasing order) and that they are all greater than or equal to `start`.
   private static int maxRefVarIndex(Template template, int start) {
     if (template instanceof Template.Compound compound) {
       // Since we assume that RefVar indices were assigned in increasing order, we can look
@@ -717,21 +689,17 @@ public class RecordLayout extends FrameLayout {
     }
   }
 
-  /**
-   * RecordLayout's VarAllocator assigns sequential indices for RefVars, but NumVar indices are
-   * offsets into a block of bytes.
-   */
+  /// RecordLayout's VarAllocator assigns sequential indices for RefVars, but NumVar indices are
+  /// offsets into a block of bytes.
   static class VarAllocator implements TemplateBuilder.VarAllocator {
-    /**
-     * The offset at which the next uint8 var could be assigned, or -1 if {@link #setUpgradeSubInts}
-     * has been called.
-     */
+    /// The offset at which the next uint8 var could be assigned, or -1 if [#setUpgradeSubInts] has
+    /// been called.
     private int nextB;
 
-    /** The offset at which the next int32 var could be assigned. */
+    /// The offset at which the next int32 var could be assigned.
     private int nextI;
 
-    /** The offset at which the next float64 var could be assigned. */
+    /// The offset at which the next float64 var could be assigned.
     private int nextD;
 
     // The not-yet-allocated bytes are the union of
@@ -741,7 +709,7 @@ public class RecordLayout extends FrameLayout {
     //
     // Those ranges may or may not overlap.
 
-    /** The index of the next refvar. */
+    /// The index of the next refvar.
     private int nextX;
 
     private boolean dropToBeSetFromUnions = false;
@@ -759,47 +727,41 @@ public class RecordLayout extends FrameLayout {
       dropToBeSetFromUnions = toDuplicate.dropToBeSetFromUnions;
     }
 
-    /** Returns a new VarAllocator that will allocate doubles at offsets 0, 8, 16, etc. */
+    /// Returns a new VarAllocator that will allocate doubles at offsets 0, 8, 16, etc.
     static VarAllocator newWithAlignedDoubles() {
       return new VarAllocator(0);
     }
 
-    /** Returns a new VarAllocator that will allocate doubles at offsets 4, 12, 20, etc. */
+    /// Returns a new VarAllocator that will allocate doubles at offsets 4, 12, 20, etc.
     static VarAllocator newWithOffsetDoubles() {
       return new VarAllocator(4);
     }
 
-    /**
-     * Returns a new VarAllocator appropriate for use with RecordLayout frames.
-     *
-     * <p>With the current layout of Frame objects (two 4-byte fields, refCnt and layout) on older
-     * JVMs (12-byte Java object header) the first byte we allocate is going to be 4-byte aligned
-     * but not 8-byte aligned, so the offset will give us properly-aligned doubles.
-     *
-     * <p>But newer JVMs (with JEP 519) reduce the header size to 8 bytes, which throws off this
-     * assumption. We'll probably get better performance for loading/storing doubles and save an
-     * average of 2 bytes per object if we adapt to that, but doing so would make test output
-     * platform-dependent so we haven't done it yet.
-     */
+    /// Returns a new VarAllocator appropriate for use with RecordLayout frames.
+    ///
+    /// With the current layout of Frame objects (two 4-byte fields, refCnt and layout) on older
+    /// JVMs (12-byte Java object header) the first byte we allocate is going to be 4-byte aligned
+    /// but not 8-byte aligned, so the offset will give us properly-aligned doubles.
+    ///
+    /// But newer JVMs (with JEP 519) reduce the header size to 8 bytes, which throws off this
+    /// assumption. We'll probably get better performance for loading/storing doubles and save an
+    /// average of 2 bytes per object if we adapt to that, but doing so would make test output
+    /// platform-dependent so we haven't done it yet.
     static VarAllocator newForRecordLayout() {
       return newWithOffsetDoubles();
     }
 
-    /**
-     * Should only be called on a newly-allocated VarAllocator; marks this allocator so that any
-     * call to allocate a NumVar with encoding smaller than an INT32 will allocate an INT32. Returns
-     * this.
-     */
+    /// Should only be called on a newly-allocated VarAllocator; marks this allocator so that any
+    /// call to allocate a NumVar with encoding smaller than an INT32 will allocate an INT32.
+    /// Returns this.
     VarAllocator setUpgradeSubInts() {
       assert nextB == 0 && nextI == 0 && (nextD & ~4) == 0 && nextX == 0;
       nextB = -1;
       return this;
     }
 
-    /**
-     * Should only be called on a newly-allocated VarAllocator; indicates that this allocator should
-     * not create templates containing {@link Core#TO_BE_SET}. Returns this.
-     */
+    /// Should only be called on a newly-allocated VarAllocator; indicates that this allocator
+    /// should not create templates containing [Core#TO_BE_SET]. Returns this.
     VarAllocator setDropToBeSetFromUnions() {
       assert nextB <= 0 && nextI == 0 && (nextD & ~4) == 0 && nextX == 0;
       dropToBeSetFromUnions = true;
@@ -811,9 +773,7 @@ public class RecordLayout extends FrameLayout {
       return dropToBeSetFromUnions;
     }
 
-    /**
-     * Returns true if nextB, nextI, and nextD are related as expected. Used only for assertions.
-     */
+    /// Returns true if nextB, nextI, and nextD are related as expected. Used only for assertions.
     private boolean invariant() {
       // nextB <= nextI <= nextD
       // nextI and nextD are int-aligned
@@ -831,10 +791,8 @@ public class RecordLayout extends FrameLayout {
       return nextB < 0;
     }
 
-    /**
-     * Returns the minimum number of bytes required to hold the numeric vars, rounded up to the
-     * nearest multiple of 4.
-     */
+    /// Returns the minimum number of bytes required to hold the numeric vars, rounded up to the
+    /// nearest multiple of 4.
     int byteSize() {
       // If nextD is only greater than nextI because of alignment requirements, we can use nextI;
       // otherwise we have to use nextD.
@@ -843,12 +801,12 @@ public class RecordLayout extends FrameLayout {
       return byteSize;
     }
 
-    /** Returns the minimum nInts required for a Frame to hold these vars. */
+    /// Returns the minimum nInts required for a Frame to hold these vars.
     int intSize() {
       return byteSize() / SizeOf.INT;
     }
 
-    /** Returns the minimum nPtrs required for a Frame to hold these vars. */
+    /// Returns the minimum nPtrs required for a Frame to hold these vars.
     int ptrSize() {
       return nextX;
     }

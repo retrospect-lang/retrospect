@@ -24,10 +24,8 @@ import org.retrolang.impl.Err.BuiltinException;
 class VmCompound implements Vm.Compound {
   final BaseType baseType;
 
-  /**
-   * A Vm.Function that takes a value of this compound's type and returns each of its elements as a
-   * separate result.
-   */
+  /// A Vm.Function that takes a value of this compound's type and returns each of its elements as a
+  /// separate result.
   final VmFunction extract;
 
   final Singleton asLambdaExpr;
@@ -52,7 +50,7 @@ class VmCompound implements Vm.Compound {
     return extract;
   }
 
-  /** Implements our {@link #extract} function. */
+  /// Implements our [#extract] function.
   private void extractMethod(TState tstate, Object[] args) throws BuiltinException {
     Value arg = (Value) args[0];
     if (baseType.isArray()) {
@@ -86,10 +84,8 @@ class VmCompound implements Vm.Compound {
     return asLambdaExpr;
   }
 
-  /**
-   * A singleton BaseType that can be passed as the first argument to {@code at()} to create values
-   * of the given BaseType.
-   */
+  /// A singleton BaseType that can be passed as the first argument to `at()` to create values of
+  /// the given BaseType.
   private static class AsLambdaExpr extends Core.CoreLambda {
     final BaseType resultType;
 

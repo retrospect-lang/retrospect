@@ -34,111 +34,82 @@ import org.retrolang.compiler.RetrospectParser.LowerIdContext;
 import org.retrolang.compiler.RetrospectParser.SimpleExtractContext;
 import org.retrolang.util.Bits;
 
-/**
- * A subclass of BlockCompiler used to create the InstructionBlock for a loop body. The resulting
- * InstructionBlock will be used to define a method for either {@code nextState(loop, element,
- * state)} (loops that have a collection) or {@code at(loop, state)} (loops that don't).
- */
+/// A subclass of BlockCompiler used to create the InstructionBlock for a loop body. The resulting
+/// InstructionBlock will be used to define a method for either `nextState(loop, element, state)`
+/// (loops that have a collection) or `at(loop, state)` (loops that don't).
 class Loop extends BlockCompiler {
-  /** True if this loop included the "sequential" keyword. */
+  /// True if this loop included the "sequential" keyword.
   final boolean isSequential;
 
-  /**
-   * True if this loop is over a collection ("{@code for x in y ...}"), false if it is an unbounded
-   * sequential loop ("{@code for sequential x ...}") (note that parallel loops must have a source,
-   * sequential loops may or may not).
-   */
+  /// True if this loop is over a collection ("`for x in y ...`"), false if it is an unbounded
+  /// sequential loop ("`for sequential x ...`") (note that parallel loops must have a source,
+  /// sequential loops may or may not).
   final boolean hasSource;
 
-  /**
-   * A compiler-generated name of the form "loop@<lineNumber>", used when creating types for the
-   * loop closure, the loop state, and any break closures.
-   */
+  /// A compiler-generated name of the form "loop@<linenumber>", used when creating types for the
+  /// loop closure, the loop state, and any break closures.
   final String name;
 
-  /** A Local storing the loop closure argument. */
+  /// A Local storing the loop closure argument.
   final Local selfArg;
 
-  /**
-   * A Local storing the element argument passed to {@code nextState()}, or null if {@link
-   * #hasSource} is false.
-   */
+  /// A Local storing the element argument passed to `nextState()`, or null if [#hasSource] is
+  /// false.
   final Local elementArg;
 
-  /** A Local storing the state argument. */
+  /// A Local storing the state argument.
   final Local stateArg;
 
-  /**
-   * A StateVar for each variable listed after the {@code sequential} keyword; empty if this is a
-   * parallel loop.
-   */
+  /// A StateVar for each variable listed after the `sequential` keyword; empty if this is a
+  /// parallel loop.
   final List<StateVar> stateVars;
 
-  /** A CollectedVar for each variable listed in the {@code collect} part of this loop. */
+  /// A CollectedVar for each variable listed in the `collect` part of this loop.
   final List<CollectedVar> collectedVars = new ArrayList<>();
 
-  /**
-   * A Break for each distinct {@code break} statement in the loop body.
-   *
-   * <p>If there are multiple {@code break} statements with no body, they are all represented by a
-   * single {@code Break} instance.
-   */
+  /// A Break for each distinct `break` statement in the loop body.
+  ///
+  /// If there are multiple `break` statements with no body, they are all represented by a single
+  /// `Break` instance.
   final List<Break> breaks = new ArrayList<>();
 
-  /**
-   * True if this loop has a source collection and at least one collected variable with an
-   * expression.
-   */
+  /// True if this loop has a source collection and at least one collected variable with an
+  /// expression.
   private boolean mayHaveKeyedCollectors;
 
-  /**
-   * Set by {@link PassOne#visitForStatement} if we can't determine statically whether the loop will
-   * need to enumerate both keys and values, in which case we must add a closure var to record the
-   * choice made at runtime.
-   */
+  /// Set by [PassOne#visitForStatement] if we can't determine statically whether the loop will need
+  /// to enumerate both keys and values, in which case we must add a closure var to record the
+  /// choice made at runtime.
   Local eKind;
 
-  /**
-   * If the {@link #elementArg} might contain a (key, value) pair, this Local will be non-null and
-   * set to the key (or {@code Absent} if {@code elementArg} doesn't actually contain a key --
-   * sometimes we will only know at runtime).
-   */
+  /// If the [#elementArg] might contain a (key, value) pair, this Local will be non-null and set to
+  /// the key (or `Absent` if `elementArg` doesn't actually contain a key -- sometimes we will only
+  /// know at runtime).
   Local key;
 
-  /**
-   * If this loop has non-trivial state, we will create a new Compound to represent it.
-   *
-   * <p>If the loop needs no state to be saved, {@code stateCompound} will be null (and {@code
-   * nextState()} or {@code at()} will be passed {@code Absent} as the state).
-   */
+  /// If this loop has non-trivial state, we will create a new Compound to represent it.
+  ///
+  /// If the loop needs no state to be saved, `stateCompound` will be null (and `nextState()` or
+  /// `at()` will be passed `Absent` as the state).
   Compound stateCompound;
 
-  /**
-   * Scope entries with index less than {@code kvStart} are created implicitly for sequential and
-   * collected vars, and in some cases may not be read in loop body. Scope entries with index
-   * greater than or equal to {@code kvStart} explicitly named by the user (beginning with any
-   * key/value bound by the loop), and it will be an error if they are unused.
-   */
+  /// Scope entries with index less than `kvStart` are created implicitly for sequential and
+  /// collected vars, and in some cases may not be read in loop body. Scope entries with index
+  /// greater than or equal to `kvStart` explicitly named by the user (beginning with any key/value
+  /// bound by the loop), and it will be an error if they are unused.
   int kvStart;
 
-  /**
-   * Scope entries with index less than {@code numDefinedAtStart} have their values set by the loop
-   * setup code, and so can be read without being written. Scope entries after this are ordinary
-   * variables that must be assigned to first.
-   */
+  /// Scope entries with index less than `numDefinedAtStart` have their values set by the loop setup
+  /// code, and so can be read without being written. Scope entries after this are ordinary
+  /// variables that must be assigned to first.
   int numDefinedAtStart;
 
-  /**
-   * The set of scope entries in the parent scope that are live after the loop completes, either
-   * through exhausting the collection (if {@link #hasSource} is true) or through executing any of
-   * the loop's {@code break} statements.
-   */
+  /// The set of scope entries in the parent scope that are live after the loop completes, either
+  /// through exhausting the collection (if [#hasSource] is true) or through executing any of the
+  /// loop's `break` statements.
   Bits liveAfter;
 
-  /**
-   * Set by {@link #compileBody} to the BranchTarget that {@code continue} instructions should
-   * branch to.
-   */
+  /// Set by [#compileBody] to the BranchTarget that `continue` instructions should branch to.
   BranchTarget continueTarget;
 
   Loop(Scope parent, boolean isSequential, boolean hasSource, String name) {
@@ -163,11 +134,9 @@ class Loop extends BlockCompiler {
     return symbols.module.newInstructionBlock(numArgs, numResults, symbols.source);
   }
 
-  /**
-   * A StateVar is created for each variable that appears after the {@code sequential} keyword in a
-   * loop. It has two scope entries, one outside the loop (the initial and final value of the var)
-   * and one inside (the current value).
-   */
+  /// A StateVar is created for each variable that appears after the `sequential` keyword in a loop.
+  /// It has two scope entries, one outside the loop (the initial and final value of the var) and
+  /// one inside (the current value).
   static class StateVar {
     final LowerIdContext id;
     final Scope.Entry outer;
@@ -180,7 +149,7 @@ class Loop extends BlockCompiler {
     }
   }
 
-  /** Creates a StateVar and adds it to {@link #stateVars}. */
+  /// Creates a StateVar and adds it to [#stateVars].
   void addStateVar(LowerIdContext id, String name) {
     Scope.Entry outer = scope.parent.getEntryForWrite(name, id.start);
     Scope.Entry inner = scope.addSequentialState(name, id.start, outer);
@@ -188,26 +157,22 @@ class Loop extends BlockCompiler {
     id.entry = outer;
   }
 
-  /**
-   * A CollectedVar is created for each variable that appears in the {@code collect} part of a loop.
-   * A typical CollectedVar (e.g. from {@code collect { x =| sum }} has three related scope entries:
-   *
-   * <ul>
-   *   <li>one named "x", outside the loop, to receive the final result;
-   *   <li>one named "x_ro" (read only), inside the loop, to save information about the collector
-   *       {@code sum}; and
-   *   <li>one named "x_rw" (read/write), inside the loop, to save the current state of the
-   *       collector (in this example, the sum so far).
-   * </ul>
-   *
-   * <p>CollectedVars may also share a collector expression (e.g. {@code collect { x, y =| sum }});
-   * in this case they will share the read only variable (i.e. "x_ro" and "y_ro" will be synonyms
-   * for the same Local, and its value will only appear in the closure type once).
-   *
-   * <p>A CollectedVar without a collector expression (e.g. {@code collect { x }}) emits to a
-   * CollectedVar in an enclosing loop. In this case there are four scope entries: "x_ro" and "x_rw"
-   * outside the loop, and "x_ro" and "x_rw" inside the loop.
-   */
+  /// A CollectedVar is created for each variable that appears in the `collect` part of a loop. A
+  /// typical CollectedVar (e.g. from `collect { x =| sum }` has three related scope entries:
+  ///
+  /// - one named "x", outside the loop, to receive the final result;
+  /// - one named "x\_ro" (read only), inside the loop, to save information about the collector
+  ///   `sum`; and
+  /// - one named "x\_rw" (read/write), inside the loop, to save the current state of the collector
+  ///   (in this example, the sum so far).
+  ///
+  /// CollectedVars may also share a collector expression (e.g. `collect { x, y =| sum }`); in this
+  /// case they will share the read only variable (i.e. "x\_ro" and "y\_ro" will be synonyms for the
+  /// same Local, and its value will only appear in the closure type once).
+  ///
+  /// A CollectedVar without a collector expression (e.g. `collect { x }`) emits to a CollectedVar
+  /// in an enclosing loop. In this case there are four scope entries: "x\_ro" and "x\_rw" outside
+  /// the loop, and "x\_ro" and "x\_rw" inside the loop.
   static class CollectedVar {
     final int index;
     final LowerIdContext id;
@@ -238,7 +203,7 @@ class Loop extends BlockCompiler {
     }
   }
 
-  /** Creates a CollectedVar and adds it to {@link #collectedVars}. */
+  /// Creates a CollectedVar and adds it to [#collectedVars].
   void addCollectedVar(
       LowerIdContext id, ExpressionContext expression, boolean firstWithExpression) {
     String name = id.start.getText();
@@ -263,28 +228,22 @@ class Loop extends BlockCompiler {
     }
   }
 
-  /**
-   * Called when PassTwo on the parent block has completed analysis of the code following the loop
-   * and each of our break bodies; at this point we have all the information need to compile the
-   * body.
-   */
+  /// Called when PassTwo on the parent block has completed analysis of the code following the loop
+  /// and each of our break bodies; at this point we have all the information need to compile the
+  /// body.
   void donePassTwo(ForLoopContext forLoop) {
     scope.constructType(name, hasSource ? symbols.vmCore.lookupType("Loop") : symbols.vmLambda);
     symbols.addSubTask(() -> compileBody(forLoop));
   }
 
-  /**
-   * Returns true if this loop has a source collection and at least one collected variable with an
-   * expression.
-   */
+  /// Returns true if this loop has a source collection and at least one collected variable with an
+  /// expression.
   boolean mayHaveKeyedCollectors() {
     return mayHaveKeyedCollectors;
   }
 
-  /**
-   * Returns the names of all (inner scope) state variables, i.e. CollectedVar "_rw" vars and
-   * StateVars (these are the components of the loop state).
-   */
+  /// Returns the names of all (inner scope) state variables, i.e. CollectedVar "\_rw" vars and
+  /// StateVars (these are the components of the loop state).
   String[] stateNames() {
     int ncv = collectedVars.size();
     String[] result = new String[ncv + stateVars.size()];
@@ -293,12 +252,10 @@ class Loop extends BlockCompiler {
     return result;
   }
 
-  /**
-   * Creates a new Break for this loop.
-   *
-   * <p>Usually {@code insideLoop} will be {@code Loop.this.scope}, but it may be the scope of a
-   * break from an inner loop if breaks are nested.
-   */
+  /// Creates a new Break for this loop.
+  ///
+  /// Usually `insideLoop` will be `Loop.this.scope`, but it may be the scope of a break from an
+  /// inner loop if breaks are nested.
   Break addBreak(BreakStmtContext ctx, Scope insideLoop) {
     BlockContext block = ctx.block();
     if (block != null && block.children.isEmpty()) {
@@ -326,13 +283,11 @@ class Loop extends BlockCompiler {
     return brk;
   }
 
-  /**
-   * Runs PassThree to emit instructions for the loop body and then defines a method for the
-   * appropriate function ({@code nextState:3} or {@code at:2}).
-   *
-   * <p>If this is a parallel loop with non-trivial state, also defines appropriate methods for
-   * {@code emptyState:1}, {@code splitState:2}, and {@code combineStates:3}.
-   */
+  /// Runs PassThree to emit instructions for the loop body and then defines a method for the
+  /// appropriate function (`nextState:3` or `at:2`).
+  ///
+  /// If this is a parallel loop with non-trivial state, also defines appropriate methods for
+  /// `emptyState:1`, `splitState:2`, and `combineStates:3`.
   void compileBody(ForLoopContext forLoop) {
     scope.emitInitFromSelf(selfArg);
     int ncv = collectedVars.size();
@@ -430,18 +385,16 @@ class Loop extends BlockCompiler {
     defineCombineStatesMethod(forThisLoopType);
   }
 
-  /**
-   * Emits a method definition like
-   *
-   * <pre>
-   * method emptyState(Loop0 loop) {
-   *   {out1_ro, out2_ro} = loop_
-   *   out1_rw = emptyStateHelper(out1_ro)
-   *   out2_rw = emptyStateHelper(out2_ro)
-   *   return LoopState0_({out1_rw, out2_rw})
-   * }
-   * </pre>
-   */
+  /// Emits a method definition like
+  ///
+  /// ```
+  /// method emptyState(Loop0 loop) {
+  ///   {out1_ro, out2_ro} = loop_
+  ///   out1_rw = emptyStateHelper(out1_ro)
+  ///   out2_rw = emptyStateHelper(out2_ro)
+  ///   return LoopState0_({out1_rw, out2_rw})
+  /// }
+  /// ```
   private void defineEmptyStateMethod(Vm.MethodPredicate forThisLoopType) {
     InstructionBlock ib = symbols.module.newInstructionBlock(1, 1, symbols.source);
     Local self = ib.addArg("loop");
@@ -456,20 +409,18 @@ class Loop extends BlockCompiler {
     ib.addMethod(symbols.vmCore.lookupFunction("emptyState", 1), forThisLoopType, false);
   }
 
-  /**
-   * Emits a method definition like
-   *
-   * <pre>
-   * method splitState(Loop0 loop, state=) {
-   *   {out1_ro, out2_ro} = loop_
-   *   {out1_rw: out1_rw1, out2_rw: out2_rw1} = state_
-   *   out1_rw2 = splitStateHelper(out1_ro, out1_rw1=)
-   *   out2_rw2 = splitStateHelper(out2_ro, out2_rw1=)
-   *   state = LoopState0_({out1_rw: out1_rw1, out2_rw: out2_rw1})
-   *   return LoopState0_({out1_rw: out1_rw2, out2_rw: out2_rw2})
-   * }
-   * </pre>
-   */
+  /// Emits a method definition like
+  ///
+  /// ```
+  /// method splitState(Loop0 loop, state=) {
+  ///   {out1_ro, out2_ro} = loop_
+  ///   {out1_rw: out1_rw1, out2_rw: out2_rw1} = state_
+  ///   out1_rw2 = splitStateHelper(out1_ro, out1_rw1=)
+  ///   out2_rw2 = splitStateHelper(out2_ro, out2_rw1=)
+  ///   state = LoopState0_({out1_rw: out1_rw1, out2_rw: out2_rw1})
+  ///   return LoopState0_({out1_rw: out1_rw2, out2_rw: out2_rw2})
+  /// }
+  /// ```
   private void defineSplitStateMethod(Vm.MethodPredicate forThisLoopType) {
     InstructionBlock ib = symbols.module.newInstructionBlock(2, 2, symbols.source);
     Local self = ib.addArg("loop");
@@ -489,20 +440,18 @@ class Loop extends BlockCompiler {
     ib.addMethod(symbols.vmCore.lookupFunction("splitState", 2), forThisLoopType, false);
   }
 
-  /**
-   * Emits a method definition like
-   *
-   * <pre>
-   * method combineStates(Loop0 loop, state1, state2) {
-   *   {out1_ro, out2_ro} = loop_
-   *   {out1_rw: out1_rw1, out2_rw: out2_rw1} = state1_
-   *   {out1_rw: out1_rw2, out2_rw: out2_rw2} = state2_
-   *   out1_rw1 = combineStatesHelper(out1_ro, out1_rw1, out1_rw2)
-   *   out2_rw1 = combineStatesHelper(out2_ro, out2_rw1, out2_rw2)
-   *   return LoopState0_({out1_rw: out1_rw1, out2_rw: out2_rw1})
-   * }
-   * </pre>
-   */
+  /// Emits a method definition like
+  ///
+  /// ```
+  /// method combineStates(Loop0 loop, state1, state2) {
+  ///   {out1_ro, out2_ro} = loop_
+  ///   {out1_rw: out1_rw1, out2_rw: out2_rw1} = state1_
+  ///   {out1_rw: out1_rw2, out2_rw: out2_rw2} = state2_
+  ///   out1_rw1 = combineStatesHelper(out1_ro, out1_rw1, out1_rw2)
+  ///   out2_rw1 = combineStatesHelper(out2_ro, out2_rw1, out2_rw2)
+  ///   return LoopState0_({out1_rw: out1_rw1, out2_rw: out2_rw1})
+  /// }
+  /// ```
   private void defineCombineStatesMethod(Vm.MethodPredicate forThisLoopType) {
     InstructionBlock ib = symbols.module.newInstructionBlock(3, 1, symbols.source);
     Local self = ib.addArg("loop");
@@ -522,10 +471,8 @@ class Loop extends BlockCompiler {
     ib.addMethod(symbols.vmCore.lookupFunction("combineStates", 3), forThisLoopType, false);
   }
 
-  /**
-   * Returns an array with one Local for the {@code _ro} part of each of this Loop's collected vars,
-   * initialized by extracting them from the given {@code self} arg.
-   */
+  /// Returns an array with one Local for the `_ro` part of each of this Loop's collected vars,
+  /// initialized by extracting them from the given `self` arg.
   private Local[] getAllRo(InstructionBlock ib, Local self) {
     Local[] result = new Local[collectedVars.size()];
     Local[] extractTo = new Local[scope.closureVars.size()];
@@ -547,38 +494,28 @@ class Loop extends BlockCompiler {
     return result;
   }
 
-  /**
-   * Returns an array with one Local for the {@code _rw} part of each of this Loop's collected vars.
-   * The given suffix is appended to each name.
-   */
+  /// Returns an array with one Local for the `_rw` part of each of this Loop's collected vars. The
+  /// given suffix is appended to each name.
   private Local[] newRwVars(InstructionBlock ib, String suffix) {
     return collectedVars.stream().map(cv -> ib.newLocal(cv.rw.name + suffix)).toArray(Local[]::new);
   }
 
-  /**
-   * Each {@code break} statement is linked to a corresponding Loop.Break instance.
-   *
-   * <p>Code is emitted for {@code break} statements in two places:
-   *
-   * <ul>
-   *   <li>In the loop body, when the {@code break} statement is reached, the {@link #passThree}
-   *       method (called from {@link PassThree#visitBreakStatement}) emits instructions to return a
-   *       {@code LoopExit} value.
-   *   <li>Outside the loop, after {@code iterate} or {@code enumerate} has returned, {@link
-   *       PassThree#visitForStatement} emits instructions to check the return value; if it
-   *       determines that it was a {@code LoopExit} value created by this Loop.Break, the emitted
-   *       instructions will extract any state saved at the time of the break and then execute the
-   *       break block.
-   * </ul>
-   */
+  /// Each `break` statement is linked to a corresponding Loop.Break instance.
+  ///
+  /// Code is emitted for `break` statements in two places:
+  ///
+  /// - In the loop body, when the `break` statement is reached, the [#passThree] method (called
+  ///   from [PassThree#visitBreakStatement]) emits instructions to return a `LoopExit` value.
+  /// - Outside the loop, after `iterate` or `enumerate` has returned, [PassThree#visitForStatement]
+  ///   emits instructions to check the return value; if it determines that it was a `LoopExit`
+  ///   value created by this Loop.Break, the emitted instructions will extract any state saved at
+  ///   the time of the break and then execute the break block.
   class Break {
     final BlockContext block;
     final Scope.ForBreak scope;
 
-    /**
-     * Records which of the variables in the scope outside the loop are live if we take this break.
-     * Only used in sequential loops, to determine which of the loop's results are accessed.
-     */
+    /// Records which of the variables in the scope outside the loop are live if we take this break.
+    /// Only used in sequential loops, to determine which of the loop's results are accessed.
     Bits live;
 
     Break(BlockContext block, Scope.ForBreak scope) {
@@ -586,10 +523,8 @@ class Loop extends BlockCompiler {
       this.scope = scope;
     }
 
-    /**
-     * Called from the backward phase of PassTwo; at this point we know which of the loop body
-     * variables are used in the break body, and hence need to be part of the break closure.
-     */
+    /// Called from the backward phase of PassTwo; at this point we know which of the loop body
+    /// variables are used in the break body, and hence need to be part of the break closure.
     void finishClosure(Bits live) {
       if (isSequential) {
         this.live = live;
@@ -623,9 +558,8 @@ class Loop extends BlockCompiler {
       }
     }
 
-    /**
-     * Emits instructions to return an instance of this break's closure type, wrapped as a LoopExit.
-     */
+    /// Emits instructions to return an instance of this break's closure type, wrapped as a
+    /// LoopExit.
     void passThree() {
       if (isSequential && mayHaveKeyedCollectors) {
         // The final values of collected vars are accessible after a break in a sequential loop,

@@ -30,13 +30,11 @@ import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.Bits;
 
-/** Implements Vm.Function. */
+/// Implements Vm.Function.
 public abstract class VmFunction implements Vm.Function {
 
-  /**
-   * We look up functions by (name, numArgs) pairs; the easiest way to turn that pair into a single
-   * Java object with appropriate equals() and hashCode() is to make a String out of them.
-   */
+  /// We look up functions by (name, numArgs) pairs; the easiest way to turn that pair into a single
+  /// Java object with appropriate equals() and hashCode() is to make a String out of them.
   static String key(String name, int numArgs) {
     return name + ":" + numArgs;
   }
@@ -56,14 +54,12 @@ public abstract class VmFunction implements Vm.Function {
         (numResults == 1 && inout.isEmpty()) ? new Lambdas.AsLambdaExpr(this) : null;
   }
 
-  /**
-   * Returns a new compound baseType that is a subtype of {@link Core#LAMBDA}. The compound's size
-   * is one less than {@link #numArgs}, and its {@code at()} method will call this function, using
-   * the value passed to {@code at()} as the {@code i}th argument and taking the rest of the
-   * arguments (in order) from the compound's elements.
-   *
-   * <p>Only valid on functions with at least two arguments (none inout) and exactly one result.
-   */
+  /// Returns a new compound baseType that is a subtype of [Core#LAMBDA]. The compound's size is one
+  /// less than [#numArgs], and its `at()` method will call this function, using the value passed to
+  /// `at()` as the `i`th argument and taking the rest of the arguments (in order) from the
+  /// compound's elements.
+  ///
+  /// Only valid on functions with at least two arguments (none inout) and exactly one result.
   public BaseType partialApplication(int i) {
     return asLambdaExpr.partialApplication(i);
   }
@@ -93,7 +89,7 @@ public abstract class VmFunction implements Vm.Function {
     return key(name, numArgs);
   }
 
-  /** Thrown by {@link VmFunction#findMethod} if more than one method matches. */
+  /// Thrown by [VmFunction#findMethod] if more than one method matches.
   static class MultipleMethodsException extends Exception {
     final VmMethod method1;
     final VmMethod method2;
@@ -104,19 +100,15 @@ public abstract class VmFunction implements Vm.Function {
     }
   }
 
-  /**
-   * Returns the method that should be used to execute this function with the given arguments, or
-   * null if no method matches. Throws a {@link MultipleMethodsException} if there are multiple
-   * matching methods.
-   */
+  /// Returns the method that should be used to execute this function with the given arguments, or
+  /// null if no method matches. Throws a [MultipleMethodsException] if there are multiple matching
+  /// methods.
   abstract VmMethod findMethod(Object... args) throws MultipleMethodsException;
 
-  /**
-   * Executes this function with the given arguments.
-   *
-   * <p>The caller should assume that any call to {@code doCall()} has indirectly called {@link
-   * TState#syncWithCoordinator()}; see its documentation for the implications of that.
-   */
+  /// Executes this function with the given arguments.
+  ///
+  /// The caller should assume that any call to `doCall()` has indirectly called
+  /// [TState#syncWithCoordinator()]; see its documentation for the implications of that.
   void doCall(
       TState tstate,
       ResultsInfo results,
@@ -192,17 +184,13 @@ public abstract class VmFunction implements Vm.Function {
     tstate.cgParent = prevCGParent;
   }
 
-  /**
-   * Emits code to determine the appropriate method for the given arguments and call {@link
-   * CodeGen#emitMethodCall}.
-   */
+  /// Emits code to determine the appropriate method for the given arguments and call
+  /// [CodeGen#emitMethodCall].
   abstract void emitCall(
       CodeGen codeGen, MethodMemo callerMemo, CallSite callSite, @RC.In Object[] args);
 
-  /**
-   * An implementation of VmFunction with a single method. The method is applicable to all argument
-   * types, and no additional methods can be added for this function.
-   */
+  /// An implementation of VmFunction with a single method. The method is applicable to all argument
+  /// types, and no additional methods can be added for this function.
   static class Simple extends VmFunction implements MethodImpl {
 
     interface SimpleMethodImpl {
@@ -261,42 +249,34 @@ public abstract class VmFunction implements Vm.Function {
     }
   }
 
-  /**
-   * A distinct ArgKey is created for each argument position of each {@link General}, to serve as a
-   * key when methods for that function are attached to types.
-   */
+  /// A distinct ArgKey is created for each argument position of each [General], to serve as a key
+  /// when methods for that function are attached to types.
   static class ArgKey {}
 
   private static final VarHandle ARG_KEY_ARRAY_ELEMENT =
       MethodHandles.arrayElementVarHandle(ArgKey[].class);
 
-  /**
-   * A full implementation of VmFunction. Multiple methods may be defined, each with its own
-   * MethodPredicate and "default" flag.
-   */
+  /// A full implementation of VmFunction. Multiple methods may be defined, each with its own
+  /// MethodPredicate and "default" flag.
   static class General extends VmFunction {
-    /** The module in which this function was defined. */
+    /// The module in which this function was defined.
     final VmModule module;
 
-    /** Methods for this function may be defined by other modules only if {@code open} is true. */
+    /// Methods for this function may be defined by other modules only if `open` is true.
     final boolean open;
 
-    /**
-     * While this function's module is being built, an ArrayList with all the methods defined for
-     * it. When the module is completed ({@link ModuleBuilder#build}), some of the methods may be
-     * moved to an arg type, and any remaining methods are left here in an ImmutableList. If there
-     * are no remaining methods this is set to null.
-     *
-     * <p>This field is immutable after the module is built.
-     */
+    /// While this function's module is being built, an ArrayList with all the methods defined for
+    /// it. When the module is completed ([ModuleBuilder#build]), some of the methods may be moved
+    /// to an arg type, and any remaining methods are left here in an ImmutableList. If there are no
+    /// remaining methods this is set to null.
+    ///
+    /// This field is immutable after the module is built.
     private List<VmMethod> methods = new ArrayList<>();
 
-    /**
-     * If this function is open or finalizeMethods() decided to attach some of this module's methods
-     * to types, an ArgKey for each argument position. The ArgKeys are created lazily, so each
-     * position will only be non-null if at least one method is attached to an argument type at that
-     * position.
-     */
+    /// If this function is open or finalizeMethods() decided to attach some of this module's
+    /// methods to types, an ArgKey for each argument position. The ArgKeys are created lazily, so
+    /// each position will only be non-null if at least one method is attached to an argument type
+    /// at that position.
     private ArgKey[] argKeys;
 
     General(VmModule module, String name, int numArgs, Bits inout, int numResults, boolean open) {
@@ -313,12 +293,10 @@ public abstract class VmFunction implements Vm.Function {
       return (m != null) ? m : findMethod(args, true);
     }
 
-    /**
-     * Returns the method that should be used to execute this function with the given arguments, or
-     * null if no method matches. Only considers methods that are (isDefault=true) or are not
-     * (isDefault=false) marked as "default". Throws a {@link MultipleMethodsException} if there are
-     * multiple matching methods.
-     */
+    /// Returns the method that should be used to execute this function with the given arguments, or
+    /// null if no method matches. Only considers methods that are (isDefault=true) or are not
+    /// (isDefault=false) marked as "default". Throws a [MultipleMethodsException] if there are
+    /// multiple matching methods.
     private VmMethod findMethod(Object[] args, boolean isDefault) throws MultipleMethodsException {
       // First check for methods attached to the function.
       VmMethod result = findMethod(null, (ImmutableList<VmMethod>) methods, args, isDefault);
@@ -343,17 +321,15 @@ public abstract class VmFunction implements Vm.Function {
       return result;
     }
 
-    /**
-     * Checks each of the methods in the given list, looking for one that (a) has the default flag
-     * as specified, and (b) is applicable to the given arguments.
-     *
-     * <p>If no matching method is found (or the list is null), return {@code prior}.
-     *
-     * <p>If one matching method is found and {@code prior} was null, return the matching method.
-     *
-     * <p>Otherwise (a matching method is found with a prior, or more than one matching method is
-     * found) throw a {@link MultipleMethodsException}.
-     */
+    /// Checks each of the methods in the given list, looking for one that (a) has the default flag
+    /// as specified, and (b) is applicable to the given arguments.
+    ///
+    /// If no matching method is found (or the list is null), return `prior`.
+    ///
+    /// If one matching method is found and `prior` was null, return the matching method.
+    ///
+    /// Otherwise (a matching method is found with a prior, or more than one matching method is
+    /// found) throw a [MultipleMethodsException].
     private static VmMethod findMethod(
         VmMethod prior, ImmutableList<VmMethod> methods, Object[] args, boolean isDefault)
         throws MultipleMethodsException {
@@ -435,13 +411,13 @@ public abstract class VmFunction implements Vm.Function {
       codeGen.escape();
     }
 
-    /** Add a method to this function. Only called while building this function's module. */
+    /// Add a method to this function. Only called while building this function's module.
     void addMethod(VmMethod method) {
       assert Thread.holdsLock(module.builder());
       methods.add(method);
     }
 
-    /** Called from ModuleBuilder.build(). */
+    /// Called from ModuleBuilder.build().
     void finalizeMethods() {
       assert Thread.holdsLock(module.builder());
       if (open || methods.size() > 2) {
@@ -463,7 +439,7 @@ public abstract class VmFunction implements Vm.Function {
       }
     }
 
-    /** Returns the ArgKey for the specified argument, creating it if needed. */
+    /// Returns the ArgKey for the specified argument, creating it if needed.
     ArgKey argKey(int index) {
       ArgKey result = argKeys[index];
       if (result != null) {
@@ -479,13 +455,11 @@ public abstract class VmFunction implements Vm.Function {
       }
     }
 
-    /**
-     * If the given method can be attached to types in the given module, does so and returns true;
-     * otherwise returns false.
-     *
-     * <p>Called from {@link #finalizeMethods} with {@code typesModule} == {@link #module}, and from
-     * {@link ModuleBuilder#addMethod} with {@code typesModule} != {@link #module}.
-     */
+    /// If the given method can be attached to types in the given module, does so and returns true;
+    /// otherwise returns false.
+    ///
+    /// Called from [#finalizeMethods] with `typesModule` == [#module], and from
+    /// [ModuleBuilder#addMethod] with `typesModule` != [#module].
     boolean canAttachToTypes(VmMethod method, VmModule typesModule) {
       assert Thread.holdsLock(typesModule.builder());
       ImmutableSet<MethodPredicate.Simple> argRestriction =
@@ -502,15 +476,15 @@ public abstract class VmFunction implements Vm.Function {
     }
   }
 
-  /** Information about a method that might match at a CallSite for which we are generating code. */
+  /// Information about a method that might match at a CallSite for which we are generating code.
   static class MatchingMethod {
     final VmMethod method;
     final MethodMemo memo;
 
-    /** The number of calls we've seen to this method at this site, as recorded in the CallMemo. */
+    /// The number of calls we've seen to this method at this site, as recorded in the CallMemo.
     final int count;
 
-    /** This method is only applicable if {@code condition} is true. */
+    /// This method is only applicable if `condition` is true.
     Condition condition;
 
     MatchingMethod(VmMethod method, MethodMemo memo, int count) {
@@ -521,18 +495,14 @@ public abstract class VmFunction implements Vm.Function {
     }
   }
 
-  /**
-   * A list of MatchingMethods with non-FALSE conditions, sorted first by preferred before default,
-   * and then by count.
-   */
+  /// A list of MatchingMethods with non-FALSE conditions, sorted first by preferred before default,
+  /// and then by count.
   static class MethodCollector extends ArrayList<MatchingMethod> {
-    /**
-     * The first {@code numPreferred} elements are preferred (i.e. not default) methods; the rest
-     * are default methods. Within each group methods are sorted by count (decreasing).
-     */
+    /// The first `numPreferred` elements are preferred (i.e. not default) methods; the rest are
+    /// default methods. Within each group methods are sorted by count (decreasing).
     int numPreferred;
 
-    /** Creates and inserts a new MatchingMethod. We'll fill in the Condition later. */
+    /// Creates and inserts a new MatchingMethod. We'll fill in the Condition later.
     void addFromCallMemo(MethodMemo memo, int count) {
       VmMethod method = memo.method();
       MatchingMethod mm = new MatchingMethod(method, memo, count);
@@ -553,10 +523,8 @@ public abstract class VmFunction implements Vm.Function {
       add(pos, mm);
     }
 
-    /**
-     * Ensure that we have a complete MatchingMethod (i.e. including {@link
-     * MatchingMethod#condition}) for each entry in {@code methods} that could match the given args.
-     */
+    /// Ensure that we have a complete MatchingMethod (i.e. including [MatchingMethod#condition])
+    /// for each entry in `methods` that could match the given args.
     void addMatching(List<VmMethod> methods, Object[] args) {
       if (methods != null) {
         for (VmMethod method : methods) {
@@ -571,10 +539,8 @@ public abstract class VmFunction implements Vm.Function {
       }
     }
 
-    /**
-     * If there is already a MatchingMethod for the given method, return it; otherwise create a new
-     * one (with null MethodMemo and zero count).
-     */
+    /// If there is already a MatchingMethod for the given method, return it; otherwise create a new
+    /// one (with null MethodMemo and zero count).
     private MatchingMethod findOrInsert(VmMethod method) {
       // We could just search the subrange before or after numPreferred based on method.isDefault,
       // but my guess is that wouldn't actually be faster.
@@ -593,10 +559,8 @@ public abstract class VmFunction implements Vm.Function {
       return mm;
     }
 
-    /**
-     * Ensure that we have complete MatchingMethods for all the methods reachable from these ArgKeys
-     * for these args.
-     */
+    /// Ensure that we have complete MatchingMethods for all the methods reachable from these
+    /// ArgKeys for these args.
     void addFromArgKeys(ArgKey[] argKeys, Object[] args) {
       for (int i = 0; i < argKeys.length; i++) {
         ArgKey argKey = argKeys[i];
@@ -625,10 +589,8 @@ public abstract class VmFunction implements Vm.Function {
       }
     }
 
-    /**
-     * Given an ArgKey and the BaseType of the corresponding arg, find all associated methods and
-     * ensure that we have a complete MatchingMethod for each of them.
-     */
+    /// Given an ArgKey and the BaseType of the corresponding arg, find all associated methods and
+    /// ensure that we have a complete MatchingMethod for each of them.
     private void addFromArgType(ArgKey argKey, BaseType baseType, Object[] args) {
       VmType argType = baseType.vmType();
       addMatching(argType.getMethods(argKey), args);
@@ -637,10 +599,8 @@ public abstract class VmFunction implements Vm.Function {
       }
     }
 
-    /**
-     * Given the index of MatchingMethod with no memo, returns the index of the next MatchingMethod
-     * that does have a memo, or -1 if there is none.
-     */
+    /// Given the index of MatchingMethod with no memo, returns the index of the next MatchingMethod
+    /// that does have a memo, or -1 if there is none.
     int nextWithMemo(int i) {
       assert get(i).memo == null;
       // Because our list was constructed to have MatchingMethods with memos before those without,
@@ -655,10 +615,8 @@ public abstract class VmFunction implements Vm.Function {
       return result;
     }
 
-    /**
-     * Given the index of a MatchingMethod, emit instructions to escape if any of the methods with
-     * index >= and the specified preferred/default status have true Conditions.
-     */
+    /// Given the index of a MatchingMethod, emit instructions to escape if any of the methods with
+    /// index >= and the specified preferred/default status have true Conditions.
     void escapeIfAnyMatch(CodeGen codeGen, boolean isDefault, int start) {
       int end = isDefault ? size() : numPreferred;
       for (int i = start; i < end; i++) {

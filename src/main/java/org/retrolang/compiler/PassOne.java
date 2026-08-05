@@ -41,19 +41,15 @@ import org.retrolang.compiler.RetrospectParser.SimpleExtractContext;
 import org.retrolang.compiler.RetrospectParser.StructExtractContext;
 import org.retrolang.compiler.RetrospectParser.TraceStatementContext;
 
-/**
- * The first pass through a statement block does only two things:
- *
- * <ul>
- *   <li>adds all locals that appear on the left hand side of an assignment statement (without
- *       indexing) to the current scope, and links their lowerIds to the scope entries; and
- *   <li>creates and initializes Loop and Break objects for any for loops or break statements within
- *       the block, and recursively runs PassOne on the loop bodies.
- * </ul>
- */
+/// The first pass through a statement block does only two things:
+///
+/// - adds all locals that appear on the left hand side of an assignment statement (without
+///   indexing) to the current scope, and links their lowerIds to the scope entries; and
+/// - creates and initializes Loop and Break objects for any for loops or break statements within
+///   the block, and recursively runs PassOne on the loop bodies.
 class PassOne extends VisitorBase<Void> {
 
-  /** Runs the first compilation pass over the given block. */
+  /// Runs the first compilation pass over the given block.
   static void apply(Scope scope, BlockContext ctx) {
     new PassOne(scope).visitBlock(ctx);
   }

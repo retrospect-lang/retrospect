@@ -40,13 +40,13 @@ public class LinkInfoTest {
   Register d5;
   Register d6;
 
-  /** A top-level loop that updates i0. */
+  /// A top-level loop that updates i0.
   Loop loop0;
 
-  /** A loop nested in i0 that updates i1. */
+  /// A loop nested in i0 that updates i1.
   Loop loop1;
 
-  /** A list of all the int registers, i.e. [i0, i1, i2, i3]. */
+  /// A list of all the int registers, i.e. [i0, i1, i2, i3].
   ImmutableList<Register> intRegisters;
 
   @Before
@@ -67,10 +67,8 @@ public class LinkInfoTest {
     loop1 = cb.startLoop(i1);
   }
 
-  /**
-   * Creates a new LinkInfo and then initializes it with sequential calls to updateForAssignment for
-   * each int register that has a corresponding info in the arguments.
-   */
+  /// Creates a new LinkInfo and then initializes it with sequential calls to updateForAssignment
+  /// for each int register that has a corresponding info in the arguments.
   LinkInfo newLinkInfoWith(ValueInfo... intRegInfos) {
     LinkInfo result = new LinkInfo();
     result.clear(true);
@@ -93,7 +91,7 @@ public class LinkInfoTest {
     assertThat(info.toString()).isEqualTo("reg{0:1, 1:∈{0..2}, 2:i1}");
   }
 
-  /** Returns a new LinkInfo initialized with the union of the given infos. */
+  /// Returns a new LinkInfo initialized with the union of the given infos.
   private LinkInfo union(Loop loop, LinkInfo... infos) {
     LinkInfo result = new LinkInfo();
     result.setFrom(infos[0]);

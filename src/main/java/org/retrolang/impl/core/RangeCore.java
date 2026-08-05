@@ -38,59 +38,49 @@ import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
 
-/** Core methods for Range. */
+/// Core methods for Range.
 public class RangeCore {
   @Core.Public static final VmFunctionBuilder range = VmFunctionBuilder.create("range", 2);
 
   @Core.Public
   static final VmFunctionBuilder rangeWithSize = VmFunctionBuilder.create("rangeWithSize", 2);
 
-  /**
-   * {@code private compound ReversedRange is Matrix}
-   *
-   * <p>Elements are {@code min}, {@code max}.
-   */
+  /// `private compound ReversedRange is Matrix`
+  ///
+  /// Elements are `min`, `max`.
   @Core.Private
   static final BaseType.Named REVERSED_RANGE = Core.newBaseType("ReversedRange", 2, Core.MATRIX);
 
-  /**
-   * {@code private compound SimpleRangeIterator is Iterator}
-   *
-   * <p>Elements are {@code previous}, {@code limit}. A simplified version of RangeIterator.
-   */
+  /// `private compound SimpleRangeIterator is Iterator`
+  ///
+  /// Elements are `previous`, `limit`. A simplified version of RangeIterator.
   @Core.Private
   static final BaseType.Named SIMPLE_RANGE_ITERATOR =
       Core.newBaseType("SimpleRangeIterator", 2, LoopCore.ITERATOR);
 
-  /**
-   * {@code private compound RangeIterator is Iterator}
-   *
-   * <p>Elements are {@code next}, {@code max}, {@code keyOffsetOrNone}.
-   */
+  /// `private compound RangeIterator is Iterator`
+  ///
+  /// Elements are `next`, `max`, `keyOffsetOrNone`.
   @Core.Private
   static final BaseType.Named RANGE_ITERATOR =
       Core.newBaseType("RangeIterator", 3, LoopCore.ITERATOR);
 
-  /**
-   * {@code private compound ReversedRangeIterator is Iterator}
-   *
-   * <p>Elements are {@code next}, {@code min}, {@code keyOffsetOrNone}.
-   */
+  /// `private compound ReversedRangeIterator is Iterator`
+  ///
+  /// Elements are `next`, `min`, `keyOffsetOrNone`.
   @Core.Private
   static final BaseType.Named REVERSED_RANGE_ITERATOR =
       Core.newBaseType("ReversedRangeIterator", 3, LoopCore.ITERATOR);
 
-  /**
-   * <pre>
-   * method range(min, max) {
-   *   assert (min is None or min is Integer) and (max is None or max is Integer)
-   *   if min is not None and max is not None {
-   *     assert min &lt;= max + 1
-   *   }
-   *   return Range_({min, max}))
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method range(min, max) {
+  ///   assert (min is None or min is Integer) and (max is None or max is Integer)
+  ///   if min is not None and max is not None {
+  ///     assert min <= max + 1
+  ///   }
+  ///   return Range_({min, max}))
+  /// }
+  /// ```
   @Core.Method("range(_, _)")
   static Value range(TState tstate, Value min, Value max) throws BuiltinException {
     Value checkedMin = checkBound(tstate, min);
@@ -101,7 +91,7 @@ public class RangeCore {
     return tstate.compound(Core.RANGE, checkedMin, checkedMax);
   }
 
-  /** If {@code bound} is a valid bound, returns it; otherwise throws INVALID_ARGUMENT. */
+  /// If `bound` is a valid bound, returns it; otherwise throws INVALID\_ARGUMENT.
   @RC.Out
   private static Value checkBound(TState tstate, Value bound) throws BuiltinException {
     return bound
@@ -110,10 +100,8 @@ public class RangeCore {
             () -> Core.NONE, () -> bound.verifyInt(Err.INVALID_ARGUMENT).makeStorable(tstate));
   }
 
-  /**
-   * Returns TRUE if {@code min..max} is a valid range, i.e. if {@code min} is None, {@code max} is
-   * None, or {@code min <= max + 1}.
-   */
+  /// Returns TRUE if `min..max` is a valid range, i.e. if `min` is None, `max` is None, or `min <=
+  /// max + 1`.
   private static Condition validBounds(TState tstate, Value min, Value max) {
     if (min instanceof RValue || max instanceof RValue) {
       // A slightly less readable version of the non-RValue logic below.
@@ -128,10 +116,8 @@ public class RangeCore {
     }
   }
 
-  /**
-   * {@code min} and {@code max} are ints. Returns true if {@code max < min - 1}, but has to be
-   * careful to avoid integer overflow.
-   */
+  /// `min` and `max` are ints. Returns true if `max < min - 1`, but has to be careful to avoid
+  /// integer overflow.
   private static Condition intBoundsInvalid(TState tstate, Value min, Value max) {
     CodeGen codeGen = tstate.codeGen();
     CodeValue cvMin = codeGen.asCodeValue(min);
@@ -166,16 +152,14 @@ public class RangeCore {
         () -> new TestBlock.IsLessThan(CodeBuilder.OpCodeType.LONG, maxPlusOne, cvMin));
   }
 
-  /**
-   * <pre>
-   * method rangeWithSize(Number min, Number size) {
-   *   assert min is Integer and size is Integer and size &gt= 0
-   *   max = min + size - 1
-   *   assert max is Integer
-   *   return Range_({min, max})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method rangeWithSize(Number min, Number size) {
+  ///   assert min is Integer and size is Integer and size >= 0
+  ///   max = min + size - 1
+  ///   assert max is Integer
+  ///   return Range_({min, max})
+  /// }
+  /// ```
   @Core.Method("rangeWithSize(_, _)")
   static Value rangeWithSize(TState tstate, Value min, Value size) throws BuiltinException {
     Value checkedMin = min.verifyInt(Err.INVALID_ARGUMENT);
@@ -202,76 +186,62 @@ public class RangeCore {
     return max;
   }
 
-  /**
-   * <pre>
-   * method reverse(Range r) = ReversedRange_(r_)
-   * </pre>
-   */
+  /// ```
+  /// method reverse(Range r) = ReversedRange_(r_)
+  /// ```
   @Core.Method("reverse(Range)")
   static Value reverseRange(TState tstate, Value range) {
     return tstate.compound(REVERSED_RANGE, range.element(0), range.element(1));
   }
 
-  /**
-   * <pre>
-   * method reverse(ReversedRange r) = Range_(r_)
-   * </pre>
-   */
+  /// ```
+  /// method reverse(ReversedRange r) = Range_(r_)
+  /// ```
   @Core.Method("reverse(ReversedRange)")
   static Value reverseReversedRange(TState tstate, Value range) {
     return tstate.compound(Core.RANGE, range.element(0), range.element(1));
   }
 
-  /**
-   * <pre>
-   * method min(Range r) = r_.min
-   * method min(ReversedRange r) = r_.min
-   * </pre>
-   */
+  /// ```
+  /// method min(Range r) = r_.min
+  /// method min(ReversedRange r) = r_.min
+  /// ```
   @Core.Method("min(Range|ReversedRange)")
   static Value minRange(Value range) {
     return range.element(0);
   }
 
-  /**
-   * <pre>
-   * method max(Range r) = r_.max
-   * method max(ReversedRange r) = r_.max
-   * </pre>
-   */
+  /// ```
+  /// method max(Range r) = r_.max
+  /// method max(ReversedRange r) = r_.max
+  /// ```
   @Core.Method("max(Range|ReversedRange)")
   static Value maxRange(Value range) {
     return range.element(1);
   }
 
-  /**
-   * <pre>
-   * method size(Range r) = r_.max - r_.min + 1
-   * method size(ReversedRange r) = r_.max - r_.min + 1
-   * </pre>
-   */
+  /// ```
+  /// method size(Range r) = r_.max - r_.min + 1
+  /// method size(ReversedRange r) = r_.max - r_.min + 1
+  /// ```
   @Core.Method("size(Range|ReversedRange)")
   static Value sizeRange(TState tstate, ResultsInfo results, Value range) throws BuiltinException {
     return size(tstate, results, range);
   }
 
-  /**
-   * <pre>
-   * method sizes(Range r) = [size(r)]
-   * method sizes(ReversedRange r) = [size(r)]
-   * </pre>
-   */
+  /// ```
+  /// method sizes(Range r) = [size(r)]
+  /// method sizes(ReversedRange r) = [size(r)]
+  /// ```
   @Core.Method("sizes(Range|ReversedRange)")
   static Value sizesRange(TState tstate, ResultsInfo results, Value range) throws BuiltinException {
     Value size = size(tstate, null, range);
     return tstate.arrayValue(size);
   }
 
-  /**
-   * Returns the size of the given Range or ReversedRange. If {@code results} is non-null, may
-   * return a double; if {@code results} is null will throw INVALID_ARGUMENT if the result does not
-   * fit in an int.
-   */
+  /// Returns the size of the given Range or ReversedRange. If `results` is non-null, may return a
+  /// double; if `results` is null will throw INVALID\_ARGUMENT if the result does not fit in an
+  /// int.
   @RC.Out
   private static Value size(TState tstate, ResultsInfo results, Value range)
       throws BuiltinException {
@@ -311,22 +281,18 @@ public class RangeCore {
     return codeGen.toValue(size);
   }
 
-  /**
-   * <pre>
-   * method element(Range r, [index]) = r_.min + index - 1
-   * </pre>
-   */
+  /// ```
+  /// method element(Range r, [index]) = r_.min + index - 1
+  /// ```
   @Core.Method("element(Range, Array)")
   static Value elementRange(TState tstate, ResultsInfo results, Value range, Value key)
       throws BuiltinException {
     return elementHelper(tstate, results, range.peekElement(0), range.peekElement(1), key, true);
   }
 
-  /**
-   * <pre>
-   * method element(ReversedRange r, [index]) = r_.max - (index - 1)
-   * </pre>
-   */
+  /// ```
+  /// method element(ReversedRange r, [index]) = r_.max - (index - 1)
+  /// ```
   @Core.Method("element(ReversedRange, Array)")
   static Value elementReversedRange(TState tstate, ResultsInfo results, Value range, Value key)
       throws BuiltinException {
@@ -375,19 +341,17 @@ public class RangeCore {
     return codeGen.toValue(result);
   }
 
-  /**
-   * <pre>
-   * method next(SimpleRangeIterator it=) {
-   *   { previous, limit } = it_
-   *   next = previous + 1
-   *   if next &gt;= limit {
-   *     return Absent
-   *   }
-   *   it_.previous = next
-   *   return next
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method next(SimpleRangeIterator it=) {
+  ///   { previous, limit } = it_
+  ///   next = previous + 1
+  ///   if next >= limit {
+  ///     return Absent
+  ///   }
+  ///   it_.previous = next
+  ///   return next
+  /// }
+  /// ```
   @Core.Method("next(SimpleRangeIterator)")
   static void nextSimpleRangeIterator(TState tstate, @RC.In Value it) {
     Value previous = it.peekElement(0);
@@ -406,16 +370,14 @@ public class RangeCore {
             });
   }
 
-  /**
-   * <pre>
-   * method iterator(Range r, EnumerationKind eKind, Loop loop=, initialState=) {
-   *   { min, max } = r_
-   *   assert min is not None
-   *   keyOffset = (eKind is EnumerateValues) ? None : 1 - min
-   *   return RangeIterator_({next: min, max, keyOffset})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(Range r, EnumerationKind eKind, Loop loop=, initialState=) {
+  ///   { min, max } = r_
+  ///   assert min is not None
+  ///   keyOffset = (eKind is EnumerateValues) ? None : 1 - min
+  ///   return RangeIterator_({next: min, max, keyOffset})
+  /// }
+  /// ```
   @Core.Method("iterator(Range, EnumerationKind, Loop, _)")
   static void iteratorRange(
       TState tstate,
@@ -430,16 +392,14 @@ public class RangeCore {
     tstate.setResults(iteratorHelper(tstate, min, max, eKind, false), loop, initialState);
   }
 
-  /**
-   * <pre>
-   * method iterator(ReversedRange r, EnumerationKind eKind, Loop loop=, initialState=) {
-   *   { min, max } = r_
-   *   assert max is not None
-   *   keyOffset = (eKind is EnumerateValues) ? None : max + 1
-   *   return ReversedRangeIterator_({next: max, min, keyOffset})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(ReversedRange r, EnumerationKind eKind, Loop loop=, initialState=) {
+  ///   { min, max } = r_
+  ///   assert max is not None
+  ///   keyOffset = (eKind is EnumerateValues) ? None : max + 1
+  ///   return ReversedRangeIterator_({next: max, min, keyOffset})
+  /// }
+  /// ```
   @Core.Method("iterator(ReversedRange, EnumerationKind, Loop, _)")
   static void iteratorReversedRange(
       TState tstate,
@@ -476,38 +436,34 @@ public class RangeCore {
             });
   }
 
-  /**
-   * <pre>
-   * method next(RangeIterator it=) {
-   *   { next, max, keyOffset } = it_
-   *   if max is not None and next &gt; max {
-   *     return Absent
-   *   }
-   *   it_.next = next + 1
-   *   assert it_.next > next
-   *   return keyOffset is None ? next : [ [next + keyOffset], next ]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method next(RangeIterator it=) {
+  ///   { next, max, keyOffset } = it_
+  ///   if max is not None and next > max {
+  ///     return Absent
+  ///   }
+  ///   it_.next = next + 1
+  ///   assert it_.next > next
+  ///   return keyOffset is None ? next : [ [next + keyOffset], next ]
+  /// }
+  /// ```
   @Core.Method("next(RangeIterator)")
   static void nextRangeIterator(TState tstate, ResultsInfo results, @RC.In Value it)
       throws BuiltinException {
     nextIterator(tstate, results, it, false);
   }
 
-  /**
-   * <pre>
-   * method next(ReversedRangeIterator it=) {
-   *   { next, min, keyOffset } = it_
-   *   if min is not None and next &lt; min {
-   *     return Absent
-   *   }
-   *   it_.next = next - 1
-   *   assert it_.next < next
-   *   return keyOffset is None ? next : [ [keyOffset - next], next ]
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method next(ReversedRangeIterator it=) {
+  ///   { next, min, keyOffset } = it_
+  ///   if min is not None and next < min {
+  ///     return Absent
+  ///   }
+  ///   it_.next = next - 1
+  ///   assert it_.next < next
+  ///   return keyOffset is None ? next : [ [keyOffset - next], next ]
+  /// }
+  /// ```
   @Core.Method("next(ReversedRangeIterator)")
   static void nextReversedRangeIterator(TState tstate, ResultsInfo results, @RC.In Value it)
       throws BuiltinException {

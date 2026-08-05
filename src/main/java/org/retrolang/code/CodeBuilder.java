@@ -43,17 +43,16 @@ import org.retrolang.code.Loop.BackRef;
 import org.retrolang.code.ValueInfo.BinaryOps;
 import org.retrolang.util.Bits;
 
-/**
- * A CodeBuilder is used to assemble the bytecode for a single Java method. The lifecycle of a
- * CodeBuilder is <nl>
- * <li>Create a {@link Register} for each of the method's arguments.
- * <li>Create Registers for local variables and {@link Block}s for the execution steps; link the
- *     Blocks together (in a directed graph) to reflect the control flow.
- * <li>Call {@link #load} to optimize the Block graph, emit the bytecode, and load the result,
- *     returning a MethodHandle to call the new method.
- * <li>Call {@link #debugInfo} to get a {@link DebugInfo} object that can be used to interpret any
- *     exceptions thrown during execution of the new method. </nl>
- */
+/// A CodeBuilder is used to assemble the bytecode for a single Java method. The lifecycle of a
+/// CodeBuilder is
+///
+/// 1. Create a [Register] for each of the method's arguments.
+/// 2. Create Registers for local variables and [Block]s for the execution steps; link the Blocks
+///    together (in a directed graph) to reflect the control flow.
+/// 3. Call [#load] to optimize the Block graph, emit the bytecode, and load the result, returning a
+///    MethodHandle to call the new method.
+/// 4. Call [#debugInfo] to get a [DebugInfo] object that can be used to interpret any exceptions
+///    thrown during execution of the new method.
 public class CodeBuilder {
 
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -61,132 +60,99 @@ public class CodeBuilder {
 
   public final DebugInfo debugInfo = new DebugInfo();
 
-  /**
-   * A placeholder for the next Block to be added. Like other FutureBlocks, {@code nextBlock} is not
-   * in {@link #blocks} and has no index.
-   */
+  /// A placeholder for the next Block to be added. Like other FutureBlocks, `nextBlock` is not in
+  /// [#blocks] and has no index.
   protected FutureBlock nextBlock = new FutureBlock();
 
-  /**
-   * All blocks in the current graph ({@code blocks.get(i).index == i}).
-   *
-   * <p>No-longer-reachable blocks will be removed from {@code blocks}, which may cause the indices
-   * of other blocks to change.
-   */
+  /// All blocks in the current graph (`blocks.get(i).index == i`).
+  ///
+  /// No-longer-reachable blocks will be removed from `blocks`, which may cause the indices of other
+  /// blocks to change.
   private final List<Block> blocks = new ArrayList<>();
 
-  /**
-   * All blocks in the graph are assigned to one of these zones ({@code zones.get(i).index == i}).
-   * Zones may be reordered (with corresponding changes to their indices) by some graph changes.
-   *
-   * <p>{@link #finalZone} is always the last element of {@code zones}. New blocks added to the
-   * graph are added to the second-last element of {@code zones} if they are not Terminals, and to
-   * {@link #finalZone} if they are.
-   */
+  /// All blocks in the graph are assigned to one of these zones (`zones.get(i).index == i`). Zones
+  /// may be reordered (with corresponding changes to their indices) by some graph changes.
+  ///
+  /// [#finalZone] is always the last element of `zones`. New blocks added to the graph are added to
+  /// the second-last element of `zones` if they are not Terminals, and to [#finalZone] if they are.
   private final List<Zone> zones = new ArrayList<>();
 
-  /**
-   * A zone that is always the last element of {@link #zones}, and is not contained in any Loop.
-   * Terminals are always added to this zone.
-   */
+  /// A zone that is always the last element of [#zones], and is not contained in any Loop.
+  /// Terminals are always added to this zone.
   final Zone finalZone;
 
-  /**
-   * New blocks are created with sequentially increasing values of {@link Zone.Ordered#order}, using
-   * this counter; this helps ensure the forward-linking-only constraint.
-   */
+  /// New blocks are created with sequentially increasing values of [Zone.Ordered#order], using this
+  /// counter; this helps ensure the forward-linking-only constraint.
   private int nextOrder = 0;
 
-  /**
-   * All registers that have been created ({@code registers.get(i).index == i}). Registers are never
-   * deleted or reordered.
-   */
+  /// All registers that have been created (`registers.get(i).index == i`). Registers are never
+  /// deleted or reordered.
   private final List<Register> registers = new ArrayList<>();
 
-  /**
-   * All loops that have been created ({@code loops.get(i).index == i}). Loops are never deleted or
-   * reordered.
-   */
+  /// All loops that have been created (`loops.get(i).index == i`). Loops are never deleted or
+  /// reordered.
   private final List<Loop> loops = new ArrayList<>();
 
-  /** The first {@code numArgs} elements of {@link #registers} represent the method's arguments. */
+  /// The first `numArgs` elements of [#registers] represent the method's arguments.
   private int numArgs;
 
-  /**
-   * The policies for combining {@link ValueInfo}s. The base {@link BinaryOps} is sufficient for the
-   * standard {@link ValueInfo} classes, but if you define additional {@link ValueInfo}s you'll need
-   * to define an appropriate {@link BinaryOps} subclass.
-   */
+  /// The policies for combining [ValueInfo]s. The base [BinaryOps] is sufficient for the standard
+  /// [ValueInfo] classes, but if you define additional [ValueInfo]s you'll need to define an
+  /// appropriate [BinaryOps] subclass.
   public final BinaryOps binaryOps;
 
-  /**
-   * If true, CodeBuilder will add additional information to {@link #debugInfo} that is only likely
-   * to be useful if you are testing or debugging CodeBuilder.
-   */
+  /// If true, CodeBuilder will add additional information to [#debugInfo] that is only likely to be
+  /// useful if you are testing or debugging CodeBuilder.
   public boolean verbose;
 
-  /**
-   * While building and optimizing the block graph the CodeBuilder uses forward propagation (of link
-   * infos) and backward propagation (of register liveness).
-   */
+  /// While building and optimizing the block graph the CodeBuilder uses forward propagation (of
+  /// link infos) and backward propagation (of register liveness).
   enum Propagation {
     OFF,
     FORWARD,
     REVERSE
   }
 
-  /**
-   * Tracks whether we are currently propagating, and if so in which direction. We propagate forward
-   * during building.
-   */
+  /// Tracks whether we are currently propagating, and if so in which direction. We propagate
+  /// forward during building.
   private Propagation propagation = Propagation.FORWARD;
 
-  /**
-   * Used during forward propagation to keep track of Blocks that need to be processed. If a Block
-   * is in this queue then all of its inlinks must have updated infos.
-   */
+  /// Used during forward propagation to keep track of Blocks that need to be processed. If a Block
+  /// is in this queue then all of its inlinks must have updated infos.
   private final PriorityQueue<Zone.Ordered> forwardPropQueue = new PriorityQueue<>();
 
-  /**
-   * Used during reverse propagation to keep track of Blocks that need to be processed. If a Block
-   * is in this queue then all of its outlinks must already have non-null live sets.
-   */
+  /// Used during reverse propagation to keep track of Blocks that need to be processed. If a Block
+  /// is in this queue then all of its outlinks must already have non-null live sets.
   private final PriorityQueue<Zone.Ordered> reversePropQueue =
       new PriorityQueue<>(Comparator.reverseOrder());
 
-  /**
-   * When running forward or reverse propagation, these fields record the latest (forward) or
-   * earliest (reverse) Ordered that has been processed so far. This enables us to determine whether
-   * the prior state is assumed to be valid (incremental processing) or not.
-   */
+  /// When running forward or reverse propagation, these fields record the latest (forward) or
+  /// earliest (reverse) Ordered that has been processed so far. This enables us to determine
+  /// whether the prior state is assumed to be valid (incremental processing) or not.
   private Zone incrementalUpToZone;
 
   private int incrementalUpToOrder;
 
-  /** Scratch state for computing LinkInfo unions. */
+  /// Scratch state for computing LinkInfo unions.
   final LinkInfo.Unioner unioner;
 
-  /**
-   * A Bits.Builder that is reused to reduce object allocation (see e.g. the default implementation
-   * of {@link Block#updateLive}).
-   */
+  /// A Bits.Builder that is reused to reduce object allocation (see e.g. the default implementation
+  /// of [Block#updateLive]).
   final Bits.Builder scratchBits = new Bits.Builder();
 
   final Bits.Builder scratchBits2 = new Bits.Builder();
 
-  /** Scratch state for temporarily saving LinkInfo contents. */
+  /// Scratch state for temporarily saving LinkInfo contents.
   final LinkInfo scratchInfo = new LinkInfo();
 
-  /** Scratch state for temporarily saving LinkInfo contents. */
+  /// Scratch state for temporarily saving LinkInfo contents.
   final LinkInfo scratchInfo2 = new LinkInfo();
 
-  /**
-   * This value will be set as the {@link Block#src} of each block added until the next call to
-   * {@link #setNextSrc}.
-   */
+  /// This value will be set as the [Block#src] of each block added until the next call to
+  /// [#setNextSrc].
   private Object nextSrc;
 
-  /** Each CodeBuilder goes through four phases. */
+  /// Each CodeBuilder goes through four phases.
   public enum Phase {
     BUILDING,
     OPTIMIZING,
@@ -194,10 +160,10 @@ public class CodeBuilder {
     EMITTING
   }
 
-  /** The CodeBuilder's current phase. */
+  /// The CodeBuilder's current phase.
   private Phase phase = Phase.BUILDING;
 
-  /** Creates a new CodeBuilder that will use the given BinaryOps to combine ValueInfos. */
+  /// Creates a new CodeBuilder that will use the given BinaryOps to combine ValueInfos.
   public CodeBuilder(BinaryOps binaryOps) {
     this.binaryOps = binaryOps;
     this.unioner = new LinkInfo.Unioner(this);
@@ -213,30 +179,28 @@ public class CodeBuilder {
     initial.next.setTarget(nextBlock);
   }
 
-  /** Returns the zone with the given index. */
+  /// Returns the zone with the given index.
   final Zone zone(int i) {
     Zone result = zones.get(i);
     assert result.index == i;
     return result;
   }
 
-  /** Returns the zone to which new non-Terminal blocks will be added. */
+  /// Returns the zone to which new non-Terminal blocks will be added.
   final Zone currentZone() {
     // finalZone is always the last zone, and it's only for Terminals; for non-terminals we use
     // the one before that.
     return zones.get(zones.size() - 2);
   }
 
-  /**
-   * Adds a new Zone, contained in the given Loop. The result will become the {@link #currentZone}.
-   */
+  /// Adds a new Zone, contained in the given Loop. The result will become the [#currentZone].
   @CanIgnoreReturnValue
   final Zone newZone(Loop containingLoop) {
     // Add it before the finalZone.
     return newZone(containingLoop, zones.size() - 1);
   }
 
-  /** Adds a new Zone, contained in the given Loop and with the given index */
+  /// Adds a new Zone, contained in the given Loop and with the given index
   Zone newZone(Loop containingLoop, int index) {
     Zone result = new Zone(this, containingLoop, index);
     zones.add(index, result);
@@ -248,119 +212,100 @@ public class CodeBuilder {
     return result;
   }
 
-  /**
-   * Called after additions to or reordering of the {@link #zones} list; sets the {@link Zone#index}
-   * of each zone from {@code first} to {@code last} (inclusive) to match its current position in
-   * {@link #zones}.
-   */
+  /// Called after additions to or reordering of the [#zones] list; sets the [Zone#index] of each
+  /// zone from `first` to `last` (inclusive) to match its current position in [#zones].
   private void reindexZones(int first, int last) {
     for (int i = first; i <= last; i++) {
       zones.get(i).index = i;
     }
   }
 
-  /**
-   * Returns the innermost Loop to which new non-Terminal blocks will be added, or null if we are
-   * not currently in a loop.
-   */
+  /// Returns the innermost Loop to which new non-Terminal blocks will be added, or null if we are
+  /// not currently in a loop.
   final Loop currentLoop() {
     return currentZone().containingLoop;
   }
 
-  /** Returns the CodeBuilder's current phase. */
+  /// Returns the CodeBuilder's current phase.
   public final Phase phase() {
     return phase;
   }
 
-  /** Returns the number of registers created with {@link #newArg} or {@link #newRegister}. */
+  /// Returns the number of registers created with [#newArg] or [#newRegister].
   public final int numRegisters() {
     return registers.size();
   }
 
-  /** Returns the number of registers created with {@link #newArg}. */
+  /// Returns the number of registers created with [#newArg].
   public final int numArgs() {
     return numArgs;
   }
 
-  /** Returns the register with the given index. */
+  /// Returns the register with the given index.
   public final Register register(int i) {
     Register result = registers.get(i);
     assert result.index == i;
     return result;
   }
 
-  /**
-   * Returns the signature of the MethodHandle that will be returned by {@link #load}. Should only
-   * be called after all args have been added.
-   */
+  /// Returns the signature of the MethodHandle that will be returned by [#load]. Should only be
+  /// called after all args have been added.
   public MethodType methodType(Class<?> returnType) {
     Class<?>[] argTypes =
         IntStream.range(0, numArgs).mapToObj(i -> register(i).type()).toArray(Class[]::new);
     return MethodType.methodType(returnType, argTypes);
   }
 
-  /** Returns the number of blocks currently in the CodeBuilder's block graph. */
+  /// Returns the number of blocks currently in the CodeBuilder's block graph.
   public final int numBlocks() {
     return blocks.size();
   }
 
-  /** Returns the block with the given index. */
+  /// Returns the block with the given index.
   protected final Block block(int i) {
     Block result = blocks.get(i);
     assert result.index() == i;
     return result;
   }
 
-  /**
-   * Returns true if there is at least one Link to {@link #nextBlock}. A new block can only be added
-   * when {@code nextIsReachable()} returns true.
-   */
+  /// Returns true if there is at least one Link to [#nextBlock]. A new block can only be added when
+  /// `nextIsReachable()` returns true.
   public final boolean nextIsReachable() {
     return nextBlock.hasInLink();
   }
 
-  /**
-   * Sets {@link #nextBlock} to the given FutureBlock. Should only be called when {@link
-   * #nextIsReachable} would return false. The caller must not reuse {@code newNext} after this
-   * call.
-   */
+  /// Sets [#nextBlock] to the given FutureBlock. Should only be called when [#nextIsReachable]
+  /// would return false. The caller must not reuse `newNext` after this call.
   public final void setNext(FutureBlock newNext) {
     assert !nextIsReachable();
     // We could instead do mergeNext(links), but this is simpler.
     nextBlock = newNext;
   }
 
-  /** Moves all links from {@code other} to {@link #nextBlock}. */
+  /// Moves all links from `other` to [#nextBlock].
   public final void mergeNext(FutureBlock other) {
     other.moveAllInLinks(nextBlock);
   }
 
-  /**
-   * Moves all links {@link #nextBlock} to {@code links}; after calling, {@code nextIsReachable()}
-   * will return false.
-   */
+  /// Moves all links [#nextBlock] to `links`; after calling, `nextIsReachable()` will return false.
   public final void branchTo(FutureBlock links) {
     nextBlock.moveAllInLinks(links);
   }
 
-  /**
-   * Sets {@link #nextBlock} to the given FutureBlock, and returns the previous {@link #nextBlock}.
-   */
+  /// Sets [#nextBlock] to the given FutureBlock, and returns the previous [#nextBlock].
   public final FutureBlock swapNext(FutureBlock other) {
     FutureBlock prevNext = nextBlock;
     nextBlock = other;
     return prevNext;
   }
 
-  /**
-   * Returns what is currently known about the value of the specified register when executing the
-   * next block to be added. Will not return another Register.
-   */
+  /// Returns what is currently known about the value of the specified register when executing the
+  /// next block to be added. Will not return another Register.
   public final ValueInfo nextInfoResolved(int index) {
     return nextBlock.getInLinkInfo(index, binaryOps, true);
   }
 
-  /** Appends a newly-created block to {@link #blocks} and sets its index. */
+  /// Appends a newly-created block to [#blocks] and sets its index.
   void add(Block b) {
     assert !b.hasInLink() && b.index() < 0;
     b.setIndex(blocks.size());
@@ -368,10 +313,8 @@ public class CodeBuilder {
     blockRenumbered(b, -1);
   }
 
-  /**
-   * Appends the given block to {@link #blocks} and moves the links from {@link #nextBlock} to it.
-   * If the block has an unset outlink, it will be linked to {@link #nextBlock}.
-   */
+  /// Appends the given block to [#blocks] and moves the links from [#nextBlock] to it. If the block
+  /// has an unset outlink, it will be linked to [#nextBlock].
   void addAsNext(Block block) {
     Preconditions.checkState(nextIsReachable());
     block.src = nextSrc;
@@ -396,21 +339,17 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Called immediately before ({@code add} is false) or after ({@code add} is true) the target of a
-   * link is changed; updates Loop entry and exit lists as needed.
-   */
+  /// Called immediately before (`add` is false) or after (`add` is true) the target of a link is
+  /// changed; updates Loop entry and exit lists as needed.
   static void updateLoopTransitions(Link link, boolean add) {
     if (link.target() instanceof Block) {
       updateLoopTransitions(link, link.origin.zone(), link.targetBlock().zone(), add);
     }
   }
 
-  /**
-   * Assumes that {@code link} goes from {@code originZone} to {@code targetZone} (if it doesn't
-   * already, we're about to change it so that it will) and determines which (if any) loops should
-   * have it on their entry or exit lists. If {@code add} is false, removes it; otherwise adds it.
-   */
+  /// Assumes that `link` goes from `originZone` to `targetZone` (if it doesn't already, we're about
+  /// to change it so that it will) and determines which (if any) loops should have it on their
+  /// entry or exit lists. If `add` is false, removes it; otherwise adds it.
   static void updateLoopTransitions(Link link, Zone originZone, Zone targetZone, boolean add) {
     // If this link is to or from a block that hasn't yet been added, it can't be on any loops yet.
     if (originZone == null || targetZone == null) {
@@ -438,10 +377,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Moves zones start through end (inclusive) either later (if shift is positive) or earlier (if
-   * shift is negative) in the zones list and updates the indices of all affected zones.
-   */
+  /// Moves zones start through end (inclusive) either later (if shift is positive) or earlier (if
+  /// shift is negative) in the zones list and updates the indices of all affected zones.
   void reorderZones(int start, int end, int shift) {
     assert end >= start - 1;
     if (shift == 0 || end < start) {
@@ -462,10 +399,8 @@ public class CodeBuilder {
     reindexZones(firstRenumber, lastRenumber);
   }
 
-  /**
-   * Called with a block that no longer has any inlinks; removes it from {@link #blocks} and
-   * detaches all of its outlinks.
-   */
+  /// Called with a block that no longer has any inlinks; removes it from [#blocks] and detaches all
+  /// of its outlinks.
   void remove(Block b) {
     int index = b.index();
     assert !b.hasInLink() && (index < 0 || blocks.get(index) == b);
@@ -494,20 +429,16 @@ public class CodeBuilder {
     b.removed();
   }
 
-  /**
-   * Called with a block that has been determined to be a no-op; moves its inlinks to the target of
-   * its (next) outlink and then removes it.
-   */
+  /// Called with a block that has been determined to be a no-op; moves its inlinks to the target of
+  /// its (next) outlink and then removes it.
   void removeNoOp(Block block) {
     Link nextLink = ((NonTerminal) block).next;
     block.moveAllInLinks(nextLink.target());
     remove(block);
   }
 
-  /**
-   * Called with an outlink of a just-removed block; detaches the link, and if it had pointed to a
-   * block that is no longer reachable deletes that block.
-   */
+  /// Called with an outlink of a just-removed block; detaches the link, and if it had pointed to a
+  /// block that is no longer reachable deletes that block.
   private void detach(Link link) {
     LinkTarget target = link.detach();
     if (target instanceof Block block) {
@@ -515,7 +446,7 @@ public class CodeBuilder {
     }
   }
 
-  /** We've just removed an inlink to the given block. If it is no longer reachable, delete it. */
+  /// We've just removed an inlink to the given block. If it is no longer reachable, delete it.
   void removedInlink(Block block) {
     if (!block.hasInLink()) {
       remove(block);
@@ -524,11 +455,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Detaches {@code toMove} and sets its target to {@code newTarget}. If {@code toMove.src} is
-   * simple and any of {@code newTarget}'s previous inlinks are duplicates of it, calls {@link
-   * #mergeMatching} to combine them.
-   */
+  /// Detaches `toMove` and sets its target to `newTarget`. If `toMove.src` is simple and any of
+  /// `newTarget`'s previous inlinks are duplicates of it, calls [#mergeMatching] to combine them.
   void moveLink(Link toMove, LinkTarget newTarget) {
     toMove.detach();
     if (toMove.origin.isSimple()) {
@@ -549,10 +477,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Given two simple blocks that are duplicates and link to the same next block, drops one of them
-   * and redirects its inlinks to the other. Returns the survivor.
-   */
+  /// Given two simple blocks that are duplicates and link to the same next block, drops one of them
+  /// and redirects its inlinks to the other. Returns the survivor.
   @CanIgnoreReturnValue
   NonTerminal mergeMatching(NonTerminal b1, NonTerminal b2) {
     assert b1 != b2 && b1.isDuplicate(b2) && b1.next.target() == b2.next.target();
@@ -588,19 +514,17 @@ public class CodeBuilder {
     return keep;
   }
 
-  /**
-   * Starts a loop. The next block added after this will be the block that can be branched back to;
-   * after adding all the blocks in the loop body, call {@link Loop#complete}. The loop body may
-   * update the registers in {@code registers} to carry state from one iteration to the next; any
-   * other registers set in the loop are assumed to be temporaries.
-   */
+  /// Starts a loop. The next block added after this will be the block that can be branched back to;
+  /// after adding all the blocks in the loop body, call [Loop#complete]. The loop body may update
+  /// the registers in `registers` to carry state from one iteration to the next; any other
+  /// registers set in the loop are assumed to be temporaries.
   public Loop startLoop(Bits registers) {
     Loop loop = new Loop(this, loops.size(), registers);
     loops.add(loop);
     return loop;
   }
 
-  /** Starts a loop that updates the given registers. */
+  /// Starts a loop that updates the given registers.
   public Loop startLoop(Register... registers) {
     scratchBits.clearAll();
     for (Register r : registers) {
@@ -609,20 +533,18 @@ public class CodeBuilder {
     return startLoop(scratchBits.build());
   }
 
-  /** Returns the number of Loops that have been created by this CodeBuilder. */
+  /// Returns the number of Loops that have been created by this CodeBuilder.
   public int numLoops() {
     return loops.size();
   }
 
-  /** Returns the Loop with the given index. */
+  /// Returns the Loop with the given index.
   public Loop loop(int i) {
     return loops.get(i);
   }
 
-  /**
-   * Adds {@code newBlock} so that it is immediately followed by {@code nextBlock}. The caller is
-   * responsible for adding at least one inlink to {@code newBlock} after this method returns.
-   */
+  /// Adds `newBlock` so that it is immediately followed by `nextBlock`. The caller is responsible
+  /// for adding at least one inlink to `newBlock` after this method returns.
   protected void insertBefore(NonTerminal newBlock, Block nextBlock) {
     assert !(newBlock instanceof Split);
     newBlock.setZone(nextBlock.zone());
@@ -631,27 +553,25 @@ public class CodeBuilder {
     newBlock.next.setTarget(nextBlock);
   }
 
-  /** Sets the {@link Block#src} of each block added until the next call to {@code setNextSrc()}. */
+  /// Sets the [Block#src] of each block added until the next call to `setNextSrc()`.
   public void setNextSrc(Object src) {
     nextSrc = src;
   }
 
-  /** The value passed in the most recent call to {@link #setNextSrc}. */
+  /// The value passed in the most recent call to [#setNextSrc].
   public Object nextSrc() {
     return nextSrc;
   }
 
-  /** Creates a new Register with the given type. */
+  /// Creates a new Register with the given type.
   public Register newRegister(Class<?> type) {
     Register result = new Register(registers.size(), type);
     registers.add(result);
     return result;
   }
 
-  /**
-   * Adds an argument with the given type. All calls to {@code newArg()} must be made before adding
-   * blocks to the block graph or creating non-argument registers.
-   */
+  /// Adds an argument with the given type. All calls to `newArg()` must be made before adding
+  /// blocks to the block graph or creating non-argument registers.
   public Register newArg(Class<?> type) {
     Preconditions.checkState(blocks.size() == 1 && numArgs == registers.size());
     Register result = newRegister(type);
@@ -660,48 +580,40 @@ public class CodeBuilder {
     return result;
   }
 
-  /** Returns the {@link Initial} that is the root of the block graph. */
+  /// Returns the [Initial] that is the root of the block graph.
   Initial initialBlock() {
     return (Initial) blocks.get(0);
   }
 
-  /** Returns a string representation of the given Block. */
+  /// Returns a string representation of the given Block.
   protected String printBlock(Block b, PrintOptions options) {
     return b.toString(options) + b.linksToString(options);
   }
 
-  /**
-   * A PrintOptions is used by the toString() methods of Blocks, Links, and CodeValues. The primary
-   * implementation of PrintOptions is Sequencer, which tries to create a maximally readable string
-   * representation of a complete block graph, but PrintOptions.DEFAULT can be used when we are not
-   * in that context.
-   */
+  /// A PrintOptions is used by the toString() methods of Blocks, Links, and CodeValues. The primary
+  /// implementation of PrintOptions is Sequencer, which tries to create a maximally readable string
+  /// representation of a complete block graph, but PrintOptions.DEFAULT can be used when we are not
+  /// in that context.
   public interface PrintOptions {
-    /**
-     * Returns true if Registers should be identified by their JVM local index, rather than their
-     * register index.
-     */
+    /// Returns true if Registers should be identified by their JVM local index, rather than their
+    /// register index.
     boolean useJvmLocals();
 
-    /**
-     * Returns true if the target of the given link will be printed immediately after its origin;
-     * {@link Block#linksToString} implementations can elide such links to make their output less
-     * verbose.
-     */
+    /// Returns true if the target of the given link will be printed immediately after its origin;
+    /// [Block#linksToString] implementations can elide such links to make their output less
+    /// verbose.
     boolean isLinkToNextBlock(Link link);
 
-    /** Returns the identifier to be used when printing a link to the given block. */
+    /// Returns the identifier to be used when printing a link to the given block.
     String blockId(Block block);
 
-    /** Returns true if the specified register is live at the start of the current block. */
+    /// Returns true if the specified register is live at the start of the current block.
     default boolean isLive(int index) {
       return true;
     }
 
-    /**
-     * Returns a PrintOptions that delegates {@link #isLive} to {@code liveRegisters}, and all other
-     * methods to {@code parent}.
-     */
+    /// Returns a PrintOptions that delegates [#isLive] to `liveRegisters`, and all other methods to
+    /// `parent`.
     static PrintOptions withLive(PrintOptions parent, IntPredicate liveRegisters) {
       return new PrintOptions() {
         @Override
@@ -747,20 +659,16 @@ public class CodeBuilder {
         };
   }
 
-  /**
-   * If the object passed to {@link #setNextSrc} implements {@code Printable}, its rendering by
-   * {@link #printBlocks} can depend on the PrintOptions.
-   */
+  /// If the object passed to [#setNextSrc] implements `Printable`, its rendering by [#printBlocks]
+  /// can depend on the PrintOptions.
   public interface Printable {
     String toString(PrintOptions options);
   }
 
   private static final String SRC_PAD = " ".repeat(55);
 
-  /**
-   * Returns a string representation of this CodeBuilder's block graph, with the blocks ordered by
-   * the given Sequencer.
-   */
+  /// Returns a string representation of this CodeBuilder's block graph, with the blocks ordered by
+  /// the given Sequencer.
   String printBlocks(Sequencer sequencer, boolean includeBlockIndex) {
     StringBuilder sb = new StringBuilder();
     Object prevSrc = null;
@@ -815,12 +723,12 @@ public class CodeBuilder {
     return sb.toString();
   }
 
-  /** Returns a string representation of this CodeBuilder's block graph. */
+  /// Returns a string representation of this CodeBuilder's block graph.
   protected String printBlocks(boolean includeBlockIndex) {
     return printBlocks(new Sequencer(blocks, false), includeBlockIndex);
   }
 
-  /** Called after optimization is complete, just before emitting. */
+  /// Called after optimization is complete, just before emitting.
   protected void finalizeBlocks(RegisterAssigner assigner) {
     // Note that this will remove BackRefs, breaking the usual no-back-links-without-a-BackRef rule,
     // but we only do this immediately before emitting blocks (after all optimization passes are
@@ -828,7 +736,7 @@ public class CodeBuilder {
     removeNoOps(Block::isNoOp);
   }
 
-  /** Calls {@link #removeNoOp} on each block identified by the given predicate. */
+  /// Calls [#removeNoOp] on each block identified by the given predicate.
   protected void removeNoOps(Predicate<Block> toRemove) {
     for (int i = 0; i < blocks.size(); ) {
       Block block = blocks.get(i);
@@ -840,10 +748,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Adds the given Block to the forward-propagation queue if forward propagation is in process;
-   * does nothing if we are not currently running forward propagation.
-   */
+  /// Adds the given Block to the forward-propagation queue if forward propagation is in process;
+  /// does nothing if we are not currently running forward propagation.
   void setForwardPropNeeded(Block block) {
     assert block.index() >= 0;
     if (propagation == Propagation.FORWARD && !block.setIsForwardQueued(true)) {
@@ -851,10 +757,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Adds the given Loop's processor to the forward-propagation queue if forward propagation is in
-   * process; does nothing if we are not currently running forward propagation.
-   */
+  /// Adds the given Loop's processor to the forward-propagation queue if forward propagation is in
+  /// process; does nothing if we are not currently running forward propagation.
   void setForwardPropNeeded(Loop loop) {
     if (propagation == Propagation.FORWARD
         && !loop.isDisabled()
@@ -876,10 +780,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * {@code link}'s info has changed; it was previously {@code prev}. Determine whether the link's
-   * target now needs forward propagation.
-   */
+  /// `link`'s info has changed; it was previously `prev`. Determine whether the link's target now
+  /// needs forward propagation.
   void linkInfoUpdated(Link link, LinkInfo prev, boolean incremental) {
     if (link.info.sameContents(prev)) {
       // Even though they're equal, restoring the older version might reduce memory use
@@ -899,20 +801,16 @@ public class CodeBuilder {
     linkInfoChanged(link);
   }
 
-  /**
-   * If we're running with assertions enabled, verify that the argument is true.
-   *
-   * <p>Used instead of an {@code assert} statement when we always want to evaluate the argument
-   * (because it has a side effect).
-   */
+  /// If we're running with assertions enabled, verify that the argument is true.
+  ///
+  /// Used instead of an `assert` statement when we always want to evaluate the argument (because it
+  /// has a side effect).
   public static void assertTrue(boolean check) {
     assert check;
   }
 
-  /**
-   * Runs {@link Zone.Ordered#runForwardProp} on each item in the forward-propagation queue, until
-   * the queue is drained.
-   */
+  /// Runs [Zone.Ordered#runForwardProp] on each item in the forward-propagation queue, until the
+  /// queue is drained.
   void runForwardProp() {
     assert propagation == Propagation.FORWARD;
     for (; ; ) {
@@ -944,7 +842,7 @@ public class CodeBuilder {
     return false;
   }
 
-  /** Adds the given Block (or Loop.Processor) to the reverse-propagation queue. */
+  /// Adds the given Block (or Loop.Processor) to the reverse-propagation queue.
   void setReversePropNeeded(Zone.Ordered zo) {
     assert propagation == Propagation.REVERSE;
     if (!zo.setIsReverseQueued(true)) {
@@ -952,9 +850,7 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Removes the given Block or Loop.Processor from the forward- and/or reverse-propagation queue.
-   */
+  /// Removes the given Block or Loop.Processor from the forward- and/or reverse-propagation queue.
   void cancelProp(Zone.Ordered zo) {
     if (zo.setIsForwardQueued(false)) {
       forwardPropQueue.remove(zo);
@@ -964,10 +860,8 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Runs {@link Zone.Ordered#runReverseProp} on each item in the reverse-propagation queue, until
-   * the queue is drained.
-   */
+  /// Runs [Zone.Ordered#runReverseProp] on each item in the reverse-propagation queue, until the
+  /// queue is drained.
   private void runReverseProp() {
     assert propagation == Propagation.REVERSE;
     for (; ; ) {
@@ -984,7 +878,7 @@ public class CodeBuilder {
     }
   }
 
-  /** Returns the head of the reverse-propagation queue, or null if the queue is empty. */
+  /// Returns the head of the reverse-propagation queue, or null if the queue is empty.
   Zone.Ordered peekReverseProp() {
     return reversePropQueue.peek();
   }
@@ -1005,10 +899,8 @@ public class CodeBuilder {
         where, numSkipped, numDropped, numMoved, numOutOfLoop, numDuped);
   }
 
-  /**
-   * Optimizes the block graph. Alternately applies backward and forward propagation until the graph
-   * stops changing.
-   */
+  /// Optimizes the block graph. Alternately applies backward and forward propagation until the
+  /// graph stops changing.
   void optimizeBlocks() {
     logChanges("Starting optimization");
     for (; ; ) {
@@ -1056,15 +948,13 @@ public class CodeBuilder {
     }
   }
 
-  /** Update {@code b.live}; for use by subclasses which otherwise would not have access. */
+  /// Update `b.live`; for use by subclasses which otherwise would not have access.
   protected static void setLive(Block b, Bits live) {
     b.live = live;
   }
 
-  /**
-   * Update the live state of each block to include the {@link Loop#extraLive()} of each enclosing
-   * loop. Should only be done once all optimization is complete.
-   */
+  /// Update the live state of each block to include the [Loop#extraLive()] of each enclosing loop.
+  /// Should only be done once all optimization is complete.
   private void finalizeLive() {
     for (Block b : blocks) {
       Loop loop = b.zone().containingLoop;
@@ -1076,25 +966,21 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Called when a Block is added ({@code prevIndex < 0}), removed ({@code b.index() < 0}), or
-   * renumbered. Enables a subclass to maintain additional per-block information using {@link
-   * Block#index()}.
-   */
+  /// Called when a Block is added (`prevIndex < 0`), removed (`b.index() < 0`), or renumbered.
+  /// Enables a subclass to maintain additional per-block information using [Block#index()].
   protected void blockRenumbered(Block b, int prevIndex) {}
 
-  /**
-   * Called after the block graph is complete; optimizes the graph, emits the resulting sequence of
-   * bytecode, and loads them as a new MethodHandle.
-   *
-   * @param methodName will appear in any stack traces thrown while executing the constructed method
-   * @param sourceFileName if non-null, will appear in any stack traces thrown while executing the
-   *     constructed method
-   * @param returnType the return type of the constructed method; must match all ReturnBlocks in the
-   *     graph
-   * @param lookup a {@link MethodHandles.Lookup} for the package in which the constructed method
-   *     will be loaded, and which it will have access to
-   */
+  /// Called after the block graph is complete; optimizes the graph, emits the resulting sequence of
+  /// bytecode, and loads them as a new MethodHandle.
+  ///
+  /// @param methodName will appear in any stack traces thrown while executing the constructed
+  ///   method
+  /// @param sourceFileName if non-null, will appear in any stack traces thrown while executing the
+  ///   constructed method
+  /// @param returnType the return type of the constructed method; must match all ReturnBlocks in
+  ///   the graph
+  /// @param lookup a [MethodHandles.Lookup] for the package in which the constructed method will be
+  ///   loaded, and which it will have access to
   public MethodHandle load(
       String methodName, String sourceFileName, Class<?> returnType, MethodHandles.Lookup lookup) {
     // Forward propagation was enabled while we were building the graph.
@@ -1127,11 +1013,9 @@ public class CodeBuilder {
     }
   }
 
-  /**
-   * Represents the 5 kinds of values the JVM distinguishes on the stack and in local variables:
-   * ints, longs, floats, doubles, and object pointers. Note that booleans, bytes, shorts, and chars
-   * are stored as ints.
-   */
+  /// Represents the 5 kinds of values the JVM distinguishes on the stack and in local variables:
+  /// ints, longs, floats, doubles, and object pointers. Note that booleans, bytes, shorts, and
+  /// chars are stored as ints.
   public enum OpCodeType {
     INT("i", int.class, Opcodes.INTEGER, Opcodes.ILOAD, Opcodes.ISTORE, Opcodes.IRETURN, 0),
     LONG(
@@ -1160,49 +1044,43 @@ public class CodeBuilder {
         Opcodes.DCMPL),
     OBJ("x", Object.class, null, Opcodes.ALOAD, Opcodes.ASTORE, Opcodes.ARETURN, 0);
 
-    /** The (lower-case) single-letter prefix used for registers of this type. */
+    /// The (lower-case) single-letter prefix used for registers of this type.
     public final String prefix;
 
-    /** The upper-case equivalent of {@link #prefix}. */
+    /// The upper-case equivalent of [#prefix].
     public final String upperPrefix;
 
-    /** The corresponding Java Class. */
+    /// The corresponding Java Class.
     public final Class<?> javaType;
 
-    /**
-     * The number of stack entries or local variable indices occupied by a value of this type. 2 for
-     * LONG and DOUBLE, 1 for everything else.
-     */
+    /// The number of stack entries or local variable indices occupied by a value of this type. 2
+    /// for LONG and DOUBLE, 1 for everything else.
     public final int size;
 
-    /** The encoding used to represent this type in stack maps, or null for OBJ. */
+    /// The encoding used to represent this type in stack maps, or null for OBJ.
     public final Integer frameType;
 
-    /** The JVM opcode used to push a local variable of this type onto the stack. */
+    /// The JVM opcode used to push a local variable of this type onto the stack.
     public final int loadVarOpcode;
 
-    /**
-     * The JVM opcode used to pop a value of this type from the top of the stack and store it in a
-     * local variable.
-     */
+    /// The JVM opcode used to pop a value of this type from the top of the stack and store it in a
+    /// local variable.
     public final int storeVarOpcode;
 
-    /** The JVM opcode used to return a value of this type from the currently-executing method. */
+    /// The JVM opcode used to return a value of this type from the currently-executing method.
     public final int returnOpcode;
 
-    /**
-     * For LONG, FLOAT, and DOUBLE, the opcode that pops two values of that type from the stack,
-     * compares them, and pushes -1, 0, or 1.
-     *
-     * <p>Null for INT (where there are instead opcodes that combine a comparison with a branch; see
-     * {@link ConditionalBranch}) and OBJ (which only has opcodes that combine equality comparison
-     * with branching; again, see {@link ConditionalBranch}).
-     *
-     * <p>(Pedants may note that for floats and doubles the JVM actually provides two opcodes that
-     * do this comparison, differing in their treatment of NaNs. We use FCMPL for floats and DCMPL
-     * for doubles, which means that if either (or both) of the arguments to a {@link
-     * TestBlock.IsLessThan} is NaN the next (success) link will be taken.)
-     */
+    /// For LONG, FLOAT, and DOUBLE, the opcode that pops two values of that type from the stack,
+    /// compares them, and pushes -1, 0, or 1.
+    ///
+    /// Null for INT (where there are instead opcodes that combine a comparison with a branch; see
+    /// [ConditionalBranch]) and OBJ (which only has opcodes that combine equality comparison with
+    /// branching; again, see [ConditionalBranch]).
+    ///
+    /// (Pedants may note that for floats and doubles the JVM actually provides two opcodes that do
+    /// this comparison, differing in their treatment of NaNs. We use FCMPL for floats and DCMPL for
+    /// doubles, which means that if either (or both) of the arguments to a [TestBlock.IsLessThan]
+    /// is NaN the next (success) link will be taken.)
     public final int compareOpcode;
 
     OpCodeType(
@@ -1240,19 +1118,15 @@ public class CodeBuilder {
       }
     }
 
-    /**
-     * Returns the number of stack entries or local variable indices occupied by a value of the
-     * given type: 2 for long and double, 1 for everything else.
-     */
+    /// Returns the number of stack entries or local variable indices occupied by a value of the
+    /// given type: 2 for long and double, 1 for everything else.
     static int localSize(Class<?> type) {
       assert type != void.class;
       return (type == double.class || type == long.class) ? 2 : 1;
     }
 
-    /**
-     * Returns true if the given type is one of the primitive types that the JVM represents using an
-     * int (i.e. int, boolean, byte, short, or char).
-     */
+    /// Returns true if the given type is one of the primitive types that the JVM represents using
+    /// an int (i.e. int, boolean, byte, short, or char).
     static boolean isStoredAsInt(Class<?> type) {
       return type == int.class
           || type == boolean.class

@@ -33,30 +33,25 @@ import org.retrolang.impl.InstructionBlock.TargetInfo;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
 
-/**
- * A VM instruction. There are nine subclasses: {@link Set}, {@link Call}, {@link Return}, {@link
- * Fail}, {@link Trace}, {@link Branch}, {@link ConditionalBranch}, and {@link TypeCheckBranch}
- * (each created by one of the {@code emit*} methods on {@link Vm.InstructionBlock}), and {@link
- * BranchTarget} (created by {@link Vm.InstructionBlock#newTarget}).
- *
- * <p>Each instance of Instruction has a corresponding StackEntryType, with fields for each of the
- * locals that are live when the instruction is executed. Because only a small fraction of
- * instructions are expected to error (and hence actually need their StackEntryType) we wait until
- * the first call to {@link #stackEntryType} before creating it.
- */
+/// A VM instruction. There are nine subclasses: [Set], [Call], [Return], [Fail], [Trace], [Branch],
+/// [ConditionalBranch], and [TypeCheckBranch] (each created by one of the `emit*` methods on
+/// [Vm.InstructionBlock]), and [BranchTarget] (created by [Vm.InstructionBlock#newTarget]).
+///
+/// Each instance of Instruction has a corresponding StackEntryType, with fields for each of the
+/// locals that are live when the instruction is executed. Because only a small fraction of
+/// instructions are expected to error (and hence actually need their StackEntryType) we wait until
+/// the first call to [#stackEntryType] before creating it.
 abstract class Instruction {
   // These are set by initialize()
   private InstructionBlock ib;
   private int lineNum;
   private int location = -1;
 
-  /**
-   * Before {@link #stackEntryType} is called, the set of locals that are live when starting
-   * execution of this instruction; converted to a StackEntryType the first time one is needed.
-   */
+  /// Before [#stackEntryType] is called, the set of locals that are live when starting execution of
+  /// this instruction; converted to a StackEntryType the first time one is needed.
   private Object unwindBeforeExecution;
 
-  /** Called when an Instruction is added to an InstructionBlock. */
+  /// Called when an Instruction is added to an InstructionBlock.
   void initialize(InstructionBlock ib, int lineNum, int location) {
     assert this.location < 0 && location >= 0;
     // BranchTargets have their ib field set at creation, but are not added to the InstructionBlock
@@ -67,81 +62,71 @@ abstract class Instruction {
     this.location = location;
   }
 
-  /**
-   * Called once (from {@link UpdateLiveHelper#visitInstructions}) on each Instruction with the set
-   * of locals that are live when starting execution of this instruction.
-   */
+  /// Called once (from [UpdateLiveHelper#visitInstructions]) on each Instruction with the set of
+  /// locals that are live when starting execution of this instruction.
   void saveLive(Bits live) {
     assert unwindBeforeExecution == null;
     unwindBeforeExecution = live;
   }
 
-  /**
-   * Given the LocalSources after the previous instruction, returns the LocalSources following
-   * execution of this instruction, or null if this instruction never falls through.
-   *
-   * <p>The default implementation returns null.
-   */
+  /// Given the LocalSources after the previous instruction, returns the LocalSources following
+  /// execution of this instruction, or null if this instruction never falls through.
+  ///
+  /// The default implementation returns null.
   LocalSources updateLocalSources(LocalSources sources) {
     return null;
   }
 
-  /** Returns the InstructionBlock that this Instruction belongs to. */
+  /// Returns the InstructionBlock that this Instruction belongs to.
   final InstructionBlock ib() {
     assert ib != null;
     return ib;
   }
 
-  /** Returns true if {@link #initialize} has been called. */
+  /// Returns true if [#initialize] has been called.
   final boolean isInitialized() {
     return location >= 0;
   }
 
-  /** Returns the {@code lineNum} that was passed to {@link #initialize}. */
+  /// Returns the `lineNum` that was passed to [#initialize].
   final int lineNum() {
     assert isInitialized();
     return lineNum;
   }
 
-  /** Returns the {@code location} that was passed to {@link #initialize}. */
+  /// Returns the `location` that was passed to [#initialize].
   final int location() {
     assert isInitialized();
     return location;
   }
 
-  /**
-   * {@link VmInstructionBlock#done} calls {@code updateLive} on each instruction in the block, in
-   * reverse order, giving it a chance to compute any state that depends on the following
-   * instructions (in particular, the liveness of locals).
-   */
+  /// [VmInstructionBlock#done] calls `updateLive` on each instruction in the block, in reverse
+  /// order, giving it a chance to compute any state that depends on the following instructions (in
+  /// particular, the liveness of locals).
   abstract void updateLive(UpdateLiveHelper helper);
 
-  /**
-   * Returns the index of next instruction to execute, or -1 if {@code tstate.unwindStarted()}
-   * becomes true (e.g. because of an error).
-   *
-   * <p>If -1 is returned, any values remaining in {@code locals} will be discarded.
-   */
+  /// Returns the index of next instruction to execute, or -1 if `tstate.unwindStarted()` becomes
+  /// true (e.g. because of an error).
+  ///
+  /// If -1 is returned, any values remaining in `locals` will be discarded.
   abstract int execute(TState tstate, @RC.Counted Object[] locals, MethodMemo memo);
 
-  /** Generates code for this instruction. */
+  /// Generates code for this instruction.
   abstract void emit(CodeGen codeGen, EmitState emitState);
 
-  /**
-   * If {@code memo} is null, returns the same result as {@code toString()}; if {@code memo} is
-   * non-null may show incorporate information from it.
-   */
+  /// If `memo` is null, returns the same result as `toString()`; if `memo` is non-null may show
+  /// incorporate information from it.
   String toString(MethodMemo memo) {
     // Most Instruction subclasses don't use the memo
     return toString();
   }
 
-  /** Returns the result of {@code toString()}, prefixed with source, line number, and location. */
+  /// Returns the result of `toString()`, prefixed with source, line number, and location.
   final String describe() {
     return String.format("%s:%s_%s %s", ib.source, lineNum, location, this);
   }
 
-  /** Returns this Instruction's StackEntryType. */
+  /// Returns this Instruction's StackEntryType.
   synchronized StackEntryType stackEntryType() {
     if (!(unwindBeforeExecution instanceof StackEntryType)) {
       unwindBeforeExecution = new StackEntryType(this, (Bits) unwindBeforeExecution);
@@ -149,16 +134,14 @@ abstract class Instruction {
     return (StackEntryType) unwindBeforeExecution;
   }
 
-  /** Called if this instruction errors. */
+  /// Called if this instruction errors.
   void startUnwind(TState tstate, Object[] locals) {
     assert !tstate.unwindStarted();
     tstate.pushUnwind(stackEntryType().newStackEntry(tstate, locals));
   }
 
-  /**
-   * Returns the value of the specified local. If its value is undefined, returns null and starts
-   * unwinding.
-   */
+  /// Returns the value of the specified local. If its value is undefined, returns null and starts
+  /// unwinding.
   @RC.Out
   @Nullable Object toValue(TState tstate, Local var, Object[] locals) {
     Object v = Value.fromArray(locals, var.index);
@@ -173,10 +156,8 @@ abstract class Instruction {
     return null;
   }
 
-  /**
-   * Returns the value of the given VmExpr, substituting the values of locals from the given array.
-   * If any local is undefined, returns null and starts unwinding.
-   */
+  /// Returns the value of the given VmExpr, substituting the values of locals from the given array.
+  /// If any local is undefined, returns null and starts unwinding.
   @RC.Out
   @Nullable Object toValue(TState tstate, VmExpr input, Object[] locals) {
     if (input instanceof VmExpr.Constant c) {
@@ -195,10 +176,8 @@ abstract class Instruction {
     }
   }
 
-  /**
-   * Calls {@link #toValue(TState, VmExpr, Object[])} with each VmExpr returned by {@code inputs}.
-   * Returns null if any of those calls returns null; otherwise returns an array of the results.
-   */
+  /// Calls [#toValue(TState, VmExpr, Object\[\])] with each VmExpr returned by `inputs`. Returns
+  /// null if any of those calls returns null; otherwise returns an array of the results.
   @RC.Out
   Object @Nullable [] toValues(
       TState tstate, IntFunction<VmExpr> inputs, int size, Object[] locals) {
@@ -215,21 +194,17 @@ abstract class Instruction {
     return values;
   }
 
-  /**
-   * Calls {@link #toValue(TState, VmExpr, Object[])} with each element of {@code inputs}. Returns
-   * null if any of those calls returns null; otherwise returns an array of the results.
-   */
+  /// Calls [#toValue(TState, VmExpr, Object\[\])] with each element of `inputs`. Returns null if
+  /// any of those calls returns null; otherwise returns an array of the results.
   @RC.Out
   Object[] toValues(TState tstate, VmExpr[] inputs, Object[] locals) {
     return toValues(tstate, i -> inputs[i], inputs.length, locals);
   }
 
-  /**
-   * Returns the value of the given VmExpr, substituting the values of locals from the given array.
-   * Escapes if any local is undefined.
-   *
-   * <p>This is the code generation equivalent of {@link #toValue(TState, VmExpr, Object[])}.
-   */
+  /// Returns the value of the given VmExpr, substituting the values of locals from the given array.
+  /// Escapes if any local is undefined.
+  ///
+  /// This is the code generation equivalent of [#toValue(TState, VmExpr, Object\[\])].
   Value toRValue(CodeGen codeGen, VmExpr input, Value[] locals) {
     if (input instanceof VmExpr.Constant c) {
       return c.value;
@@ -244,21 +219,19 @@ abstract class Instruction {
     }
   }
 
-  /** Calls {@link #toRValue} with each VmExpr returned by {@code inputs}. */
+  /// Calls [#toRValue] with each VmExpr returned by `inputs`.
   Value[] toRValues(CodeGen codeGen, IntFunction<VmExpr> inputs, int size, Value[] locals) {
     Value[] result = new Value[size];
     Arrays.setAll(result, i -> toRValue(codeGen, inputs.apply(i), locals));
     return result;
   }
 
-  /** Calls {@link #toRValue} with each element of {@code inputs}. */
+  /// Calls [#toRValue] with each element of `inputs`.
   Value[] toRValues(CodeGen codeGen, VmExpr[] inputs, Value[] locals) {
     return toRValues(codeGen, i -> inputs[i], inputs.length, locals);
   }
 
-  /**
-   * Sets {@code locals[index]} (which should be null) to {@code value} (which should not be null).
-   */
+  /// Sets `locals[index]` (which should be null) to `value` (which should not be null).
   static void setLocal(int index, @RC.In Value value, @RC.Counted Object[] locals) {
     Object prev = locals[index];
     if (value == null || prev != null) {
@@ -268,29 +241,27 @@ abstract class Instruction {
     locals[index] = value;
   }
 
-  /** Sets each of the specified entries of {@code locals} to null. */
+  /// Sets each of the specified entries of `locals` to null.
   static void clearLocals(TState tstate, int[] indices, @RC.Counted Object[] locals) {
     for (int i : indices) {
       tstate.clearElement(locals, i);
     }
   }
 
-  /**
-   * Returns true if the code generated for this instruction could escape. The default
-   * implementation returns true.
-   */
+  /// Returns true if the code generated for this instruction could escape. The default
+  /// implementation returns true.
   boolean couldEscape() {
     return true;
   }
 
-  /** Returns {@code local.toString()}, or {@code "_"} if {@code local} is null. */
+  /// Returns `local.toString()`, or `"_"` if `local` is null.
   static String toString(Local local) {
     return (local == null) ? "_" : local.toString();
   }
 
-  /** A no-op "Instruction" that implements Vm.BranchTarget. */
+  /// A no-op "Instruction" that implements Vm.BranchTarget.
   static class BranchTarget extends Instruction implements Vm.BranchTarget {
-    /** Each BranchTarget in an InstructionBlock is assigned a distinct index. */
+    /// Each BranchTarget in an InstructionBlock is assigned a distinct index.
     final int index;
 
     private HarmonizerOrBuilder harmonizer = new HarmonizerBuilder();
@@ -303,10 +274,8 @@ abstract class Instruction {
       this.index = index;
     }
 
-    /**
-     * Called each time we emit a branch to this target; returns true if a reference to {@code
-     * localSources} was saved, false if the information was copied from it.
-     */
+    /// Called each time we emit a branch to this target; returns true if a reference to
+    /// `localSources` was saved, false if the information was copied from it.
     @CanIgnoreReturnValue
     boolean addReference(LocalSources sources) {
       HarmonizerBuilder builder = (HarmonizerBuilder) harmonizer;
@@ -314,7 +283,7 @@ abstract class Instruction {
       return builder.sources == sources;
     }
 
-    /** Returns true if at least one branch to this instruction has been emitted. */
+    /// Returns true if at least one branch to this instruction has been emitted.
     boolean hasReference() {
       return ((HarmonizerBuilder) harmonizer).sources != null;
     }
@@ -335,10 +304,8 @@ abstract class Instruction {
       ((HarmonizerBuilder) harmonizer).setLive(helper.live.build());
     }
 
-    /**
-     * Called from {@link InstructionBlock#initialize}; if this BranchTarget requires harmonization,
-     * saves the given valueMemoIndex and returns true, otherwise returns false.
-     */
+    /// Called from [InstructionBlock#initialize]; if this BranchTarget requires harmonization,
+    /// saves the given valueMemoIndex and returns true, otherwise returns false.
     boolean setValueMemoIndex(int valueMemoIndex) {
       harmonizer = ((HarmonizerBuilder) harmonizer).build(valueMemoIndex);
       return needsHarmonization();
@@ -391,7 +358,7 @@ abstract class Instruction {
       }
     }
 
-    /** Generates code for a branch to this target. */
+    /// Generates code for a branch to this target.
     void emitBranch(CodeGen codeGen, EmitState emitState, int[] clearLocals) {
       assert codeGen.cb.nextIsReachable();
       TargetInfo target = emitState.targets[index];
@@ -414,7 +381,7 @@ abstract class Instruction {
       target.destination.addBranch(codeGen, harmonized);
     }
 
-    /** Creates a new TargetInfo for this target. */
+    /// Creates a new TargetInfo for this target.
     private TargetInfo newTarget(CodeGen codeGen, EmitState emitState, int[] clearLocals) {
       Destination destination;
       if (needsHarmonization()) {
@@ -430,11 +397,9 @@ abstract class Instruction {
       return new TargetInfo(destination, unharmonizedLocals);
     }
 
-    /**
-     * Only intended for use in assertions. Verifies that a call to {@link #copyUnharmonizedLocals}
-     * in the current state returns (essentially) the same results that a previous call did, i.e.
-     * that the harmonized locals are the only ones that differ between incoming branches.
-     */
+    /// Only intended for use in assertions. Verifies that a call to [#copyUnharmonizedLocals] in
+    /// the current state returns (essentially) the same results that a previous call did, i.e. that
+    /// the harmonized locals are the only ones that differ between incoming branches.
     private boolean nonHarmonizedLocalsAreUnchanged(
         Value[] locals, int[] clearLocals, Value[] prev) {
       Value[] current = copyUnharmonizedLocals(locals, clearLocals);
@@ -454,10 +419,8 @@ abstract class Instruction {
       return true;
     }
 
-    /**
-     * Returns a copy of the current locals array, with elements that are in {@code clearLocals} or
-     * {@link #harmonizedIndices} set to null.
-     */
+    /// Returns a copy of the current locals array, with elements that are in `clearLocals` or
+    /// [#harmonizedIndices] set to null.
     private Value[] copyUnharmonizedLocals(Value[] locals, int[] clearLocals) {
       Value[] result = Arrays.copyOf(locals, locals.length);
       for (int i : clearLocals) {
@@ -482,27 +445,20 @@ abstract class Instruction {
       return "b_" + index;
     }
 
-    /** Shared base class for Harmonizer and HarmonizerBuilder. */
+    /// Shared base class for Harmonizer and HarmonizerBuilder.
     private static class HarmonizerOrBuilder {}
 
-    /**
-     * A HarmonizerBuilder is used to accumulate information while the InstructionBlock is being
-     * built.
-     */
+    /// A HarmonizerBuilder is used to accumulate information while the InstructionBlock is being
+    /// built.
     private class HarmonizerBuilder extends HarmonizerOrBuilder {
-      /**
-       * Contains the merged LocalSources from all code paths that can reach this BranchTarget.
-       *
-       * <p>Null if either there are not yet any paths to this BranchTarget ({@code
-       * needHarmonization == null}) or this target has already been emitted ({@code
-       * needHarmonization != null}).
-       */
+      /// Contains the merged LocalSources from all code paths that can reach this BranchTarget.
+      ///
+      /// Null if either there are not yet any paths to this BranchTarget (`needHarmonization ==
+      /// null`) or this target has already been emitted (`needHarmonization != null`).
       private LocalSources sources;
 
-      /**
-       * After the BranchTarget is emitted (and thus all code paths that can reach it are known),
-       * the locals that will need harmonization are saved here.
-       */
+      /// After the BranchTarget is emitted (and thus all code paths that can reach it are known),
+      /// the locals that will need harmonization are saved here.
       private Bits needHarmonization;
 
       void merge(LocalSources moreSources) {
@@ -510,10 +466,8 @@ abstract class Instruction {
         this.sources = LocalSources.merge(this.sources, moreSources, BranchTarget.this);
       }
 
-      /**
-       * Called when the target is emitted; saves the locals that need harmonization and returns the
-       * LocalSources for the target.
-       */
+      /// Called when the target is emitted; saves the locals that need harmonization and returns
+      /// the LocalSources for the target.
       LocalSources completed() {
         assert needHarmonization == null;
         needHarmonization = sources.needHarmonization(BranchTarget.this);
@@ -522,15 +476,13 @@ abstract class Instruction {
         return result;
       }
 
-      /**
-       * Called from {@link BranchTarget#updateLive}; narrows {@link #needHarmonization} to just the
-       * locals that are live after execution of this target.
-       */
+      /// Called from [BranchTarget#updateLive]; narrows [#needHarmonization] to just the locals
+      /// that are live after execution of this target.
       void setLive(Bits live) {
         needHarmonization = Bits.Op.INTERSECTION.apply(needHarmonization, live);
       }
 
-      /** Returns an appropriate Harmonizer based on our analysis. */
+      /// Returns an appropriate Harmonizer based on our analysis.
       Harmonizer build(int valueMemoIndex) {
         if (needHarmonization.isEmpty()) {
           return Harmonizer.NONE;
@@ -540,18 +492,16 @@ abstract class Instruction {
       }
     }
 
-    /** A Harmonizer is responsible for harmonizing locals as needed for a BranchTarget. */
+    /// A Harmonizer is responsible for harmonizing locals as needed for a BranchTarget.
     private static class Harmonizer extends HarmonizerOrBuilder {
-      /** Used for BranchTargets that do not need any harmonization. */
+      /// Used for BranchTargets that do not need any harmonization.
       static final Harmonizer NONE = new Harmonizer(EMPTY_INTS, -1);
 
-      /** The locals that need harmonization. */
+      /// The locals that need harmonization.
       final int[] indices;
 
-      /**
-       * The index of the ValueMemo in the InstructionBlock's MethodMemo that will be used for this
-       * BranchTarget's harmonization.
-       */
+      /// The index of the ValueMemo in the InstructionBlock's MethodMemo that will be used for this
+      /// BranchTarget's harmonization.
       final int valueMemoIndex;
 
       Harmonizer(int[] indices, int valueMemoIndex) {
@@ -593,25 +543,21 @@ abstract class Instruction {
     }
   }
 
-  /** The "set" instruction, which is just about as simple as you'd hope. */
+  /// The "set" instruction, which is just about as simple as you'd hope.
   static class Set extends Instruction {
-    /**
-     * The local that will be set by this instruction.
-     *
-     * <p>May be null (indicating that the right hand side's value should be discarded); all that
-     * does is error if any of the vars in the RHS are undefined.
-     */
+    /// The local that will be set by this instruction.
+    ///
+    /// May be null (indicating that the right hand side's value should be discarded); all that does
+    /// is error if any of the vars in the RHS are undefined.
     private Local output;
 
-    /** The value to set it to. */
+    /// The value to set it to.
     final VmExpr input;
 
-    /**
-     * The locals that stop being live after this instruction is executed.
-     *
-     * <p>In other words, these are locals that appear in {@link #input} but whose value will not be
-     * used by any following instruction.
-     */
+    /// The locals that stop being live after this instruction is executed.
+    ///
+    /// In other words, these are locals that appear in [#input] but whose value will not be used by
+    /// any following instruction.
     private int[] toClear;
 
     Set(Local output, VmExpr input) {
@@ -671,24 +617,22 @@ abstract class Instruction {
   }
 
   static class Call extends Instruction {
-    /**
-     * The locals that will be set to the function's results. May include nulls for results that are
-     * to be discarded.
-     */
+    /// The locals that will be set to the function's results. May include nulls for results that
+    /// are to be discarded.
     private final Local[] outputs;
 
-    /** The function to be called. */
+    /// The function to be called.
     final VmFunction fn;
 
     final CallSite callSite;
 
-    /** A VmExpr for each function argument. */
+    /// A VmExpr for each function argument.
     private final VmExpr[] inputs;
 
-    /** The locals that stop being live after this instruction is executed. */
+    /// The locals that stop being live after this instruction is executed.
     private int[] toClear;
 
-    /** The StackEntryType used when unwinding during a call. */
+    /// The StackEntryType used when unwinding during a call.
     private StackEntryType duringCallStackEntryType;
 
     Call(Local[] outputs, VmFunction fn, VmExpr[] inputs, CallSite callSite) {
@@ -756,10 +700,8 @@ abstract class Instruction {
       }
     }
 
-    /**
-     * Takes the function results from {@code tstate} and stores them in the appropriate elements of
-     * {@code locals}.
-     */
+    /// Takes the function results from `tstate` and stores them in the appropriate elements of
+    /// `locals`.
     void saveResults(TState tstate, ValueMemo valueMemo, @RC.Counted Object[] locals) {
       int memoIndex = 0;
       for (int i = 0; i < fn.numResults; i++) {
@@ -893,11 +835,9 @@ abstract class Instruction {
   static class Fail extends Instruction {
     private final String msg;
 
-    /**
-     * The locals that were passed to emitError(). These will be included in our stack entry, along
-     * with any locals that would be live if execution continued at the next instruction (unless
-     * this is the last instruction in the block).
-     */
+    /// The locals that were passed to emitError(). These will be included in our stack entry, along
+    /// with any locals that would be live if execution continued at the next instruction (unless
+    /// this is the last instruction in the block).
     private final Bits includeLocals;
 
     Fail(String msg, Bits includeLocals) {
@@ -943,10 +883,10 @@ abstract class Instruction {
   static class Trace extends Instruction {
     private final String msg;
 
-    /** The locals that were passed to emitTrace(). */
+    /// The locals that were passed to emitTrace().
     private final Bits includeLocals;
 
-    /** The locals that stop being live after this instruction is executed. */
+    /// The locals that stop being live after this instruction is executed.
     private int[] toClear;
 
     Trace(String msg, Bits includeLocals) {
@@ -1036,25 +976,19 @@ abstract class Instruction {
     }
   }
 
-  /**
-   * Conditionally branch based on the value of a Boolean local. Also subclassed to implement
-   * TypeCheckBranch.
-   */
+  /// Conditionally branch based on the value of a Boolean local. Also subclassed to implement
+  /// TypeCheckBranch.
   static class ConditionalBranch extends Instruction {
     private final BranchTarget target;
     final Local input;
     final boolean branchIfTrue;
 
-    /**
-     * The locals whose value is needed for the test or for the fall through code, but not if we
-     * take the branch.
-     */
+    /// The locals whose value is needed for the test or for the fall through code, but not if we
+    /// take the branch.
     private int[] clearForBranch;
 
-    /**
-     * The locals whose value is needed for the test or if we take the branch, but not if we fall
-     * through.
-     */
+    /// The locals whose value is needed for the test or if we take the branch, but not if we fall
+    /// through.
     private int[] clearForNext;
 
     ConditionalBranch(BranchTarget target, Local input, boolean branchIfTrue) {
@@ -1094,11 +1028,9 @@ abstract class Instruction {
       clearForNext = Bits.Op.DIFFERENCE.apply(liveBefore, fallThroughLive).toArray();
     }
 
-    /**
-     * Returns a Condition that is true if the given value satisfies the branch condition. Throws a
-     * BuiltinException if the given value is not allowed for this instruction. Overridden in the
-     * TypeCheckBranch subclass.
-     */
+    /// Returns a Condition that is true if the given value satisfies the branch condition. Throws a
+    /// BuiltinException if the given value is not allowed for this instruction. Overridden in the
+    /// TypeCheckBranch subclass.
     Condition isTrue(Value v) throws BuiltinException {
       return Condition.fromBoolean(v);
     }
@@ -1152,7 +1084,7 @@ abstract class Instruction {
       emitState.clearLocals(clearForNext);
     }
 
-    /** Used by toString(), overridden by subclass. */
+    /// Used by toString(), overridden by subclass.
     String conditionString() {
       return (branchIfTrue ? "" : "not ") + input;
     }
@@ -1189,17 +1121,13 @@ abstract class Instruction {
     }
   }
 
-  /**
-   * A {@link BaseType.StackEntryType} that captures the execution state at an Instruction. Calling
-   * {@link #resume} on an instance of this class will begin execution with the corresponding
-   * instruction.
-   */
+  /// A [BaseType.StackEntryType] that captures the execution state at an Instruction. Calling
+  /// [#resume] on an instance of this class will begin execution with the corresponding
+  /// instruction.
   static class StackEntryType extends BaseType.StackEntryType {
     final Instruction instruction;
 
-    /**
-     * The indices of the locals that are live, and captured by instances of this StackEntryType.
-     */
+    /// The indices of the locals that are live, and captured by instances of this StackEntryType.
     private final int[] live;
 
     StackEntryType(Instruction instruction, Bits live) {
@@ -1218,12 +1146,12 @@ abstract class Instruction {
       return instruction.ib.getLocal(live[i]).name;
     }
 
-    /** The index of the specified saved local. */
+    /// The index of the specified saved local.
     int localIndex(int i) {
       return live[i];
     }
 
-    /** Returns a stack entry, copying the values of saved locals from the given execution state. */
+    /// Returns a stack entry, copying the values of saved locals from the given execution state.
     @RC.Out
     Value newStackEntry(TState tstate, Object[] locals) {
       if (live == null) {
@@ -1273,19 +1201,15 @@ abstract class Instruction {
     }
   }
 
-  /**
-   * A subclass of {@link StackEntryType} for stack entries that represent state during a call.
-   *
-   * <p>Compared with the {@link StackEntryType} for the same Call,
-   *
-   * <ul>
-   *   <li>this stack entry may have a reduced liveset (if variables required for the args are no
-   *       longer needed after the call); and
-   *   <li>its {@link #resume} method expects to be called with the function results in the TState,
-   *       and after storing them in the appropriate locals execution will continue with the
-   *       following instruction.
-   * </ul>
-   */
+  /// A subclass of [StackEntryType] for stack entries that represent state during a call.
+  ///
+  /// Compared with the [StackEntryType] for the same Call,
+  ///
+  /// - this stack entry may have a reduced liveset (if variables required for the args are no
+  ///   longer needed after the call); and
+  /// - its [#resume] method expects to be called with the function results in the TState, and after
+  ///   storing them in the appropriate locals execution will continue with the following
+  ///   instruction.
   static class DuringCallStackEntryType extends StackEntryType {
     DuringCallStackEntryType(Instruction instruction, Bits live) {
       super(instruction, live);
@@ -1300,53 +1224,43 @@ abstract class Instruction {
 
   private static final int[] EMPTY_INTS = new int[0];
 
-  /**
-   * An UpdateLiveHelper is used to visit each instruction in an InstructionBlock in reverse order,
-   * computing the set of live locals at each step.
-   *
-   * <p>The general pattern for an {@link Instruction#updateLive} method is
-   *
-   * <ul>
-   *   <li>Call {@link #outputIsUsed} on each of the statement's outputs, to determine which are
-   *       actually used by subsequent instructions and to mark them as "not live" for preceding
-   *       instructions (since this instruction overwrites the value).
-   *   <li>Call {@link #addLocalRefs} on each of the statement's inputs, to mark them as live (note
-   *       that this should be done after any calls to {@link #outputIsUsed}, to get the correct
-   *       behavior when a Local is both input and output).
-   *   <li>Call {@link #getNewLive} to get the indices of all locals whose last use is this
-   *       instrution (i.e. are live for this instruction, and either not live for the subsequent
-   *       instruction or are an output of this instruction); these are locals that should be
-   *       cleared after loading the instruction's inputs and before setting its outputs.
-   * </ul>
-   */
+  /// An UpdateLiveHelper is used to visit each instruction in an InstructionBlock in reverse order,
+  /// computing the set of live locals at each step.
+  ///
+  /// The general pattern for an [Instruction#updateLive] method is
+  ///
+  /// - Call [#outputIsUsed] on each of the statement's outputs, to determine which are actually
+  ///   used by subsequent instructions and to mark them as "not live" for preceding instructions
+  ///   (since this instruction overwrites the value).
+  /// - Call [#addLocalRefs] on each of the statement's inputs, to mark them as live (note that this
+  ///   should be done after any calls to [#outputIsUsed], to get the correct behavior when a Local
+  ///   is both input and output).
+  /// - Call [#getNewLive] to get the indices of all locals whose last use is this instrution (i.e.
+  ///   are live for this instruction, and either not live for the subsequent instruction or are an
+  ///   output of this instruction); these are locals that should be cleared after loading the
+  ///   instruction's inputs and before setting its outputs.
   static class UpdateLiveHelper {
-    /**
-     * For each BranchTarget in the InstructionBlock, the set of live locals at that target. Indexed
-     * by {@link BranchTarget#index}.
-     */
+    /// For each BranchTarget in the InstructionBlock, the set of live locals at that target.
+    /// Indexed by [BranchTarget#index].
     private final Bits[] liveAtTarget;
 
-    /** The currently-live locals. */
+    /// The currently-live locals.
     final Bits.Builder live = new Bits.Builder();
 
-    /**
-     * A scratch array used to record the indices of locals that were not live after the current
-     * instruction, but are live before it.
-     */
+    /// A scratch array used to record the indices of locals that were not live after the current
+    /// instruction, but are live before it.
     private int[] newLive = new int[6];
 
-    /** The number of valid entries in {@link #newLive}. */
+    /// The number of valid entries in [#newLive].
     private int numNewLive;
 
     UpdateLiveHelper(int numBranchTargets) {
       liveAtTarget = new Bits[numBranchTargets];
     }
 
-    /**
-     * Visits each element of {@code instructions} in reverse order, returning the final live set
-     * (i.e. the locals that are live before executing the first instruction). Should only be called
-     * once on each UpdateLiveHelper.
-     */
+    /// Visits each element of `instructions` in reverse order, returning the final live set (i.e.
+    /// the locals that are live before executing the first instruction). Should only be called once
+    /// on each UpdateLiveHelper.
     Bits.Builder visitInstructions(List<Instruction> instructions) {
       for (Instruction inst : Lists.reverse(instructions)) {
         assert numNewLive == 0;
@@ -1356,36 +1270,29 @@ abstract class Instruction {
       return live;
     }
 
-    /** Returns the liveset at the given target, which must have been already visited. */
+    /// Returns the liveset at the given target, which must have been already visited.
     Bits liveAtTarget(BranchTarget target) {
       Bits result = liveAtTarget[target.index];
       assert result != null;
       return result;
     }
 
-    /**
-     * Returns true if the given local was live. Marks it as not live (since the current instruction
-     * is overwriting its value, the previous value cannot be read).
-     */
+    /// Returns true if the given local was live. Marks it as not live (since the current
+    /// instruction is overwriting its value, the previous value cannot be read).
     boolean outputIsUsed(Local output) {
       return live.clear(output.index);
     }
 
-    /**
-     * Adds each local in {@code inputs} to the current liveset. Any local that was not previously
-     * live (i.e. for which this is the last instruction to use that local) is added to {@link
-     * #newLive}.
-     */
+    /// Adds each local in `inputs` to the current liveset. Any local that was not previously live
+    /// (i.e. for which this is the last instruction to use that local) is added to [#newLive].
     void addLocalRefs(VmExpr... inputs) {
       for (VmExpr input : inputs) {
         input.forEachLocal(v -> addLocalRef(v.index));
       }
     }
 
-    /**
-     * Adds each local whose index is in the given set to the current liveset. Any not previously
-     * live are added to {@link #newLive}.
-     */
+    /// Adds each local whose index is in the given set to the current liveset. Any not previously
+    /// live are added to [#newLive].
     void addLocalRefs(Bits locals) {
       locals.stream().forEach(this::addLocalRef);
     }
@@ -1399,7 +1306,7 @@ abstract class Instruction {
       }
     }
 
-    /** Returns the indices of all locals that were made live by the current instruction. */
+    /// Returns the indices of all locals that were made live by the current instruction.
     int[] getNewLive() {
       if (numNewLive == 0) {
         return EMPTY_INTS;
@@ -1409,63 +1316,53 @@ abstract class Instruction {
       return Arrays.copyOf(newLive, n);
     }
 
-    /** Equivalent to calling {@link #getNewLive} and discarding the result. */
+    /// Equivalent to calling [#getNewLive] and discarding the result.
     void discardNewLive() {
       numNewLive = 0;
     }
 
-    /** Saves the current liveset for the given target. */
+    /// Saves the current liveset for the given target.
     void saveCurrentLive(BranchTarget target) {
       assert liveAtTarget[target.index] == null;
       liveAtTarget[target.index] = live.build();
     }
   }
 
-  /**
-   * A LocalSources records the instruction that most recently set each local. We track this so that
-   * when multiple control paths converge at a BranchTarget we can identify which locals should be
-   * harmonized.
-   */
+  /// A LocalSources records the instruction that most recently set each local. We track this so
+  /// that when multiple control paths converge at a BranchTarget we can identify which locals
+  /// should be harmonized.
   static class LocalSources {
 
     static final LocalSources EMPTY = new LocalSources();
 
-    /**
-     * Maps each Local to the Instruction that set its value. If the Instruction corresponding to a
-     * Local is null, the Local's value has not been changed since the beginning of the block (if it
-     * is an argument it has its original value, and otherwise it is undefined).
-     *
-     * <p>If this is the LocalSources for a BranchTarget and a Local has different sources depending
-     * on which path was taken, the corresponding entry in this array will be the BranchTarget
-     * itself (and the BranchTarget will harmonize the incoming value).
-     */
+    /// Maps each Local to the Instruction that set its value. If the Instruction corresponding to a
+    /// Local is null, the Local's value has not been changed since the beginning of the block (if
+    /// it is an argument it has its original value, and otherwise it is undefined).
+    ///
+    /// If this is the LocalSources for a BranchTarget and a Local has different sources depending
+    /// on which path was taken, the corresponding entry in this array will be the BranchTarget
+    /// itself (and the BranchTarget will harmonize the incoming value).
     private final Instruction[] sources;
 
-    /**
-     * True if this LocalSources has been shared by more than one code path (due to a conditional
-     * branch), and so must be immutable. Unshared LocalSources may be modified.
-     */
+    /// True if this LocalSources has been shared by more than one code path (due to a conditional
+    /// branch), and so must be immutable. Unshared LocalSources may be modified.
     private boolean shared;
 
-    /** Creates the empty LocalSources. */
+    /// Creates the empty LocalSources.
     private LocalSources() {
       shared = true;
       sources = new Instruction[0];
     }
 
-    /**
-     * Creates a new, mutable copy of the given LocalSources, ensuring that its {@link #sources}
-     * array has at least the specified length.
-     */
+    /// Creates a new, mutable copy of the given LocalSources, ensuring that its [#sources] array
+    /// has at least the specified length.
     private LocalSources(LocalSources src, int minSize) {
       shared = false;
       sources = Arrays.copyOf(src.sources, Math.max(src.sources.length, minSize));
     }
 
-    /**
-     * Returns a LocalSources identical to this except that the given local's mapping has been
-     * changed.
-     */
+    /// Returns a LocalSources identical to this except that the given local's mapping has been
+    /// changed.
     LocalSources set(Local local, Instruction instruction) {
       LocalSources result;
       // If we can make the change in place, do so; otherwise copy this LocalSources and apply the
@@ -1479,11 +1376,9 @@ abstract class Instruction {
       return result;
     }
 
-    /**
-     * If either of the given LocalSources is null, returns the other. Otherwise returns a
-     * LocalSources where locals that had the same value in both {@code x} and {@code y} are
-     * unchanged, and locals that had different values are set to {@code target}.
-     */
+    /// If either of the given LocalSources is null, returns the other. Otherwise returns a
+    /// LocalSources where locals that had the same value in both `x` and `y` are unchanged, and
+    /// locals that had different values are set to `target`.
     static LocalSources merge(LocalSources x, LocalSources y, BranchTarget target) {
       if (x == null || x == y) {
         return y;
@@ -1514,7 +1409,7 @@ abstract class Instruction {
       return merged;
     }
 
-    /** Returns a Bits containing the locals that need harmonization at this target. */
+    /// Returns a Bits containing the locals that need harmonization at this target.
     Bits needHarmonization(BranchTarget target) {
       if (shared) {
         // If we had merged multiple paths the result would be unshared

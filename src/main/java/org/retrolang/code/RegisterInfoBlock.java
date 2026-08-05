@@ -22,17 +22,13 @@ import org.retrolang.code.ValueInfo.BinaryOps;
 import org.retrolang.util.SmallIntMap;
 import org.retrolang.util.SmallIntMapBase;
 
-/**
- * A Block that emits no byte codes but adds ValueInfos for one or more registers. Subsequent
- * instructions may assume that these assertions are true; if they are violated the results are
- * undefined.
- */
+/// A Block that emits no byte codes but adds ValueInfos for one or more registers. Subsequent
+/// instructions may assume that these assertions are true; if they are violated the results are
+/// undefined.
 public class RegisterInfoBlock extends Block.NonTerminal {
 
-  /**
-   * ValueInfos that will be added to (intersected with) whatever our inlinks say. Mutable so that
-   * we can drop entries that are no longer useful.
-   */
+  /// ValueInfos that will be added to (intersected with) whatever our inlinks say. Mutable so that
+  /// we can drop entries that are no longer useful.
   private final SmallIntMap.Builder<ValueInfo> registerInfo = new SmallIntMap.Builder<>();
 
   public RegisterInfoBlock(Register register, ValueInfo info) {

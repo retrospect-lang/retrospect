@@ -21,87 +21,70 @@ import org.jspecify.annotations.Nullable;
 import org.retrolang.code.CodeValue.Const;
 import org.retrolang.util.Bits;
 
-/**
- * A ValueInfo represents information about the possible values of a register or other CodeValue.
- * There are a number of standard ValueInfo implementations, including
- *
- * <ul>
- *   <li>ANY: the register can have any value consistent with its type
- *   <li>CodeValue.Const: the register can only have this value
- *   <li>Register: the register has the same value as another register
- *   <li>IntRange: the register's value is an int within the specified range
- *   <li>SmallIntSet: the register's value is one of the ints in a given Bits
- * </ul>
- *
- * ... but CodeBuilder clients can define additional ValueInfo implementations suitable for their
- * domain. All ValueInfo implementations must be immutable.
- *
- * <p>All ValueInfos other than Const are assumed to represent more than one possible value, so e.g.
- * {@code IntRange.of(4, 4)} returns a Const, not a single-element IntRange.
- *
- * <p>Operations that combine a ValueInfo with a value (such as {@link #containsValue} or {@link
- * #unionConst}) are defined as methods on this interface, but operations that combine two
- * ValueInfos (such as {@link BinaryOps#containsAll} or {@link BinaryOps#union}) are defined on the
- * {@link BinaryOps} class; this makes it easier to ensure that newly-added ValueInfo
- * implementations combine in the expected ways with standard implementations.
- */
+/// A ValueInfo represents information about the possible values of a register or other CodeValue.
+/// There are a number of standard ValueInfo implementations, including
+///
+/// - ANY: the register can have any value consistent with its type
+/// - CodeValue.Const: the register can only have this value
+/// - Register: the register has the same value as another register
+/// - IntRange: the register's value is an int within the specified range
+/// - SmallIntSet: the register's value is one of the ints in a given Bits
+///
+/// ... but CodeBuilder clients can define additional ValueInfo implementations suitable for their
+/// domain. All ValueInfo implementations must be immutable.
+///
+/// All ValueInfos other than Const are assumed to represent more than one possible value, so e.g.
+/// `IntRange.of(4, 4)` returns a Const, not a single-element IntRange.
+///
+/// Operations that combine a ValueInfo with a value (such as [#containsValue] or [#unionConst]) are
+/// defined as methods on this interface, but operations that combine two ValueInfos (such as
+/// [BinaryOps#containsAll] or [BinaryOps#union]) are defined on the [BinaryOps] class; this makes
+/// it easier to ensure that newly-added ValueInfo implementations combine in the expected ways with
+/// standard implementations.
 public interface ValueInfo {
 
-  /** True if a register with this ValueInfo could have the specified value. */
+  /// True if a register with this ValueInfo could have the specified value.
   boolean containsValue(Object value);
 
-  /** True if a register with this ValueInfo could have the specified value. */
+  /// True if a register with this ValueInfo could have the specified value.
   default boolean containsConst(Const constInfo) {
     return containsValue(constInfo.value);
   }
 
-  /**
-   * Returns a ValueInfo that includes all the values allowed by this ValueInfo, as well as the
-   * given constant. May return ANY if no more precise ValueInfo is suitable.
-   */
+  /// Returns a ValueInfo that includes all the values allowed by this ValueInfo, as well as the
+  /// given constant. May return ANY if no more precise ValueInfo is suitable.
   ValueInfo unionConst(Const constInfo);
 
-  /**
-   * Returns a ValueInfo that includes all the values allowed by this ValueInfo except the given
-   * constant. May return this if no more precise ValueInfo is suitable.
-   */
+  /// Returns a ValueInfo that includes all the values allowed by this ValueInfo except the given
+  /// constant. May return this if no more precise ValueInfo is suitable.
   default ValueInfo removeConst(Const constInfo) {
     return this;
   }
 
-  /**
-   * Should only be called on a ValueInfo that represents numeric values; returns the minimum value
-   * allowed, or null if there is no lower bound (other than that of the type).
-   */
+  /// Should only be called on a ValueInfo that represents numeric values; returns the minimum value
+  /// allowed, or null if there is no lower bound (other than that of the type).
   default Number minimum() {
     throw new AssertionError();
   }
 
-  /**
-   * Should only be called on a ValueInfo that represents numeric values; returns the maximum value
-   * allowed, or null if there is no upper bound (other than that of the type).
-   */
+  /// Should only be called on a ValueInfo that represents numeric values; returns the maximum value
+  /// allowed, or null if there is no upper bound (other than that of the type).
   default Number maximum() {
     throw new AssertionError();
   }
 
-  /**
-   * Returns true if any difference between {@code this} and {@code other} is too insignificant to
-   * merit re-analysis of the affected blocks.
-   *
-   * <p>The default implementation returns {@code this.equals(other)}. Only ValueInfo
-   * implementations that have large numbers of almost-identical instances need worry about
-   * overriding this method. See docs/code.md#the-valueinfo-interface-and-codevalue-simplification
-   * for more details.
-   */
+  /// Returns true if any difference between `this` and `other` is too insignificant to merit
+  /// re-analysis of the affected blocks.
+  ///
+  /// The default implementation returns `this.equals(other)`. Only ValueInfo implementations that
+  /// have large numbers of almost-identical instances need worry about overriding this method. See
+  /// docs/code.md#the-valueinfo-interface-and-codevalue-simplification for more details.
   default boolean isCloseEnoughTo(ValueInfo other) {
     return equals(other);
   }
 
-  /**
-   * A ValueInfo indicating that nothing is known about this register beyond the restrictions of its
-   * type.
-   */
+  /// A ValueInfo indicating that nothing is known about this register beyond the restrictions of
+  /// its type.
   ValueInfo ANY =
       new ValueInfo() {
         @Override
@@ -130,29 +113,24 @@ public interface ValueInfo {
         }
       };
 
-  /**
-   * A BinaryOps implements operations like union, intersection, mightIntersect, and containsAll
-   * that combine two ValueInfos. The base BinaryOps class implements those for the standard
-   * ValueInfo types, but if you define additional implementations of ValueInfo you'll need to
-   * define a BinaryOps subclass that handles combinations of your new types (and just calls super
-   * when given two of the standard types).
-   *
-   * <p>None of these methods accept Registers as ValueInfos, because they cannot be interpreted in
-   * isolation; callers are expected to have first resolved copied registers to the ValueInfo for
-   * the copied Register.
-   *
-   * <p>Note that for each operation there is a public final method that clients should call (e.g.
-   * {@link #union}) and a protected (non-final) method that subclasses should override; generally
-   * the public method handles a number of trivial cases, so overrides don't need to check for them.
-   * In the case of union the public method distinguishes three separate cases ({@link
-   * #unionConsts}, {@link #unionImpl}, and {@link ValueInfo#unionConst}) so that the overrides can
-   * be simpler.
-   */
+  /// A BinaryOps implements operations like union, intersection, mightIntersect, and containsAll
+  /// that combine two ValueInfos. The base BinaryOps class implements those for the standard
+  /// ValueInfo types, but if you define additional implementations of ValueInfo you'll need to
+  /// define a BinaryOps subclass that handles combinations of your new types (and just calls super
+  /// when given two of the standard types).
+  ///
+  /// None of these methods accept Registers as ValueInfos, because they cannot be interpreted in
+  /// isolation; callers are expected to have first resolved copied registers to the ValueInfo for
+  /// the copied Register.
+  ///
+  /// Note that for each operation there is a public final method that clients should call (e.g.
+  /// [#union]) and a protected (non-final) method that subclasses should override; generally the
+  /// public method handles a number of trivial cases, so overrides don't need to check for them. In
+  /// the case of union the public method distinguishes three separate cases ([#unionConsts],
+  /// [#unionImpl], and [ValueInfo#unionConst]) so that the overrides can be simpler.
   class BinaryOps {
-    /**
-     * Returns a ValueInfo that is true whenever at least one of {@code x} or {@code y} is true.
-     * Neither ValueInfo is a Register.
-     */
+    /// Returns a ValueInfo that is true whenever at least one of `x` or `y` is true. Neither
+    /// ValueInfo is a Register.
     public final ValueInfo union(ValueInfo x, ValueInfo y) {
       assert !(x == null || x instanceof Register || y == null || y instanceof Register);
       if (x == y || x == ANY || y == CodeValue.NONE) {
@@ -171,10 +149,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns a ValueInfo that is true whenever at least one of {@code x} or {@code y} is true.
-     * Neither ValueInfo is NONE, ANY, a Const, or a Register.
-     */
+    /// Returns a ValueInfo that is true whenever at least one of `x` or `y` is true. Neither
+    /// ValueInfo is NONE, ANY, a Const, or a Register.
     protected ValueInfo unionImpl(ValueInfo x, ValueInfo y) {
       // We handle combinations of IntRange and/or SmallIntSet; everything else is ANY.
       if (x instanceof IntRange xRange) {
@@ -193,7 +169,7 @@ public interface ValueInfo {
       return ANY;
     }
 
-    /** Returns a ValueInfo that contains the two given (non-equal) values. */
+    /// Returns a ValueInfo that contains the two given (non-equal) values.
     protected ValueInfo unionConsts(Object x, Object y) {
       // If they're both ints we can return a SmallIntSet or IntRange; otherwise we fall back on
       // ANY.
@@ -209,10 +185,8 @@ public interface ValueInfo {
       return ANY;
     }
 
-    /**
-     * Returns a ValueInfo that is true whenever both {@code x} and {@code y} are true. Neither
-     * ValueInfo is a Register.
-     */
+    /// Returns a ValueInfo that is true whenever both `x` and `y` are true. Neither ValueInfo is a
+    /// Register.
     public final ValueInfo intersection(ValueInfo x, ValueInfo y) {
       assert !(x == null || x instanceof Register || y == null || y instanceof Register);
       if (x == y || y == ANY || x == CodeValue.NONE) {
@@ -228,10 +202,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns a ValueInfo that is true whenever both {@code x} and {@code y} are true. Neither
-     * ValueInfo is NONE, ANY, a Const, or a Register.
-     */
+    /// Returns a ValueInfo that is true whenever both `x` and `y` are true. Neither ValueInfo is
+    /// NONE, ANY, a Const, or a Register.
     public ValueInfo intersectionImpl(ValueInfo x, ValueInfo y) {
       // We handle combinations of IntRange and/or SmallIntSet.
       if (x instanceof IntRange xRange) {
@@ -252,14 +224,12 @@ public interface ValueInfo {
       throw new AssertionError();
     }
 
-    /**
-     * Returns false if there are no values compatible with both {@code x} and {@code y}. Neither
-     * ValueInfo is a Register.
-     *
-     * <p>This method may return true if the correct answer is infeasible to determine, so while a
-     * return value of false means that the intersection is definitely empty, a return value of true
-     * does not guarantee a non-empty intersection.
-     */
+    /// Returns false if there are no values compatible with both `x` and `y`. Neither ValueInfo is
+    /// a Register.
+    ///
+    /// This method may return true if the correct answer is infeasible to determine, so while a
+    /// return value of false means that the intersection is definitely empty, a return value of
+    /// true does not guarantee a non-empty intersection.
     public final boolean mightIntersect(ValueInfo x, ValueInfo y) {
       assert !(x == null || x instanceof Register || y == null || y instanceof Register);
       if (x == CodeValue.NONE || y == CodeValue.NONE) {
@@ -275,10 +245,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns false if there are no values compatible with both {@code x} and {@code y}. Neither
-     * ValueInfo is NONE, ANY, a Const, or a Register.
-     */
+    /// Returns false if there are no values compatible with both `x` and `y`. Neither ValueInfo is
+    /// NONE, ANY, a Const, or a Register.
     public boolean mightIntersectImpl(ValueInfo x, ValueInfo y) {
       // We handle combinations of IntRange and/or SmallIntSet.
       if (x instanceof IntRange xRange) {
@@ -297,10 +265,8 @@ public interface ValueInfo {
       return true;
     }
 
-    /**
-     * Returns true if every value compatible with {@code y} is also compatible with {@code x}.
-     * Neither ValueInfo is a Register.
-     */
+    /// Returns true if every value compatible with `y` is also compatible with `x`. Neither
+    /// ValueInfo is a Register.
     public final boolean containsAll(ValueInfo x, ValueInfo y) {
       assert !(x == null || x instanceof Register || y == null || y instanceof Register);
       if (x == y || x == ANY || y == CodeValue.NONE) {
@@ -318,10 +284,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns true if every value compatible with {@code y} is also compatible with {@code x}.
-     * Neither ValueInfo is NONE, ANY, a Const, or a Register.
-     */
+    /// Returns true if every value compatible with `y` is also compatible with `x`. Neither
+    /// ValueInfo is NONE, ANY, a Const, or a Register.
     protected boolean containsAllImpl(ValueInfo x, ValueInfo y) {
       if (x instanceof IntRange xRange) {
         if (y instanceof IntRange yRange) {
@@ -339,15 +303,15 @@ public interface ValueInfo {
     }
   }
 
-  /** A simple ValueInfo for integers in a range. */
+  /// A simple ValueInfo for integers in a range.
   class IntRange implements ValueInfo {
-    /** A ValueInfo for integers in the range 0..255. */
+    /// A ValueInfo for integers in the range 0..255.
     public static final ValueInfo UINT8 = IntRange.of(0, 255);
 
-    /** The (inclusive) lower bound. */
+    /// The (inclusive) lower bound.
     public final int min;
 
-    /** The (inclusive) upper bound. */
+    /// The (inclusive) upper bound.
     public final int max;
 
     private IntRange(int min, int max) {
@@ -357,11 +321,8 @@ public interface ValueInfo {
       this.max = max;
     }
 
-    /**
-     * Returns a ValueInfo for integers between {@code min} and {@code max} inclusive. Chooses
-     * whichever representation is most appropriate, among NONE, Const, SmallIntSet, IntRange, or
-     * ANY.
-     */
+    /// Returns a ValueInfo for integers between `min` and `max` inclusive. Chooses whichever
+    /// representation is most appropriate, among NONE, Const, SmallIntSet, IntRange, or ANY.
     public static ValueInfo of(int min, int max) {
       if (min > max) {
         return CodeValue.NONE;
@@ -376,10 +337,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns a ValueInfo for integers less than (or less than or equal to, if {@code inclusive})
-     * the given number.
-     */
+    /// Returns a ValueInfo for integers less than (or less than or equal to, if `inclusive`) the
+    /// given number.
     public static ValueInfo lessThan(Number max, boolean inclusive) {
       long bound = bound(max, true, inclusive);
       if (bound < Integer.MIN_VALUE) {
@@ -389,10 +348,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Returns a ValueInfo for integers greater than (or greater than or equal to, if {@code
-     * inclusive}) the given number.
-     */
+    /// Returns a ValueInfo for integers greater than (or greater than or equal to, if `inclusive`)
+    /// the given number.
     public static ValueInfo greaterThan(Number min, boolean inclusive) {
       long bound = bound(min, false, inclusive);
       if (bound > Integer.MAX_VALUE) {
@@ -402,10 +359,8 @@ public interface ValueInfo {
       }
     }
 
-    /**
-     * Interpret a Number as an integer bound. Handles cases where {@code value} is non-integral
-     * and/or beyond the bounds of an int.
-     */
+    /// Interpret a Number as an integer bound. Handles cases where `value` is non-integral and/or
+    /// beyond the bounds of an int.
     public static long bound(Number value, boolean upper, boolean inclusive) {
       long result;
       if (value instanceof Double || value instanceof Float) {
@@ -486,15 +441,15 @@ public interface ValueInfo {
       return (max == Integer.MAX_VALUE) ? null : max;
     }
 
-    /** Returns the number of ints in this range. */
+    /// Returns the number of ints in this range.
     private long longSize() {
       return max - (long) min + 1;
     }
 
-    /** An arbitrarily-chosen threshold for {@link #isCloseEnoughTo}. */
+    /// An arbitrarily-chosen threshold for [#isCloseEnoughTo].
     private static final int SIGNIFICANT_BOUND = 8;
 
-    /** Returns the closest element of [-SIGNIFICANT_BOUND, SIGNIFICANT_BOUND]. */
+    /// Returns the closest element of [-SIGNIFICANT\_BOUND, SIGNIFICANT\_BOUND].
     private static int clamp(int bound) {
       return Math.min(Math.max(bound, -SIGNIFICANT_BOUND), SIGNIFICANT_BOUND);
     }
@@ -579,28 +534,26 @@ public interface ValueInfo {
     }
   }
 
-  /** A simple ValueInfo for integers in 0..31, represented as a {@link Bits}. */
+  /// A simple ValueInfo for integers in 0..31, represented as a [Bits].
   class SmallIntSet implements ValueInfo {
     static final int LIMIT = 31;
 
-    /** The ints included in this ValueInfo. */
+    /// The ints included in this ValueInfo.
     public final Bits bits;
 
-    /** Returns true if the given int is in the range representable by a SmallIntSet. */
+    /// Returns true if the given int is in the range representable by a SmallIntSet.
     static boolean inRange(int i) {
       return i >= 0 && i <= LIMIT;
     }
 
-    /**
-     * Creates a SmallIntSet with the given Bits, which must be within range and have at least two
-     * elements.
-     */
+    /// Creates a SmallIntSet with the given Bits, which must be within range and have at least two
+    /// elements.
     public SmallIntSet(Bits bits) {
       assert bits.count() > 1 && bits.max() <= LIMIT;
       this.bits = bits;
     }
 
-    /** Returns a ValueInfo for the given Bits, which must be in range for a SmallIntSet. */
+    /// Returns a ValueInfo for the given Bits, which must be in range for a SmallIntSet.
     private ValueInfo withNewBits(Bits newBits) {
       if (newBits.equals(bits)) {
         return this;
@@ -611,7 +564,7 @@ public interface ValueInfo {
       }
     }
 
-    /** Combine another SmallIntSet with this one, using the specified {@link Bits.Op}. */
+    /// Combine another SmallIntSet with this one, using the specified [Bits.Op].
     private ValueInfo applyOp(Bits.Op op, SmallIntSet other) {
       Bits newBits = op.apply(bits, other.bits);
       return newBits.equals(bits) ? this : other.withNewBits(newBits);

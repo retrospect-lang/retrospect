@@ -8,11 +8,9 @@ import org.retrolang.code.Register;
 import org.retrolang.code.TestBlock;
 
 public class StoreEmitter {
-  /**
-   * {@code src} is a Value object; {@code dst} was built from a ValueMemo. If harmonizing {@code
-   * src} with the ValueMemo would not change the ValueMemo, emit instructions that set the
-   * registers in {@code dst} to match {@code src}; otherwise escape.
-   */
+  /// `src` is a Value object; `dst` was built from a ValueMemo. If harmonizing `src` with the
+  /// ValueMemo would not change the ValueMemo, emit instructions that set the registers in `dst` to
+  /// match `src`; otherwise escape.
   public static void store(CodeGen codeGen, Template dst, CodeValue src, FutureBlock onFail) {
     switch (dst) {
       case Template.Constant c -> {
@@ -95,7 +93,7 @@ public class StoreEmitter {
     }
   }
 
-  /** Returns {@code src} as a Value-typed CodeValue. */
+  /// Returns `src` as a Value-typed CodeValue.
   public static CodeValue toCodeValue(CodeGen codeGen, Template src) {
     return switch (src) {
       case Template.Constant c -> CodeValue.of(c.value);

@@ -18,14 +18,12 @@ package org.retrolang.impl;
 
 import com.google.common.collect.ImmutableList;
 
-/**
- * A statics-only class that defines all the available subclasses of Frame. Each subclass defines a
- * different combination of int and pointer fields as reflected in its name, e.g. Frame5i2x has 5
- * int fields and 2 pointer fields.
- *
- * <p>The particular configurations defined here were somewhat arbitrarily chosen; when Retrospect
- * is in production it might be worth gathering data to enable a more informed choice.
- */
+/// A statics-only class that defines all the available subclasses of Frame. Each subclass defines a
+/// different combination of int and pointer fields as reflected in its name, e.g. Frame5i2x has 5
+/// int fields and 2 pointer fields.
+///
+/// The particular configurations defined here were somewhat arbitrarily chosen; when Retrospect is
+/// in production it might be worth gathering data to enable a more informed choice.
 class Frames {
   // Currently Frame contributes 8 bytes (refCnt + layout) and the Java object header is 12 bytes,
   // so we aim to have these all use an odd number of 4-byte words to make full use of an object

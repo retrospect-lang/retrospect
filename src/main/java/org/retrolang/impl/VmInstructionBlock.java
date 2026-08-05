@@ -26,7 +26,7 @@ import org.retrolang.Vm;
 import org.retrolang.util.Bits;
 import org.retrolang.util.Bits.Op;
 
-/** Implementation of Vm.InstructionBlock. A builder for an {@link InstructionBlock}. */
+/// Implementation of Vm.InstructionBlock. A builder for an [InstructionBlock].
 class VmInstructionBlock implements Vm.InstructionBlock {
   final ModuleBuilder module;
   final InstructionBlock ib;
@@ -36,10 +36,8 @@ class VmInstructionBlock implements Vm.InstructionBlock {
   private int numBranchTargets;
   private int numCalls;
 
-  /**
-   * Records the Instruction that most recently set each Local after the most recent instruction.
-   * Null if the next instruction is not reachable.
-   */
+  /// Records the Instruction that most recently set each Local after the most recent instruction.
+  /// Null if the next instruction is not reachable.
   private Instruction.LocalSources localSources = Instruction.LocalSources.EMPTY;
 
   private final List<Local> locals = new ArrayList<>();
@@ -50,10 +48,8 @@ class VmInstructionBlock implements Vm.InstructionBlock {
     this.ib = new InstructionBlock(numArgs, numResults, source, module.module);
   }
 
-  /**
-   * We should only emit instructions after all args have been added, and before calling {@link
-   * #done}. Throws an IllegalStateException if those conditions are not met.
-   */
+  /// We should only emit instructions after all args have been added, and before calling [#done].
+  /// Throws an IllegalStateException if those conditions are not met.
   private void checkEmitOK() {
     Preconditions.checkState(locals.size() >= ib.numArgs, "missing addArg()");
     Preconditions.checkState(!ib.isInitialized(), "InstructionBlock is done()");
@@ -69,19 +65,19 @@ class VmInstructionBlock implements Vm.InstructionBlock {
     }
   }
 
-  /** Throws an IllegalArgumentException if the given Local is not from this InstructionBlock. */
+  /// Throws an IllegalArgumentException if the given Local is not from this InstructionBlock.
   private void checkLocal(Local local) {
     Preconditions.checkArgument(local.ib == ib, "Local from another InstructionBlock");
   }
 
-  /** Casts the argument to a Local and verifies that it's from this InstructionBlock. */
+  /// Casts the argument to a Local and verifies that it's from this InstructionBlock.
   private Local checkVmLocal(Vm.Local vmLocal) {
     Local local = (Local) vmLocal;
     checkLocal(local);
     return local;
   }
 
-  /** Verifies that each of the given Vm.Locals is a Local, and returns their indices as a Bits. */
+  /// Verifies that each of the given Vm.Locals is a Local, and returns their indices as a Bits.
   private Bits checkVmLocalSet(Vm.Local[] locals) {
     if (locals.length == 0) {
       return Bits.EMPTY;
@@ -93,30 +89,26 @@ class VmInstructionBlock implements Vm.InstructionBlock {
     return result.build();
   }
 
-  /**
-   * Casts the argument to a VmExpr and verifies that any Locals it contains are from this
-   * InstructionBlock.
-   */
+  /// Casts the argument to a VmExpr and verifies that any Locals it contains are from this
+  /// InstructionBlock.
   private VmExpr checkExpr(Vm.Expr vmExpr) {
     VmExpr expr = (VmExpr) vmExpr;
     expr.forEachLocal(this::checkLocal);
     return expr;
   }
 
-  /** Calls {@link #checkExpr} on each of the given Vm.Exprs and returns an array of the results. */
+  /// Calls [#checkExpr] on each of the given Vm.Exprs and returns an array of the results.
   private VmExpr[] checkExprs(Vm.Expr[] exprs) {
     return Arrays.stream(exprs).map(this::checkExpr).toArray(VmExpr[]::new);
   }
 
-  /** Like {@link #checkVmLocal}, but also accepts null (representing the write-only var "_"). */
+  /// Like [#checkVmLocal], but also accepts null (representing the write-only var "\_").
   private @Nullable Local checkOutput(Vm.Local vmLocal) {
     return (vmLocal == null) ? null : checkVmLocal(vmLocal);
   }
 
-  /**
-   * Calls {@link #checkOutput} on each of the given Vm.Locals and returns an array of the results.
-   * Also verifies that there are no duplicates.
-   */
+  /// Calls [#checkOutput] on each of the given Vm.Locals and returns an array of the results. Also
+  /// verifies that there are no duplicates.
   private Local[] checkOutputs(Vm.Local[] vmLocals) {
     Local[] result = Arrays.stream(vmLocals).map(this::checkOutput).toArray(Local[]::new);
     // Ensure there are no duplicates.  Using a Bits.Builder would be O(n) instead
@@ -132,7 +124,7 @@ class VmInstructionBlock implements Vm.InstructionBlock {
     return result;
   }
 
-  /** Verifies that we can emit a branch to the given target. */
+  /// Verifies that we can emit a branch to the given target.
   private Instruction.BranchTarget checkTarget(Vm.BranchTarget vmTarget) {
     Instruction.BranchTarget target = (Instruction.BranchTarget) vmTarget;
     Preconditions.checkArgument(target.ib() == ib, "Branching to another InstructionBlock");

@@ -29,18 +29,18 @@ import org.retrolang.util.SizeOf;
 @RunWith(JUnitParamsRunner.class)
 public class MemoryHelperTest {
 
-  /** A simple class containing two Tuples and an Object[], to exercise the refcounting logic. */
+  /// A simple class containing two Tuples and an Object[], to exercise the refcounting logic.
   static class Tuple extends RefCounted {
-    /** The number of bytes used to store a single Tuple. */
+    /// The number of bytes used to store a single Tuple.
     private static final long SIZE = SizeOf.object(BASE_SIZE + 3 * SizeOf.PTR);
 
     final Tuple left;
     final Tuple right;
 
-    /** The Tuple constructor also creates an Object[] just so that we exercise more of the API. */
+    /// The Tuple constructor also creates an Object[] just so that we exercise more of the API.
     private final Object[] data;
 
-    /** Creates a new Tuple with the given values, updating their refcounts appropriately. */
+    /// Creates a new Tuple with the given values, updating their refcounts appropriately.
     @RC.Out
     Tuple(Allocator allocator, Tuple left, Tuple right, int arrayLength) {
       this.left = left;
@@ -63,7 +63,7 @@ public class MemoryHelperTest {
       allocator.recordAlloc(this, SIZE);
     }
 
-    /** The total number of bytes allocated by the Tuple constructor. */
+    /// The total number of bytes allocated by the Tuple constructor.
     static long totalSize(int arrayLength, boolean debug) {
       return SIZE + MemoryHelper.objectArraySize(arrayLength, debug);
     }
@@ -83,7 +83,7 @@ public class MemoryHelperTest {
     }
   }
 
-  /** Allocates a few linked Tuples and verifies that reference counting works as expected. */
+  /// Allocates a few linked Tuples and verifies that reference counting works as expected.
   @Test
   @Parameters({"false", "true"})
   public void basic(boolean debug) {
@@ -118,10 +118,8 @@ public class MemoryHelperTest {
     assertThat(tracker.allReleased()).isTrue();
   }
 
-  /**
-   * Calls {@link MemoryHelper#reserve} and returns true if it succeeds, or false if it throws an
-   * OUT_OF_MEMORY exception.
-   */
+  /// Calls [MemoryHelper#reserve] and returns true if it succeeds, or false if it throws an
+  /// OUT\_OF\_MEMORY exception.
   private boolean tryReserve(MemoryHelper mh, long size) {
     try {
       mh.reserve(size);
@@ -132,7 +130,7 @@ public class MemoryHelperTest {
     }
   }
 
-  /** Verifies the behavior of {@link MemoryHelper#reserve}. */
+  /// Verifies the behavior of [MemoryHelper#reserve].
   @Test
   @Parameters({"false", "true"})
   public void reserve(boolean debug) {
@@ -169,10 +167,8 @@ public class MemoryHelperTest {
     assertThat(tracker.allReleased()).isTrue();
   }
 
-  /**
-   * Builds a deep chain of linked Tuples, and drops it. A naive recursive descent would cause a
-   * StackOverflow.
-   */
+  /// Builds a deep chain of linked Tuples, and drops it. A naive recursive descent would cause a
+  /// StackOverflow.
   @Test
   @Parameters({"false", "true"})
   public void deep(boolean debug) {

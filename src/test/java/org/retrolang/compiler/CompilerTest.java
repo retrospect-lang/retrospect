@@ -31,43 +31,34 @@ import org.retrolang.Vm;
 import org.retrolang.testing.TestdataScanner;
 import org.retrolang.testing.TestdataScanner.TestProgram;
 
-/**
- * Compiles Retrospect source code from each of the .r8t files in the testdata directory, based on
- * comments in the files.
- */
+/// Compiles Retrospect source code from each of the .r8t files in the testdata directory, based on
+/// comments in the files.
 @RunWith(TestParameterInjector.class)
 public class CompilerTest {
 
   private static final Path TESTDATA = Path.of("src/test/java/org/retrolang/compiler/testdata");
 
-  /**
-   * Each .r8t file is expected to have source code followed by a comment that begins "{@code /*
-   * COMPILE (...)}". The parentheses enclose argument names (if any) for the code block.
-   *
-   * <p>There are three variants for the COMPILE comment:
-   *
-   * <ul>
-   *   <li>With no additional information before the end of the comment: the test passes if the file
-   *       compiles successfully.
-   *   <li>With an error message (e.g. "{@code COMPILE (): No initialization of 'x'}"): the test
-   *       passes if the compilation results in an error containing the given message.
-   *   <li>With expected output (e.g. "{@code COMPILE (n):}" followed by VM instructions up to the
-   *       end of the comment): the test passes if the file compiles and the resulting VM
-   *       instructions match.
-   * </ul>
-   *
-   * <p>For convenience a single file may contain multiple source programs, each followed by a
-   * COMPILE comment; each is compiled independently (such a file is not actually valid Retrospect
-   * source, since it may contain e.g. multiple main programs or multiple definitions of the same
-   * type name).
-   */
+  /// Each .r8t file is expected to have source code followed by a comment that begins "`/* COMPILE
+  /// (...)`". The parentheses enclose argument names (if any) for the code block.
+  ///
+  /// There are three variants for the COMPILE comment:
+  ///
+  /// - With no additional information before the end of the comment: the test passes if the file
+  ///   compiles successfully.
+  /// - With an error message (e.g. "`COMPILE (): No initialization of 'x'`"): the test passes if
+  ///   the compilation results in an error containing the given message.
+  /// - With expected output (e.g. "`COMPILE (n):`" followed by VM instructions up to the end of the
+  ///   comment): the test passes if the file compiles and the resulting VM instructions match.
+  ///
+  /// For convenience a single file may contain multiple source programs, each followed by a COMPILE
+  /// comment; each is compiled independently (such a file is not actually valid Retrospect source,
+  /// since it may contain e.g. multiple main programs or multiple definitions of the same type
+  /// name).
   private static final Pattern COMMENT_PATTERN =
       Pattern.compile("\n/\\* COMPILE (.*?)\\*/\\n*", Pattern.DOTALL);
 
-  /**
-   * A pattern to parse the first line of a COMPILE comment (beginning immediately after the "/*
-   * COMPILE ").
-   */
+  /// A pattern to parse the first line of a COMPILE comment (beginning immediately after the "/\*
+  /// COMPILE ").
   private static final Pattern FIRST_LINE_PATTERN =
       Pattern.compile("\\(([, a-z0-9_]*)\\) *(:.*\n?)?");
 
@@ -117,10 +108,8 @@ public class CompilerTest {
     }
   }
 
-  /**
-   * Returns an Iterator of three-element arrays, each a [name, code, comment] tuple corresponding
-   * to a code chunk from a ".r8t" file in our testdata directory.
-   */
+  /// Returns an Iterator of three-element arrays, each a [name, code, comment] tuple corresponding
+  /// to a code chunk from a ".r8t" file in our testdata directory.
   public static final class AllPrograms extends TestdataScanner {
     public AllPrograms() {
       super(TESTDATA, COMMENT_PATTERN);
@@ -134,10 +123,8 @@ public class CompilerTest {
     return s.isEmpty() ? new String[0] : COMMA.split(s);
   }
 
-  /**
-   * Removes all whitespace at the beginning and end of lines in the given output, and removes all
-   * completely blank lines.
-   */
+  /// Removes all whitespace at the beginning and end of lines in the given output, and removes all
+  /// completely blank lines.
   private static String cleanLines(String output) {
     return output.replaceAll(" *\n[ \n]*", "\n").trim();
   }

@@ -35,88 +35,76 @@ import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
 
-/** Implementation of save() and friends. */
+/// Implementation of save() and friends.
 public final class SaveCore {
-  /**
-   * {@code private compound SaveWithDefault is Collector}
-   *
-   * <p>Element is default value.
-   */
+  /// `private compound SaveWithDefault is Collector`
+  ///
+  /// Element is default value.
   @Core.Private
   static final BaseType.Named SAVE_WITH_DEFAULT =
       Core.newBaseType("SaveWithDefault", 1, LoopCore.COLLECTOR);
 
-  /** {@code private singleton SaveElements is Loop} */
+  /// `private singleton SaveElements is Loop`
   @Core.Private
   public static final Singleton SAVE_ELEMENTS = Core.newSingleton("SaveElements", LoopCore.LOOP);
 
-  /**
-   * {@code private compound SaveWithOffset is Loop}
-   *
-   * <p>Element is offset, an integer. Inputs are expected to be [[index], value] pairs, and the
-   * state is an array; each input value is saved in state[index+offset]
-   */
+  /// `private compound SaveWithOffset is Loop`
+  ///
+  /// Element is offset, an integer. Inputs are expected to be [[index], value] pairs, and the state
+  /// is an array; each input value is saved in state[index+offset]
   @Core.Private
   public static final BaseType.Named SAVE_WITH_OFFSET =
       Core.newBaseType("SaveWithOffset", 1, LoopCore.LOOP);
 
-  /**
-   * {@code private compound SaverLoop is Loop}
-   *
-   * <p>Element is sequential loop.
-   */
+  /// `private compound SaverLoop is Loop`
+  ///
+  /// Element is sequential loop.
   @Core.Private
   static final BaseType.Named SAVER_LOOP = Core.newBaseType("SaverLoop", 1, LoopCore.LOOP);
 
-  /**
-   * {@code private compound SaverUpdates}
-   *
-   * <p>Element is an array of updates to be applied to the primary state.
-   */
+  /// `private compound SaverUpdates`
+  ///
+  /// Element is an array of updates to be applied to the primary state.
   @Core.Private static final BaseType.Named SAVER_UPDATES = Core.newBaseType("SaverUpdates", 1);
 
-  /** {@code function save() = SaveWithDefault_(Absent)} */
+  /// `function save() = SaveWithDefault_(Absent)`
   @Core.Public
   static final VmFunctionBuilder save =
       VmFunctionBuilder.fromConstant("save", SAVE_WITH_DEFAULT.uncountedOf(Core.ABSENT));
 
-  /** {@code function saveWithDefault(defaultElement)} */
+  /// `function saveWithDefault(defaultElement)`
   @Core.Public
   static final VmFunctionBuilder saveWithDefault = VmFunctionBuilder.create("saveWithDefault", 1);
 
-  /** {@code function saverSetup(eKind, loop, initialState)} */
+  /// `function saverSetup(eKind, loop, initialState)`
   @Core.Public
   static final VmFunctionBuilder saverSetup = VmFunctionBuilder.create("saverSetup", 3);
 
-  /**
-   * <pre>
-   * method saveWithDefault(x) = SaveWithDefault_(x)
-   * </pre>
-   */
+  /// ```
+  /// method saveWithDefault(x) = SaveWithDefault_(x)
+  /// ```
   @Core.Method("saveWithDefault(_)")
   static Value saveWithDefault(TState tstate, @RC.In Value x) {
     return tstate.compound(SAVE_WITH_DEFAULT, x);
   }
 
-  /**
-   * <pre>
-   * method collectorSetup(SaveWithDefault swd, collection) {
-   *   if swd_ is not Absent {
-   *     eKind = EnumerateWithKeys
-   *     initialState = new(keys(collection), swd_)
-   *   } else {
-   *     // If the default value is Absent we don't initialize the elements of the initial
-   *     // collection (which isn't expressible in Retrospect); that means we need to set all
-   *     // elements, even if their value is Absent.
-   *     // (This may allow the VM to use a representation for our result that is unable to
-   *     // represent Absent elements.)
-   *     eKind = EnumerateAllKeys
-   *     initialState = newUninitialized(keys(collection))
-   *   }
-   *   return saverSetup(eKind, Save, initialState)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method collectorSetup(SaveWithDefault swd, collection) {
+  ///   if swd_ is not Absent {
+  ///     eKind = EnumerateWithKeys
+  ///     initialState = new(keys(collection), swd_)
+  ///   } else {
+  ///     // If the default value is Absent we don't initialize the elements of the initial
+  ///     // collection (which isn't expressible in Retrospect); that means we need to set all
+  ///     // elements, even if their value is Absent.
+  ///     // (This may allow the VM to use a representation for our result that is unable to
+  ///     // represent Absent elements.)
+  ///     eKind = EnumerateAllKeys
+  ///     initialState = newUninitialized(keys(collection))
+  ///   }
+  ///   return saverSetup(eKind, Save, initialState)
+  /// }
+  /// ```
   static class CollectorSetupSaveWithDefault extends BuiltinMethod {
     static final Caller keys = new Caller("keys:1", "afterKeys");
     static final Caller new2 = new Caller("new:2", "afterNew");
@@ -150,14 +138,12 @@ public final class SaveCore {
     }
   }
 
-  /**
-   * <pre>
-   * method saverSetup(EnumerationKind eKind, Loop loop, initialState) {
-   *   assert initialState is not SaverUpdates
-   *   return { canParallel: True, eKind, initialState, loop: SaverLoop_(loop) }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method saverSetup(EnumerationKind eKind, Loop loop, initialState) {
+  ///   assert initialState is not SaverUpdates
+  ///   return { canParallel: True, eKind, initialState, loop: SaverLoop_(loop) }
+  /// }
+  /// ```
   @Core.Method("saverSetup(EnumerationKind, Loop, _)")
   static Value saverSetup(
       TState tstate, @RC.Singleton Value eKind, @RC.In Value loop, @RC.In Value initialState)
@@ -167,11 +153,9 @@ public final class SaveCore {
         LoopCore.SETUP_KEYS, Core.TRUE, eKind, initialState, tstate.compound(SAVER_LOOP, loop));
   }
 
-  /**
-   * <pre>
-   * method nextState(SaveElements, state, [key, value]) = replaceElement(state, key, value)
-   * </pre>
-   */
+  /// ```
+  /// method nextState(SaveElements, state, [key, value]) = replaceElement(state, key, value)
+  /// ```
   @Core.Method("nextState(SaveElements, _, _)")
   static void nextStateSaveElements(
       TState tstate,
@@ -186,12 +170,10 @@ public final class SaveCore {
     tstate.startCall(replaceElement, state, key, value);
   }
 
-  /**
-   * <pre>
-   * method nextState(SaveWithOffset swo, Array state, [[index], value]) =
-   *     replaceElement(state, [index + swo_], value)
-   * </pre>
-   */
+  /// ```
+  /// method nextState(SaveWithOffset swo, Array state, [[index], value]) =
+  ///     replaceElement(state, [index + swo_], value)
+  /// ```
   @Core.Method("nextState(SaveWithOffset, Array, _)")
   static Value nextStateSaveWithOffset(TState tstate, Value swo, @RC.In Value state, Value keyValue)
       throws BuiltinException {
@@ -210,19 +192,17 @@ public final class SaveCore {
     return ValueUtil.replaceElement(tstate, state, i, 0, keyValue.element(1));
   }
 
-  /**
-   * <pre>
-   * method nextState(SaverLoop loop, state, element) {
-   *   if state is SaverUpdates {
-   *     // We don't have the primary state, so just save this element for now.
-   *     state_ &amp;= [element]
-   *     return state
-   *   }
-   *   // We have the primary state, so we can update it.
-   *   return nextState(loop_, state, element)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method nextState(SaverLoop loop, state, element) {
+  ///   if state is SaverUpdates {
+  ///     // We don't have the primary state, so just save this element for now.
+  ///     state_ &= [element]
+  ///     return state
+  ///   }
+  ///   // We have the primary state, so we can update it.
+  ///   return nextState(loop_, state, element)
+  /// }
+  /// ```
   @Core.Method("nextState(SaverLoop, _, _)")
   static void nextStateSaverLoop(
       TState tstate,

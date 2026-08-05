@@ -47,7 +47,7 @@ import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.VmFunctionBuilder;
 
-/** Core methods on Numbers. */
+/// Core methods on Numbers.
 public final class NumberCore {
   @Core.Public
   static final VmFunctionBuilder number = VmFunctionBuilder.create("number", 1).isOpen();
@@ -146,29 +146,23 @@ public final class NumberCore {
   @Core.Public
   static final VmFunctionBuilder radiansPerDegree = constant("radiansPerDegree", Math.PI / 180);
 
-  /**
-   * Most U32 arithmetic operations return a struct with these keys.
-   *
-   * <p>Must be in alphabetical order.
-   */
+  /// Most U32 arithmetic operations return a struct with these keys.
+  ///
+  /// Must be in alphabetical order.
   static final StructType HIGH_LOW_KEYS = new StructType("high", "low");
 
-  /**
-   * uDivWithRemainder returns a struct with these keys.
-   *
-   * <p>Must be in alphabetical order.
-   */
+  /// uDivWithRemainder returns a struct with these keys.
+  ///
+  /// Must be in alphabetical order.
   static final StructType Q_R_KEYS = new StructType("q", "r");
 
-  /** Create a new builtin with the given name that returns a constant value. */
+  /// Create a new builtin with the given name that returns a constant value.
   private static VmFunctionBuilder constant(String name, double d) {
     return VmFunctionBuilder.fromConstant(name, NumValue.of(d, Allocator.UNCOUNTED));
   }
 
-  /**
-   * Create a new builtin with the given signature that is implemented by calling the method of the
-   * same name in java.lang.Math.
-   */
+  /// Create a new builtin with the given signature that is implemented by calling the method of the
+  /// same name in java.lang.Math.
   private static VmFunctionBuilder.FromOp mathBuiltin(String name, int numArgs) {
     Class<?>[] argTypes = new Class<?>[numArgs];
     Arrays.fill(argTypes, double.class);
@@ -386,10 +380,8 @@ public final class NumberCore {
     }
   }
 
-  /**
-   * Retrospect's definition of {@code double % double} has some subtle differences from Java's
-   * (because Java's is wrong).
-   */
+  /// Retrospect's definition of `double % double` has some subtle differences from Java's (because
+  /// Java's is wrong).
   public static double modulo(double x, double y) {
     if (Double.isInfinite(y)) {
       // Java thinks that x % inf == x, but that's clearly wrong if x and y have different signs;
@@ -438,12 +430,9 @@ public final class NumberCore {
     return null;
   }
 
-  /**
-   * If {@code x} and {@code y} are both integers, try applying {@code intOp} to them. If that
-   * succeeds, return its result as a {@link NumValue.I}. If either argument is a double or if
-   * {@code intOp} throws an ArithmeticException, apply {@code doubleOp} to {@code x} and {@code y}
-   * and return its result as a {@link NumValue.D}.
-   */
+  /// If `x` and `y` are both integers, try applying `intOp` to them. If that succeeds, return its
+  /// result as a [NumValue.I]. If either argument is a double or if `intOp` throws an
+  /// ArithmeticException, apply `doubleOp` to `x` and `y` and return its result as a [NumValue.D].
   @RC.Out
   private static Value doMath(
       TState tstate, Value x, Value y, IntBinaryOperator intOp, DoubleBinaryOperator doubleOp) {
@@ -459,11 +448,9 @@ public final class NumberCore {
     return NumValue.orNan(d, tstate);
   }
 
-  /**
-   * If {@code x} and {@code y} are both integers and our result is to be stored as an integer, emit
-   * code that applies {@code intOp} and escapes if it throws an ArithmeticException; otherwise emit
-   * code that applies {@code doubleOp}.
-   */
+  /// If `x` and `y` are both integers and our result is to be stored as an integer, emit code that
+  /// applies `intOp` and escapes if it throws an ArithmeticException; otherwise emit code that
+  /// applies `doubleOp`.
   private static Value doMath(
       CodeGen codeGen, Value x, Value y, ResultsInfo results, Op exactIntOp, Op doubleOp)
       throws BuiltinException {
@@ -480,11 +467,9 @@ public final class NumberCore {
     return codeGen.toValue(result);
   }
 
-  /**
-   * If {@code x} is an integer and our result is to be stored as an integer, emit code that applies
-   * {@code intOp} and escapes if it throws an ArithmeticException; otherwise emit code that applies
-   * {@code doubleOp}.
-   */
+  /// If `x` is an integer and our result is to be stored as an integer, emit code that applies
+  /// `intOp` and escapes if it throws an ArithmeticException; otherwise emit code that applies
+  /// `doubleOp`.
   private static Value doMath(
       CodeGen codeGen, Value x, ResultsInfo results, Op exactIntOp, Op doubleOp)
       throws BuiltinException {
@@ -545,19 +530,15 @@ public final class NumberCore {
   static final Op TO_U32_OP =
       Op.forMethod(NumberCore.class, "toU32", double.class).withConstSimplifier().build();
 
-  /**
-   * If {@code d} is an integer between 0 and 2**32-1, returns it as a long; otherwise returns -1.
-   */
+  /// If `d` is an integer between 0 and 2\*\*32-1, returns it as a long; otherwise returns -1.
   public static long toU32(double d) {
     long i = (long) d;
     return (i == d && i <= 0xffffffffL) ? i : -1;
   }
 
-  /**
-   * {@code method u32(Number x) = ...}
-   *
-   * <p>The {@code x} must be an integer between 0 and 2**32-1
-   */
+  /// `method u32(Number x) = ...`
+  ///
+  /// The `x` must be an integer between 0 and 2\*\*32-1
   @Core.Method("u32(Number)")
   static Value u32(TState tstate, Value x) throws BuiltinException {
     Value u32;
@@ -712,7 +693,7 @@ public final class NumberCore {
         HIGH_LOW_KEYS, tstate.compound(Core.U32, high), tstate.compound(Core.U32, low));
   }
 
-  /** Converts a long to a {@code {high, low}} pair of U32s. */
+  /// Converts a long to a `{high, low}` pair of U32s.
   @RC.Out
   private static Value asHighLow(TState tstate, long value) {
     Value low = NumValue.of((int) value, tstate);
@@ -720,10 +701,10 @@ public final class NumberCore {
     return asHighLow(tstate, low, high);
   }
 
-  /** The number of bits in an int, as a CodeValue. */
+  /// The number of bits in an int, as a CodeValue.
   private static final CodeValue INT_BITS = CodeValue.of(32);
 
-  /** Converts a long CodeValue to a {@code {high, low}} pair of U32s. */
+  /// Converts a long CodeValue to a `{high, low}` pair of U32s.
   private static Value asHighLow(CodeGen codeGen, CodeValue value) {
     value = codeGen.materialize(value, long.class);
     Value low = codeGen.intToValue(Op.LONG_TO_INT.result(value));
@@ -732,10 +713,8 @@ public final class NumberCore {
     return asHighLow(codeGen.tstate(), low, high);
   }
 
-  /**
-   * Combines two U32s using an operation on longs, and returns the result as a {@code {high, low}}
-   * pair of U32s.
-   */
+  /// Combines two U32s using an operation on longs, and returns the result as a `{high, low}` pair
+  /// of U32s.
   private static Value u32sToHighLow(
       TState tstate, Value x, Value y, LongBinaryOperator binOp, Op op) {
     if (!(x instanceof RValue || y instanceof RValue)) {
@@ -761,7 +740,7 @@ public final class NumberCore {
     return u32sToHighLow(tstate, x, y, (a, b) -> a - b, Op.SUBTRACT_LONGS);
   }
 
-  /** Converts a {@code {high, low}} pair of U32s to a long. */
+  /// Converts a `{high, low}` pair of U32s to a long.
   static long highLowToLong(Value struct) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(HIGH_LOW_KEYS.matches(struct));
     Value high = struct.peekElement(0);
@@ -806,7 +785,7 @@ public final class NumberCore {
     return tstate.compound(Q_R_KEYS, q, tstate.compound(Core.U32, r));
   }
 
-  /** Applies an int operation to a U32 and returns the result as an Integer. */
+  /// Applies an int operation to a U32 and returns the result as an Integer.
   private static Value unaryBitOp(
       TState tstate, Value x, IntUnaryOperator intOp, UnaryOperator<CodeValue> op) {
     if (!(x instanceof RValue)) {
@@ -817,7 +796,7 @@ public final class NumberCore {
     }
   }
 
-  /** {@code v} must be a U32 or an Integer; returns it as an int. */
+  /// `v` must be a U32 or an Integer; returns it as an int.
   private static int toInt(Value v) throws BuiltinException {
     if (v.baseType() == Core.U32) {
       return v.elementAsInt(0);
@@ -827,18 +806,16 @@ public final class NumberCore {
     }
   }
 
-  /** {@code v} must be a U32 or an Integer; returns it as an int CodeValue. */
+  /// `v` must be a U32 or an Integer; returns it as an int CodeValue.
   private static CodeValue toInt(CodeGen codeGen, Value v) throws BuiltinException {
     return (v.baseType() == Core.U32) ? u32ToInt(codeGen, v) : codeGen.verifyInt(v);
   }
 
-  /**
-   * Applies an int operation to two arguments, each a U32 or an Integer, and returns the result as
-   * an Integer.
-   *
-   * <p>Accepting arguments as either type lets us use this for both operations like bitAnd (which
-   * takes two U32s) and bitShift (which takes a U32 and an Integer).
-   */
+  /// Applies an int operation to two arguments, each a U32 or an Integer, and returns the result as
+  /// an Integer.
+  ///
+  /// Accepting arguments as either type lets us use this for both operations like bitAnd (which
+  /// takes two U32s) and bitShift (which takes a U32 and an Integer).
   private static Value binaryBitOp(
       TState tstate, Value x, Value y, IntBinaryOperator intOp, BinaryOperator<CodeValue> op)
       throws BuiltinException {

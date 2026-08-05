@@ -29,44 +29,36 @@ import org.retrolang.impl.Template.NumVar;
 import org.retrolang.impl.Template.RefVar;
 import org.retrolang.util.Bits;
 
-/**
- * A CopyEmitter creates Blocks based on a given CopyPlan. The base class assumes that NumVars and
- * RefVars in both source and destination are Registers, but subclasses may override the defaults to
- * load or store values elsewhere.
- */
+/// A CopyEmitter creates Blocks based on a given CopyPlan. The base class assumes that NumVars and
+/// RefVars in both source and destination are Registers, but subclasses may override the defaults
+/// to load or store values elsewhere.
 class CopyEmitter {
 
-  /**
-   * Returns a CodeValue for the given NumVar or RefVar.
-   *
-   * <p>The default implementation just returns the corresponding Register.
-   */
+  /// Returns a CodeValue for the given NumVar or RefVar.
+  ///
+  /// The default implementation just returns the corresponding Register.
   CodeValue getSrcVar(CodeGen codeGen, Template t) {
     return codeGen.register(t);
   }
 
-  /**
-   * Sets the given NumVar or RefVar to the given value.
-   *
-   * <p>The default implementation just sets the corresponding Register.
-   */
+  /// Sets the given NumVar or RefVar to the given value.
+  ///
+  /// The default implementation just sets the corresponding Register.
   void setDstVar(CodeGen codeGen, Template t, CodeValue v) {
     codeGen.emitSet(codeGen.register(t), v);
   }
 
-  /**
-   * If this method returns true and a COPY_NUM step has a narrower destination encoding than its
-   * source encoding, {@link #emit} will add a block to verify that the source value fits in the
-   * destination before calling {@link #setDstVar}. If this method returns false, {@link #setDstVar}
-   * is responsible for doing that check.
-   *
-   * <p>The default implementation returns true.
-   */
+  /// If this method returns true and a COPY\_NUM step has a narrower destination encoding than its
+  /// source encoding, [#emit] will add a block to verify that the source value fits in the
+  /// destination before calling [#setDstVar]. If this method returns false, [#setDstVar] is
+  /// responsible for doing that check.
+  ///
+  /// The default implementation returns true.
   boolean checkNarrow() {
     return true;
   }
 
-  /** Emits blocks that will perform the copy, or branch to {@code onFail} if the copy fails. */
+  /// Emits blocks that will perform the copy, or branch to `onFail` if the copy fails.
   final void emit(CodeGen codeGen, CopyPlan plan, FutureBlock onFail) {
     if (plan.isFail()) {
       codeGen.cb.branchTo(onFail);
@@ -271,14 +263,12 @@ class CopyEmitter {
     }
   }
 
-  /** An instance of the base class, for copying registers to registers. */
+  /// An instance of the base class, for copying registers to registers.
   static final CopyEmitter REGISTER_TO_REGISTER = new CopyEmitter();
 
-  /**
-   * Emits blocks that interpret source and destination as Registers, but do not update the
-   * destination; instead they compare the source with the destination and branch to {@code ifFalse}
-   * if they do not match.
-   */
+  /// Emits blocks that interpret source and destination as Registers, but do not update the
+  /// destination; instead they compare the source with the destination and branch to `ifFalse` if
+  /// they do not match.
   static void emitEqualRegisters(CodeGen codeGen, CopyPlan plan, FutureBlock ifFalse) {
     new CopyEmitter() {
       @Override

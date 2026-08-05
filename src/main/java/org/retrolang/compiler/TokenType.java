@@ -19,22 +19,18 @@ package org.retrolang.compiler;
 import com.google.common.collect.ImmutableMap;
 import org.antlr.v4.runtime.Vocabulary;
 
-/**
- * A statics-only class providing convenient access to ANTLR token types (which are just ints).
- *
- * <p>ANTLR's Vocabulary class doesn't seem to provide any direct way to get the token type for a
- * particular token, so we just build a map of them (there are O(60)) and look up each one we're
- * interested in once.
- */
+/// A statics-only class providing convenient access to ANTLR token types (which are just ints).
+///
+/// ANTLR's Vocabulary class doesn't seem to provide any direct way to get the token type for a
+/// particular token, so we just build a map of them (there are O(60)) and look up each one we're
+/// interested in once.
 class TokenType {
 
   // Statics only
   private TokenType() {}
 
-  /**
-   * A Map from token name to token type. Token names are either literals enclosed in single quotes
-   * (e.g. "{@code '+'}") or symbolic names (e.g. "{@code NUMBER}").
-   */
+  /// A Map from token name to token type. Token names are either literals enclosed in single quotes
+  /// (e.g. "`'+'`") or symbolic names (e.g. "`NUMBER`").
   static final ImmutableMap<String, Integer> MAP;
 
   static {
@@ -56,9 +52,7 @@ class TokenType {
     MAP = builder.buildOrThrow();
   }
 
-  /**
-   * Returns the token type for the given name. Throws an exception if there is no such token name.
-   */
+  /// Returns the token type for the given name. Throws an exception if there is no such token name.
   static int of(String name) {
     Integer result = MAP.get(name);
     if (result == null) {

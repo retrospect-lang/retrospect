@@ -17,19 +17,17 @@
 package org.retrolang.impl;
 
 interface MethodImpl {
-  /**
-   * Either saves results in tstate if the method completes successfully, or starts unwinding if it
-   * does not.
-   *
-   * @param results information about how the results of this call will be represented
-   * @param mMemo the MethodMemo that should be used while executing this method
-   */
+  /// Either saves results in tstate if the method completes successfully, or starts unwinding if it
+  /// does not.
+  ///
+  /// @param results information about how the results of this call will be represented
+  /// @param mMemo the MethodMemo that should be used while executing this method
   void execute(TState tstate, ResultsInfo results, MethodMemo mMemo, @RC.In Object[] args);
 
-  /** Emits instructions that are equivalent to calling {@link #execute}. */
+  /// Emits instructions that are equivalent to calling [#execute].
   void emit(CodeGen codeGen, ResultsInfo results, MethodMemo mMemo, Object[] args);
 
-  /** Returns the module that defined this method. */
+  /// Returns the module that defined this method.
   default VmModule module() {
     return Core.CORE;
   }

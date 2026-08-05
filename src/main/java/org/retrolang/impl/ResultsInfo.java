@@ -16,10 +16,10 @@
 
 package org.retrolang.impl;
 
-/** Information passed to a method implementation about how its results will be represented. */
+/// Information passed to a method implementation about how its results will be represented.
 public interface ResultsInfo {
 
-  /** A trivial ResultsInfo that returns default values for every TProperty. */
+  /// A trivial ResultsInfo that returns default values for every TProperty.
   public static final ResultsInfo EMPTY =
       new ResultsInfo() {
         @Override
@@ -28,10 +28,10 @@ public interface ResultsInfo {
         }
       };
 
-  /** Returns the given property applied to the specified result. */
+  /// Returns the given property applied to the specified result.
   <T> T result(int resultNum, TProperty<T> property);
 
-  /** Returns the given property applied to the first result. */
+  /// Returns the given property applied to the first result.
   default <T> T result(TProperty<T> property) {
     return result(0, property);
   }

@@ -29,57 +29,53 @@ public final class ParserCore {
   public static final VmType.Union PARSER =
       Core.newOpenUnionWithSubTypes("Parser", Core.STRING.vmType());
 
-  /**
-   * {@code function parse(parser, mode, pos=, source)}
-   *
-   * <p>Returns an array or None; if it returns None, the value of {@code pos} is unspecified.
-   * {@code mode} is one of OutputsOrNone, EmptyOrNone, OutputsOrError, or EmptyOrError.
-   */
+  /// `function parse(parser, mode, pos=, source)`
+  ///
+  /// Returns an array or None; if it returns None, the value of `pos` is unspecified. `mode` is one
+  /// of OutputsOrNone, EmptyOrNone, OutputsOrError, or EmptyOrError.
   @Core.Private
   static final VmFunctionBuilder parse4 = VmFunctionBuilder.create("parse", 4).hasInoutArg(2);
 
-  /** {@code function parse(parser, stream=)} */
+  /// `function parse(parser, stream=)`
   @Core.Public
   static final VmFunctionBuilder parse2 = VmFunctionBuilder.create("parse", 2).hasInoutArg(1);
 
-  /** {@code function match(parser, stream=)} */
+  /// `function match(parser, stream=)`
   @Core.Public
   static final VmFunctionBuilder match = VmFunctionBuilder.create("match", 2).hasInoutArg(1);
 
-  /** {@code function peek(parser, stream=)} */
+  /// `function peek(parser, stream=)`
   @Core.Public static final VmFunctionBuilder peek = VmFunctionBuilder.create("peek", 2);
 
   @Core.Public public static final VmType.Union SOURCE = Core.newOpenUnion("Source");
 
-  /** {@code open function atEnd(source, pos)} */
+  /// `open function atEnd(source, pos)`
   @Core.Public
   static final VmFunctionBuilder sourceAtEnd = VmFunctionBuilder.create("atEnd", 2).isOpen();
 
-  /** {@code open function takeChar(source, pos=)} */
+  /// `open function takeChar(source, pos=)`
   @Core.Public
   static final VmFunctionBuilder sourceTakeChar =
       VmFunctionBuilder.create("takeChar", 2).hasInoutArg(1).isOpen();
 
-  /** {@code open function getString(source, startPos, endPos)} */
+  /// `open function getString(source, startPos, endPos)`
   @Core.Public
   static final VmFunctionBuilder sourceGetString =
       VmFunctionBuilder.create("getString", 3).isOpen();
 
-  /** {@code open function matchString(source, pos=, substring)} */
+  /// `open function matchString(source, pos=, substring)`
   @Core.Public
   static final VmFunctionBuilder sourceMatchString =
       VmFunctionBuilder.create("matchString", 3).hasInoutArg(1).isOpen();
 
-  /** {@code open function parseInt(source, pos=)} */
+  /// `open function parseInt(source, pos=)`
   @Core.Public
   static final VmFunctionBuilder sourceParseInt =
       VmFunctionBuilder.create("parseInt", 2).hasInoutArg(1).isOpen();
 
-  /**
-   * {@code private compound Stream}
-   *
-   * <p>Elements are {@code pos}, {@code source}.
-   */
+  /// `private compound Stream`
+  ///
+  /// Elements are `pos`, `source`.
   @Core.Private static final BaseType.Named STREAM = Core.newBaseType("Stream", 2);
 
   @Core.Public static final VmFunctionBuilder stream = VmFunctionBuilder.create("stream", 1);
@@ -112,78 +108,68 @@ public final class ParserCore {
 
   @Core.Public public static final Singleton AT_END = Core.newSingleton("AtEnd", PARSER);
 
-  /** {@code function atEnd() = AtEnd} */
+  /// `function atEnd() = AtEnd`
   @Core.Public
   static final VmFunctionBuilder atEnd = VmFunctionBuilder.fromConstant("atEnd", AT_END);
 
   @Core.Public public static final Singleton NEW_LINE = Core.newSingleton("NewLine", PARSER);
 
-  /** {@code function newLine() = NewLine} */
+  /// `function newLine() = NewLine`
   @Core.Public
   static final VmFunctionBuilder newLine = VmFunctionBuilder.fromConstant("newLine", NEW_LINE);
 
-  /**
-   * {@code private compound OutputMatch is Parser}
-   *
-   * <p>Element is {@code parser}.
-   */
+  /// `private compound OutputMatch is Parser`
+  ///
+  /// Element is `parser`.
   @Core.Private
   static final BaseType.Named OUTPUT_MATCH = Core.newBaseType("OutputMatch", 1, PARSER);
 
-  /** {@code function outputMatch(parser)} */
+  /// `function outputMatch(parser)`
   @Core.Public
   static final VmFunctionBuilder outputMatch = VmFunctionBuilder.create("outputMatch", 1);
 
-  /**
-   * {@code private compound Guarded}
-   *
-   * <p>Elements are {@code guard} and {@code parser}.
-   */
+  /// `private compound Guarded`
+  ///
+  /// Elements are `guard` and `parser`.
   @Core.Private static final BaseType.Named GUARDED = Core.newBaseType("Guarded", 2);
 
-  /**
-   * {@code private compound ChooseParser is Parser}
-   *
-   * <p>Elements are {@code first} and {@code second}.
-   */
+  /// `private compound ChooseParser is Parser`
+  ///
+  /// Elements are `first` and `second`.
   @Core.Private
   static final BaseType.Named CHOOSE_PARSER = Core.newBaseType("ChooseParser", 2, PARSER);
 
-  /** {@code function choose(first, second)} */
+  /// `function choose(first, second)`
   @Core.Public static final VmFunctionBuilder chooseParser = VmFunctionBuilder.create("choose", 2);
 
-  /**
-   * {@code private compound OneOf is Parser}
-   *
-   * <p>Element is {@code chars}.
-   */
+  /// `private compound OneOf is Parser`
+  ///
+  /// Element is `chars`.
   @Core.Private static final BaseType.Named ONE_OF = Core.newBaseType("OneOf", 1, PARSER);
 
-  /** {@code function oneOf(chars)} */
+  /// `function oneOf(chars)`
   @Core.Public static final VmFunctionBuilder oneOf = VmFunctionBuilder.create("oneOf", 1);
 
   // Should this include \u000B and \u000C?  regex.Pattern docs say that \R ("linebreak matcher")
   // includes them, but they are not considered "line terminators"?
   static final StringValue LINE_ENDS = StringValue.uncounted("\n\r\u0085\u2028\u2029");
 
-  /** {@code function lineEnd() = oneOf("\n\r\u0085\u2028\u2029")} */
+  /// `function lineEnd() = oneOf("\\n\\r\\u0085\\u2028\\u2029")`
   @Core.Public
   static final VmFunctionBuilder lineEnd =
       VmFunctionBuilder.fromConstant("lineEnd", ONE_OF.uncountedOf(LINE_ENDS));
 
-  /**
-   * {@code private compound OneOfRange is Parser}
-   *
-   * <p>Elements are {@code firstChar}, {@code lastChar}.
-   */
+  /// `private compound OneOfRange is Parser`
+  ///
+  /// Elements are `firstChar`, `lastChar`.
   @Core.Private
   static final BaseType.Named ONE_OF_RANGE = Core.newBaseType("OneOfRange", 2, PARSER);
 
-  /** {@code function oneOfRange(first, last)} */
+  /// `function oneOfRange(first, last)`
   @Core.Public
   static final VmFunctionBuilder oneOfRange = VmFunctionBuilder.create("oneOfRange", 2);
 
-  /** {@code function digit() = oneOfRange("0", "9")} */
+  /// `function digit() = oneOfRange("0", "9")`
   @Core.Public
   static final VmFunctionBuilder digit =
       VmFunctionBuilder.fromConstant(
@@ -191,49 +177,45 @@ public final class ParserCore {
           ONE_OF_RANGE.uncountedOf(
               NumValue.of('0', Allocator.UNCOUNTED), NumValue.of('9', Allocator.UNCOUNTED)));
 
-  /** {@code private singleton ParseInt is Parser} */
+  /// `private singleton ParseInt is Parser`
   @Core.Private public static final Singleton PARSE_INT = Core.newSingleton("ParseInt", PARSER);
 
-  /** {@code function parseInt() = ParseInt} */
+  /// `function parseInt() = ParseInt`
   @Core.Public
   static final VmFunctionBuilder parseInt = VmFunctionBuilder.fromConstant("parseInt", PARSE_INT);
 
-  /**
-   * {@code private compound ConcatParser is Parser}
-   *
-   * <p>Elements are {@code p1}, {@code p2}.
-   */
+  /// `private compound ConcatParser is Parser`
+  ///
+  /// Elements are `p1`, `p2`.
   @Core.Private
   static final BaseType.Named CONCAT_PARSER = Core.newBaseType("ConcatParser", 2, PARSER);
 
-  /**
-   * {@code private compound Repeat is Parser}
-   *
-   * <p>Elements are {@code inner}, {@code min}, {@code max}.
-   */
+  /// `private compound Repeat is Parser`
+  ///
+  /// Elements are `inner`, `min`, `max`.
   @Core.Private
   static final BaseType.Named REPEAT_PARSER = Core.newBaseType("RepeatParser", 3, PARSER);
 
-  /** {@code method stream(String) = Stream_({pos: 0, source: s}} */
+  /// `method stream(String) = Stream_({pos: 0, source: s}`
   @Core.Method("stream(String)")
   static Value streamString(TState tstate, @RC.In Value s) {
     return tstate.compound(STREAM, NumValue.ZERO, s);
   }
 
-  /** {@code method outputMatch(Parser parser) = OutputMatch_(parser)} */
+  /// `method outputMatch(Parser parser) = OutputMatch_(parser)`
   @Core.Method("outputMatch(Parser)")
   static Value outputMatch(TState tstate, @RC.In Value parser) {
     return tstate.compound(OUTPUT_MATCH, parser);
   }
 
-  /** {@code method oneOf(String chars) = OneOf_(chars)} */
+  /// `method oneOf(String chars) = OneOf_(chars)`
   @Core.Method("oneOf(String)")
   static Value oneOf(TState tstate, @RC.In Value chars) throws Err.BuiltinException {
     Err.INVALID_ARGUMENT.when(StringValue.lengthIs(tstate, chars, NumValue.ZERO));
     return tstate.compound(ONE_OF, chars);
   }
 
-  /** {@code method oneOfRange(String firstChar, String lastChar) = ...} */
+  /// `method oneOfRange(String firstChar, String lastChar) = ...`
   @Core.Method("oneOfRange(String, String)")
   static Value oneOfRange(TState tstate, Value firstChar, Value lastChar)
       throws Err.BuiltinException {
@@ -247,27 +229,23 @@ public final class ParserCore {
     return tstate.compound(ONE_OF_RANGE, first, last);
   }
 
-  /** {@code method choose(Guarded first, Parser second) = Choose_({first, second})} */
+  /// `method choose(Guarded first, Parser second) = Choose_({first, second})`
   @Core.Method("choose(Guarded, Parser)")
   static Value chooseGuarded(TState tstate, @RC.In Value first, @RC.In Value second) {
     return tstate.compound(CHOOSE_PARSER, first, second);
   }
 
-  /**
-   * {@code method choose(Parser first, Parser second) = Choose_({first: Guarded_({guard: first,
-   * rest: Trivial}), second})}
-   */
+  /// `method choose(Parser first, Parser second) = Choose_({first: Guarded_({guard: first, rest:
+  /// Trivial}), second})`
   @Core.Method("choose(Parser, Parser)")
   static Value chooseParser(TState tstate, @RC.In Value first, @RC.In Value second) {
     Value guarded = tstate.compound(GUARDED, first, TRIVIAL_PARSER);
     return tstate.compound(CHOOSE_PARSER, guarded, second);
   }
 
-  /**
-   * <pre>
-   * function parse(Parser parser, Stream stream=) = parse(parser, OutputsOrNone, stream_.pos=, stream_.source)
-   * </pre>
-   */
+  /// ```
+  /// function parse(Parser parser, Stream stream=) = parse(parser, OutputsOrNone, stream_.pos=, stream_.source)
+  /// ```
   static class Parse2 extends BuiltinMethod {
     static final Caller parse = new Caller("parse:4", "afterParse");
 
@@ -294,11 +272,9 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * function match(Parser parser, Stream stream=) = parse(parser, OutputsOrError, stream_.pos=, stream_.source)
-   * </pre>
-   */
+  /// ```
+  /// function match(Parser parser, Stream stream=) = parse(parser, OutputsOrError, stream_.pos=, stream_.source)
+  /// ```
   static class Match extends BuiltinMethod {
     static final Caller parse = new Caller("parse:4", "afterParse");
 
@@ -317,14 +293,12 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * function peek(Parser parser, Stream stream) {
-   *   tempPos = stream_.pos
-   *   return parse(parser, EmptyOrNone, tempPos=, stream_.source) is not None
-   * }
-   * </pre>
-   */
+  /// ```
+  /// function peek(Parser parser, Stream stream) {
+  ///   tempPos = stream_.pos
+  ///   return parse(parser, EmptyOrNone, tempPos=, stream_.source) is not None
+  /// }
+  /// ```
   static class Peek extends BuiltinMethod {
     static final Caller parse = new Caller("parse:4", "afterParse");
 
@@ -341,15 +315,13 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(AtEnd, mode, pos=, source) {
-   *   if atEnd(stream, pos) { return [] }
-   *   assert not isErrorOnFail(mode)
-   *   return None
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(AtEnd, mode, pos=, source) {
+  ///   if atEnd(stream, pos) { return [] }
+  ///   assert not isErrorOnFail(mode)
+  ///   return None
+  /// }
+  /// ```
   static class ParseAtEnd extends BuiltinMethod {
     static final Caller atEnd = new Caller("atEnd:2", "afterAtEnd");
 
@@ -367,18 +339,16 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(OneOf oneOf, mode, pos=, source) {
-   *   next = takeChar(source, pos=)
-   *   if contains(oneOf_, next) {
-   * 		 return []
-   *   }
-   * 	assert not isErrorOnFail(mode)
-   * 	return None
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(OneOf oneOf, mode, pos=, source) {
+  ///   next = takeChar(source, pos=)
+  ///   if contains(oneOf_, next) {
+  /// 		 return []
+  ///   }
+  /// 	assert not isErrorOnFail(mode)
+  /// 	return None
+  /// }
+  /// ```
   static class ParseOneOf extends BuiltinMethod {
     static final Caller takeChar = new Caller("takeChar:2", "afterTakeChar");
 
@@ -411,19 +381,17 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(OneOfRange oneOfRange, mode, pos=, source) {
-   *   next = takeChar(source, pos=)
-   *   {first, last} = oneOfRange_
-   *   if next is not None and next >= first and next <= last {
-   * 		 return []
-   *   }
-   * 	assert not isErrorOnFail(mode)
-   * 	return None
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(OneOfRange oneOfRange, mode, pos=, source) {
+  ///   next = takeChar(source, pos=)
+  ///   {first, last} = oneOfRange_
+  ///   if next is not None and next >= first and next <= last {
+  /// 		 return []
+  ///   }
+  /// 	assert not isErrorOnFail(mode)
+  /// 	return None
+  /// }
+  /// ```
   static class ParseOneOfRange extends BuiltinMethod {
     static final Caller takeChar = new Caller("takeChar:2", "afterTakeChar");
 
@@ -461,15 +429,13 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(String s, mode, pos=, source) {
-   *   if matchString(source, s, pos=) { return [] }
-   *   assert not isErrorOnFail(mode)
-   *   return None
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(String s, mode, pos=, source) {
+  ///   if matchString(source, s, pos=) { return [] }
+  ///   assert not isErrorOnFail(mode)
+  ///   return None
+  /// }
+  /// ```
   static class ParseString extends BuiltinMethod {
     static final Caller matchString = new Caller("matchString:3", "afterMatchString");
 
@@ -498,29 +464,25 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(TrivalParser, mode, pos=, source) = []
-   * </pre>
-   */
+  /// ```
+  /// method parse(TrivalParser, mode, pos=, source) = []
+  /// ```
   @Core.Method("parse(TrivialParser, ParseMode, _, _)")
   static void parseTrivial(
       TState tstate, Value unused, Value mode, @RC.In Value pos, Value source) {
     tstate.setResults(Core.EMPTY_ARRAY, pos);
   }
 
-  /**
-   * <pre>
-   * method parse(OutputMatch outputMatch, mode, pos=, source) {
-   *   savedPos = pos
-   *   result = parse(outputMatch_, mode, pos=, source)
-   *   if result is not None and isKeepOutputs(mode) {
-   *     result &= [getString(source, savedPos, pos)]
-   *   }
-   *   return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(OutputMatch outputMatch, mode, pos=, source) {
+  ///   savedPos = pos
+  ///   result = parse(outputMatch_, mode, pos=, source)
+  ///   if result is not None and isKeepOutputs(mode) {
+  ///     result &= [getString(source, savedPos, pos)]
+  ///   }
+  ///   return result
+  /// }
+  /// ```
   static class ParseOutputMatch extends BuiltinMethod {
     static final Caller parseInner = new Caller("parse:4", "afterParseInner");
     static final Caller getString = new Caller("getString:3", "afterGetString");
@@ -571,19 +533,17 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(ParseInt, mode, pos=, source) {
-   *   result = parseInt(source, pos=)
-   *   if result is None {
-   *     assert not isErrorOnFail(mode)
-   *   } else {
-   *     result = isKeepOutputs(mode) ? [result] : []
-   *   }
-   *   return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(ParseInt, mode, pos=, source) {
+  ///   result = parseInt(source, pos=)
+  ///   if result is None {
+  ///     assert not isErrorOnFail(mode)
+  ///   } else {
+  ///     result = isKeepOutputs(mode) ? [result] : []
+  ///   }
+  ///   return result
+  /// }
+  /// ```
   static class ParseInt extends BuiltinMethod {
     static final Caller sourceParseInt = new Caller("parseInt:2", "afterParseInt");
 
@@ -621,26 +581,24 @@ public final class ParserCore {
   static final NumValue CR_CODE_POINT = NumValue.of('\r', Allocator.UNCOUNTED);
   static final NumValue LF_CODE_POINT = NumValue.of('\n', Allocator.UNCOUNTED);
 
-  /**
-   * <pre>
-   * method tryParse(NewLine, errorOnFail, outputs=, pos=, source) {
-   *   tempPos = pos
-   *   next = takeChar(source, tempPos=)
-   *   if not contains(lineEnds, next) {
-   * 	   assert not isErrorOnFail(mode)
-   * 	   return None
-   * 	 }
-   * 	 pos = tempPos
-   * 	 if next == "\r" {
-   *     next = takeChar(source, tempPos=)
-   *     if next2 == "\n" {
-   *       pos = tempPos
-   *     }
-   *   }
-   * 	 return []
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method tryParse(NewLine, errorOnFail, outputs=, pos=, source) {
+  ///   tempPos = pos
+  ///   next = takeChar(source, tempPos=)
+  ///   if not contains(lineEnds, next) {
+  /// 	   assert not isErrorOnFail(mode)
+  /// 	   return None
+  /// 	 }
+  /// 	 pos = tempPos
+  /// 	 if next == "\r" {
+  ///     next = takeChar(source, tempPos=)
+  ///     if next2 == "\n" {
+  ///       pos = tempPos
+  ///     }
+  ///   }
+  /// 	 return []
+  /// }
+  /// ```
   static class ParseNewLine extends BuiltinMethod {
     static final Caller takeChar = new Caller("takeChar:2", "afterTakeChar");
     static final Caller takeChar2 = new Caller("takeChar:2", "afterTakeChar2");
@@ -693,30 +651,26 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method add(Parser p1, Parser p2) = ConcatParser_({p1, p2})
-   * </pre>
-   */
+  /// ```
+  /// method add(Parser p1, Parser p2) = ConcatParser_({p1, p2})
+  /// ```
   @Core.Method("add(Parser, Parser)")
   static Value addParsers(TState tstate, @RC.In Value p1, @RC.In Value p2) {
     return tstate.compound(CONCAT_PARSER, p1, p2);
   }
 
-  /**
-   * <pre>
-   * method parse(ConcatParser concat, mode, pos=, source) {
-   *   tempPos = pos
-   *   result = parse(concat_.p1, mode, tempPos=, source)
-   *   if result is None { return None }
-   *   result2 = tryParse(concat_.p2, mode, tempPos=, source)
-   *   if result2 is None { return None }
-   * 	 pos = tempPos
-   * 	 result &= result2
-   * 	 return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(ConcatParser concat, mode, pos=, source) {
+  ///   tempPos = pos
+  ///   result = parse(concat_.p1, mode, tempPos=, source)
+  ///   if result is None { return None }
+  ///   result2 = tryParse(concat_.p2, mode, tempPos=, source)
+  ///   if result2 is None { return None }
+  /// 	 pos = tempPos
+  /// 	 result &= result2
+  /// 	 return result
+  /// }
+  /// ```
   static class ParseConcatParser extends BuiltinMethod {
     static final Caller parse1 = new Caller("parse:4", "afterParse1");
     static final Caller parse2 = new Caller("parse:4", "afterParse2");
@@ -773,14 +727,12 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method multiply(Number n, Parser inner) {
-   *   assert n is Integer and n >= 0
-   *   return RepeatParser_({inner, min: n, max: n})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method multiply(Number n, Parser inner) {
+  ///   assert n is Integer and n >= 0
+  ///   return RepeatParser_({inner, min: n, max: n})
+  /// }
+  /// ```
   @Core.Method("multiply(Number, Parser)")
   static Value repeatParserInt(TState tstate, Value n, @RC.In Value inner)
       throws Err.BuiltinException {
@@ -791,20 +743,18 @@ public final class ParserCore {
     return tstate.compound(REPEAT_PARSER, guarded, min, addRef(min));
   }
 
-  /**
-   * <pre>
-   * method multiply(Range range, Parser inner) {
-   *   min = min(range)
-   *   if min is None {
-   *     min = 0
-   *   }
-   *   assert min >= 0
-   *   // range must not be empty
-   *   assert max is None or max >= min
-   *   return RepeatParser_({inner, min, max: max(range)})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method multiply(Range range, Parser inner) {
+  ///   min = min(range)
+  ///   if min is None {
+  ///     min = 0
+  ///   }
+  ///   assert min >= 0
+  ///   // range must not be empty
+  ///   assert max is None or max >= min
+  ///   return RepeatParser_({inner, min, max: max(range)})
+  /// }
+  /// ```
   @Core.Method("multiply(Range, Parser|Guarded)")
   static Value repeatParserRange(TState tstate, Value range, @RC.In Value inner)
       throws Err.BuiltinException {
@@ -832,41 +782,37 @@ public final class ParserCore {
             });
   }
 
-  /**
-   * Returns OUTPUTS_OR_NONE if {@code mode} is OUTPUTS_OR_NONE or OUTPUTS_OR_ERROR; otherwise
-   * returns EMPTY_OR_NONE.
-   */
+  /// Returns OUTPUTS\_OR\_NONE if `mode` is OUTPUTS\_OR\_NONE or OUTPUTS\_OR\_ERROR; otherwise
+  /// returns EMPTY\_OR\_NONE.
   private static Value noError(Value mode) {
     return mode.isa(KEEP_OUTPUTS_MODE).choose(OUTPUTS_OR_NONE, EMPTY_OR_NONE);
   }
 
-  /**
-   * <pre>
-   * method parse(RepeatParser repeat, mode, pos=, source) {
-   *   { inner, min, max } = repeat_
-   *   savedPos = pos
-   *   result = []
-   *   for count in 1..max sequential result, pos {
-   *     guardPos = pos
-   *     guardMode = (count <= min) ? mode : noError(mode)
-   *     guardResult = parse(inner_.guard, guardMode, guardPos=, source)
-   *     if guardResult is None {
-   *       if count <= min { results = None }
-   *       break
-   *     }
-   *     result &= guardResult
-   *     pos = guardPos
-   *     restResult = parse(inner_.rest, mode, pos=, source)
-   *     if restResult is None {
-   *       result = None
-   *       break
-   *     }
-   *     result &= restResult
-   *   }
-   *   return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(RepeatParser repeat, mode, pos=, source) {
+  ///   { inner, min, max } = repeat_
+  ///   savedPos = pos
+  ///   result = []
+  ///   for count in 1..max sequential result, pos {
+  ///     guardPos = pos
+  ///     guardMode = (count <= min) ? mode : noError(mode)
+  ///     guardResult = parse(inner_.guard, guardMode, guardPos=, source)
+  ///     if guardResult is None {
+  ///       if count <= min { results = None }
+  ///       break
+  ///     }
+  ///     result &= guardResult
+  ///     pos = guardPos
+  ///     restResult = parse(inner_.rest, mode, pos=, source)
+  ///     if restResult is None {
+  ///       result = None
+  ///       break
+  ///     }
+  ///     result &= restResult
+  ///   }
+  ///   return result
+  /// }
+  /// ```
   static class ParseRepeat extends BuiltinMethod {
     static final Caller parseGuard = new Caller("parse:4", "afterParseGuard");
     static final Caller parseRest = new Caller("parse:4", "afterParseRest");
@@ -1008,25 +954,23 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method parse(Choose choose, mode, pos=, source) {
-   *   { first second } = choose_
-   * 	 guardPos = pos
-   * 	 result = parse(first_.guard, noError(mode), guardPos=, source)
-   * 	 if result is None {
-   * 	   return parse(second, mode, pos=, source)
-   * 	 }
-   * 	 pos = guardPos
-   * 	 restResult = parse(first_.rest, mode, pos=, source)
-   * 	 if restResult is None {
-   * 	 	 return None
-   * 	 }
-   * 	 result &= restResult
-   * 	 return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parse(Choose choose, mode, pos=, source) {
+  ///   { first second } = choose_
+  /// 	 guardPos = pos
+  /// 	 result = parse(first_.guard, noError(mode), guardPos=, source)
+  /// 	 if result is None {
+  /// 	   return parse(second, mode, pos=, source)
+  /// 	 }
+  /// 	 pos = guardPos
+  /// 	 restResult = parse(first_.rest, mode, pos=, source)
+  /// 	 if restResult is None {
+  /// 	 	 return None
+  /// 	 }
+  /// 	 result &= restResult
+  /// 	 return result
+  /// }
+  /// ```
   static class ParseChoose extends BuiltinMethod {
     static final Caller parseGuard = new Caller("parse:4", "afterParseGuard");
     static final Caller parseRest = new Caller("parse:4", "afterParseRest");
@@ -1097,28 +1041,24 @@ public final class ParserCore {
     }
   }
 
-  /**
-   * <pre>
-   * method atEnd(String s, Number pos) = (pos == size(s))
-   * </pre>
-   */
+  /// ```
+  /// method atEnd(String s, Number pos) = (pos == size(s))
+  /// ```
   @Core.Method("atEnd(String, Number)")
   static Value atEndString(TState tstate, Value s, Value pos) {
     return StringValue.lengthIs(tstate, s, pos).asValue();
   }
 
-  /**
-   * <pre>
-   * method takeChar(String s, Number pos=) {
-   *   if atEnd(s, pos) {
-   *     return None
-   *   }
-   *   result = s @ pos
-   *   pos += 1
-   *   return result
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method takeChar(String s, Number pos=) {
+  ///   if atEnd(s, pos) {
+  ///     return None
+  ///   }
+  ///   result = s @ pos
+  ///   pos += 1
+  ///   return result
+  /// }
+  /// ```
   @Core.Method("takeChar(String, Number)")
   static void takeCharString(TState tstate, Value s, Value pos) throws Err.BuiltinException {
     Value result = StringValue.codePoint(tstate, s, pos, 0);
@@ -1131,22 +1071,18 @@ public final class ParserCore {
             });
   }
 
-  /**
-   * <pre>
-   * method getString(String s, Number start, Number end) = s[start + 1 .. end]
-   * </pre>
-   */
+  /// ```
+  /// method getString(String s, Number start, Number end) = s[start + 1 .. end]
+  /// ```
   @Core.Method("getString(String, Number, Number)")
   static Value getStringString(TState tstate, Value s, Value start, Value end)
       throws Err.BuiltinException {
     return StringValue.substring(tstate, s, start, end, 0);
   }
 
-  /**
-   * <pre>
-   * method matchString(String s, Number pos=, String sub) = ...
-   * </pre>
-   */
+  /// ```
+  /// method matchString(String s, Number pos=, String sub) = ...
+  /// ```
   @Core.Method("matchString(String, Number, String)")
   static void matchStringString(TState tstate, Value s, @RC.In Value pos, Value sub)
       throws Err.BuiltinException {
@@ -1162,13 +1098,11 @@ public final class ParserCore {
             () -> tstate.setResults(Core.FALSE, pos));
   }
 
-  /**
-   * <pre>
-   * method parseInt(String s, Number pos=) {
-   *   ...
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method parseInt(String s, Number pos=) {
+  ///   ...
+  /// }
+  /// ```
   @Core.Method("parseInt(String, Number)")
   static void parseIntString(TState tstate, ResultsInfo results, Value s, Value start)
       throws Err.BuiltinException {

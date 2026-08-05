@@ -31,14 +31,12 @@ import org.retrolang.compiler.Compiler;
 @RunWith(JUnitParamsRunner.class)
 public class StressTest {
 
-  /**
-   * A Retrospect script (copied from future.r8t) that starts a bunch of threads that are
-   * independently evolving the same layout and replacing the same frame.
-   *
-   * <p>(One small change from the version in future.r8t: this has a parameter ({@code index}) that
-   * is used in place of the constant 1 in that script. If {@code index} is greater than 255 that
-   * will force an upgrade to int32 rather than uint8.)
-   */
+  /// A Retrospect script (copied from future.r8t) that starts a bunch of threads that are
+  /// independently evolving the same layout and replacing the same frame.
+  ///
+  /// (One small change from the version in future.r8t: this has a parameter (`index`) that is used
+  /// in place of the constant 1 in that script. If `index` is greater than 255 that will force an
+  /// upgrade to int32 rather than uint8.)
   private static final String CODE =
       """
       others = [index, "a", True, "b", False, None]
@@ -50,26 +48,22 @@ public class StressTest {
       return waitFor(^y) | save
       """;
 
-  /**
-   * The expected result of {@link #CODE}. This is a format string with one parameter, the value of
-   * {@code index}.
-   */
+  /// The expected result of [#CODE]. This is a format string with one parameter, the value of
+  /// `index`.
   @SuppressWarnings("InlineFormatString")
   private static final String EXPECTED = "[%s, \"a\", True, \"b\", False, None]";
 
-  /**
-   * The result of compiling {@link #CODE}.
-   *
-   * <p>We're cheating a little here by executing code in one VirtualMachine after compiling it in
-   * another. That isn't documented to work, although it does currently. At some point we'll have a
-   * fully worked-out story about how to do this properly.
-   *
-   * <p>We could also just recompile the code anew in each VirtualMachine, but we'd rather use as
-   * many cores as possible for the execution that we're testing.
-   */
+  /// The result of compiling [#CODE].
+  ///
+  /// We're cheating a little here by executing code in one VirtualMachine after compiling it in
+  /// another. That isn't documented to work, although it does currently. At some point we'll have a
+  /// fully worked-out story about how to do this properly.
+  ///
+  /// We could also just recompile the code anew in each VirtualMachine, but we'd rather use as many
+  /// cores as possible for the execution that we're testing.
   Vm.InstructionBlock insts;
 
-  /** Records the minimum and maximum values from a sequence of longs. */
+  /// Records the minimum and maximum values from a sequence of longs.
   static class MinMax {
     long min = Long.MAX_VALUE;
     long max = Long.MIN_VALUE;
@@ -85,44 +79,40 @@ public class StressTest {
     }
   }
 
-  /**
-   * Records the range of allocedBytes, allocedObjs, and peakBytes from a sequence of
-   * ResourceTrackers. Verifies that {@link ResourceTracker#allReleased} is true for each.
-   */
+  /// Records the range of allocedBytes, allocedObjs, and peakBytes from a sequence of
+  /// ResourceTrackers. Verifies that [ResourceTracker#allReleased] is true for each.
   static class TrackerChecker {
     final MinMax allocedBytes = new MinMax();
     final MinMax allocedObjs = new MinMax();
     final MinMax peakBytes = new MinMax();
 
-    /**
-     * The call to applyToArgs() may return before the last RThreads have shut down, which means
-     * that tracker.allReleased() may return false if we check it immediately. VirtualMachineTest
-     * handles this by first calling awaitQuiescence() on the ForkJoinPool, but we can't do that
-     * here since other trials will still be running.
-     *
-     * <p>So if tracker.allReleased() fails we add the tracker to a queue and let another thread
-     * re-check it after a short delay. (We could just save all the failing trackers and re-check
-     * them after the test finishes, but the ResourceTracker has a link to the Scope, which has a
-     * link to the heavy MethodMemos, so we would risk running out of memory when running with very
-     * high numbers of trials.)
-     *
-     * <p>After all trials have been completed we insert a non-ResourceTracker into the queue to
-     * notify the queueDrainer that it should exit -- that's why the element type is Object rather
-     * than ResourceTracker.
-     */
+    /// The call to applyToArgs() may return before the last RThreads have shut down, which means
+    /// that tracker.allReleased() may return false if we check it immediately. VirtualMachineTest
+    /// handles this by first calling awaitQuiescence() on the ForkJoinPool, but we can't do that
+    /// here since other trials will still be running.
+    ///
+    /// So if tracker.allReleased() fails we add the tracker to a queue and let another thread
+    /// re-check it after a short delay. (We could just save all the failing trackers and re-check
+    /// them after the test finishes, but the ResourceTracker has a link to the Scope, which has a
+    /// link to the heavy MethodMemos, so we would risk running out of memory when running with very
+    /// high numbers of trials.)
+    ///
+    /// After all trials have been completed we insert a non-ResourceTracker into the queue to
+    /// notify the queueDrainer that it should exit -- that's why the element type is Object rather
+    /// than ResourceTracker.
     final ArrayBlockingQueue<Object> awaitingAllReleased = new ArrayBlockingQueue<>(256);
 
-    /** The thread that will wait for queued ResourceTrackers to return true from allReleased(). */
+    /// The thread that will wait for queued ResourceTrackers to return true from allReleased().
     final Thread queueDrainer = new Thread(this::drainQueue);
 
-    /** The number of times the {@link #queueDrainer} has had to wait for a ResourceTracker. */
+    /// The number of times the [#queueDrainer] has had to wait for a ResourceTracker.
     int numSleeps;
 
     TrackerChecker() {
       queueDrainer.start();
     }
 
-    /** Shuts down the {@link #queueDrainer}. */
+    /// Shuts down the [#queueDrainer].
     void shutdown() throws InterruptedException {
       // Enqueue the "we're done" flag value and then wait for the drainer to complete.
       awaitingAllReleased.put(false);
@@ -183,10 +173,8 @@ public class StressTest {
     module.build();
   }
 
-  /**
-   * Runs {@link #insts} with the given value of {@code index}, and verifies that it returns the
-   * expected result. Returns the ResourceTracker it used.
-   */
+  /// Runs [#insts] with the given value of `index`, and verifies that it returns the expected
+  /// result. Returns the ResourceTracker it used.
   private ResourceTracker runOnce(int index) {
     // Create a new VirtualMachine for each invocation to ensure that FrameLayout evolution from
     // one invocation doesn't affect another.
@@ -202,7 +190,7 @@ public class StressTest {
     return tracker;
   }
 
-  /** Runs trials repeatedly until we've done enough. */
+  /// Runs trials repeatedly until we've done enough.
   private void runMany(AtomicInteger nextTrial, int numTrials, TrackerChecker trackerChecker) {
     for (; ; ) {
       int index = nextTrial.getAndIncrement();

@@ -30,14 +30,12 @@ import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
 
-/**
- * An initial implementation of future().
- *
- * <p>This is currently very simplistic. A more sophisticated approach would be to not hand off the
- * lambda to a new thread immediately, but instead start running it on the current thread. If that's
- * taking a while and there is more parallelism available, unwind back to the future() call and hand
- * off at that point. (This assumes that the lambda will often complete quickly or block.)
- */
+/// An initial implementation of future().
+///
+/// This is currently very simplistic. A more sophisticated approach would be to not hand off the
+/// lambda to a new thread immediately, but instead start running it on the current thread. If
+/// that's taking a while and there is more parallelism available, unwind back to the future() call
+/// and hand off at that point. (This assumes that the lambda will often complete quickly or block.)
 public class FutureValue extends RefCounted implements Value, RThread.Waiter {
 
   private static final FluentLogger logger = FluentLogger.forEnclosingClass();
@@ -57,7 +55,7 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   static final BaseType.NonCompositional FUTURE_TYPE =
       new BaseType.NonCompositional(Core.CORE, "Future", FutureValue.class);
 
-  /** The BlockingEntryType for threads that have called waitFor(). */
+  /// The BlockingEntryType for threads that have called waitFor().
   static final BaseType.BlockingEntryType WAITFOR_ENTRY =
       new BaseType.BlockingEntryType("WaitFor", "fv") {
         @Override
@@ -80,31 +78,29 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   private static final Op NEW_FOR_TEST =
       RcOp.forRcMethod(lookup, FutureValue.class, "newForTest", Allocator.class).build();
 
-  /**
-   * Creates a FutureValue that will be set by a non-Retrospect thread started on the first call to
-   * {@link #waitFor}. {@code producer} will be called exactly once, but if the future is dropped
-   * before {@link #waitFor} is called its argument will be null.
-   */
+  /// Creates a FutureValue that will be set by a non-Retrospect thread started on the first call to
+  /// [#waitFor]. `producer` will be called exactly once, but if the future is dropped before
+  /// [#waitFor] is called its argument will be null.
   @RC.Out
   public static FutureValue newLazy(Allocator allocator, Consumer<Consumer<Value>> producer) {
     assert producer != null;
     return new FutureValue(allocator, Core.TO_BE_SET, producer);
   }
 
-  /** Creates a FutureValue whose result is already known. */
+  /// Creates a FutureValue whose result is already known.
   @RC.Out
   public static FutureValue newCompleted(Allocator allocator, @RC.In Value result) {
     assert result != Core.TO_BE_SET && !(result.baseType() instanceof Err);
     return new FutureValue(allocator, result, null);
   }
 
-  /** Creates a FutureValue whose result will be set by a call to {@link #setTestFuture}. */
+  /// Creates a FutureValue whose result will be set by a call to [#setTestFuture].
   @RC.Out
   public static FutureValue newForTest(Allocator allocator) {
     return new FutureValue(allocator, Core.TO_BE_SET, null);
   }
 
-  /** Converts a TStack into an "Error while computing future" error. */
+  /// Converts a TStack into an "Error while computing future" error.
   @RC.Out
   static Value stackAsValue(TState tstate, @RC.In TStack errorStack) {
     assert errorStack.hasErr();
@@ -237,58 +233,47 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + 3 * SizeOf.PTR);
 
-  /**
-   * If {@code result} is TO_BE_SET this FutureValue has not yet completed. If {@code
-   * result.baseType()} is an Err this FutureValue's lambda errored. If {@code result} is null this
-   * FutureValue has been dropped and any asynchronous update will be discarded. Otherwise this is
-   * the value to be returned by {@link #waitFor}.
-   */
+  /// If `result` is TO\_BE\_SET this FutureValue has not yet completed. If `result.baseType()` is
+  /// an Err this FutureValue's lambda errored. If `result` is null this FutureValue has been
+  /// dropped and any asynchronous update will be discarded. Otherwise this is the value to be
+  /// returned by [#waitFor].
   @GuardedBy("this")
   private Value result;
 
-  /**
-   * If non-null this FutureValue has a lambda. If null this FutureValue's value will be set by a
-   * call to {@link #setResult}.
-   */
+  /// If non-null this FutureValue has a lambda. If null this FutureValue's value will be set by a
+  /// call to [#setResult].
   final RThread lambdaThread;
 
-  /**
-   * If non-null this FutureValue will be set by an asynchronous process that will be started on the
-   * first call to {@link #waitFor}. The producer may never be called, and must not have any counted
-   * references.
-   */
+  /// If non-null this FutureValue will be set by an asynchronous process that will be started on
+  /// the first call to [#waitFor]. The producer may never be called, and must not have any counted
+  /// references.
   @GuardedBy("this")
   private Consumer<Consumer<Value>> producer;
 
-  /**
-   * If non-null, {@link #result} must be TO_BE_SET and these threads are waiting for the future's
-   * result.
-   */
+  /// If non-null, [#result] must be TO\_BE\_SET and these threads are waiting for the future's
+  /// result.
   @GuardedBy("this")
   private List<RThread> pending;
 
-  /** Creates a FutureValue with an associated lambda. */
+  /// Creates a FutureValue with an associated lambda.
   private FutureValue(Allocator allocator) {
     result = Core.TO_BE_SET;
     this.lambdaThread = new RThread(allocator, this);
     allocator.recordAlloc(this, OBJ_SIZE);
   }
 
-  /**
-   * Creates a FutureValue without a lambda.
-   *
-   * <p>If {@code result} is TO_BE_SET and {@code producer} is null, the result will be set by a
-   * call to {@link #setTestFuture}.
-   *
-   * <p>If {@code result} is TO_BE_SET and {@code producer} is non-null, {@code producer.accept()}
-   * will be called on the first call to {@link #waitFor} and is responsible for (asynchronously)
-   * calling back with the result. (If the FutureValue is dropped without a call to {@link
-   * #waitFor}, {@code producer.accept()} will be called with null and is only responsible for
-   * cleaning up state of its own.)
-   *
-   * <p>If {@code result} is anything other than TO_BE_SET, {@code producer} must be null and this
-   * is an already-completed FutureValue.
-   */
+  /// Creates a FutureValue without a lambda.
+  ///
+  /// If `result` is TO\_BE\_SET and `producer` is null, the result will be set by a call to
+  /// [#setTestFuture].
+  ///
+  /// If `result` is TO\_BE\_SET and `producer` is non-null, `producer.accept()` will be called on
+  /// the first call to [#waitFor] and is responsible for (asynchronously) calling back with the
+  /// result. (If the FutureValue is dropped without a call to [#waitFor], `producer.accept()` will
+  /// be called with null and is only responsible for cleaning up state of its own.)
+  ///
+  /// If `result` is anything other than TO\_BE\_SET, `producer` must be null and this is an
+  /// already-completed FutureValue.
   private FutureValue(
       Allocator allocator, @RC.In Value result, Consumer<Consumer<Value>> producer) {
     assert result == Core.TO_BE_SET || producer == null;
@@ -305,11 +290,9 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     return lambdaThread == null && setResult(tstate, result);
   }
 
-  /**
-   * Called when the RThread completes (for FutureValues with a lambda), the producer calls {@code
-   * accept()} (for FutureValues created by {@link #newLazy}), or from {@code setTestFuture()}.
-   * Returns true unless {@code setResult()} has already been called on this FutureValue.
-   */
+  /// Called when the RThread completes (for FutureValues with a lambda), the producer calls
+  /// `accept()` (for FutureValues created by [#newLazy]), or from `setTestFuture()`. Returns true
+  /// unless `setResult()` has already been called on this FutureValue.
   private boolean setResult(TState tstate, @RC.In Value result) {
     boolean tooLate;
     List<RThread> pending;
@@ -357,10 +340,8 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   static final Op DO_WAIT_FOR =
       RcOp.forRcMethod(lookup, FutureValue.class, "doWaitFor", TState.class).build();
 
-  /**
-   * Returns a non-Err Value if this FutureValue has completed successfully. Returns null and starts
-   * unwinding if the FutureValue failed or has not yet completed.
-   */
+  /// Returns a non-Err Value if this FutureValue has completed successfully. Returns null and
+  /// starts unwinding if the FutureValue failed or has not yet completed.
   Value doWaitFor(TState tstate) {
     Value result;
     Consumer<Consumer<Value>> producer;
@@ -404,13 +385,13 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
         });
   }
 
-  /** Returns the blocking stack entry that will be used for threads calling waitFor(). */
+  /// Returns the blocking stack entry that will be used for threads calling waitFor().
   @RC.Out
   private Value blockingEntry(TState tstate) {
     return tstate.compound(WAITFOR_ENTRY, Value.addRef(this));
   }
 
-  /** Called with a suspended RThread that should be resumed when this FutureValue completes. */
+  /// Called with a suspended RThread that should be resumed when this FutureValue completes.
   private void suspended(TState tstate, RThread thread) {
     Value result;
     synchronized (this) {

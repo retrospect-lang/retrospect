@@ -16,37 +16,31 @@
 
 package org.retrolang.impl;
 
-/** A VmMethod represents a method, together with its predicate and "default" flag. */
+/// A VmMethod represents a method, together with its predicate and "default" flag.
 public final class VmMethod {
 
-  /** The function this method implements. */
+  /// The function this method implements.
   final VmFunction function;
 
-  /** The MethodPredicate associated with this method. Will not be null. */
+  /// The MethodPredicate associated with this method. Will not be null.
   final MethodPredicate predicate;
 
-  /**
-   * If true, this method will only be considered when there are no matching preferred methods (i.e.
-   * methods with isDefault=false).
-   */
+  /// If true, this method will only be considered when there are no matching preferred methods
+  /// (i.e. methods with isDefault=false).
   final boolean isDefault;
 
-  /** The method's implementation. */
+  /// The method's implementation.
   final MethodImpl impl;
 
-  /**
-   * A measure of the complexity of this method, not counting the weight of any functions it calls.
-   */
+  /// A measure of the complexity of this method, not counting the weight of any functions it calls.
   final int baseWeight;
 
-  /** A factory for creating new MethodMemos, or null if all call sites can share a fixed memo. */
+  /// A factory for creating new MethodMemos, or null if all call sites can share a fixed memo.
   final MethodMemo.Factory memoFactory;
 
-  /**
-   * Simple builtins with no nested calls may not need any information to be saved in their
-   * MethodMemos; for such methods we create a single, immutable MethodMemo that can be shared among
-   * all uses (even between Scopes).
-   */
+  /// Simple builtins with no nested calls may not need any information to be saved in their
+  /// MethodMemos; for such methods we create a single, immutable MethodMemo that can be shared
+  /// among all uses (even between Scopes).
   final MethodMemo fixedMemo;
 
   VmMethod(
@@ -72,11 +66,9 @@ public final class VmMethod {
     }
   }
 
-  /**
-   * Returns a MethodMemo for this method; called the first time the method is invoked from a
-   * particular MethodMemo / CallSite combination (the MethodMemo returned will be saved and reused
-   * for subsequent calls of the same method from the same site).
-   */
+  /// Returns a MethodMemo for this method; called the first time the method is invoked from a
+  /// particular MethodMemo / CallSite combination (the MethodMemo returned will be saved and reused
+  /// for subsequent calls of the same method from the same site).
   MethodMemo newMemo(MemoMerger merger, Object[] args) {
     // Find the scope's PerMethod entry, and see if there are already exlined MethodMemos that match
     // these arguments.

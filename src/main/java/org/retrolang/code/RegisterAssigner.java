@@ -25,94 +25,77 @@ import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeBuilder.Phase;
 import org.retrolang.util.Bits;
 
-/**
- * Assigns a Java local index to each register. We could just assign distinct indices to each
- * register, but I assume that using fewer indices will reduce the JVM resources required to run the
- * code.
- *
- * <p>If two registers are assigned the same index I refer to them as "aliased".
- *
- * <ul>
- *   <li>If registers r1 and r2 are live at the same time and may have different values, they must
- *       not be aliased (since storing one would modify the other).
- *   <li>On the other hand, if there are simple SetBlocks "r1 = r2" and it is valid to alias r1 and
- *       r2, doing so will allow us to optimize away those blocks (they would be setting a Java
- *       local to itself).
- * </ul>
- *
- * <p>We choose the assignment in two stages:
- *
- * <ul>
- *   <li>Identify maximal sets of registers that we can alias, where each member of the set is
- *       assigned to another member of the set at least once (this is done by the constructor).
- *   <li>Assign a Java local index to each alias set, ensuring no two alias sets get the same local
- *       index unless they're never live at the same time (this is done by {@link
- *       #assignJavaLocalNumbers}).
- * </ul>
- *
- * <p>Aliasing introduced by the first stage enables us to drop some SetBlocks; aliasing introduced
- * by the second stage doesn't reduce the code size but may enable the JVM to run it more
- * efficiently (by minimizing the size of its local variable array).
- *
- * <p>To find a relatively optimal partition in the first stage we first do a pass through the
- * blocks constructing two two-dimensional bitmaps:
- *
- * <ul>
- *   <li>{@code registerConflicts[r1,r2]}: if {@code registerConflicts[r1,r2]} is true or {@code
- *       registerConflicts[r2,r1]} is true, r1 and r2 must not be aliases
- *   <li>{@code preferAlias[r1,r2]}: if {@code preferAlias[r1,r2]}is true, aliasing r1 and r2 would
- *       enable us to delete at least one SetBlock
- * </ul>
- *
- * <p>(Since we don't have a two-dimensional bitmap type we actually use a {@code Bits.Builder[]}.)
- *
- * <p>We then consider each register {@code r} in sequence, and expand {@code r} to a maximal set of
- * registers that are transitively connected in {@code preferAlias} and no two of which are directly
- * connected in {@code registerConflicts}.
- *
- * <p>For the second stage we choose the smallest local index that has not already been assigned to
- * any register that conflicts with any in the alias set.
- */
+/// Assigns a Java local index to each register. We could just assign distinct indices to each
+/// register, but I assume that using fewer indices will reduce the JVM resources required to run
+/// the code.
+///
+/// If two registers are assigned the same index I refer to them as "aliased".
+///
+/// - If registers r1 and r2 are live at the same time and may have different values, they must not
+///   be aliased (since storing one would modify the other).
+/// - On the other hand, if there are simple SetBlocks "r1 = r2" and it is valid to alias r1 and r2,
+///   doing so will allow us to optimize away those blocks (they would be setting a Java local to
+///   itself).
+///
+/// We choose the assignment in two stages:
+///
+/// - Identify maximal sets of registers that we can alias, where each member of the set is assigned
+///   to another member of the set at least once (this is done by the constructor).
+/// - Assign a Java local index to each alias set, ensuring no two alias sets get the same local
+///   index unless they're never live at the same time (this is done by [#assignJavaLocalNumbers]).
+///
+/// Aliasing introduced by the first stage enables us to drop some SetBlocks; aliasing introduced by
+/// the second stage doesn't reduce the code size but may enable the JVM to run it more efficiently
+/// (by minimizing the size of its local variable array).
+///
+/// To find a relatively optimal partition in the first stage we first do a pass through the blocks
+/// constructing two two-dimensional bitmaps:
+///
+/// - `registerConflicts[r1,r2]`: if `registerConflicts[r1,r2]` is true or
+///   `registerConflicts[r2,r1]` is true, r1 and r2 must not be aliases
+/// - `preferAlias[r1,r2]`: if `preferAlias[r1,r2]`is true, aliasing r1 and r2 would enable us to
+///   delete at least one SetBlock
+///
+/// (Since we don't have a two-dimensional bitmap type we actually use a `Bits.Builder[]`.)
+///
+/// We then consider each register `r` in sequence, and expand `r` to a maximal set of registers
+/// that are transitively connected in `preferAlias` and no two of which are directly connected in
+/// `registerConflicts`.
+///
+/// For the second stage we choose the smallest local index that has not already been assigned to
+/// any register that conflicts with any in the alias set.
 public class RegisterAssigner {
   final CodeBuilder cb;
 
-  /**
-   * Indexed twice by {@link Register#index}; if set, registers must not alias. Does not need to be
-   * symmetric since we'll test in both directions.
-   *
-   * <p>During construction we union all the conflicts for an alias set into {@code
-   * registerConflicts[r.jvmLocal()]}, and then only use the combined values.
-   */
+  /// Indexed twice by [Register#index]; if set, registers must not alias. Does not need to be
+  /// symmetric since we'll test in both directions.
+  ///
+  /// During construction we union all the conflicts for an alias set into
+  /// `registerConflicts[r.jvmLocal()]`, and then only use the combined values.
   private final Bits.Builder[] registerConflicts;
 
-  /**
-   * The alias sets found by the constructor.
-   *
-   * <p>If register r is in a non-trivial alias set (i.e. there is at least one r2 such that {@code
-   * r2 != r} and {@code r2.jvmLocal() == r.jvmLocal()}) then {@code aliasSet[r.jvmLocal()]} is the
-   * set of all registers in the alias set.
-   *
-   * <p>If r's alias set contains only r, then {@code r.jvmLocal() == r} and {@code aliasSet[r]} is
-   * null.
-   */
+  /// The alias sets found by the constructor.
+  ///
+  /// If register r is in a non-trivial alias set (i.e. there is at least one r2 such that `r2 != r`
+  /// and `r2.jvmLocal() == r.jvmLocal()`) then `aliasSet[r.jvmLocal()]` is the set of all registers
+  /// in the alias set.
+  ///
+  /// If r's alias set contains only r, then `r.jvmLocal() == r` and `aliasSet[r]` is null.
   private final Bits[] aliasSet;
 
-  /** True if {@link #assignJavaLocalNumbers} has been called. */
+  /// True if [#assignJavaLocalNumbers] has been called.
   private boolean completed;
 
-  /**
-   * Initializes a new RegisterAssigner from the (optimized) block list and does the first stage of
-   * analysis.
-   *
-   * <p>After the constructor completes, calling {@link Register#jvmLocal()} on two registers will
-   * return the same value if and only if the registers are in the same alias set, but the final
-   * local numbers have not yet been determined. At this point {@link #addConflicts} can still be
-   * called to augment the conflict sets, as long as it doesn't conflict with the already-chosen
-   * alias sets.
-   *
-   * <p>Calling {@link #assignJavaLocalNumbers} will complete register assignment so that {@link
-   * Register#jvmLocal()} returns the final Java local index for each register.
-   */
+  /// Initializes a new RegisterAssigner from the (optimized) block list and does the first stage of
+  /// analysis.
+  ///
+  /// After the constructor completes, calling [Register#jvmLocal()] on two registers will return
+  /// the same value if and only if the registers are in the same alias set, but the final local
+  /// numbers have not yet been determined. At this point [#addConflicts] can still be called to
+  /// augment the conflict sets, as long as it doesn't conflict with the already-chosen alias sets.
+  ///
+  /// Calling [#assignJavaLocalNumbers] will complete register assignment so that
+  /// [Register#jvmLocal()] returns the final Java local index for each register.
   RegisterAssigner(CodeBuilder cb) {
     assert cb.phase() == Phase.FINALIZING;
     this.cb = cb;
@@ -130,10 +113,8 @@ public class RegisterAssigner {
     initializeConflictsAndFindAliases();
   }
 
-  /**
-   * Returns the specified element of a {@code Bits.Builder[]}, initializing it to a new
-   * Bits.Builder if was null.
-   */
+  /// Returns the specified element of a `Bits.Builder[]`, initializing it to a new Bits.Builder if
+  /// was null.
   private static Bits.Builder getBuilder(Bits.Builder[] builders, int index) {
     Bits.Builder result = builders[index];
     if (result == null) {
@@ -143,11 +124,9 @@ public class RegisterAssigner {
     return result;
   }
 
-  /**
-   * Adds a requirement that {@code r} must not alias any of the registers in {@code conflicts}. If
-   * called after the initial alias sets have been chosen (i.e. after the constructor returns),
-   * {@code conflicts} must not include any registers in {@code r}'s alias set.
-   */
+  /// Adds a requirement that `r` must not alias any of the registers in `conflicts`. If called
+  /// after the initial alias sets have been chosen (i.e. after the constructor returns),
+  /// `conflicts` must not include any registers in `r`'s alias set.
   public void addConflicts(Register r, Bits.Builder conflicts) {
     Preconditions.checkState(!completed, "Must be called before assignJavaLocalNumbers()");
     int index;
@@ -164,7 +143,7 @@ public class RegisterAssigner {
     Bits.Op.UNION.into(getBuilder(registerConflicts, index), conflicts);
   }
 
-  /** This does the substantive part of the constructor's initialization. */
+  /// This does the substantive part of the constructor's initialization.
   private void initializeConflictsAndFindAliases() {
     // Indexed twice by Register.index; if set, it would reduce code size if registers were aliased.
     // Updated symmetrically since we don't know which direction we'll propagate in.
@@ -322,20 +301,18 @@ public class RegisterAssigner {
     }
   }
 
-  /** Two registers of different types can only be aliased if neither is primitive. */
+  /// Two registers of different types can only be aliased if neither is primitive.
   private static boolean typesCouldAlias(Class<?> x, Class<?> y) {
     return (x == y) || !(x.isPrimitive() || y.isPrimitive());
   }
 
-  /**
-   * If we alias two Registers with different (non-primitive) types we use the least common
-   * supertype. If a block depends on the register having the subtype, {@link Emitter#push(Register,
-   * Class<?>)} will automatically insert a cast when it is loaded.
-   *
-   * <p>("Least common supertype" isn't actually well-defined in the presence of interfaces, but we
-   * keep it simple and only consider superclasses. If x or y is an interface and neither contains
-   * the other, we just return Object.)
-   */
+  /// If we alias two Registers with different (non-primitive) types we use the least common
+  /// supertype. If a block depends on the register having the subtype, [`?`][Emitter#push(Register,
+  /// Class<>)] will automatically insert a cast when it is loaded.
+  ///
+  /// ("Least common supertype" isn't actually well-defined in the presence of interfaces, but we
+  /// keep it simple and only consider superclasses. If x or y is an interface and neither contains
+  /// the other, we just return Object.)
   private static Class<?> combineTypes(Class<?> x, Class<?> y) {
     if (x == y) {
       return x;
@@ -360,13 +337,11 @@ public class RegisterAssigner {
     }
   }
 
-  /**
-   * Assigns a Java local index to each register, consistent with the previously-recorded conflicts
-   * and alias sets. Returns the total number of Java locals.
-   *
-   * <p>One additional bit of complexity: the JVM decrees that longs and doubles actually require a
-   * pair of consecutive local indices.
-   */
+  /// Assigns a Java local index to each register, consistent with the previously-recorded conflicts
+  /// and alias sets. Returns the total number of Java locals.
+  ///
+  /// One additional bit of complexity: the JVM decrees that longs and doubles actually require a
+  /// pair of consecutive local indices.
   int assignJavaLocalNumbers() {
     // Maps each local index to the set of registers that have been assigned to it so far; a
     // register can be assigned to this local only if none of its conflicts are in this set.

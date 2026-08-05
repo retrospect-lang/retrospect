@@ -30,33 +30,25 @@ import org.retrolang.impl.Template.RefVar;
 import org.retrolang.impl.Template.Union;
 import org.retrolang.util.Ordered;
 
-/**
- * A TemplateBuilder is used to build Templates. The basic flow is <nl>
- * <li>Start with Template.EMPTY or an existing Template cast to TemplateBuilder.
- * <li>One or more times: {@code builder = builder.add(value)} or {@code builder =
- *     builder.merge(builder2)} (note that unlike many builder classes, you must save the returned
- *     TemplateBuilder after each change, which may or may not be the one on which {@link #add} or
- *     {@link #merge} was called).
- * <li>Call {@link #build} with an appropriate VarAllocator. </nl>
- */
+/// A TemplateBuilder is used to build Templates. The basic flow is
+///
+/// 1. Start with Template.EMPTY or an existing Template cast to TemplateBuilder.
+/// 2. One or more times: `builder = builder.add(value)` or `builder = builder.merge(builder2)`
+///    (note that unlike many builder classes, you must save the returned TemplateBuilder after each
+///    change, which may or may not be the one on which [#add] or [#merge] was called).
+/// 3. Call [#build] with an appropriate VarAllocator.
 public abstract class TemplateBuilder {
 
-  /**
-   * The number of NumVars that would be allocated to build this TemplateBuilder (capped at
-   * VAR_COUNT_LIMIT, although in practice we don't expect to ever get such complex templates).
-   */
+  /// The number of NumVars that would be allocated to build this TemplateBuilder (capped at
+  /// VAR\_COUNT\_LIMIT, although in practice we don't expect to ever get such complex templates).
   private short nNumVars;
 
-  /**
-   * The number of RefVars that would be allocated to build this TemplateBuilder (capped at
-   * VAR_COUNT_LIMIT, although in practice we don't expect to ever get such complex templates).
-   */
+  /// The number of RefVars that would be allocated to build this TemplateBuilder (capped at
+  /// VAR\_COUNT\_LIMIT, although in practice we don't expect to ever get such complex templates).
   private short nRefVars;
 
-  /**
-   * The limit on {@link #nNumVars} and {@link #nRefVars}. This choice is arbitrary, but ensures
-   * that we don't come near overflowing the shorts they're currently stored in.
-   */
+  /// The limit on [#nNumVars] and [#nRefVars]. This choice is arbitrary, but ensures that we don't
+  /// come near overflowing the shorts they're currently stored in.
   static final int VAR_COUNT_LIMIT = 255;
 
   TemplateBuilder(short nNumVars, short nRefVars) {
@@ -66,21 +58,17 @@ public abstract class TemplateBuilder {
     this.nRefVars = nRefVars;
   }
 
-  /**
-   * Returns the (estimated) total number of variables that would be allocated to build this
-   * template.
-   */
+  /// Returns the (estimated) total number of variables that would be allocated to build this
+  /// template.
   final int totalWeight() {
     return nNumVars + (int) nRefVars;
   }
 
-  /**
-   * Tries to reduce the total weight of this TemplateBuilder by choosing a CompoundBuilder that has
-   * totalWeight >= targetWeight and replacing it with a new FrameLayout (i.e. by boxing some part
-   * of this template into a separate Frame).
-   *
-   * <p>Should only be called when {@code totalWeight() >= targetWeight}.
-   */
+  /// Tries to reduce the total weight of this TemplateBuilder by choosing a CompoundBuilder that
+  /// has totalWeight >= targetWeight and replacing it with a new FrameLayout (i.e. by boxing some
+  /// part of this template into a separate Frame).
+  ///
+  /// Should only be called when `totalWeight() >= targetWeight`.
   TemplateBuilder insertFrameLayout(int targetWeight) {
     // This method only does something interesting on CompoundBuilders and UnionBuilders; I don't
     // think it will ever be called on anything else, but if it is just declining to do anything
@@ -88,10 +76,8 @@ public abstract class TemplateBuilder {
     return this;
   }
 
-  /**
-   * Returns a TemplateBuilder that includes all values included by this TemplateBuilder as well as
-   * the given value. The result may or may not be identical to this.
-   */
+  /// Returns a TemplateBuilder that includes all values included by this TemplateBuilder as well as
+  /// the given value. The result may or may not be identical to this.
   final TemplateBuilder add(Value v) {
     if (this == Template.EMPTY
         || this instanceof UnionBase
@@ -102,12 +88,12 @@ public abstract class TemplateBuilder {
     }
   }
 
-  /** Adds each element of the given array value to this TemplateBuilder. */
+  /// Adds each element of the given array value to this TemplateBuilder.
   final TemplateBuilder addElements(Value v) {
     return addElements(v, 0, v.numElements());
   }
 
-  /** Adds the specified elements of the given value to this TemplateBuilder. */
+  /// Adds the specified elements of the given value to this TemplateBuilder.
   final TemplateBuilder addElements(Value v, int start, int end) {
     TemplateBuilder result = this;
     for (int i = start; i < end; i++) {
@@ -116,10 +102,8 @@ public abstract class TemplateBuilder {
     return result;
   }
 
-  /**
-   * Returns a TemplateBuilder that includes all values included by this TemplateBuilder or the
-   * given TemplateBuilder. The result may or may not be identical to this.
-   */
+  /// Returns a TemplateBuilder that includes all values included by this TemplateBuilder or the
+  /// given TemplateBuilder. The result may or may not be identical to this.
   final TemplateBuilder merge(TemplateBuilder other) {
     if (this == Template.EMPTY) {
       return other;
@@ -139,53 +123,41 @@ public abstract class TemplateBuilder {
     }
   }
 
-  /** Calls {@link #addImpl} if {@code other} is Constant, {@link #mergeImpl} otherwise. */
+  /// Calls [#addImpl] if `other` is Constant, [#mergeImpl] otherwise.
   final TemplateBuilder mergeOrAdd(TemplateBuilder other) {
     return (other instanceof Constant c) ? addImpl(c.value) : mergeImpl(other);
   }
 
-  /**
-   * Returns a Value equal to v and suitable for storing in storage described by this
-   * TemplateBuilder (e.g. this is a RefVar with a FrameLayout, the result will be a Frame with that
-   * layout). If the given value cannot be cast to this TemplateBuilder, returns null.
-   *
-   * <p>The given value may be have been returned by an {@link RC.Transient} method; this method
-   * will call {@link Value#makeStorable} before returning it.
-   */
+  /// Returns a Value equal to v and suitable for storing in storage described by this
+  /// TemplateBuilder (e.g. this is a RefVar with a FrameLayout, the result will be a Frame with
+  /// that layout). If the given value cannot be cast to this TemplateBuilder, returns null.
+  ///
+  /// The given value may be have been returned by an [RC.Transient] method; this method will call
+  /// [Value#makeStorable] before returning it.
   @RC.Out
   final @Nullable Value cast(TState tstate, Value v) {
     return castImpl(tstate, v);
   }
 
-  /**
-   * An option that determines some details of the behavior of {@link #couldCast} or {@link
-   * #isSubsetOf}.
-   */
+  /// An option that determines some details of the behavior of [#couldCast] or [#isSubsetOf].
   enum TestOption {
-    /**
-     * The default behavior for {@link #couldCast}; will return true even if some FrameLayout
-     * evolution would be required to make the cast possible.
-     *
-     * <p>Not valid for calls to {@link #isSubsetOf}.
-     */
+    /// The default behavior for [#couldCast]; will return true even if some FrameLayout evolution
+    /// would be required to make the cast possible.
+    ///
+    /// Not valid for calls to [#isSubsetOf].
     EVOLUTION_OK,
 
-    /**
-     * Will return true only if the relationship (cast or subset) holds without additional evolution
-     * of FrameLayouts. There is no special treatment of ToBeSet or NumVars.
-     */
+    /// Will return true only if the relationship (cast or subset) holds without additional
+    /// evolution of FrameLayouts. There is no special treatment of ToBeSet or NumVars.
     NO_EVOLUTION,
 
-    /**
-     * Will return true only if the relationship (cast or subset) holds without additional evolution
-     * of FrameLayouts. ToBeSet values can be ignored. There is no special treatment of NumVars.
-     */
+    /// Will return true only if the relationship (cast or subset) holds without additional
+    /// evolution of FrameLayouts. ToBeSet values can be ignored. There is no special treatment of
+    /// NumVars.
     DROP_TO_BE_SET,
 
-    /**
-     * NumVars with encodings smaller than {@link NumEncoding#INT32} are treated as if they were
-     * {@link NumEncoding#INT32}. Implies {@link #NO_EVOLUTION}.
-     */
+    /// NumVars with encodings smaller than [NumEncoding#INT32] are treated as if they were
+    /// [NumEncoding#INT32]. Implies [#NO_EVOLUTION].
     UPGRADE_SUB_INTS;
 
     boolean evolutionAllowed() {
@@ -200,34 +172,30 @@ public abstract class TemplateBuilder {
       return this == UPGRADE_SUB_INTS;
     }
 
-    /** If this is {@link #EVOLUTION_OK}, returns {@link #NO_EVOLUTION}; otherwise returns this. */
+    /// If this is [#EVOLUTION_OK], returns [#NO_EVOLUTION]; otherwise returns this.
     TestOption withNoEvolution() {
       return this == EVOLUTION_OK ? NO_EVOLUTION : this;
     }
   }
 
-  /** Returns true if {@link #cast} would return a non-null Value. */
+  /// Returns true if [#cast] would return a non-null Value.
   final boolean couldCast(Value v) {
     return couldCast(v, TestOption.EVOLUTION_OK);
   }
 
-  /** Returns true if {@link #cast} would return a non-null Value, subject to the given option. */
+  /// Returns true if [#cast] would return a non-null Value, subject to the given option.
   final boolean couldCast(Value v, TestOption option) {
     return (v == Core.TO_BE_SET && option.dropToBeSetFromUnions()) || couldCastImpl(v, option);
   }
 
-  /**
-   * Returns true if every Value that can be stored in this TemplateBuilder can also be stored in
-   * {@code other}.
-   */
+  /// Returns true if every Value that can be stored in this TemplateBuilder can also be stored in
+  /// `other`.
   final boolean isSubsetOf(TemplateBuilder other) {
     return isSubsetOf(other, TestOption.NO_EVOLUTION);
   }
 
-  /**
-   * Returns true if every Value that can be stored in this TemplateBuilder can also be stored in
-   * {@code other}, subject to the given option.
-   */
+  /// Returns true if every Value that can be stored in this TemplateBuilder can also be stored in
+  /// `other`, subject to the given option.
   final boolean isSubsetOf(TemplateBuilder other, TestOption option) {
     assert !option.evolutionAllowed();
     if (this == Template.EMPTY
@@ -257,20 +225,19 @@ public abstract class TemplateBuilder {
     return t.isSubsetOfImpl(other, option);
   }
 
-  /**
-   * Used by {@link MethodMemo#isSimilarEnough} to check for similarities between the args of two
-   * MethodMemos.
-   *
-   * <p>This is not a very principled predicate (and may end up getting further tweaked to get
-   * better inlining decisions). The current intuition is roughly "does this TemplateBuilder include
-   * values for which {@code t2.couldCast()} returns true, or vice versa"? ... except that any
-   * numeric constant or variable is considered to overlap with any other numeric constant or
-   * variable, and any string constant is considered to overlap with any other string constant.
-   *
-   * <p>This also has potentially surprising behavior with Template.EMPTY; because that is what's
-   * returned by newBuilder(TO_BE_SET), and TO_BE_SET can be cast to anything, I've chosen to make
-   * EMPTY overlap with anything (when you might reasonably have expected it to overlap nothing).
-   */
+  /// Used by [MethodMemo#isSimilarEnough] to check for similarities between the args of two
+  /// MethodMemos.
+  ///
+  /// This is not a very principled predicate (and may end up getting further tweaked to get better
+  /// inlining decisions). The current intuition is roughly "does this TemplateBuilder include
+  /// values for which `t2.couldCast()` returns true, or vice versa"? ... except that any numeric
+  /// constant or variable is considered to overlap with any other numeric constant or variable, and
+  /// any string constant is considered to overlap with any other string constant.
+  ///
+  /// This also has potentially surprising behavior with Template.EMPTY; because that is what's
+  /// returned by newBuilder(TO\_BE\_SET), and TO\_BE\_SET can be cast to anything, I've chosen to
+  /// make EMPTY overlap with anything (when you might reasonably have expected it to overlap
+  /// nothing).
   final boolean overlaps(TemplateBuilder t2) {
     if (this == t2 || this == Template.EMPTY || t2 == Template.EMPTY) {
       return true;
@@ -298,86 +265,70 @@ public abstract class TemplateBuilder {
     }
   }
 
-  /**
-   * Returns a Template that includes all values included by this TemplateBuilder, using the given
-   * VarAllocator to assign indices to NumVars and RefVars.
-   *
-   * <p>If this is a Template and the VarAllocator assigns the same indices to all variables,
-   * returns this.
-   */
+  /// Returns a Template that includes all values included by this TemplateBuilder, using the given
+  /// VarAllocator to assign indices to NumVars and RefVars.
+  ///
+  /// If this is a Template and the VarAllocator assigns the same indices to all variables, returns
+  /// this.
   abstract Template build(VarAllocator alloc);
 
-  /**
-   * For a TemplateBuilder that can only represent a single BaseType (Constant, NumVar, RefVar, and
-   * CompoundBase) returns that BaseType. Should not be called on Empty or UnionBase.
-   *
-   * <p>Note that a RefVar whose FrameLayout has evolved will return the BaseType of the original
-   * layout, which may not match the current FrameLayout (it might be a FixedArrayType when the
-   * layout has evolved to a VArrayLayout), but it will still have the same sortOrder and that's all
-   * that our callers depend on.
-   *
-   * <p>TODO: maybe replace with a sortOrder() method to avoid that jankiness?
-   */
+  /// For a TemplateBuilder that can only represent a single BaseType (Constant, NumVar, RefVar, and
+  /// CompoundBase) returns that BaseType. Should not be called on Empty or UnionBase.
+  ///
+  /// Note that a RefVar whose FrameLayout has evolved will return the BaseType of the original
+  /// layout, which may not match the current FrameLayout (it might be a FixedArrayType when the
+  /// layout has evolved to a VArrayLayout), but it will still have the same sortOrder and that's
+  /// all that our callers depend on.
+  ///
+  /// TODO: maybe replace with a sortOrder() method to avoid that jankiness?
   abstract BaseType baseType();
 
-  /** Returns true if this is a Constant template for a Singleton. */
+  /// Returns true if this is a Constant template for a Singleton.
   final boolean isSingleton() {
     return this instanceof Constant c && c.value instanceof Singleton;
   }
 
-  /** Implements the {@link #cast} method. */
+  /// Implements the [#cast] method.
   @RC.Out
   abstract @Nullable Value castImpl(TState tstate, Value v);
 
-  /** Implements the {@link #couldCast} method. */
+  /// Implements the [#couldCast] method.
   abstract boolean couldCastImpl(Value v, TestOption option);
 
-  /**
-   * Implements the {@link #isSubsetOf} method. Neither {@code this} nor {@code other} is empty. If
-   * {@code this} is not a union, {@code other} is not a union.
-   */
+  /// Implements the [#isSubsetOf] method. Neither `this` nor `other` is empty. If `this` is not a
+  /// union, `other` is not a union.
   abstract boolean isSubsetOfImpl(TemplateBuilder other, TestOption option);
 
-  /**
-   * Implements the {@link #overlaps} method; only defined for unions and refVars (other types are
-   * handled directly by {@link #overlaps}).
-   */
+  /// Implements the [#overlaps] method; only defined for unions and refVars (other types are
+  /// handled directly by [#overlaps]).
   boolean overlapsImpl(TemplateBuilder t2) {
     throw new AssertionError();
   }
 
-  /**
-   * Returns a TemplateBuilder that includes all values included by this TemplateBuilder as well as
-   * the given value.
-   *
-   * <p>Unless this is a union or empty, the given value's base type must have the same sort order
-   * as baseType(). Use {@link #add} instead to avoid that restriction.
-   */
+  /// Returns a TemplateBuilder that includes all values included by this TemplateBuilder as well as
+  /// the given value.
+  ///
+  /// Unless this is a union or empty, the given value's base type must have the same sort order as
+  /// baseType(). Use [#add] instead to avoid that restriction.
   abstract TemplateBuilder addImpl(Value v);
 
-  /**
-   * Returns a TemplateBuilder that includes any values included by this TemplateBuilder or the
-   * given TemplateBuilder.
-   *
-   * <p>The given template may not a union or empty, and unless this is a union or empty, the given
-   * template may not be Constant and must have a base type with the same sort order as baseType().
-   * Use {@link #merge} instead to avoid those restrictions.
-   */
+  /// Returns a TemplateBuilder that includes any values included by this TemplateBuilder or the
+  /// given TemplateBuilder.
+  ///
+  /// The given template may not a union or empty, and unless this is a union or empty, the given
+  /// template may not be Constant and must have a base type with the same sort order as baseType().
+  /// Use [#merge] instead to avoid those restrictions.
   abstract TemplateBuilder mergeImpl(TemplateBuilder other);
 
-  /**
-   * Returns true if this is a FLOAT64 NumVar, a floating-point constant, or a union with either of
-   * those as a choice.
-   */
+  /// Returns true if this is a FLOAT64 NumVar, a floating-point constant, or a union with either of
+  /// those as a choice.
   boolean coercesToFloat() {
     assert this instanceof Empty || this instanceof RefVar || this instanceof CompoundBase;
     return false;
   }
 
-  /**
-   * If this TemplateBuilder includes values with the given compositional BaseType, returns a
-   * TemplateBuilder that describes the specified element of those values; otherwise returns EMPTY.
-   */
+  /// If this TemplateBuilder includes values with the given compositional BaseType, returns a
+  /// TemplateBuilder that describes the specified element of those values; otherwise returns EMPTY.
   TemplateBuilder builderForElement(BaseType compositionalType, int elementIndex) {
     assert this instanceof Empty
         || this instanceof NumVar
@@ -385,10 +336,8 @@ public abstract class TemplateBuilder {
     return Template.EMPTY;
   }
 
-  /**
-   * Returns the FrameLayout to be used for values with the given sortOrder, or null if none has
-   * been chosen.
-   */
+  /// Returns the FrameLayout to be used for values with the given sortOrder, or null if none has
+  /// been chosen.
   @Nullable FrameLayout layout(long sortOrder) {
     assert this instanceof Empty
         || this instanceof NumVar
@@ -397,18 +346,14 @@ public abstract class TemplateBuilder {
     return null;
   }
 
-  /**
-   * Should only be called on a CompoundBase or Constant when {@link #baseType} returns a BaseType
-   * with size greater than {@code i}; returns a TemplateBuilder for the specified element.
-   */
+  /// Should only be called on a CompoundBase or Constant when [#baseType] returns a BaseType with
+  /// size greater than `i`; returns a TemplateBuilder for the specified element.
   TemplateBuilder elementBuilder(int i) {
     throw new AssertionError();
   }
 
-  /**
-   * Returns a String representation of this TemplateBuilder, using the given Printer to render any
-   * NumVars or RefVars.
-   */
+  /// Returns a String representation of this TemplateBuilder, using the given Printer to render any
+  /// NumVars or RefVars.
   abstract String toString(Template.Printer printer);
 
   @Override
@@ -416,55 +361,42 @@ public abstract class TemplateBuilder {
     return toString(Template.Printer.DEFAULT);
   }
 
-  /**
-   * A VarAllocator is used by {@link #build} to assign indices to the NumVars and RefVars in the
-   * result Template.
-   */
+  /// A VarAllocator is used by [#build] to assign indices to the NumVars and RefVars in the result
+  /// Template.
   interface VarAllocator {
 
-    /**
-     * Returns a NumVar with the same encoding as {@code forEncoding} and the next available index.
-     */
+    /// Returns a NumVar with the same encoding as `forEncoding` and the next available index.
     NumVar allocNumVar(NumVar forEncoding);
 
-    /** Returns the next index for a RefVar. */
+    /// Returns the next index for a RefVar.
     int allocRefVar();
 
-    /**
-     * Returns true if new RefVars with a FrameLayout should update when the layout evolves. The
-     * default implementation returns true.
-     */
+    /// Returns true if new RefVars with a FrameLayout should update when the layout evolves. The
+    /// default implementation returns true.
     default boolean refVarsTrackLayoutEvolution() {
       return true;
     }
 
-    /** Returns true if Unions in the resulting template should drop any ToBeSet choice. */
+    /// Returns true if Unions in the resulting template should drop any ToBeSet choice.
     default boolean dropToBeSetFromUnions() {
       return false;
     }
 
-    /**
-     * Returns a new VarAllocator that will assign the same indices as this; used when building
-     * unions.
-     */
+    /// Returns a new VarAllocator that will assign the same indices as this; used when building
+    /// unions.
     VarAllocator duplicate();
 
-    /**
-     * Resets this VarAllocator's state so that it will assign the same indices as {@code other};
-     * used when building unions. Will only be called on an allocator that was returned by {@link
-     * #duplicate}.
-     */
+    /// Resets this VarAllocator's state so that it will assign the same indices as `other`; used
+    /// when building unions. Will only be called on an allocator that was returned by [#duplicate].
     void resetTo(VarAllocator other);
 
-    /**
-     * Advances (if necessary) the state of this so that it will avoid assigning any indices that
-     * would conflict with those assigned by {@code other}; used when building unions. Will only be
-     * called with an allocator that was returned by {@link #duplicate}.
-     */
+    /// Advances (if necessary) the state of this so that it will avoid assigning any indices that
+    /// would conflict with those assigned by `other`; used when building unions. Will only be
+    /// called with an allocator that was returned by [#duplicate].
     void union(VarAllocator other);
   }
 
-  /** Returns a new TemplateBuilder that includes the given value. */
+  /// Returns a new TemplateBuilder that includes the given value.
   static TemplateBuilder newBuilder(Value v) {
     if (Template.isConstantValue(v)) {
       return Constant.of(v).toBuilder();
@@ -489,12 +421,12 @@ public abstract class TemplateBuilder {
     return new CompoundBuilder(baseType, elements);
   }
 
-  /** Creates a new VArrayLayout with the given element layout, and returns a RefVar for it. */
+  /// Creates a new VArrayLayout with the given element layout, and returns a RefVar for it.
   static Template.RefVar newVarray(TemplateBuilder element) {
     return VArrayLayout.newFromBuilder(TState.get().scope(), element).asRefVar;
   }
 
-  /** A shared base class for (immutable) Compound and (mutable) CompoundBuilder. */
+  /// A shared base class for (immutable) Compound and (mutable) CompoundBuilder.
   abstract static class CompoundBase extends TemplateBuilder {
     final BaseType baseType;
 
@@ -505,16 +437,12 @@ public abstract class TemplateBuilder {
       this.baseType = baseType;
     }
 
-    /**
-     * Returns a CompoundBase with the same BaseType and each element's TemplateBuilder provided by
-     * the given function. If this is a CompoundBuilder, just modifies it in place.
-     */
+    /// Returns a CompoundBase with the same BaseType and each element's TemplateBuilder provided by
+    /// the given function. If this is a CompoundBuilder, just modifies it in place.
     abstract CompoundBase withElements(IntFunction<TemplateBuilder> updatedElements);
 
-    /**
-     * Returns a CompoundBase with the same BaseType and elements as this, except that {@code v} has
-     * been added to the specified element.
-     */
+    /// Returns a CompoundBase with the same BaseType and elements as this, except that `v` has been
+    /// added to the specified element.
     CompoundBase addToElement(int index, Value v) {
       return withElements(
           i -> {
@@ -616,7 +544,7 @@ public abstract class TemplateBuilder {
       }
     }
 
-    /** Merges each element's builder into the given TemplateBuilder. */
+    /// Merges each element's builder into the given TemplateBuilder.
     TemplateBuilder mergeElementsInto(TemplateBuilder builder) {
       int n = baseType.size();
       for (int i = 0; i < n; i++) {
@@ -625,7 +553,7 @@ public abstract class TemplateBuilder {
       return builder;
     }
 
-    /** Recomputes this compound's weight by summing the weights of its elements. */
+    /// Recomputes this compound's weight by summing the weights of its elements.
     void computeWeightPair() {
       int nNumVars = 0;
       int nRefVars = 0;
@@ -701,10 +629,8 @@ public abstract class TemplateBuilder {
       }
     }
 
-    /**
-     * We're going to store values described by this template as frames; returns true if we should
-     * use a VArrayLayout rather than a RecordLayout.
-     */
+    /// We're going to store values described by this template as frames; returns true if we should
+    /// use a VArrayLayout rather than a RecordLayout.
     private boolean preferVarray() {
       if (!(baseType instanceof Core.FixedArrayType) || baseType.size() <= 2) {
         return false;
@@ -745,11 +671,9 @@ public abstract class TemplateBuilder {
       return memoryPenalty <= elements.length;
     }
 
-    /**
-     * A helper for {@link #preferVarray}; inserts {@code choice} into {@code choices}, keeping them
-     * sorted by order. If there is already a choice with the same order, keep the one with the
-     * larger {@link #totalWeight}.
-     */
+    /// A helper for [#preferVarray]; inserts `choice` into `choices`, keeping them sorted by order.
+    /// If there is already a choice with the same order, keep the one with the larger
+    /// [#totalWeight].
     private static void saveChoice(List<TemplateBuilder> choices, TemplateBuilder choice) {
       if (choices.isEmpty()) {
         choices.add(choice);
@@ -768,7 +692,7 @@ public abstract class TemplateBuilder {
     }
   }
 
-  /** A shared base class for (immutable) Union and (mutable) UnionBuilder. */
+  /// A shared base class for (immutable) Union and (mutable) UnionBuilder.
   abstract static class UnionBase extends TemplateBuilder {
 
     UnionBase() {
@@ -781,15 +705,12 @@ public abstract class TemplateBuilder {
 
     abstract TemplateBuilder choiceBuilder(int i);
 
-    /**
-     * Returns a UnionBuilder with the given choice either replacing one of our choices ({@code
-     * index >= 0}) or inserted among them ({@code index < 0}) (see {@link Ordered#setOrAdd} for the
-     * interpretation of {@code index}). If this is a UnionBuilder, modifies it; otherwise creates a
-     * new one.
-     */
+    /// Returns a UnionBuilder with the given choice either replacing one of our choices (`index >=
+    /// 0`) or inserted among them (`index < 0`) (see [Ordered#setOrAdd] for the interpretation of
+    /// `index`). If this is a UnionBuilder, modifies it; otherwise creates a new one.
     abstract UnionBuilder withNewChoice(int index, TemplateBuilder choice);
 
-    /** Returns true if this union has a {@link Core#TO_BE_SET} choice. */
+    /// Returns true if this union has a [Core#TO_BE_SET] choice.
     boolean hasToBeSet() {
       // We chose the sortIndex of TO_BE_SET so that it would (almost always) be at the end.
       // (If it's not at the end, it's followed by UNDEF, but the unions that we're testing
@@ -880,7 +801,7 @@ public abstract class TemplateBuilder {
       return withNewChoice(index, other);
     }
 
-    /** Calls {@link #mergeImpl} with each choice in {@code other}. */
+    /// Calls [#mergeImpl] with each choice in `other`.
     UnionBase mergeAll(UnionBase other) {
       UnionBase result = this;
       int n = other.numChoices();
@@ -910,19 +831,15 @@ public abstract class TemplateBuilder {
       return i >= 0 ? choiceBuilder(i).layout(sortOrder) : null;
     }
 
-    /**
-     * Returns the index of the choice with the given sortOrder, or the position at which a new
-     * choice with that sortOrder should be inserted (see {@link Ordered#search} for the
-     * interpretation of the result).
-     */
+    /// Returns the index of the choice with the given sortOrder, or the position at which a new
+    /// choice with that sortOrder should be inserted (see [Ordered#search] for the interpretation
+    /// of the result).
     int indexOf(long order) {
       return Ordered.search(order, i -> choiceBuilder(i).baseType().sortOrder, numChoices());
     }
 
-    /**
-     * Returns true if this UnionBase's choices are valid and correctly ordered. Should always
-     * return true; only used for assertions.
-     */
+    /// Returns true if this UnionBase's choices are valid and correctly ordered. Should always
+    /// return true; only used for assertions.
     boolean isValidChoiceList() {
       if (numChoices() < 2) {
         // choices must have length >= 2
@@ -942,12 +859,10 @@ public abstract class TemplateBuilder {
       return true;
     }
 
-    /**
-     * Computes the weight pair for this union. The result is (maxRefVars, 1 + maxNumVars) where
-     * maxRefVars is the largest nRefVars among the union's choices, and maxNumVars is the largest
-     * nNumVars among its choices (the extra numVar is for the tag; this method is not called for
-     * untagged Unions, but is called for all UnionBuilders).
-     */
+    /// Computes the weight pair for this union. The result is (maxRefVars, 1 + maxNumVars) where
+    /// maxRefVars is the largest nRefVars among the union's choices, and maxNumVars is the largest
+    /// nNumVars among its choices (the extra numVar is for the tag; this method is not called for
+    /// untagged Unions, but is called for all UnionBuilders).
     void computeWeightPair() {
       int maxNums = 0;
       int maxRefs = 0;
@@ -962,12 +877,12 @@ public abstract class TemplateBuilder {
       ((TemplateBuilder) this).nRefVars = (short) maxRefs;
     }
 
-    /** Returns a string that {@link #toString} will prefix to the list of choices. */
+    /// Returns a string that [#toString] will prefix to the list of choices.
     String toStringPrefix(Template.Printer printer) {
       return "";
     }
 
-    /** If true, {@link #toString} will label each choice with its index. */
+    /// If true, [#toString] will label each choice with its index.
     boolean toStringNumbersChoices() {
       return false;
     }
@@ -1000,15 +915,13 @@ public abstract class TemplateBuilder {
       computeWeightPair();
     }
 
-    /** Creates a UnionBuilder containing the given choices, which must have distinct sortOrders. */
+    /// Creates a UnionBuilder containing the given choices, which must have distinct sortOrders.
     UnionBuilder(TemplateBuilder b1, TemplateBuilder b2) {
       this(asOrderedList(b1, b2));
     }
 
-    /**
-     * Returns a two-element sorted list containing the given TemplateBuilders, which must have
-     * distinct sortOrders.
-     */
+    /// Returns a two-element sorted list containing the given TemplateBuilders, which must have
+    /// distinct sortOrders.
     private static List<TemplateBuilder> asOrderedList(TemplateBuilder b1, TemplateBuilder b2) {
       long o1 = b1.baseType().sortOrder;
       long o2 = b2.baseType().sortOrder;

@@ -62,10 +62,8 @@ public class BuiltinSupportTest {
     }
   }
 
-  /**
-   * Retrieves the results of the last function call and verifies that they are identical to the
-   * given Values.
-   */
+  /// Retrieves the results of the last function call and verifies that they are identical to the
+  /// given Values.
   private void verifyResults(TState tstate, Value... expected) {
     for (int i = 0; i < expected.length; i++) {
       Value v = tstate.takeResult(i);
@@ -75,18 +73,18 @@ public class BuiltinSupportTest {
     tstate.clearResults();
   }
 
-  /** Used by several tests. */
+  /// Used by several tests.
   static class Module1 {
-    /** {@code type MyUnion} */
+    /// `type MyUnion`
     static final VmType myUnion;
 
-    /** {@code singleton Enum1} */
+    /// `singleton Enum1`
     static final Singleton enum1;
 
-    /** {@code singleton Enum2 is MyUnion} */
+    /// `singleton Enum2 is MyUnion`
     static final Singleton enum2;
 
-    /** {@code function fn(x, y=, z)} */
+    /// `function fn(x, y=, z)`
     static final VmFunction fn;
 
     static {
@@ -114,42 +112,36 @@ public class BuiltinSupportTest {
       mb.build();
     }
 
-    /**
-     * <pre>
-     * method fn(x, y=, Enum1) {
-     *   y = x
-     *   return x
-     * }
-     * </pre>
-     */
+    /// ```
+    /// method fn(x, y=, Enum1) {
+    ///   y = x
+    ///   return x
+    /// }
+    /// ```
     @Core.Method("fn(_, _, Enum1)")
     static void method1(TState tstate, Value x, Value y, Value z) {
       tstate.setResults(addRef(x), addRef(x));
     }
 
-    /**
-     * <pre>
-     * method fn(x, y=, z) default {
-     *   y = z
-     *   return x
-     * }
-     * </pre>
-     */
+    /// ```
+    /// method fn(x, y=, z) default {
+    ///   y = z
+    ///   return x
+    /// }
+    /// ```
     @Core.Method("fn(_, _, _) default")
     static void method2(TState tstate, @RC.In Value x, @RC.In Value y, @RC.In Value z) {
       // This method is buggy: it claims to decrement y's root count, but doesn't.
       tstate.setResults(x, z);
     }
 
-    /**
-     * <pre>
-     * method fn(x, MyUnion y=, z) {
-     *   assert z is Singleton // not actually a Retrospect type
-     *   y = z
-     *   return z
-     * }
-     * </pre>
-     */
+    /// ```
+    /// method fn(x, MyUnion y=, z) {
+    ///   assert z is Singleton // not actually a Retrospect type
+    ///   y = z
+    ///   return z
+    /// }
+    /// ```
     @Core.Method("fn(_, MyUnion, _)")
     static void method3(TState tstate, Value x, Value y, @RC.In Value z) throws BuiltinException {
       Err.ASSERTION_FAILED.when(z instanceof Singleton);
@@ -225,7 +217,7 @@ public class BuiltinSupportTest {
   }
 
   static class WrongNumberOfArgs {
-    /** Try to load the method defined in this class into a new module; expected to fail. */
+    /// Try to load the method defined in this class into a new module; expected to fail.
     static void loadIt() {
       ModuleBuilder mb = new ModuleBuilder();
       VmFunction fn =
@@ -242,10 +234,8 @@ public class BuiltinSupportTest {
       }
     }
 
-    /**
-     * A bad builtin method definition (Java signature doesn't match Retrospect signature) to test
-     * error handling.
-     */
+    /// A bad builtin method definition (Java signature doesn't match Retrospect signature) to test
+    /// error handling.
     @Core.Method("fn(_, _)")
     static void method1(TState tstate, Value x) {}
   }
@@ -258,7 +248,7 @@ public class BuiltinSupportTest {
   }
 
   static class BadArgType {
-    /** Try to load the method defined in this class into a new module; expected to fail. */
+    /// Try to load the method defined in this class into a new module; expected to fail.
     static void loadIt() {
       ModuleBuilder mb = new ModuleBuilder();
       VmFunction fn =
@@ -275,9 +265,8 @@ public class BuiltinSupportTest {
       }
     }
 
-    /**
-     * A bad builtin method definition (Java arguments should be type Value) to test error handling.
-     */
+    /// A bad builtin method definition (Java arguments should be type Value) to test error
+    /// handling.
     @Core.Method("fn(_, _)")
     static void method1(TState tstate, Value x, Object y) {}
   }
@@ -289,7 +278,7 @@ public class BuiltinSupportTest {
   }
 
   static class SavedNotAllowed {
-    /** Try to load the method defined in this class into a new module; expected to fail. */
+    /// Try to load the method defined in this class into a new module; expected to fail.
     static void loadIt() {
       ModuleBuilder mb = new ModuleBuilder();
       VmFunction fn =
@@ -318,10 +307,10 @@ public class BuiltinSupportTest {
   }
 
   static class CallerTest {
-    /** {@code function foo(x, y)} */
+    /// `function foo(x, y)`
     static final VmFunction foo;
 
-    /** {@code function bar(x)} */
+    /// `function bar(x)`
     static final VmFunction bar;
 
     static {
@@ -348,7 +337,7 @@ public class BuiltinSupportTest {
       mb.build();
     }
 
-    /** {@code method foo(x, y) = (x == 0) ? bar(y) : foo(y, x)} */
+    /// `method foo(x, y) = (x == 0) ? bar(y) : foo(y, x)`
     @Core.Method("foo(_, _)")
     static void foo(
         TState tstate, Value x, Value y, @Fn("foo:2") Caller foo, @Fn("bar:1") Caller bar) {
@@ -359,14 +348,7 @@ public class BuiltinSupportTest {
       }
     }
 
-    /**
-     * <pre
-     * method bar(x) {
-     *   assert x is not Number
-     *   return x
-     * }
-     * </pre>
-     */
+    /// `method bar(x) { assert x is not number; return x }`
     @Core.Method("bar(_)")
     static Value bar(TState tstate, @RC.In Value x) throws BuiltinException {
       Err.INVALID_ARGUMENT.when(x instanceof NumValue);

@@ -35,13 +35,10 @@ import org.retrolang.impl.BuiltinSupport.ContinuationMethod;
 import org.retrolang.impl.Template.VarSource;
 import org.retrolang.util.ArrayUtil;
 
-/** A TState is a ThreadLocal that holds all the per-thread state of a computation. */
+/// A TState is a ThreadLocal that holds all the per-thread state of a computation.
 public final class TState extends MemoryHelper {
 
-  /**
-   * A MethodHandle of type `void <- (TState, Object[])` that calls {@link
-   * #dropReference(Object[])}.
-   */
+  /// A MethodHandle of type \`void <- (TState, Object[])\` that calls [#dropReference(Object\[\])].
   static final MethodHandle DROP_REFERENCE_OBJ_ARRAY =
       Handle.forMethod(MemoryHelper.class, "dropReference", Object[].class)
           .asType(MethodType.methodType(void.class, TState.class, Object[].class));
@@ -120,15 +117,13 @@ public final class TState extends MemoryHelper {
 
   private static final ThreadLocal<TState> savedTState = new ThreadLocal<>();
 
-  /**
-   * Returns the current thread's TState, or null if it has none. Threads should only call TState
-   * methods on their own TState.
-   */
+  /// Returns the current thread's TState, or null if it has none. Threads should only call TState
+  /// methods on their own TState.
   static TState get() {
     return savedTState.get();
   }
 
-  /** Returns the current thread's TState, creating one if it didn't already exist. */
+  /// Returns the current thread's TState, creating one if it didn't already exist.
   public static TState getOrCreate() {
     TState result = savedTState.get();
     // We don't use ThreadLocal.withInitial(TState::new) just because there are only a few places
@@ -141,10 +136,8 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
-  /**
-   * Bind this thread's TState (creating one, if needed) to the given ResourceTracker and apply
-   * {@code fn} to it, then restore any previous binding.
-   */
+  /// Bind this thread's TState (creating one, if needed) to the given ResourceTracker and apply
+  /// `fn` to it, then restore any previous binding.
   public static <T> T withTracker(ResourceTracker tracker, Function<TState, T> fn) {
     assert tracker != null;
     TState tstate = getOrCreate();
@@ -158,23 +151,19 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * Discards any TState that was previously associated with this Thread.
-   *
-   * <p>Intended only for tests, which want to ensure that they are not affected by any
-   * previously-interrupted tests that used the same thread.
-   */
+  /// Discards any TState that was previously associated with this Thread.
+  ///
+  /// Intended only for tests, which want to ensure that they are not affected by any
+  /// previously-interrupted tests that used the same thread.
   @VisibleForTesting
   static void reset() {
     savedTState.remove();
   }
 
-  /**
-   * Discards any TState that was previously associated with this Thread, and creates a new one.
-   *
-   * <p>Intended only for tests, which want to ensure that they are not affected by any
-   * previously-interrupted tests that used the same thread.
-   */
+  /// Discards any TState that was previously associated with this Thread, and creates a new one.
+  ///
+  /// Intended only for tests, which want to ensure that they are not affected by any
+  /// previously-interrupted tests that used the same thread.
   @VisibleForTesting
   static TState resetAndGet() {
     TState result = new TState();
@@ -182,12 +171,10 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
-  /**
-   * Drops a reference to the given RefCounted, which was allocated by the given ResourceTracker.
-   *
-   * <p>This entry point is used by methods like Vm.Value.close() that are invoked from outside the
-   * VM; during normal operation the TState is already bound to the appropriate ResourceTracker.
-   */
+  /// Drops a reference to the given RefCounted, which was allocated by the given ResourceTracker.
+  ///
+  /// This entry point is used by methods like Vm.Value.close() that are invoked from outside the
+  /// VM; during normal operation the TState is already bound to the appropriate ResourceTracker.
   static void dropReferenceWithTracker(ResourceTracker tracker, @RC.In RefCounted obj) {
     withTracker(
         tracker,
@@ -228,10 +215,8 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
-  /**
-   * Updates the {@link #codeGenDebugging} cache; should be called whenever codeGen debugging might
-   * have been enabled for the current Scope.
-   */
+  /// Updates the [#codeGenDebugging] cache; should be called whenever codeGen debugging might have
+  /// been enabled for the current Scope.
   static void updateCodeGenDebugging() {
     TState tstate = TState.get();
     if (tstate != null && tstate.tracker() != null) {
@@ -239,41 +224,31 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * Owned by the current ResourceTracker's Coordinator; used to cache this TState's last sync for
-   * faster checks in {@link Coordinator#syncClock}.
-   */
+  /// Owned by the current ResourceTracker's Coordinator; used to cache this TState's last sync for
+  /// faster checks in [Coordinator#syncClock].
   int lastSync;
 
-  /**
-   * If {@code rThread} is non-null it will be periodically checked to see if it has been cancelled;
-   * if so, any work this TState is doing will be discarded and the TState should be interrupted if
-   * possible.
-   */
+  /// If `rThread` is non-null it will be periodically checked to see if it has been cancelled; if
+  /// so, any work this TState is doing will be discarded and the TState should be interrupted if
+  /// possible.
   RThread rThread;
 
-  /**
-   * A cached link to the nearest enclosing loop or exlined MethodMemo; this (and its parents) will
-   * have their stability counter reset if we make changes to the current MethodMemo.
-   */
+  /// A cached link to the nearest enclosing loop or exlined MethodMemo; this (and its parents) will
+  /// have their stability counter reset if we make changes to the current MethodMemo.
   CodeGenParent cgParent;
 
-  /**
-   * Set to true when the currently-executing MethodMemo has been modified, to indicate that we need
-   * to call {@link #resetStabilityCounter} when convenient.
-   */
+  /// Set to true when the currently-executing MethodMemo has been modified, to indicate that we
+  /// need to call [#resetStabilityCounter] when convenient.
   boolean methodMemoUpdated;
 
-  /**
-   * Caches the value of {@code tracker().scope.codeGenDebugging()}, to minimize the cost of our
-   * frequent non-null checks on it.
-   */
+  /// Caches the value of `tracker().scope.codeGenDebugging()`, to minimize the cost of our frequent
+  /// non-null checks on it.
   CodeGenDebugging codeGenDebugging = null;
 
-  /** Set when unwinding from generated code. */
+  /// Set when unwinding from generated code.
   CodeGenTarget unwoundFrom;
 
-  /** Returns the Scope for the current computation. */
+  /// Returns the Scope for the current computation.
   public Scope scope() {
     return tracker().scope;
   }
@@ -282,14 +257,12 @@ public final class TState extends MemoryHelper {
     return tracker().coordinator.replace(this, f);
   }
 
-  /**
-   * Synchronizes with the current ResourceTracker's Coordinator. Should be called periodically by
-   * all active TStates.
-   *
-   * <p>Note that this method may cause existing Value references to become out-of-date; if you have
-   * a Value in a local variable and directly or indirectly call this method, you should usually
-   * call {@link Value#latest} before using it again.
-   */
+  /// Synchronizes with the current ResourceTracker's Coordinator. Should be called periodically by
+  /// all active TStates.
+  ///
+  /// Note that this method may cause existing Value references to become out-of-date; if you have a
+  /// Value in a local variable and directly or indirectly call this method, you should usually call
+  /// [Value#latest] before using it again.
   void syncWithCoordinator() {
     tracker().coordinator.syncClock(this);
   }
@@ -344,7 +317,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Returns true if the given array contains any reference-counted values. */
+  /// Returns true if the given array contains any reference-counted values.
   private static boolean containsRefCounted(Object[] objs) {
     return Arrays.stream(objs)
         .anyMatch(
@@ -361,24 +334,20 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * Equivalent to {@code TState.get().dropReference(obj)}, but faster if the object isn't released.
-   */
+  /// Equivalent to `TState.get().dropReference(obj)`, but faster if the object isn't released.
   public static void staticDropReference(@RC.In RefCounted obj) {
     if (obj != null && obj.dropRefInternal()) {
       get().dropped(obj);
     }
   }
 
-  /**
-   * RefCounted values and arrays on which we will call dropReference() if the current builtin
-   * method step throws an exception.
-   */
+  /// RefCounted values and arrays on which we will call dropReference() if the current builtin
+  /// method step throws an exception.
   private Object[] dropOnThrow = new Object[8];
 
   private int numDropOnThrow = 0;
 
-  /** Queues a call to {@link #dropValue} if the current builtin method step throws an exception. */
+  /// Queues a call to [#dropValue] if the current builtin method step throws an exception.
   public void dropOnThrow(Value v) {
     if (RefCounted.isRefCounted(v)) {
       // Values manipulated during codegen should not be reference counted
@@ -387,18 +356,14 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * Queues a call to {@link #dropReference} if the current builtin method step throws an exception.
-   */
+  /// Queues a call to [#dropReference] if the current builtin method step throws an exception.
   public void dropOnThrow(byte[] array) {
     if (!(hasCodeGen() || array == null || array.length == 0)) {
       dropOnThrowInternal(array);
     }
   }
 
-  /**
-   * Queues a call to {@link #dropReference} if the current builtin method step throws an exception.
-   */
+  /// Queues a call to [#dropReference] if the current builtin method step throws an exception.
   public void dropOnThrow(Object[] array) {
     if (!(hasCodeGen() || array == null || array.length == 0)) {
       dropOnThrowInternal(array);
@@ -412,40 +377,34 @@ public final class TState extends MemoryHelper {
     dropOnThrow[numDropOnThrow++] = x;
   }
 
-  /**
-   * Executes all deferred drops queued by {@link #dropOnThrow}. Automatically called if a builtin
-   * method's execution throws a BuiltinException.
-   */
+  /// Executes all deferred drops queued by [#dropOnThrow]. Automatically called if a builtin
+  /// method's execution throws a BuiltinException.
   void dropForThrow() {
     clearElements(dropOnThrow, 0, numDropOnThrow);
     numDropOnThrow = 0;
   }
 
-  /**
-   * Discards any pending drops queued by {@link #dropOnThrow}. Automatically called after each
-   * successfully completed step of a builtin method.
-   */
+  /// Discards any pending drops queued by [#dropOnThrow]. Automatically called after each
+  /// successfully completed step of a builtin method.
   void discardDropOnThrow() {
     Arrays.fill(dropOnThrow, 0, numDropOnThrow, null);
     numDropOnThrow = 0;
   }
 
-  /** Returns true if a call to {@link #discardDropOnThrow} would do anything. */
+  /// Returns true if a call to [#discardDropOnThrow] would do anything.
   boolean hasDropOnThrow() {
     return numDropOnThrow != 0;
   }
 
-  /**
-   * Determines how much memory is required to make a modified version of {@code array}, increasing
-   * or decreasing its size by the given number of elements.
-   *
-   * <p>If {@link RefCounted#isNotShared} is true of {@code array} and either {@code parent} is null
-   * or {@code parent} is also unshared, assumes that {@code array} may be modified in place;
-   * otherwise assumes that it must be copied.
-   *
-   * <p>If the required memory can be reserved, does so and returns the array's current size;
-   * otherwise throws {@link Err#OUT_OF_MEMORY}.
-   */
+  /// Determines how much memory is required to make a modified version of `array`, increasing or
+  /// decreasing its size by the given number of elements.
+  ///
+  /// If [RefCounted#isNotShared] is true of `array` and either `parent` is null or `parent` is also
+  /// unshared, assumes that `array` may be modified in place; otherwise assumes that it must be
+  /// copied.
+  ///
+  /// If the required memory can be reserved, does so and returns the array's current size;
+  /// otherwise throws [Err#OUT_OF_MEMORY].
   @RC.Out
   public Value getArraySizeAndReserveForChange(Value array, Value sizeDelta, Value parent)
       throws Err.BuiltinException {
@@ -493,11 +452,9 @@ public final class TState extends MemoryHelper {
       RcOp.forRcMethod(TState.class, "reserveForChange", VArrayLayout.class, Frame.class, int.class)
           .build();
 
-  /**
-   * Determines how much additional memory is needed to modify the given varray, given the size of
-   * the result. If {@code array} is null or is shared, assumes that a new varray must be allocated.
-   * If the required memory can be reserved, does so and returns true; otherwise returns false.
-   */
+  /// Determines how much additional memory is needed to modify the given varray, given the size of
+  /// the result. If `array` is null or is shared, assumes that a new varray must be allocated. If
+  /// the required memory can be reserved, does so and returns true; otherwise returns false.
   boolean reserveForChange(VArrayLayout layout, Frame array, int newSize) {
     // newSize < 0 probably means we overflowed an int
     return newSize > 0 ? tryReserve(layout.reservationForChange(array, newSize)) : newSize == 0;
@@ -509,7 +466,7 @@ public final class TState extends MemoryHelper {
     super.reserve(size);
   }
 
-  /** Allocates a new array with the given elements. */
+  /// Allocates a new array with the given elements.
   @RC.Out
   public Object[] array(@RC.In Value... elements) {
     if (hasCodeGen()) {
@@ -521,20 +478,20 @@ public final class TState extends MemoryHelper {
     return array;
   }
 
-  /** Allocates a new CompoundValue with the given type and elements. */
+  /// Allocates a new CompoundValue with the given type and elements.
   @RC.Out
   public Value compound(BaseType baseType, @RC.In Value... elements) {
     assert elements.length == baseType.size();
     return elements.length == 0 ? baseType.asValue() : asCompoundValue(baseType, array(elements));
   }
 
-  /** Allocates a new array compound with the given elements. */
+  /// Allocates a new array compound with the given elements.
   @RC.Out
   public Value arrayValue(@RC.In Value... elements) {
     return compound(Core.FixedArrayType.withSize(elements.length), elements);
   }
 
-  /** Converts a Java array of Values into a Retrospect array. */
+  /// Converts a Java array of Values into a Retrospect array.
   @RC.Out
   public Value asArrayValue(@RC.In Object[] elements, int size) {
     if (size == 0) {
@@ -544,7 +501,7 @@ public final class TState extends MemoryHelper {
     return asCompoundValue(Core.FixedArrayType.withSize(size), elements);
   }
 
-  /** Converts a Java array of Values into a Retrospect compound. */
+  /// Converts a Java array of Values into a Retrospect compound.
   @RC.Out
   public Value asCompoundValue(BaseType baseType, @RC.In Object[] elements) {
     int size = baseType.size();
@@ -568,29 +525,22 @@ public final class TState extends MemoryHelper {
     return new CompoundValue(this, baseType, elements);
   }
 
-  /**
-   * Non-null if the current computation is unwinding its stack.
-   *
-   * <p>If non-null, {@link #stackRest} is non-null and {@code stackHead.stream()} includes {@code
-   * stackRest}.
-   */
+  /// Non-null if the current computation is unwinding its stack.
+  ///
+  /// If non-null, [#stackRest] is non-null and `stackHead.stream()` includes `stackRest`.
   @RC.Counted private TStack stackHead;
 
-  /**
-   * If non-null, will be used as the {@code rest} of any stack entries created by the currently-
-   * executing method.
-   *
-   * <p>If {@code stackRest} is non-null on return from a function call, {@code stackRest.isSet()}
-   * will be false and the caller of the currently-executing function is responsible for populating
-   * it with the call site.
-   */
+  /// If non-null, will be used as the `rest` of any stack entries created by the currently-
+  /// executing method.
+  ///
+  /// If `stackRest` is non-null on return from a function call, `stackRest.isSet()` will be false
+  /// and the caller of the currently-executing function is responsible for populating it with the
+  /// call site.
   @RC.Counted private TStack stackRest;
 
-  /**
-   * Begins unwinding the current stack. {@code blockingEntry} will be placed at the top of the
-   * stack, and its {@link BaseType.BlockingEntryType#suspended} method will be called when stack
-   * unwinding is complete.
-   */
+  /// Begins unwinding the current stack. `blockingEntry` will be placed at the top of the stack,
+  /// and its [BaseType.BlockingEntryType#suspended] method will be called when stack unwinding is
+  /// complete.
   void startBlock(@RC.In Value blockingEntry, ResultsInfo results, MethodMemo mMemo) {
     assert stackHead == null && blockingEntry.baseType() instanceof BaseType.BlockingEntryType;
     stackHead = new TStack(this);
@@ -601,9 +551,7 @@ public final class TState extends MemoryHelper {
   static final Op TAKE_STACK_REST_OP =
       RcOp.forRcMethod(TState.class, "takeStackRest").hasSideEffect().build();
 
-  /**
-   * Returns and clears {@link #stackRest}; called from generated code after an exlined method call.
-   */
+  /// Returns and clears [#stackRest]; called from generated code after an exlined method call.
   @RC.Out
   TStack takeStackRest() {
     TStack result = stackRest;
@@ -620,7 +568,7 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
-  /** Returns true if {@link #stackRest} is {@link TStack#BASE}; only intended for assertions. */
+  /// Returns true if [#stackRest] is [TStack#BASE]; only intended for assertions.
   boolean stackRestIsBase() {
     return stackRest == TStack.BASE;
   }
@@ -631,7 +579,7 @@ public final class TState extends MemoryHelper {
           .withSimplifier((tstate, rest) -> CodeValue.NULL.equals(rest) ? CodeValue.NULL : null)
           .build();
 
-  /** Sets {@link #stackRest}. Should only be called when {@link #stackRest} is null. */
+  /// Sets [#stackRest]. Should only be called when [#stackRest] is null.
   void setStackRest(@RC.In TStack rest) {
     assert stackRest == null;
     stackRest = rest;
@@ -639,15 +587,13 @@ public final class TState extends MemoryHelper {
 
   static final Op UNWIND_STARTED_OP = RcOp.forRcMethod(TState.class, "unwindStarted").build();
 
-  /** True if the current computation is unwinding its stack. */
+  /// True if the current computation is unwinding its stack.
   boolean unwindStarted() {
     return hasCodeGen() ? codeGen.emittingUnwindHandler() : stackHead != null;
   }
 
-  /**
-   * If the current computation was not already unwinding, begins unwinding. Pushes the given stack
-   * entry on the top of the stack.
-   */
+  /// If the current computation was not already unwinding, begins unwinding. Pushes the given stack
+  /// entry on the top of the stack.
   void pushUnwind(@RC.In Value entry) {
     if (stackRest == null) {
       stackRest = new TStack(this);
@@ -662,10 +608,8 @@ public final class TState extends MemoryHelper {
     stackHead.setRest(prevHead);
   }
 
-  /**
-   * Called after the current thread has finished unwinding; returns the stack and resets the unwind
-   * state.
-   */
+  /// Called after the current thread has finished unwinding; returns the stack and resets the
+  /// unwind state.
   @RC.Out
   TStack takeUnwind() {
     assert stackHead != null;
@@ -679,24 +623,22 @@ public final class TState extends MemoryHelper {
   static final Op BEFORE_CALL_OP =
       RcOp.forRcMethod(TState.class, "beforeCall").hasSideEffect().build();
 
-  /**
-   * Should be called before starting a function call.
-   *
-   * <p>To correctly populate stacks, each function call should follow this pattern:
-   *
-   * <pre>
-   *   TStack prev = tstate.beforeCall();
-   *   ...make function call...
-   *   if (tstate.callEntryNeeded()) {
-   *     tstate.afterCall(prev, ...call entry for just-completed call...);
-   *     if (tstate.unwindStarted()) {
-   *       ... abrupt return from currently executing instruction block ...
-   *     }
-   *   } else {
-   *     tstate.afterCall(prev);
-   *   }
-   * </pre>
-   */
+  /// Should be called before starting a function call.
+  ///
+  /// To correctly populate stacks, each function call should follow this pattern:
+  ///
+  /// ```
+  ///   TStack prev = tstate.beforeCall();
+  ///   ...make function call...
+  ///   if (tstate.callEntryNeeded()) {
+  ///     tstate.afterCall(prev, ...call entry for just-completed call...);
+  ///     if (tstate.unwindStarted()) {
+  ///       ... abrupt return from currently executing instruction block ...
+  ///     }
+  ///   } else {
+  ///     tstate.afterCall(prev);
+  ///   }
+  /// ```
   @RC.Out
   TStack beforeCall() {
     assert !hasCodeGen() && !unwindStarted();
@@ -705,10 +647,8 @@ public final class TState extends MemoryHelper {
     return result;
   }
 
-  /**
-   * Returns true if a stack entry is needed for the just-completed function call; see {@link
-   * #beforeCall}.
-   */
+  /// Returns true if a stack entry is needed for the just-completed function call; see
+  /// [#beforeCall].
   boolean callEntryNeeded() {
     assert stackRest == null || !stackRest.isSet();
     if (stackRest == null) {
@@ -725,23 +665,21 @@ public final class TState extends MemoryHelper {
     return true;
   }
 
-  /** Should only be called if callEntryNeeded() returns true; see {@link #beforeCall}. */
+  /// Should only be called if callEntryNeeded() returns true; see [#beforeCall].
   void afterCall(
       @RC.In TStack prev, @RC.In Value callEntry, ResultsInfo results, MethodMemo methodMemo) {
     assert stackRest != null;
     stackRest = fillStackEntry(stackRest, callEntry, results, methodMemo, prev);
   }
 
-  /** Should only be called if callEntryNeeded() returns false; see {@link #beforeCall}. */
+  /// Should only be called if callEntryNeeded() returns false; see [#beforeCall].
   void afterCall(@RC.In TStack prev) {
     assert stackRest == null;
     stackRest = prev;
   }
 
-  /**
-   * Sets {@code tstack}'s {@link TStack#rest()} to {@code rest}, or to a new TStack if {@code rest}
-   * is null; returns {@code rest} or the new TStack.
-   */
+  /// Sets `tstack`'s [TStack#rest()] to `rest`, or to a new TStack if `rest` is null; returns
+  /// `rest` or the new TStack.
   @RC.Out
   TStack setTStackRest(TStack tstack, @RC.In TStack rest) {
     if (rest == null) {
@@ -764,13 +702,10 @@ public final class TState extends MemoryHelper {
           .hasSideEffect()
           .build();
 
-  /**
-   * Adds an entry to a TStack, initialized from {@code first}, {@code results}, {@code methodMemo},
-   * and {@code rest}. If {@code tstack} is non-null it is the entry that should be populated;
-   * otherwise a new TStack is allocated and saved as {@link #stackHead}. If {@code rest} is null a
-   * new TStack is allocated to be the {@link TStack#rest()}; the {@link TStack#rest()} is also
-   * returned.
-   */
+  /// Adds an entry to a TStack, initialized from `first`, `results`, `methodMemo`, and `rest`. If
+  /// `tstack` is non-null it is the entry that should be populated; otherwise a new TStack is
+  /// allocated and saved as [#stackHead]. If `rest` is null a new TStack is allocated to be the
+  /// [TStack#rest()]; the [TStack#rest()] is also returned.
   @RC.Out
   TStack fillStackEntry(
       @RC.In TStack tstack,
@@ -807,12 +742,12 @@ public final class TState extends MemoryHelper {
           .hasSideEffect()
           .build();
 
-  /** Saves the stack for a trace instruction. */
+  /// Saves the stack for a trace instruction.
   void trace(Instruction.Trace inst, @RC.In Value head) {
     stackRest = trace(inst, head, stackRest);
   }
 
-  /** Saves the stack for a trace instruction. */
+  /// Saves the stack for a trace instruction.
   @RC.Out
   TStack trace(Instruction.Trace inst, @RC.In Value head, @RC.In TStack rest) {
     // Create a new stack ...
@@ -831,24 +766,19 @@ public final class TState extends MemoryHelper {
   static final int INITIAL_FN_RESULTS_SIZE = 8;
   static final int INITIAL_FN_RESULT_BYTES_SIZE = 32;
 
-  /**
-   * If {@code fnResultTemplates} is null, method results are stored as Values in the initial
-   * elements of {@link #fnResults}. If {@code fnResultTemplates} is non-null, there is one template
-   * for each of the method's results; the values of its RefVars are stored in {@link #fnResults},
-   * and the values of its NumVars are stored in {@link #fnResultBytes}.
-   */
+  /// If `fnResultTemplates` is null, method results are stored as Values in the initial elements of
+  /// [#fnResults]. If `fnResultTemplates` is non-null, there is one template for each of the
+  /// method's results; the values of its RefVars are stored in [#fnResults], and the values of its
+  /// NumVars are stored in [#fnResultBytes].
   private ImmutableList<Template> fnResultTemplates;
 
-  /** Values returned by a method. The array is not counted, but its elements are. */
+  /// Values returned by a method. The array is not counted, but its elements are.
   @RC.Counted private Value[] fnResults = new Value[INITIAL_FN_RESULTS_SIZE];
 
-  /** The numeric values returned by a method that uses {@link #fnResultTemplates}. */
+  /// The numeric values returned by a method that uses [#fnResultTemplates].
   private byte[] fnResultBytes = new byte[INITIAL_FN_RESULT_BYTES_SIZE];
 
-  /**
-   * If {@link #fnResultTemplates} is non-null, this VarSource can be used to read the method's
-   * results.
-   */
+  /// If [#fnResultTemplates] is non-null, this VarSource can be used to read the method's results.
   private final VarSource fnResultSource =
       new VarSource() {
         @Override
@@ -877,7 +807,7 @@ public final class TState extends MemoryHelper {
         }
       };
 
-  /** Sets the result for the current function call. */
+  /// Sets the result for the current function call.
   public void setResult(@RC.In Value result) {
     assert result != null && RefCounted.isValidForStore(result);
     if (hasCodeGen()) {
@@ -888,7 +818,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Sets the results for the current function call. */
+  /// Sets the results for the current function call.
   public void setResults(@RC.In Value result1, @RC.In Value result2) {
     assert result1 != null
         && result2 != null
@@ -903,7 +833,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Sets the results for the current function call. */
+  /// Sets the results for the current function call.
   public void setResults(@RC.In Value... results) {
     assert Arrays.stream(results).allMatch(x -> x != null && RefCounted.isValidForStore(x));
     if (hasCodeGen()) {
@@ -914,7 +844,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Sets the results for the current function call. */
+  /// Sets the results for the current function call.
   public void setResults(int numResults, @RC.In Object[] results) {
     assert !hasCodeGen()
         && fnResultTemplates == null
@@ -928,10 +858,8 @@ public final class TState extends MemoryHelper {
     dropReference(results);
   }
 
-  /**
-   * Sets the results for the current function call to the elements of the given array or compound
-   * value.
-   */
+  /// Sets the results for the current function call to the elements of the given array or compound
+  /// value.
   public void setResultsFromElements(int size, Value v) {
     assert hasCodeGen() || fnResultTemplates == null;
     Value[] results = hasCodeGen() ? new Value[size] : fnResults(size);
@@ -942,7 +870,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Called after setting results, to harmonize them with {@link MethodMemo#resultsMemo}. */
+  /// Called after setting results, to harmonize them with [MethodMemo#resultsMemo].
   void harmonizeResults(MethodMemo memo) {
     assert !hasCodeGen();
     assert memo.perMethod == null || resultsStateMatches(memo.method().function);
@@ -970,17 +898,14 @@ public final class TState extends MemoryHelper {
       RcOp.forRcMethod(TState.class, "fnResultBytes", int.class).build();
   static final Op FN_RESULT_OP = RcOp.forRcMethod(TState.class, "fnResult", int.class).build();
 
-  /**
-   * Sets the templates for the results of the current function call. The values of the RefVars and
-   * NumVars should then be written to the arrays returned by {@link #fnResults} and {@link
-   * #fnResultBytes}.
-   */
+  /// Sets the templates for the results of the current function call. The values of the RefVars and
+  /// NumVars should then be written to the arrays returned by [#fnResults] and [#fnResultBytes].
   void setResultTemplates(ImmutableList<Template> templates) {
     assert !hasCodeGen() && allNull(fnResults) && fnResultTemplates == null && templates != null;
     fnResultTemplates = templates;
   }
 
-  /** Retrieves the given function result; should only be called once for each result. */
+  /// Retrieves the given function result; should only be called once for each result.
   @RC.Out
   public Value takeResult(int index) {
     assert !hasCodeGen() && !unwindStarted();
@@ -994,11 +919,9 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * If the just-completed method call escaped, resumes direct execution until it returns, errors,
-   * or blocks. Returns true if it returned with results that use the given templates. Returns false
-   * if it errored, blocked, or returned results in a different representation.
-   */
+  /// If the just-completed method call escaped, resumes direct execution until it returns, errors,
+  /// or blocks. Returns true if it returned with results that use the given templates. Returns
+  /// false if it errored, blocked, or returned results in a different representation.
   @SuppressWarnings("ReferenceEquality")
   boolean checkExlinedResult(ImmutableList<Template> expectedTemplates) {
     // The generated code should have saved its identity only if it unwound
@@ -1057,22 +980,20 @@ public final class TState extends MemoryHelper {
     return false;
   }
 
-  /**
-   * Discards any remaining saved function results; should always be called after the desired
-   * results have been taken.
-   */
+  /// Discards any remaining saved function results; should always be called after the desired
+  /// results have been taken.
   void clearResults() {
     fnResultTemplates = null;
     clearElements(fnResults, 0, fnResults.length);
   }
 
-  /** A cheaper alternative to {@link #clearResults} when there were no pointers in the results. */
+  /// A cheaper alternative to [#clearResults] when there were no pointers in the results.
   void clearResultTemplates() {
     fnResultTemplates = null;
     assert allNull(fnResults);
   }
 
-  /** Ensures that {@link #fnResults} has at least the given length, and returns it. */
+  /// Ensures that [#fnResults] has at least the given length, and returns it.
   Value[] fnResults(int minSize) {
     assert allNull(fnResults);
     if (fnResults.length < minSize) {
@@ -1081,13 +1002,13 @@ public final class TState extends MemoryHelper {
     return fnResults;
   }
 
-  /** Returns the specified element of {@link #fnResults}. */
+  /// Returns the specified element of [#fnResults].
   @RC.Out
   Value fnResult(int i) {
     return addRef(fnResults[i]);
   }
 
-  /** Ensures that {@link #fnResultBytes} has at least the given length, and returns it. */
+  /// Ensures that [#fnResultBytes] has at least the given length, and returns it.
   byte[] fnResultBytes(int minSize) {
     if (fnResultBytes.length < minSize) {
       fnResultBytes = new byte[chooseCapacityBytes(minSize)];
@@ -1095,15 +1016,13 @@ public final class TState extends MemoryHelper {
     return fnResultBytes;
   }
 
-  /** Returns true if all elements of the given array are null. For assertions only. */
+  /// Returns true if all elements of the given array are null. For assertions only.
   private static boolean allNull(Object[] array) {
     return Arrays.stream(array).allMatch(x -> x == null);
   }
 
-  /**
-   * Returns true if the results state is appropriate for resuming a stack entry with the given
-   * {@link StackEntryType#called}. For assertions only.
-   */
+  /// Returns true if the results state is appropriate for resuming a stack entry with the given
+  /// [StackEntryType#called]. For assertions only.
   private boolean resultsStateMatches(VmFunction called) {
     // If we're resuming anywhere other than a function call, there should be no results; otherwise
     // the number of saved results should match the function that was called.
@@ -1181,7 +1100,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Resume execution of a builtin method. */
+  /// Resume execution of a builtin method.
   void resumeBuiltin(
       BuiltinSupport.ContinuationMethod continuation,
       @RC.In Object[] values,
@@ -1196,36 +1115,30 @@ public final class TState extends MemoryHelper {
     finishBuiltin(results, mMemo, continuation.impl);
   }
 
-  /**
-   * Called after a builtin method returns, to handle any call to {@link #startCall} or {@link
-   * #jump}.
-   *
-   * <p>There are four possible valid states when a builtin method returns:
-   *
-   * <ul>
-   *   <li>done: {@link #builtinCall}, {@link #builtinCallArgs}, {@link #builtinContinuation}, and
-   *       {@link #builtinContinuationArgs} are all null, {@link #unwindStarted} is false, and
-   *       {@link #setResults} has been called with the method's results.
-   *   <li>unwinding: {@link #builtinCall}, {@link #builtinCallArgs}, {@link #builtinContinuation},
-   *       and {@link #builtinContinuationArgs} are all null, {@link #unwindStarted} is true, and
-   *       {@link #setResults} has not been called.
-   *   <li>calling: {@link #builtinCall} is non-null and {@link #builtinCallArgs} contains {@code
-   *       builtinCall.fn.numArgs} Values. Either {@link #builtinContinuationArgs} is null (no saved
-   *       values were passed in the call) or it is an array with saved values at indices {@code
-   *       builtinCall.fn.numResults} through {@code builtinCall.continuation.numArgs-1}. {@link
-   *       #builtinCallFn} is the function that will be called, and {@link #builtinDuringCall} is
-   *       the type that will be used if we need to construct a stack entry (its size must match the
-   *       number of saved values). {@link #builtinContinuation} is null, {@link #unwindStarted} is
-   *       false, and {@link #setResults} has not been called.
-   *   <li>jumping: {@link #builtinCall} and {@link #builtinCallArgs} are null, {@link
-   *       #builtinContinuation} and {@link #builtinContinuationArgs} are non-null, {@link
-   *       #unwindStarted} is false, and {@link #setResults} has not been called.
-   * </ul>
-   *
-   * <p>(See also the "five things a begin or continuation method must do when called" list at
-   * docs/builtins.md#general-nested-function-calls; the first two leave the TState in state "done",
-   * and each of the others corresponds to a different state in this list.)
-   */
+  /// Called after a builtin method returns, to handle any call to [#startCall] or [#jump].
+  ///
+  /// There are four possible valid states when a builtin method returns:
+  ///
+  /// - done: [#builtinCall], [#builtinCallArgs], [#builtinContinuation], and
+  ///   [#builtinContinuationArgs] are all null, [#unwindStarted] is false, and [#setResults] has
+  ///   been called with the method's results.
+  /// - unwinding: [#builtinCall], [#builtinCallArgs], [#builtinContinuation], and
+  ///   [#builtinContinuationArgs] are all null, [#unwindStarted] is true, and [#setResults] has not
+  ///   been called.
+  /// - calling: [#builtinCall] is non-null and [#builtinCallArgs] contains `builtinCall.fn.numArgs`
+  ///   Values. Either [#builtinContinuationArgs] is null (no saved values were passed in the call)
+  ///   or it is an array with saved values at indices `builtinCall.fn.numResults` through
+  ///   `builtinCall.continuation.numArgs-1`. [#builtinCallFn] is the function that will be called,
+  ///   and [#builtinDuringCall] is the type that will be used if we need to construct a stack entry
+  ///   (its size must match the number of saved values). [#builtinContinuation] is null,
+  ///   [#unwindStarted] is false, and [#setResults] has not been called.
+  /// - jumping: [#builtinCall] and [#builtinCallArgs] are null, [#builtinContinuation] and
+  ///   [#builtinContinuationArgs] are non-null, [#unwindStarted] is false, and [#setResults] has
+  ///   not been called.
+  ///
+  /// (See also the "five things a begin or continuation method must do when called" list at
+  /// docs/builtins.md#general-nested-function-calls; the first two leave the TState in state
+  /// "done", and each of the others corresponds to a different state in this list.)
   void finishBuiltin(ResultsInfo results, MethodMemo mMemo, BuiltinImpl impl) {
     assert !hasCodeGen();
     if (mMemo instanceof MethodMemo.LoopMethodMemo lmm) {
@@ -1403,10 +1316,8 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * We are about to start running a LoopContinuation; see if we should increment its stability
-   * counter, and whether we have generated code for the loop.
-   */
+  /// We are about to start running a LoopContinuation; see if we should increment its stability
+  /// counter, and whether we have generated code for the loop.
   CodeGenTarget enteringLoop(
       MethodMemo mMemo, boolean incrementStability, BuiltinImpl impl, Object[] continuationArgs) {
     MethodMemo.LoopMethodMemo loop = (MethodMemo.LoopMethodMemo) mMemo;
@@ -1437,10 +1348,7 @@ public final class TState extends MemoryHelper {
     return null;
   }
 
-  /**
-   * Resumes execution of the given stack; continues until it reaches {@code base} or begins
-   * unwinding.
-   */
+  /// Resumes execution of the given stack; continues until it reaches `base` or begins unwinding.
   void resumeStack(@RC.In TStack stack, TStack base) {
     cgParent = CodeGenParent.INVALID;
     for (; ; ) {
@@ -1494,11 +1402,9 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /**
-   * Reset the stability counter for the enclosing CodeGenLink(s). If the {@link #cgParent} caches
-   * are up-to-date they will point directly to the CodeGenLinks that need to updated; otherwise we
-   * may need to search from {@code mMemo}.
-   */
+  /// Reset the stability counter for the enclosing CodeGenLink(s). If the [#cgParent] caches are
+  /// up-to-date they will point directly to the CodeGenLinks that need to updated; otherwise we may
+  /// need to search from `mMemo`.
   void resetStabilityCounter(MethodMemo mMemo) {
     // Null if we're looking for the first enclosing CodeGenLink; otherwise the CodeGenLink we
     // should search upwards from.
@@ -1534,7 +1440,7 @@ public final class TState extends MemoryHelper {
     unwoundFrom = null;
   }
 
-  /** Verify that {@code p} is a valid cache of the CodeGenLink containing {@code mm}. */
+  /// Verify that `p` is a valid cache of the CodeGenLink containing `mm`.
   private boolean checkParent(CodeGenParent p, MethodMemo mm, boolean skipLoopLink) {
     // If other threads are active it's possible to get a transient mismatch here, but retrying
     // once or twice should be enough to succeed.
@@ -1553,10 +1459,8 @@ public final class TState extends MemoryHelper {
     return false;
   }
 
-  /**
-   * A transient object created when we want to coerce function results into a given set of result
-   * templates.
-   */
+  /// A transient object created when we want to coerce function results into a given set of result
+  /// templates.
   private class ResultsFixer implements Template.VarVisitor, Template.VarSink {
     // Scratch space used within tryFix(); always reset before it exits
     private int sizeBytes;
@@ -1564,10 +1468,8 @@ public final class TState extends MemoryHelper {
     private byte[] bytesOut;
     private Value[] objsOut;
 
-    /**
-     * Either coerces the function results into the given templates and returns true, or leaves them
-     * unchanged and returns false. Can be called more than once, but not thread-safe.
-     */
+    /// Either coerces the function results into the given templates and returns true, or leaves
+    /// them unchanged and returns false. Can be called more than once, but not thread-safe.
     boolean tryFix(ImmutableList<Template> newTemplates) {
       int n = newTemplates.size();
       assert (fnResultTemplates != null)
@@ -1657,7 +1559,7 @@ public final class TState extends MemoryHelper {
     }
   }
 
-  /** Non-null during code generation */
+  /// Non-null during code generation
   private CodeGen codeGen;
 
   void setCodeGen(CodeGen codeGen) {

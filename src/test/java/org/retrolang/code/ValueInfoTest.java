@@ -39,7 +39,7 @@ public class ValueInfoTest {
   static final Register I2 = new Register(2, int.class);
   static final Register I3 = new Register(3, int.class);
 
-  /** Returns a simple IntFunction that returns the corresponding argument. */
+  /// Returns a simple IntFunction that returns the corresponding argument.
   static IntFunction<ValueInfo> registers(ValueInfo... values) {
     return i -> values[i];
   }

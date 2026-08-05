@@ -30,26 +30,20 @@ import org.retrolang.impl.Template.RefVar;
 import org.retrolang.impl.Template.Union;
 import org.retrolang.util.Bits;
 
-/**
- * RValue is a Value implementation that is only used during code generation; an RValue depends on
- * the contents of one or more registers, so its value will only be determined when the generated
- * code is executed.
- */
+/// RValue is a Value implementation that is only used during code generation; an RValue depends on
+/// the contents of one or more registers, so its value will only be determined when the generated
+/// code is executed.
 public class RValue implements Value {
 
-  /**
-   * A Template that determines the value of this RValue; each NumVar or RefVar in the template
-   * refers to the contents of the register with the same index:
-   *
-   * <ul>
-   *   <li>A NumVar must have encoding INT32 or FLOAT64, and the corresponding register must have
-   *       type int or double (respectively).
-   *   <li>The register corresponding to a RefVar must have type Object, Value, or (for RefVars with
-   *       a non-null FrameLayout) Frame.
-   * </ul>
-   *
-   * <p>May not be EMPTY or a Constant.
-   */
+  /// A Template that determines the value of this RValue; each NumVar or RefVar in the template
+  /// refers to the contents of the register with the same index:
+  ///
+  /// - A NumVar must have encoding INT32 or FLOAT64, and the corresponding register must have type
+  ///   int or double (respectively).
+  /// - The register corresponding to a RefVar must have type Object, Value, or (for RefVars with a
+  ///   non-null FrameLayout) Frame.
+  ///
+  /// May not be EMPTY or a Constant.
   public final Template template;
 
   private RValue(Template template) {
@@ -57,42 +51,31 @@ public class RValue implements Value {
     this.template = template;
   }
 
-  /**
-   * Returns an RValue based on the given template. If the template is constant, just returns the
-   * template's value.
-   */
+  /// Returns an RValue based on the given template. If the template is constant, just returns the
+  /// template's value.
   public static Value fromTemplate(Template t) {
     return Template.isConstant(t) ? Template.toValue(t) : new RValue(t);
   }
 
-  /**
-   * If {@code v} is an RValue, returns its template; otherwise returns a constant template for
-   * {@code v}.
-   *
-   * <p>{@code v} must not be reference-counted.
-   */
+  /// If `v` is an RValue, returns its template; otherwise returns a constant template for `v`.
+  ///
+  /// `v` must not be reference-counted.
   public static Template toTemplate(Value v) {
     return (v instanceof RValue r) ? r.template : Template.Constant.of(v);
   }
 
-  /**
-   * Wraps an RValue so that it can be examined without any chance of generating code. If {@code v}
-   * is not an RValue, returns it unchanged; otherwise returns a Value that only implements the
-   * {@link Value#baseType}, {@link Value#numElements}, and {@link Value#peekElement} methods, where
-   *
-   * <ul>
-   *   <li>{@code baseType()} will return null if the value's baseType may vary at runtime; and
-   *   <li>{@code numElements()} will return -1 if the value's size may vary at runtime.
-   * </ul>
-   */
+  /// Wraps an RValue so that it can be examined without any chance of generating code. If `v` is
+  /// not an RValue, returns it unchanged; otherwise returns a Value that only implements the
+  /// [Value#baseType], [Value#numElements], and [Value#peekElement] methods, where
+  ///
+  /// - `baseType()` will return null if the value's baseType may vary at runtime; and
+  /// - `numElements()` will return -1 if the value's size may vary at runtime.
   public static Value exploreSafely(Value v) {
     return (v instanceof RValue rv) ? SafeExplorer.exploreTemplate(rv.template) : v;
   }
 
-  /**
-   * Returns true if the given Value resulted from a call to {@link #exploreSafely} and does not
-   * provide complete information about the value.
-   */
+  /// Returns true if the given Value resulted from a call to [#exploreSafely] and does not provide
+  /// complete information about the value.
   public static boolean isExplorer(Value v) {
     return v instanceof SafeExplorer;
   }
@@ -143,11 +126,9 @@ public class RValue implements Value {
     throw new UnsupportedOperationException();
   }
 
-  /**
-   * Returns an RValue that is False if the given register is 0, True if it is 1.
-   *
-   * <p>The result is unspecified if the register is not 0 or 1.
-   */
+  /// Returns an RValue that is False if the given register is 0, True if it is 1.
+  ///
+  /// The result is unspecified if the register is not 0 or 1.
   public static RValue intToBoolean(Register r) {
     assert r.type() == int.class;
     return new RValue(
@@ -155,16 +136,14 @@ public class RValue implements Value {
             NumVar.INT32.withIndex(r.index), null, Core.FALSE.asTemplate, Core.TRUE.asTemplate));
   }
 
-  /**
-   * Returns a possibly-simplified version of this RValue, assuming the given ValueInfos for each
-   * register it references.
-   */
+  /// Returns a possibly-simplified version of this RValue, assuming the given ValueInfos for each
+  /// register it references.
   Value simplify(IntFunction<ValueInfo> infos) {
     Value simplified = simplify(template, infos);
     return (simplified != null) ? simplified : this;
   }
 
-  /** Simplifies the given template; returns null if no simplification is possible. */
+  /// Simplifies the given template; returns null if no simplification is possible.
   private static Value simplify(Template t, IntFunction<ValueInfo> infos) {
     if (t instanceof NumVar nv) {
       ValueInfo info = infos.apply(nv.index);
@@ -223,7 +202,7 @@ public class RValue implements Value {
     return null;
   }
 
-  /** Returns a Condition that is true if the given predicate is true of this RValue's baseType. */
+  /// Returns a Condition that is true if the given predicate is true of this RValue's baseType.
   Condition typeTest(Predicate<BaseType> type) {
     // Unless our template is a Union, the baseType is known so we're done.
     if (!(template instanceof Union union)) {
@@ -247,10 +226,8 @@ public class RValue implements Value {
     }
   }
 
-  /**
-   * If the given template is a union and the tag register's value is known, return the
-   * corresponding choice; otherwise just return the template.
-   */
+  /// If the given template is a union and the tag register's value is known, return the
+  /// corresponding choice; otherwise just return the template.
   private static Template resolveUnion(Template template) {
     if (template instanceof Union union) {
       CodeGen codeGen = TState.get().codeGen();
@@ -328,13 +305,13 @@ public class RValue implements Value {
     return RValue.fromTemplate(rv.withIndex(result.index));
   }
 
-  /** Instances of SafeExplorer are created by calls ot {@link #exploreSafely}. */
+  /// Instances of SafeExplorer are created by calls ot [#exploreSafely].
   private record SafeExplorer(Template template) implements Value {
 
-    /** A SafeExplorer that has no information about its Value. */
+    /// A SafeExplorer that has no information about its Value.
     static final SafeExplorer UNKNOWN = new SafeExplorer(null);
 
-    /** Returns a SafeExplorer for an RValue with the given Template. */
+    /// Returns a SafeExplorer for an RValue with the given Template.
     static SafeExplorer exploreTemplate(Template t) {
       // If t is RefVar with a RecordLayout, we want the template of that RecordLayout instead
       if (t instanceof RefVar.ForFrame rv && rv.frameLayout() instanceof RecordLayout layout) {

@@ -32,7 +32,7 @@ decl
   : ('open' | 'private')? kind=('function' | 'procedure')
     name=lowerId '(' paramList? ')' methodDef?                #functionDecl
   | 'method' name=functionName '(' paramList? ')'
-    ( '(' methodPredicate ')')?
+    ('(' methodPredicate ')')?
     isDefault='default'?
     methodDef                                                 #methodDecl
   | 'private'? kind=('singleton' | 'compound') UPPER_ID

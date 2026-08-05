@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.retrolang.code.Op;
 
-/** A BaseType for structs with a specific set of keys. */
+/// A BaseType for structs with a specific set of keys.
 public class StructType extends BaseType {
 
   public static final Op INDEX_OP =
@@ -42,12 +42,12 @@ public class StructType extends BaseType {
         }
       };
 
-  /** Given the BaseType of a struct or structKeys, returns the StructType. */
+  /// Given the BaseType of a struct or structKeys, returns the StructType.
   public static StructType from(BaseType baseType) {
     return baseType instanceof StructType st ? st : ((StructKeys) baseType).struct;
   }
 
-  /** A Singleton for the empty struct, {@code {}}. */
+  /// A Singleton for the empty struct, `{}`.
   public static final StructType EMPTY = new StructType();
 
   final String name;
@@ -56,15 +56,15 @@ public class StructType extends BaseType {
 
   public final ImmutableList<StringValue> keysAsStringValues;
 
-  /** Maps key to index in {@link #keys}. */
+  /// Maps key to index in [#keys].
   public final ImmutableMap<String, Integer> keyMap;
 
-  /** * The value returned by keys(struct). */
+  /// \* The value returned by keys(struct).
   public final Value keySet;
 
   final VmCompound vmCompound;
 
-  /** A StructType with the given keys, which must be distinct and sorted. */
+  /// A StructType with the given keys, which must be distinct and sorted.
   public StructType(ImmutableList<String> keys) {
     super(keys.size());
     this.keys = keys;
@@ -83,7 +83,7 @@ public class StructType extends BaseType {
     this.vmCompound = new VmCompound(this);
   }
 
-  /** A StructType with the given keys, which must be distinct and sorted. */
+  /// A StructType with the given keys, which must be distinct and sorted.
   public StructType(String... keys) {
     this(ImmutableList.copyOf(keys));
   }
@@ -100,7 +100,7 @@ public class StructType extends BaseType {
         .collect(Collectors.joining(", ", "{", "}"));
   }
 
-  /** True if the given value is a StructType with the same keys as this one. */
+  /// True if the given value is a StructType with the same keys as this one.
   public Condition matches(Value v) {
     if (v instanceof RValue rv) {
       return rv.typeTest(bt -> bt == this);
@@ -109,10 +109,8 @@ public class StructType extends BaseType {
     }
   }
 
-  /**
-   * If {@code key} is one of the keys of this compound, returns its index (in 0..size-1); otherwise
-   * returns -1.
-   */
+  /// If `key` is one of the keys of this compound, returns its index (in 0..size-1); otherwise
+  /// returns -1.
   public int index(Value key) {
     assert !(key instanceof RValue);
     if (key instanceof StringValue s) {

@@ -23,45 +23,39 @@ import java.util.PriorityQueue;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.code.CodeBuilder.PrintOptions;
 
-/**
- * A Sequencer assigns a sequential ordering to a block graph, trying to maximize the number of
- * blocks whose next block (or, for TestBlocks, their alternate block) follows them in sequence.
- * This makes for a more readable listing of blocks, and when used to order emitting minimizes the
- * number of branches.
- */
+/// A Sequencer assigns a sequential ordering to a block graph, trying to maximize the number of
+/// blocks whose next block (or, for TestBlocks, their alternate block) follows them in sequence.
+/// This makes for a more readable listing of blocks, and when used to order emitting minimizes the
+/// number of branches.
 class Sequencer implements PrintOptions {
 
-  /**
-   * True if Registers should be identified by their JVM local index, rather than their register
-   * index.
-   */
+  /// True if Registers should be identified by their JVM local index, rather than their register
+  /// index.
   private final boolean useJvmLocals;
 
-  /** The sequence of blocks constructed by the Sequencer. */
+  /// The sequence of blocks constructed by the Sequencer.
   private final List<Block> orderedBlocks;
 
-  /** Maps block.index() to the block's position in {@link #orderedBlocks}. */
+  /// Maps block.index() to the block's position in [#orderedBlocks].
   private final int[] blockPos;
 
-  /** Returns the position assigned to the given block. */
+  /// Returns the position assigned to the given block.
   int position(Block b) {
     return blockPos[b.index()];
   }
 
-  /** Returns the block assigned the given position. */
+  /// Returns the block assigned the given position.
   Block orderedBlock(int i) {
     return orderedBlocks.get(i);
   }
 
-  /** Returns true if the given block has already been assigned a position. */
+  /// Returns true if the given block has already been assigned a position.
   private boolean isDone(Block b) {
     return position(b) >= 0;
   }
 
-  /**
-   * Sequences the given set of Blocks. {@code useJvmLocals} does not affect the sequencing, but
-   * controls how the blocks are printed.
-   */
+  /// Sequences the given set of Blocks. `useJvmLocals` does not affect the sequencing, but controls
+  /// how the blocks are printed.
   Sequencer(List<Block> blocks, boolean useJvmLocals) {
     this.useJvmLocals = useJvmLocals;
     orderedBlocks = new ArrayList<>(blocks.size());
@@ -94,10 +88,8 @@ class Sequencer implements PrintOptions {
     assert orderedBlocks.size() == blocks.size();
   }
 
-  /**
-   * If the target of the given link is a not-yet-sequenced block, returns it; otherwise returns
-   * null.
-   */
+  /// If the target of the given link is a not-yet-sequenced block, returns it; otherwise returns
+  /// null.
   private @Nullable Block target(Link link) {
     if (link.target() instanceof Block b && !isDone(b)) {
       return b;
@@ -105,10 +97,8 @@ class Sequencer implements PrintOptions {
     return null;
   }
 
-  /**
-   * Checks the targets of each of b's outlinks; each one that is a not-yet-serialized block will
-   * either be pushed on pending or returned.
-   */
+  /// Checks the targets of each of b's outlinks; each one that is a not-yet-serialized block will
+  /// either be pushed on pending or returned.
   private @Nullable Block chooseNext(Block b, PriorityQueue<Block> pending) {
     if (!(b instanceof Block.NonTerminal nonTerminal)) {
       return null;
@@ -142,7 +132,7 @@ class Sequencer implements PrintOptions {
     }
   }
 
-  /** Returns true the given block has at least one inlink that has not yet been sequenced. */
+  /// Returns true the given block has at least one inlink that has not yet been sequenced.
   private boolean hasPendingInlink(Block b) {
     // We can skip the test if b only has a single inlink, since that must be from the block we just
     // sequenced.

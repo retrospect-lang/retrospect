@@ -32,33 +32,24 @@ import org.retrolang.code.ValueInfo;
 import org.retrolang.impl.Template.NumVar;
 import org.retrolang.impl.Template.RefVar;
 
-/**
- * A custom Block type for an exlined call to a code-generated method.
- *
- * <p>In addition to the call itself (just a call to a MethodHandle) this emits two additional
- * steps:
- *
- * <ul>
- *   <li>It calls {@link TState#checkExlinedResult} in case the generated code escaped, and to
- *       distinguish "returned results using the expected templates" (we continue to the next block)
- *       from "errored, blocked, or returned unexpected results" (we take the alternate link, which
- *       unwinds).
- *   <li>After calling checkExlinedResult it calls {@link TState#takeStackRest} and stores the
- *       result in a register; if it returned non-null we will need to fill the stack entry to
- *       describe this call.
- * </ul>
- */
+/// A custom Block type for an exlined call to a code-generated method.
+///
+/// In addition to the call itself (just a call to a MethodHandle) this emits two additional steps:
+///
+/// - It calls [TState#checkExlinedResult] in case the generated code escaped, and to distinguish
+///   "returned results using the expected templates" (we continue to the next block) from "errored,
+///   blocked, or returned unexpected results" (we take the alternate link, which unwinds).
+/// - After calling checkExlinedResult it calls [TState#takeStackRest] and stores the result in a
+///   register; if it returned non-null we will need to fill the stack entry to describe this call.
 class ExlinedCall extends Block.Split {
-  /** An Op.Result that calls the exlined generated code with appropriate args. */
+  /// An Op.Result that calls the exlined generated code with appropriate args.
   private Op.Result call;
 
-  /** The expected representation for the exlined method's results. */
+  /// The expected representation for the exlined method's results.
   final ImmutableList<Template> expectedResultsTemplate;
 
-  /**
-   * The register in which we will store the result of {@link TState#takeStackRest}, or null if this
-   * is a detached call.
-   */
+  /// The register in which we will store the result of [TState#takeStackRest], or null if this is a
+  /// detached call.
   final Register stackRest;
 
   ExlinedCall(
@@ -157,7 +148,7 @@ class ExlinedCall extends Block.Split {
     return String.format(";%s unwind:%s", nextLink, alternate.toString(options));
   }
 
-  /** Emit the code to call an exlined method. */
+  /// Emit the code to call an exlined method.
   static void emitCall(CodeGen codeGen, CodeGenTarget target, Object[] args) {
     int numArgs = target.args.size();
     CodeBuilder cb = codeGen.cb;
@@ -214,7 +205,7 @@ class ExlinedCall extends Block.Split {
     currentCall.done.addBranch(codeGen);
   }
 
-  /** A CopyEmitter that reads source NumVars and RefVars from the TState's function results. */
+  /// A CopyEmitter that reads source NumVars and RefVars from the TState's function results.
   private static class FromFnResults extends CopyEmitter implements Template.VarVisitor {
     private boolean hasNumVar;
     private int maxRefVar = -1;

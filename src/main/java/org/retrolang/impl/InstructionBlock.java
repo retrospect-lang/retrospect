@@ -27,13 +27,11 @@ import org.retrolang.impl.Instruction.BranchTarget;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
 
-/**
- * A sequence of Instructions that can be executed. Constructed by a VmInstructionBlock.
- *
- * <p>The InstructionBlock is created at the same time as the VmInstructionBlock, but the {@link
- * #locals}, {@link #instructions}, {@link #liveArgs}, and {@link #numBranchTargets} fields are only
- * filled in when {@link VmInstructionBlock#done} is called.
- */
+/// A sequence of Instructions that can be executed. Constructed by a VmInstructionBlock.
+///
+/// The InstructionBlock is created at the same time as the VmInstructionBlock, but the [#locals],
+/// [#instructions], [#liveArgs], and [#numBranchTargets] fields are only filled in when
+/// [VmInstructionBlock#done] is called.
 class InstructionBlock implements MethodImpl {
   final int numArgs;
   final int numResults;
@@ -48,18 +46,16 @@ class InstructionBlock implements MethodImpl {
   private int numBranchTargets;
   private int numValueMemos;
 
-  /**
-   * Creates a new InstructionBlock.
-   *
-   * @param numArgs The number of args that will be passed to {@link #applyToArgs}. If this
-   *     InstructionBlock is used to define a method (via {@link Vm.InstructionBlock#addMethod}),
-   *     must match the function's {@code numArgs}.
-   * @param numResults The number of results that will be returned from {@link #applyToArgs}. If
-   *     this InstructionBlock is used to define a method (via {@link
-   *     Vm.InstructionBlock#addMethod}), must match the function's {@code numResults}.
-   * @param source An identifier for where the source code may be found; will appear in stack
-   *     traces.
-   */
+  /// Creates a new InstructionBlock.
+  ///
+  /// @param numArgs The number of args that will be passed to [#applyToArgs]. If this
+  ///   InstructionBlock is used to define a method (via [Vm.InstructionBlock#addMethod]), must
+  ///   match the function's `numArgs`.
+  /// @param numResults The number of results that will be returned from [#applyToArgs]. If this
+  ///   InstructionBlock is used to define a method (via [Vm.InstructionBlock#addMethod]), must
+  ///   match the function's `numResults`.
+  /// @param source An identifier for where the source code may be found; will appear in stack
+  ///   traces.
   InstructionBlock(int numArgs, int numResults, String source, VmModule module) {
     this.numArgs = numArgs;
     this.numResults = numResults;
@@ -67,20 +63,17 @@ class InstructionBlock implements MethodImpl {
     this.module = module;
   }
 
-  /**
-   * Finishes setting up this InstructionBlock. Must be called exactly once on each InstructionBlock
-   * before any methods (other than {@link #isInitialized}) are called.
-   *
-   * @param locals All of the Locals created by this InstructionBlock, in index order. The first
-   *     {@link #numArgs} locals will be intitialized with the arguments before execution begins;
-   *     all other locals will be undefined and must be assigned a value before use. If an argument
-   *     is not referred to by any instructions the corresponding entry in {@code locals} may be
-   *     null.
-   * @param liveArgs A subset of {@code 0..(numArgs-1)}, identifying which argument values are used
-   *     by the InstructionBlock; unused arguments are discarded and any corresponding local is not
-   *     initialized.
-   * @param numBranchTargets The number of {@link BranchTarget}s allocated in this InstructionBlock.
-   */
+  /// Finishes setting up this InstructionBlock. Must be called exactly once on each
+  /// InstructionBlock before any methods (other than [#isInitialized]) are called.
+  ///
+  /// @param locals All of the Locals created by this InstructionBlock, in index order. The first
+  ///   [#numArgs] locals will be intitialized with the arguments before execution begins; all other
+  ///   locals will be undefined and must be assigned a value before use. If an argument is not
+  ///   referred to by any instructions the corresponding entry in `locals` may be null.
+  /// @param liveArgs A subset of `0..(numArgs-1)`, identifying which argument values are used by
+  ///   the InstructionBlock; unused arguments are discarded and any corresponding local is not
+  ///   initialized.
+  /// @param numBranchTargets The number of [BranchTarget]s allocated in this InstructionBlock.
   void initialize(
       ImmutableList<Local> locals,
       ImmutableList<Instruction> instructions,
@@ -105,54 +98,50 @@ class InstructionBlock implements MethodImpl {
     this.numValueMemos = numValueMemos;
   }
 
-  /** Returns true if {@link #initialize} has been called. */
+  /// Returns true if [#initialize] has been called.
   boolean isInitialized() {
     return locals != null;
   }
 
-  /** Returns the specified Local. */
+  /// Returns the specified Local.
   Local getLocal(int i) {
     return locals.get(i);
   }
 
-  /** Returns the names of the specified locals, separated by commas. */
+  /// Returns the names of the specified locals, separated by commas.
   String localNames(int... indices) {
     return Arrays.stream(indices)
         .mapToObj(i -> locals.get(i).toString())
         .collect(Collectors.joining(", "));
   }
 
-  /** Returns the names of the specified locals, separated by commas. */
+  /// Returns the names of the specified locals, separated by commas.
   String localNames(Bits indices) {
     return indices.stream()
         .mapToObj(i -> locals.get(i).toString())
         .collect(Collectors.joining(", "));
   }
 
-  /** Allocates an array suitable for storing this InstructionBlock's locals. */
+  /// Allocates an array suitable for storing this InstructionBlock's locals.
   @RC.Out
   Object[] newLocalValues(Allocator allocator) {
     return allocator.allocObjectArray(locals.size());
   }
 
-  /**
-   * Returns an appropriate MethodMemo Factory for creating a VmMethod from this InstructionBlock.
-   */
+  /// Returns an appropriate MethodMemo Factory for creating a VmMethod from this InstructionBlock.
   MethodMemo.Factory memoFactory() {
     return MethodMemo.Factory.create(numArgs, numResults, numCalls, numValueMemos);
   }
 
-  /** Returns a new MethodMemo suitable for passing to {@link #applyToArgs}. */
+  /// Returns a new MethodMemo suitable for passing to [#applyToArgs].
   MethodMemo memoForApply() {
     return new MethodMemo.AnonymousFactory(numArgs, numResults, numCalls, numValueMemos).newMemo();
   }
 
-  /**
-   * Executes this InstructionBlock with the given initial values for its arguments. Should only be
-   * called on InstructionBlocks with {@link #numResults} == 1.
-   *
-   * <p>Returns the value returned by the InstructionBlock or throws a {@link Vm.RuntimeError}.
-   */
+  /// Executes this InstructionBlock with the given initial values for its arguments. Should only be
+  /// called on InstructionBlocks with [#numResults] == 1.
+  ///
+  /// Returns the value returned by the InstructionBlock or throws a [Vm.RuntimeError].
   @RC.Out
   Value applyToArgs(ResourceTracker tracker, MethodMemo memo, Vm.Value... args)
       throws Vm.RuntimeError {
@@ -217,7 +206,7 @@ class InstructionBlock implements MethodImpl {
     }
   }
 
-  /** Executes this InstructionBlock with the given initial values for its arguments. */
+  /// Executes this InstructionBlock with the given initial values for its arguments.
   @Override
   public void execute(TState tstate, ResultsInfo results, MethodMemo mMemo, @RC.In Object[] args) {
     assert Value.containsValues(args, numArgs);
@@ -246,10 +235,8 @@ class InstructionBlock implements MethodImpl {
     execute(tstate, localValues, 0, mMemo);
   }
 
-  /**
-   * Executes instructions beginning at pc. Either saves results in tstate and returns (if execution
-   * reaches a return statement), or starts unwinding.
-   */
+  /// Executes instructions beginning at pc. Either saves results in tstate and returns (if
+  /// execution reaches a return statement), or starts unwinding.
   void execute(TState tstate, @RC.In Object[] localValues, int pc, MethodMemo memo) {
     try {
       do {
@@ -324,21 +311,18 @@ class InstructionBlock implements MethodImpl {
     }
   }
 
-  /**
-   * We (lazily) create a TargetInfo for each BranchTarget in the InstructionBlock, to save the
-   * local values that will be used when emitting the instruction following the BranchTarget.
-   *
-   * <p>This could be made a record (since both its fields are final), but that doesn't really feel
-   * appropriate; the equals() method wouldn't make sense, and the Value[] it holds isn't immutable.
-   */
+  /// We (lazily) create a TargetInfo for each BranchTarget in the InstructionBlock, to save the
+  /// local values that will be used when emitting the instruction following the BranchTarget.
+  ///
+  /// This could be made a record (since both its fields are final), but that doesn't really feel
+  /// appropriate; the equals() method wouldn't make sense, and the Value[] it holds isn't
+  /// immutable.
   static class TargetInfo {
-    /**
-     * A Destination corresponding to this BranchTarget, with a value for each local that is
-     * harmonized.
-     */
+    /// A Destination corresponding to this BranchTarget, with a value for each local that is
+    /// harmonized.
     final Destination destination;
 
-    /** The values of all unharmonized locals. */
+    /// The values of all unharmonized locals.
     final Value[] unharmonizedLocals;
 
     TargetInfo(Destination destination, Value[] unharmonizedLocals) {
@@ -347,15 +331,15 @@ class InstructionBlock implements MethodImpl {
     }
   }
 
-  /** An EmitState holds the state involved in a single call to {@link #emit}. */
+  /// An EmitState holds the state involved in a single call to [#emit].
   static class EmitState {
-    /** A MethodMemo created by the result of {@link #memoFactory}. */
+    /// A MethodMemo created by the result of [#memoFactory].
     final MethodMemo memo;
 
-    /** A TargetInfo for each BranchTarget in this InstructionBlock. */
+    /// A TargetInfo for each BranchTarget in this InstructionBlock.
     final TargetInfo[] targets;
 
-    /** The value of each local when the current instruction is reached. */
+    /// The value of each local when the current instruction is reached.
     Value[] locals;
 
     EmitState(MethodMemo memo, Value[] locals, int numBranchTargets) {
@@ -376,18 +360,14 @@ class InstructionBlock implements MethodImpl {
     }
   }
 
-  /**
-   * Returns a readable representation of the instructions in this block; currently only used for
-   * debugging.
-   */
+  /// Returns a readable representation of the instructions in this block; currently only used for
+  /// debugging.
   String printInstructions() {
     return printInstructions(null);
   }
 
-  /**
-   * Returns a readable representation of the instructions in this block; currently only used for
-   * debugging.
-   */
+  /// Returns a readable representation of the instructions in this block; currently only used for
+  /// debugging.
   String printInstructions(MethodMemo memo) {
     return IntStream.range(0, instructions.size())
         .mapToObj(

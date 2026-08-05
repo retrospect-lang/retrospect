@@ -16,20 +16,16 @@
 
 package org.retrolang.impl;
 
-/**
- * A SimpleStackEntryType for errors, with a static instance for each error that can be thrown by
- * the VM.
- */
+/// A SimpleStackEntryType for errors, with a static instance for each error that can be thrown by
+/// the VM.
 public class Err extends BaseType.SimpleStackEntryType {
   Err(String msg, String... localNames) {
     super(msg, localNames);
   }
 
-  /**
-   * Builtin methods may report an error by throwing a BuiltinException that wraps a stack entry.
-   */
+  /// Builtin methods may report an error by throwing a BuiltinException that wraps a stack entry.
   public static final class BuiltinException extends Exception {
-    // The code that catches this exception ({@link BuiltinSupport#handleException} is
+    // The code that catches this exception (BuiltinSupport.handleException()) is
     // responsible for storing this value somewhere else.
     @RC.Counted private Value stackEntry;
 
@@ -50,13 +46,11 @@ public class Err extends BaseType.SimpleStackEntryType {
       return result;
     }
 
-    /**
-     * Push two entries on the stack: one describing this error, and one describing the method call
-     * in which it happened.
-     *
-     * @param entryType a StackEntryType for the method reporting the error
-     * @param args the args to the method
-     */
+    /// Push two entries on the stack: one describing this error, and one describing the method call
+    /// in which it happened.
+    ///
+    /// @param entryType a StackEntryType for the method reporting the error
+    /// @param args the args to the method
     void push(TState tstate, StackEntryType entryType, @RC.In Object[] args) {
       assert !tstate.unwindStarted();
       Value entry;
@@ -71,7 +65,7 @@ public class Err extends BaseType.SimpleStackEntryType {
     }
   }
 
-  /** Returns a BuiltinException corresponding to this Err. */
+  /// Returns a BuiltinException corresponding to this Err.
   public BuiltinException asException() {
     // TODO (mdixon): since we throw away these exceptions without ever looking at their Java
     // stacks, would it be worth precreating them (for singleton Errs)?  We'd just need to change
@@ -79,33 +73,33 @@ public class Err extends BaseType.SimpleStackEntryType {
     return new BuiltinException(asValue());
   }
 
-  /** Returns a BuiltinException corresponding to this Err. */
+  /// Returns a BuiltinException corresponding to this Err.
   public BuiltinException asException(TState tstate, @RC.In Value... locals) {
     return new BuiltinException(tstate.compound(this, locals));
   }
 
-  /** Throws {@link #asException} unless {@code check} is true. */
+  /// Throws [#asException] unless `check` is true.
   public void unless(boolean check) throws BuiltinException {
     if (!check) {
       throw asException();
     }
   }
 
-  /** Throws {@link #asException} unless {@code check} is true. */
+  /// Throws [#asException] unless `check` is true.
   public void unless(Condition check) throws BuiltinException {
     if (check != Condition.TRUE) {
       doCheck(check);
     }
   }
 
-  /** Throws {@link #asException} if {@code check} is true. */
+  /// Throws [#asException] if `check` is true.
   public void when(boolean check) throws BuiltinException {
     if (check) {
       throw asException();
     }
   }
 
-  /** Throws {@link #asException} if {@code check} is true. */
+  /// Throws [#asException] if `check` is true.
   public void when(Condition check) throws BuiltinException {
     if (check != Condition.FALSE) {
       doCheck(check.not());
@@ -177,7 +171,7 @@ public class Err extends BaseType.SimpleStackEntryType {
 
   public static final Err REPEATED_EMPTY_PARSE = new Err("Repeated parser matches empty string");
 
-  /** {@code futureStack} is an array of stack entries, from top to base. */
+  /// `futureStack` is an array of stack entries, from top to base.
   public static final Err FUTURE_ERROR =
       new Err("Error while computing future() value", "futureStack");
 }

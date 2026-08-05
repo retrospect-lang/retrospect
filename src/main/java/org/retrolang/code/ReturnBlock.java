@@ -21,18 +21,13 @@ import org.objectweb.asm.Opcodes;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeBuilder.PrintOptions;
 
-/**
- * A Block that emits a return opcode (RETURN, IRETURN, LRETURN, FRETURN, DRETURN, or ARETURN, as
- * appropriate).
- */
+/// A Block that emits a return opcode (RETURN, IRETURN, LRETURN, FRETURN, DRETURN, or ARETURN, as
+/// appropriate).
 public class ReturnBlock extends Block.Terminal {
   private CodeValue returnedValue;
 
-  /**
-   * Creates a ReturnBlock. If {@code returnedValue} is non-null, its type must be compatible with
-   * the {@code returnType} passed to {@link CodeBuilder#load}; if it is null, {@code returnType}
-   * must be void.
-   */
+  /// Creates a ReturnBlock. If `returnedValue` is non-null, its type must be compatible with the
+  /// `returnType` passed to [CodeBuilder#load]; if it is null, `returnType` must be void.
   public ReturnBlock(CodeValue returnedValue) {
     this.returnedValue = returnedValue;
   }

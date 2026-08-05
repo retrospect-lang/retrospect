@@ -19,17 +19,12 @@ package org.retrolang.util;
 import java.util.List;
 import java.util.function.IntToLongFunction;
 
-/**
- * A static-only class with methods for working with arrays and lists that have elements sorted in
- * ascending sortOrder.
- */
+/// A static-only class with methods for working with arrays and lists that have elements sorted in
+/// ascending sortOrder.
 public class Ordered {
-  /**
-   * Searches the results of {@code keyFn} from 0 to {@code limit-1} for {@code key}, assuming that
-   * it returns values in strictly increasing order. If a match is found, returns its index;
-   * otherwise returns {@code -(i+1)} where {@code i} is the index at which {@code key} should be
-   * inserted to preserve ordering.
-   */
+  /// Searches the results of `keyFn` from 0 to `limit-1` for `key`, assuming that it returns values
+  /// in strictly increasing order. If a match is found, returns its index; otherwise returns
+  /// `-(i+1)` where `i` is the index at which `key` should be inserted to preserve ordering.
   public static int search(long key, IntToLongFunction keyFn, int limit) {
     // It's 2022 and I'm still writing binary search.
     int start = 0;
@@ -53,11 +48,8 @@ public class Ordered {
     return -(start + 1);
   }
 
-  /**
-   * If {@code index} is non-negative, replaces the specified element of {@code list}; otherwise
-   * inserts a new element. The interpretation of {@code index} matches the result of {@link
-   * #search}.
-   */
+  /// If `index` is non-negative, replaces the specified element of `list`; otherwise inserts a new
+  /// element. The interpretation of `index` matches the result of [#search].
   public static <T> void setOrAdd(List<T> list, int index, T newElement) {
     if (index >= 0) {
       list.set(index, newElement);

@@ -18,53 +18,42 @@ package org.retrolang.impl;
 
 import org.retrolang.util.SizeOf;
 
-/**
- * An Allocator provides methods to allocate byte and Object arrays, and to record the allocation of
- * RefCounted objects. Methods that create {@link RefCounted}s should take an Allocator as an
- * argument and call the appropriate methods to reflect their memory use.
- *
- * <p>Allocators that limit memory use will not throw exceptions even when their limit is exceeded;
- * it is the caller's responsibility to call {@link MemoryHelper#checkAvailable} at appropriate
- * points.
- */
+/// An Allocator provides methods to allocate byte and Object arrays, and to record the allocation
+/// of RefCounted objects. Methods that create [RefCounted]s should take an Allocator as an argument
+/// and call the appropriate methods to reflect their memory use.
+///
+/// Allocators that limit memory use will not throw exceptions even when their limit is exceeded; it
+/// is the caller's responsibility to call [MemoryHelper#checkAvailable] at appropriate points.
 public interface Allocator {
 
-  /**
-   * Returns a byte[] of at least the given length and records its memory use.
-   *
-   * <p>The caller should not assume that the returned byte[] has been zero-filled.
-   */
+  /// Returns a byte[] of at least the given length and records its memory use.
+  ///
+  /// The caller should not assume that the returned byte[] has been zero-filled.
   @RC.Out
   byte[] allocByteArray(int length);
 
-  /** Returns a null-filled Object[] of at least the given length and records its memory use. */
+  /// Returns a null-filled Object[] of at least the given length and records its memory use.
   @RC.Out
   Object[] allocObjectArray(int length);
 
-  /**
-   * Records the allocation of a new RefCounted. {@link SizeOf#isValidSize} should return true for
-   * the given size.
-   */
+  /// Records the allocation of a new RefCounted. [SizeOf#isValidSize] should return true for the
+  /// given size.
   void recordAlloc(RefCounted obj, long size);
 
-  /**
-   * Records a change in memory use of a previously-allocated object.
-   *
-   * <p>{@code sizeDelta} is the change in the number of bytes, positive if {@code obj} is now
-   * larger; {@link SizeOf#isValidSize} should be true of the new size.
-   */
+  /// Records a change in memory use of a previously-allocated object.
+  ///
+  /// `sizeDelta` is the change in the number of bytes, positive if `obj` is now larger;
+  /// [SizeOf#isValidSize] should be true of the new size.
   void adjustAlloc(RefCounted obj, long sizeDelta);
 
-  /** Returns true if objects created with this allocator are counted. */
+  /// Returns true if objects created with this allocator are counted.
   boolean isCounted();
 
   static final byte[] EMPTY_BYTES = new byte[0];
   static final Object[] EMPTY_OBJECTS = new Object[0];
 
-  /**
-   * Returns a trivial implementation of Allocator that has no limits, and whose {@link
-   * #recordAlloc} method calls {@link RefCounted#setUncounted} or {@link RefCounted#setTransient}.
-   */
+  /// Returns a trivial implementation of Allocator that has no limits, and whose [#recordAlloc]
+  /// method calls [RefCounted#setUncounted] or [RefCounted#setTransient].
   private static Allocator trivialAllocator(boolean createTransient) {
     return new Allocator() {
       @Override
@@ -99,12 +88,10 @@ public interface Allocator {
     };
   }
 
-  /**
-   * A trivial implementation of Allocator that has no limits, and whose {@link #recordAlloc} method
-   * calls {@link RefCounted#setUncounted}.
-   */
+  /// A trivial implementation of Allocator that has no limits, and whose [#recordAlloc] method
+  /// calls [RefCounted#setUncounted].
   public Allocator UNCOUNTED = trivialAllocator(false);
 
-  /** Like UNCOUNTED, except that {@link #recordAlloc} calls {@link RefCounted#setTransient}. */
+  /// Like UNCOUNTED, except that [#recordAlloc] calls [RefCounted#setTransient].
   public Allocator TRANSIENT = trivialAllocator(true);
 }

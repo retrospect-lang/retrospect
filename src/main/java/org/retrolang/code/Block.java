@@ -26,81 +26,67 @@ import org.retrolang.code.Loop.BackRef;
 import org.retrolang.code.TestBlock.IsEq;
 import org.retrolang.util.Bits;
 
-/**
- * A Block represents one step in the program being constructed; when the program is emitted each
- * Block will contribute a sequence of bytecodes (from its {@link #emit} method). Blocks are
- * connected to other Blocks by {@link Link}s, forming a directed graph; each Link represents a
- * possible flow of control. There are subclass of Block with zero Links ({@link Terminal}), one
- * Link ({@link NonTerminal}), and two Links ({@link Split}).
- */
+/// A Block represents one step in the program being constructed; when the program is emitted each
+/// Block will contribute a sequence of bytecodes (from its [#emit] method). Blocks are connected to
+/// other Blocks by [Link]s, forming a directed graph; each Link represents a possible flow of
+/// control. There are subclass of Block with zero Links ([Terminal]), one Link ([NonTerminal]), and
+/// two Links ([Split]).
 public abstract class Block extends Zone.Ordered {
 
-  /** The index of this block in the {@link CodeBuilder#blocks} list. */
+  /// The index of this block in the [CodeBuilder#blocks] list.
   private int index = -1;
 
-  /**
-   * If non-null, the registers that are live at the start of this block. A register is live if its
-   * contents may be read by at least one possible execution path.
-   *
-   * <p>Note that for blocks inside a loop this may be incomplete until the CodeBuilder's FINALIZING
-   * phase; see {@link Loop#extraLive()} for details.
-   */
+  /// If non-null, the registers that are live at the start of this block. A register is live if its
+  /// contents may be read by at least one possible execution path.
+  ///
+  /// Note that for blocks inside a loop this may be incomplete until the CodeBuilder's FINALIZING
+  /// phase; see [Loop#extraLive()] for details.
   Bits live;
 
-  /**
-   * Optional information about the source code that produced this block; does not affect code
-   * generation, but is included when printing to assist with debugging.
-   *
-   * <p>If this object implements {@link CodeBuilder.Printable} its rendering as a string may depend
-   * on the state of the CodeBuilder.
-   */
+  /// Optional information about the source code that produced this block; does not affect code
+  /// generation, but is included when printing to assist with debugging.
+  ///
+  /// If this object implements [CodeBuilder.Printable] its rendering as a string may depend on the
+  /// state of the CodeBuilder.
   Object src;
 
-  /** Add this (newly-created) block to the CodeBuilder's blocks list. */
+  /// Add this (newly-created) block to the CodeBuilder's blocks list.
   public void addTo(CodeBuilder cb) {
     cb.addAsNext(this);
   }
 
-  /**
-   * Returns the number of expressions associated with this block.
-   *
-   * <p>For example, a {@link SetBlock} has a single input for the right hand side; a {@link
-   * ReturnBlock} block has zero or one inputs (depending on whether the method being compiled has a
-   * void return type or not), and an {@link IsEq} test has two inputs.
-   *
-   * <p>The default implementation returns zero.
-   */
+  /// Returns the number of expressions associated with this block.
+  ///
+  /// For example, a [SetBlock] has a single input for the right hand side; a [ReturnBlock] block
+  /// has zero or one inputs (depending on whether the method being compiled has a void return type
+  /// or not), and an [IsEq] test has two inputs.
+  ///
+  /// The default implementation returns zero.
   public int numInputs() {
     return 0;
   }
 
-  /**
-   * Returns one of the expressions associated with this block; {@code index} must be less than
-   * {@link #numInputs}.
-   */
+  /// Returns one of the expressions associated with this block; `index` must be less than
+  /// [#numInputs].
   public CodeValue input(int index) {
     throw new AssertionError();
   }
 
-  /**
-   * Updates one of the expressions associated with this block; {@code index} must be less than
-   * {@link #numInputs}.
-   */
+  /// Updates one of the expressions associated with this block; `index` must be less than
+  /// [#numInputs].
   public void setInput(int index, CodeValue input) {
     throw new AssertionError();
   }
 
-  /** Simplifies each of the expressions associated with this block. */
+  /// Simplifies each of the expressions associated with this block.
   protected void simplifyInputs(IntFunction<ValueInfo> registerInfo) {
     for (int i = numInputs() - 1; i >= 0; i--) {
       setInput(i, input(i).simplify(registerInfo));
     }
   }
 
-  /**
-   * Emits the bytecode to implement this block. If the emitted bytecode expects to fall through to
-   * another block, returns that block; otherwise returns null.
-   */
+  /// Emits the bytecode to implement this block. If the emitted bytecode expects to fall through to
+  /// another block, returns that block; otherwise returns null.
   @CanIgnoreReturnValue
   public Block emit(Emitter emitter) {
     // The only case in which it's valid to not override the emit() method is for Blocks that are
@@ -109,34 +95,28 @@ public abstract class Block extends Zone.Ordered {
     return ((NonTerminal) this).next.targetBlock();
   }
 
-  /**
-   * If this block modifies register values, calls the consumer with each of the registers it can
-   * modify. The default implementation does nothing.
-   */
+  /// If this block modifies register values, calls the consumer with each of the registers it can
+  /// modify. The default implementation does nothing.
   public void forEachModifiedRegister(Consumer<Register> consumer) {}
 
-  /**
-   * True if this block may read at least one of the registers in its inputs after modifying a
-   * register in its outputs. Not used if this block does not modify register values.
-   *
-   * <p>The default implementation returns false.
-   */
+  /// True if this block may read at least one of the registers in its inputs after modifying a
+  /// register in its outputs. Not used if this block does not modify register values.
+  ///
+  /// The default implementation returns false.
   public boolean mayReadAfterWrite() {
     return false;
   }
 
-  /** Null if this Block is not in any Loop; otherwise the innermost Loop that contains it. */
+  /// Null if this Block is not in any Loop; otherwise the innermost Loop that contains it.
   public final Loop containingLoop() {
     return zone().containingLoop;
   }
 
-  /**
-   * Returns a printable description of the links from this block, suitable for appending to the
-   * result of {@link #toString(CodeBuilder.PrintOptions)}.
-   */
+  /// Returns a printable description of the links from this block, suitable for appending to the
+  /// result of [#toString(CodeBuilder.PrintOptions)].
   public abstract String linksToString(CodeBuilder.PrintOptions options);
 
-  /** Returns a printable description of this block. */
+  /// Returns a printable description of this block.
   public abstract String toString(CodeBuilder.PrintOptions options);
 
   @Override
@@ -144,15 +124,13 @@ public abstract class Block extends Zone.Ordered {
     return toString(PrintOptions.DEFAULT) + linksToString(PrintOptions.DEFAULT);
   }
 
-  /**
-   * The index of this block in the {@link CodeBuilder#blocks} list; negative if this block has not
-   * yet been inserted or has been removed.
-   */
+  /// The index of this block in the [CodeBuilder#blocks] list; negative if this block has not yet
+  /// been inserted or has been removed.
   public final int index() {
     return index;
   }
 
-  /** Enables CodeBuilder to update {@link #index}; not for general use. */
+  /// Enables CodeBuilder to update [#index]; not for general use.
   final void setIndex(int index) {
     this.index = index;
   }
@@ -182,10 +160,8 @@ public abstract class Block extends Zone.Ordered {
     super.setZone(newZone);
   }
 
-  /**
-   * We are about to move this Block to {@code newZone}, and {@code link} is one of its outlinks;
-   * add or remove {@code link} from loop entry & exit lists as appropriate.
-   */
+  /// We are about to move this Block to `newZone`, and `link` is one of its outlinks; add or remove
+  /// `link` from loop entry and exit lists as appropriate.
   private void updateOutLinkTransition(Link link, Zone newZone) {
     // If link isn't yet attached there's nothing to do.
     if (link.target() instanceof Block) {
@@ -195,50 +171,42 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * If this block's next or alternate link is unset, sets it to {@code links}. If this block has no
-   * unset outlinks, does nothing. Throws an exception if both are unset.
-   */
+  /// If this block's next or alternate link is unset, sets it to `links`. If this block has no
+  /// unset outlinks, does nothing. Throws an exception if both are unset.
   void setNext(FutureBlock links) {}
 
-  /** Called when a block is removed; the default implementation does nothing. */
+  /// Called when a block is removed; the default implementation does nothing.
   protected void removed() {}
 
-  /** Should return true if calling {@link #emit} will emit no bytecode. */
+  /// Should return true if calling [#emit] will emit no bytecode.
   public boolean isNoOp() {
     return false;
   }
 
-  /**
-   * The result of the {@link NonTerminal#updateInfo} (forward propagation) and {@link #updateLive}
-   * (reverse propagation) methods; one of
-   *
-   * <ul>
-   *   <li>DONE: This block's outlink {@link Link#info} (for forward propagation) or {@link #live}
-   *       (for reverse propagation) has been updated.
-   *   <li>REMOVE: This block is no longer needed (e.g. it sets a register that no one reads) and
-   *       can be removed from the graph. Any remaining inlinks will be redirected to the target of
-   *       its (next) outlink.
-   *   <li>SKIP: Skips any further steps in propagation for this block, and continues propagation
-   *       with the next block on the queue.
-   * </ul>
-   */
+  /// The result of the [NonTerminal#updateInfo] (forward propagation) and [#updateLive] (reverse
+  /// propagation) methods; one of
+  ///
+  /// - DONE: This block's outlink [Link#info] (for forward propagation) or [#live] (for reverse
+  ///   propagation) has been updated.
+  /// - REMOVE: This block is no longer needed (e.g. it sets a register that no one reads) and can
+  ///   be removed from the graph. Any remaining inlinks will be redirected to the target of its
+  ///   (next) outlink.
+  /// - SKIP: Skips any further steps in propagation for this block, and continues propagation with
+  ///   the next block on the queue.
   public enum PropagationResult {
     DONE,
     REMOVE,
     SKIP
   }
 
-  /**
-   * Called by {@link #runReverseProp} to set {@link #live} to the registers that are live at the
-   * beginning of this block's execution. The live sets of this block's outlinks have already been
-   * set. If the block is now a no-op (e.g. because it sets a register that is not live on its
-   * outlink) it can instead return REMOVE.
-   *
-   * <p>The default implementation unions the live sets from each outlink, removes any register that
-   * is set by the block, and adds any registers referenced by the block's inputs. It always returns
-   * DONE.
-   */
+  /// Called by [#runReverseProp] to set [#live] to the registers that are live at the beginning of
+  /// this block's execution. The live sets of this block's outlinks have already been set. If the
+  /// block is now a no-op (e.g. because it sets a register that is not live on its outlink) it can
+  /// instead return REMOVE.
+  ///
+  /// The default implementation unions the live sets from each outlink, removes any register that
+  /// is set by the block, and adds any registers referenced by the block's inputs. It always
+  /// returns DONE.
   PropagationResult updateLive() {
     Bits.Builder live = cb().scratchBits;
     live.clearAll();
@@ -257,7 +225,7 @@ public abstract class Block extends Zone.Ordered {
     return PropagationResult.DONE;
   }
 
-  /** Returns the registers that are live at the beginning of this block's execution. */
+  /// Returns the registers that are live at the beginning of this block's execution.
   public Bits live() {
     // During BUILDING and OPTIMIZING the live set is incomplete (it doesn't include the extraLive
     // of our containing loops).
@@ -265,10 +233,7 @@ public abstract class Block extends Zone.Ordered {
     return live;
   }
 
-  /**
-   * Sets the bits in {@code builder} that correspond to registers for which {@link #isLive} would
-   * return true.
-   */
+  /// Sets the bits in `builder` that correspond to registers for which [#isLive] would return true.
   public void getLive(Bits.Builder builder, Zone originZone) {
     Bits.Op.UNION.into(builder, live);
     for (Loop loop = containingLoop();
@@ -278,15 +243,13 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * Called when the given register has been set to the given value immediately before this block.
-   * If this block has a single occurrence of {@code register} in its input values, and the register
-   * is not live on any of this block's outlinks, it may replace the occurrence of {@code register}
-   * with {@code value} and return {@link SubstitutionOutcome#YES}. If this block has no occurrences
-   * of {@code register} in its input values, has no side effects that might change the value of
-   * {@code value}, and has only a single outlink, may return {@link
-   * SubstitutionOutcome#KEEP_TRYING}. Otherwise must return {@link SubstitutionOutcome#NO}.
-   */
+  /// Called when the given register has been set to the given value immediately before this block.
+  /// If this block has a single occurrence of `register` in its input values, and the register is
+  /// not live on any of this block's outlinks, it may replace the occurrence of `register` with
+  /// `value` and return [SubstitutionOutcome#YES]. If this block has no occurrences of `register`
+  /// in its input values, has no side effects that might change the value of `value`, and has only
+  /// a single outlink, may return [SubstitutionOutcome#KEEP_TRYING]. Otherwise must return
+  /// [SubstitutionOutcome#NO].
   protected SubstitutionOutcome trySubstitute(Register register, CodeValue value) {
     // Putting a default method here is handy for block types (such as Initial) where it will never
     // be called anyway.
@@ -298,45 +261,35 @@ public abstract class Block extends Zone.Ordered {
     return SubstitutionOutcome.NO;
   }
 
-  /** The possible return values of {@link #trySubstitute} and {@link CodeValue#couldSubstitute}. */
+  /// The possible return values of [#trySubstitute] and [CodeValue#couldSubstitute].
   protected enum SubstitutionOutcome {
-    /**
-     * If returned from {@link #trySubstitute} indicates that there was only one use of the register
-     * and it has now been replaced, so the SetBlock for the register can be removed.
-     *
-     * <p>If returned from {@link CodeValue#couldSubstitute} indicates that there is exactly one
-     * occurrence of the register in this CodeValue and it could be safely replaced by the given
-     * value.
-     *
-     * <p>(Note that we don't consider substitution if the register occurs more than once, because
-     * we don't know how expensive it is to compute the value (which is always an Op.Result). Even
-     * for simple cases, duplicating the sequence of byte codes to compute value will almost always
-     * result in as much or more code than storing the result and retrieving it.)
-     */
+    /// If returned from [#trySubstitute] indicates that there was only one use of the register and
+    /// it has now been replaced, so the SetBlock for the register can be removed.
+    ///
+    /// If returned from [CodeValue#couldSubstitute] indicates that there is exactly one occurrence
+    /// of the register in this CodeValue and it could be safely replaced by the given value.
+    ///
+    /// (Note that we don't consider substitution if the register occurs more than once, because we
+    /// don't know how expensive it is to compute the value (which is always an Op.Result). Even for
+    /// simple cases, duplicating the sequence of byte codes to compute value will almost always
+    /// result in as much or more code than storing the result and retrieving it.)
     YES,
 
-    /**
-     * Indicates that substitution is not feasible, e.g. because there are multiple uses of the
-     * register or because an intervening side effect might change the evaluation of value.
-     */
+    /// Indicates that substitution is not feasible, e.g. because there are multiple uses of the
+    /// register or because an intervening side effect might change the evaluation of value.
     NO,
 
-    /**
-     * If returned from {@link #trySubstitute} indicates that this block does not use register, but
-     * does not do anything that might affect its value and is a non-Split NonTerminal, so the
-     * caller may consider calling {@link #trySubstitute} on the following block.
-     *
-     * <p>If returned from {@link CodeValue#couldSubstitute} indicates that there are no occurrences
-     * of register in this CodeValue and no calls to side-effecting Ops.
-     */
+    /// If returned from [#trySubstitute] indicates that this block does not use register, but does
+    /// not do anything that might affect its value and is a non-Split NonTerminal, so the caller
+    /// may consider calling [#trySubstitute] on the following block.
+    ///
+    /// If returned from [CodeValue#couldSubstitute] indicates that there are no occurrences of
+    /// register in this CodeValue and no calls to side-effecting Ops.
     KEEP_TRYING;
 
-    /**
-     * If either argument is KEEP_TRYING, returns the other argument; otherwise returns NO. Used to
-     * combine the results of {@link CodeValue#couldSubstitute} on two separate values. (Note that
-     * {@code YES.and(YES)} is {@code NO}, since that would indicate that there are two uses of the
-     * register.)
-     */
+    /// If either argument is KEEP\_TRYING, returns the other argument; otherwise returns NO. Used
+    /// to combine the results of [CodeValue#couldSubstitute] on two separate values. (Note that
+    /// `YES.and(YES)` is `NO`, since that would indicate that there are two uses of the register.)
     public SubstitutionOutcome combine(SubstitutionOutcome other) {
       if (this == KEEP_TRYING) {
         return other;
@@ -348,14 +301,11 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * Returns true if the specified register is live at the beginning of this block's execution.
-   *
-   * <p>If {@code originZone} is non-null and this block and {@code originZone} are contained in the
-   * same loop, may return false for registers that are unchanged in that loop even if they are
-   * live. (This enables us to determine the result without having done a global analysis of the
-   * program.)
-   */
+  /// Returns true if the specified register is live at the beginning of this block's execution.
+  ///
+  /// If `originZone` is non-null and this block and `originZone` are contained in the same loop,
+  /// may return false for registers that are unchanged in that loop even if they are live. (This
+  /// enables us to determine the result without having done a global analysis of the program.)
   boolean isLive(int registerIndex, Zone originZone) {
     if (live.test(registerIndex)) {
       return true;
@@ -370,10 +320,8 @@ public abstract class Block extends Zone.Ordered {
     return false;
   }
 
-  /**
-   * Returns a function that, given a register index, returns the union of the infos for that
-   * register across all of this block's inlinks. May return a Register as an info.
-   */
+  /// Returns a function that, given a register index, returns the union of the infos for that
+  /// register across all of this block's inlinks. May return a Register as an info.
   IntFunction<ValueInfo> inlinkRegisterInfosUnresolved() {
     if (!inLink.hasSibling()) {
       // If we've only got one inlink no union is needed
@@ -384,11 +332,9 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * Gets the info for the given register from each of this blocks's inLinks and unions the results;
-   * returns null if any of those calls returns null. If {@code resolveRegisters} is true, will not
-   * return a Register as an info.
-   */
+  /// Gets the info for the given register from each of this blocks's inLinks and unions the
+  /// results; returns null if any of those calls returns null. If `resolveRegisters` is true, will
+  /// not return a Register as an info.
   ValueInfo getInLinkInfo(int index, boolean resolveRegisters) {
     return super.getInLinkInfo(index, cb().binaryOps, resolveRegisters);
   }
@@ -427,11 +373,9 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * Queue the blocks immediately preceding this one for their own checkLive() call, except that if
-   * one of those blocks is a BackRef (i.e. we're at the start of a loop) queue the Loop processor
-   * instead of the BackRef.
-   */
+  /// Queue the blocks immediately preceding this one for their own checkLive() call, except that if
+  /// one of those blocks is a BackRef (i.e. we're at the start of a loop) queue the Loop processor
+  /// instead of the BackRef.
   private void checkLiveInlinks() {
     forEachInLink(
         link -> {
@@ -443,7 +387,7 @@ public abstract class Block extends Zone.Ordered {
         });
   }
 
-  /** A subclass for Blocks with no outlinks (i.e. {@link ReturnBlock} or {@link ThrowBlock}). */
+  /// A subclass for Blocks with no outlinks (i.e. [ReturnBlock] or [ThrowBlock]).
   public abstract static class Terminal extends Block {
     @Override
     public String linksToString(CodeBuilder.PrintOptions options) {
@@ -451,15 +395,13 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /** A subclass for Blocks with at least one outlink. */
+  /// A subclass for Blocks with at least one outlink.
   public abstract static class NonTerminal extends Block {
-    /**
-     * A Link to the block following this one.
-     *
-     * <p>If this is a {@link Split}, {@code next} will be followed in the "normal" case, e.g. if
-     * the test succeeds (for a {@link TestBlock}) or the expressions doesn't throw an exception
-     * (for a {@link SetBlock.WithCatch}).
-     */
+    /// A Link to the block following this one.
+    ///
+    /// If this is a [Split], `next` will be followed in the "normal" case, e.g. if the test
+    /// succeeds (for a [TestBlock]) or the expressions doesn't throw an exception (for a
+    /// [SetBlock.WithCatch]).
     public final Link next = new Link(this);
 
     @Override
@@ -469,25 +411,21 @@ public abstract class Block extends Zone.Ordered {
       }
     }
 
-    /**
-     * Called by the default implementation of {@link #runForwardProp} after the LinkInfo on this
-     * block's outlink(s) has been initialized to match those of its inlinks. Should change the
-     * outlink info to reflect the results of executing this block; may also use that info to
-     * simplify CodeValues and/or redirect some or all of the block's inlinks.
-     *
-     * <p>The default implementation throws an AssertionError; subclasses must override either this
-     * method or {@link #runForwardProp}.
-     */
+    /// Called by the default implementation of [#runForwardProp] after the LinkInfo on this block's
+    /// outlink(s) has been initialized to match those of its inlinks. Should change the outlink
+    /// info to reflect the results of executing this block; may also use that info to simplify
+    /// CodeValues and/or redirect some or all of the block's inlinks.
+    ///
+    /// The default implementation throws an AssertionError; subclasses must override either this
+    /// method or [#runForwardProp].
     protected PropagationResult updateInfo() {
       throw new AssertionError();
     }
 
-    /**
-     * A convenience method for {@link #updateInfo} implementations that want to replace this block
-     * with another (presumably simpler) block. Initializes {@code newBlock}'s zone, order, inlinks,
-     * and outlinks, and adds it to the graph. Returns {@link PropagationResult#REMOVE}, which is
-     * what @link #updateInfo} should return after calling this.
-     */
+    /// A convenience method for [#updateInfo] implementations that want to replace this block with
+    /// another (presumably simpler) block. Initializes `newBlock`'s zone, order, inlinks, and
+    /// outlinks, and adds it to the graph. Returns [PropagationResult#REMOVE], which is what @link
+    /// #updateInfo} should return after calling this.
     protected final PropagationResult replaceWith(NonTerminal newBlock) {
       newBlock.setZone(zone());
       newBlock.setOrder(order());
@@ -501,21 +439,16 @@ public abstract class Block extends Zone.Ordered {
       return PropagationResult.REMOVE;
     }
 
-    /**
-     * Returns true if this block is simple enough to be considered for duplication by {@link
-     * SimpleDuplicator}. Blocks that return true must not be Splits, and should emit few or no byte
-     * codes.
-     */
+    /// Returns true if this block is simple enough to be considered for duplication by
+    /// [SimpleDuplicator]. Blocks that return true must not be Splits, and should emit few or no
+    /// byte codes.
     boolean isSimple() {
       return false;
     }
 
-    /**
-     * Returns a new block with the same behavior as this; only called on blocks that return true
-     * from {@link #isSimple}. The result will have been fully initialized and added to the
-     * CodeBuilder with the same zone and order as this block, but not yet linked to any other
-     * blocks.
-     */
+    /// Returns a new block with the same behavior as this; only called on blocks that return true
+    /// from [#isSimple]. The result will have been fully initialized and added to the CodeBuilder
+    /// with the same zone and order as this block, but not yet linked to any other blocks.
     final NonTerminal duplicate() {
       assert isSimple();
       NonTerminal result = duplicateImpl();
@@ -529,40 +462,32 @@ public abstract class Block extends Zone.Ordered {
       return result;
     }
 
-    /**
-     * Returns a new block with the same behavior as this; only called on blocks that return true
-     * from {@link #isSimple}.
-     *
-     * <p>This method is only responsible for creating the new block and initializing its
-     * subclass-specific fields; generic fields such as {@code next} and {@code live} will be
-     * initialized by the caller.
-     */
+    /// Returns a new block with the same behavior as this; only called on blocks that return true
+    /// from [#isSimple].
+    ///
+    /// This method is only responsible for creating the new block and initializing its
+    /// subclass-specific fields; generic fields such as `next` and `live` will be initialized by
+    /// the caller.
     NonTerminal duplicateImpl() {
       throw new AssertionError();
     }
 
-    /**
-     * Returns true if the given block is equivalent to this; only called on blocks that return true
-     * from {@link #isSimple}.
-     */
+    /// Returns true if the given block is equivalent to this; only called on blocks that return
+    /// true from [#isSimple].
     boolean isDuplicate(Block other) {
       throw new AssertionError();
     }
 
-    /**
-     * Given info for register values before this block is executed, returns info for their values
-     * after it is executed; should match the behavior of {@link #updateInfo} but may be called
-     * speculatively. Only called on blocks that return true from {@link #isSimple}.
-     */
+    /// Given info for register values before this block is executed, returns info for their values
+    /// after it is executed; should match the behavior of [#updateInfo] but may be called
+    /// speculatively. Only called on blocks that return true from [#isSimple].
     IntFunction<ValueInfo> simpleInfos(IntFunction<ValueInfo> fromInlink) {
       throw new AssertionError();
     }
 
-    /**
-     * Initializes the outlink info to match the inlink info, then calls {@link #updateInfo} to make
-     * whatever adjustments are appropriate for this Block. If the resulting infos are changed or
-     * {@code incremental} is false, marks the outlink target(s) as needing propagation.
-     */
+    /// Initializes the outlink info to match the inlink info, then calls [#updateInfo] to make
+    /// whatever adjustments are appropriate for this Block. If the resulting infos are changed or
+    /// `incremental` is false, marks the outlink target(s) as needing propagation.
     @Override
     void runForwardProp(boolean incremental) {
       assert !(this instanceof Loop.BackRef);
@@ -610,20 +535,16 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /**
-   * A Split block has two outlinks, "next" and "alternate"; the emitted code will choose one or the
-   * other path.
-   *
-   * <p>The primary subclass of Split is {@link TestBlock}, which just chooses {@code next} if a
-   * specified condition is true and {@code alternate} otherwise.
-   */
+  /// A Split block has two outlinks, "next" and "alternate"; the emitted code will choose one or
+  /// the other path.
+  ///
+  /// The primary subclass of Split is [TestBlock], which just chooses `next` if a specified
+  /// condition is true and `alternate` otherwise.
   public abstract static class Split extends NonTerminal {
-    /**
-     * A Link to an alternative block.
-     *
-     * <p>This link will be followed if the test fails (for a {@link TestBlock}) or the expression
-     * throws an exception (for a {@link SetBlock.WithCatch}).
-     */
+    /// A Link to an alternative block.
+    ///
+    /// This link will be followed if the test fails (for a [TestBlock]) or the expression throws an
+    /// exception (for a [SetBlock.WithCatch]).
     public final Link alternate = new Link(this);
 
     @Override
@@ -637,7 +558,7 @@ public abstract class Block extends Zone.Ordered {
     }
   }
 
-  /** A trivial NonTerminal that serves as the root of the Block graph. */
+  /// A trivial NonTerminal that serves as the root of the Block graph.
   public static class Initial extends NonTerminal {
     Initial() {
       // For most blocks, runForwardProp() ensures that the outlink info is properly initialized
@@ -646,7 +567,7 @@ public abstract class Block extends Zone.Ordered {
       next.info.clear(true);
     }
 
-    /** Updates the info on our outlink to reflect the argument's initial value. */
+    /// Updates the info on our outlink to reflect the argument's initial value.
     void addArg(Register arg, ValueInfo info) {
       next.info.updateInfo(arg, info);
     }

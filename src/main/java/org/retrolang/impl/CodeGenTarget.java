@@ -39,105 +39,83 @@ import org.retrolang.impl.Template.VarSink;
 import org.retrolang.impl.TemplateBuilder.VarAllocator;
 import org.retrolang.util.Bits;
 
-/**
- * A CodeGenTarget is used to configure a CodeGen. Once code generation is complete it will become
- * the current target of a CodeGenLink until we decide to regenerate the code.
- */
+/// A CodeGenTarget is used to configure a CodeGen. Once code generation is complete it will become
+/// the current target of a CodeGenLink until we decide to regenerate the code.
 class CodeGenTarget {
 
-  /**
-   * The number of times we have entered this generated code. Only maintained if {@link
-   * CodeGenGroup.Monitor#countCalls} returns true.
-   */
+  /// The number of times we have entered this generated code. Only maintained if
+  /// [CodeGenGroup.Monitor#countCalls] returns true.
   private volatile int callCount;
 
-  /**
-   * The CodeGenLink that points (or pointed to) this target.
-   *
-   * <p>When first created, a CodeGenTarget is the link's "next" target (only visible to the code we
-   * are generating, not to already-running code).
-   *
-   * <p>Once the CodeGenGroup is completed it will be promoted to be the link's "ready" target.
-   *
-   * <p>If a subsequent CodeGenGroup regenerates the link the newer version (when completed) will
-   * replace this target, which should eventually be garbage-collected.
-   */
+  /// The CodeGenLink that points (or pointed to) this target.
+  ///
+  /// When first created, a CodeGenTarget is the link's "next" target (only visible to the code we
+  /// are generating, not to already-running code).
+  ///
+  /// Once the CodeGenGroup is completed it will be promoted to be the link's "ready" target.
+  ///
+  /// If a subsequent CodeGenGroup regenerates the link the newer version (when completed) will
+  /// replace this target, which should eventually be garbage-collected.
   final CodeGenLink link;
 
-  /**
-   * Used to identify this target in code listings; ideally will be unique, but nothing depends on
-   * that. Must be a valid JVM method name, i.e. must contain at least one character and must not
-   * contain any of "{@code .;[/<>}".
-   */
+  /// Used to identify this target in code listings; ideally will be unique, but nothing depends on
+  /// that. Must be a valid JVM method name, i.e. must contain at least one character and must not
+  /// contain any of "`.;[/<>`".
   final String name;
 
-  /**
-   * A template for each of the args; numvar and refvar indices refer to the generated method's
-   * arguments, so will be between 1 and {@link #numJavaArgs} (argument 0 is always the TState).
-   */
+  /// A template for each of the args; numvar and refvar indices refer to the generated method's
+  /// arguments, so will be between 1 and [#numJavaArgs] (argument 0 is always the TState).
   final ImmutableList<Template> args;
 
-  /**
-   * A template for each of the results; numvar indices are offsets into {@link
-   * TState#fnResultBytes} and refvar indices are positions in {@link TState#fnResults}.
-   */
+  /// A template for each of the results; numvar indices are offsets into [TState#fnResultBytes] and
+  /// refvar indices are positions in [TState#fnResults].
   final ImmutableList<Template> results;
 
-  /** The number of (Java) arguments that the generated method expects. */
+  /// The number of (Java) arguments that the generated method expects.
   final int numJavaArgs;
 
-  /** The maximum number of bytes required to represent the generated code's numeric results. */
+  /// The maximum number of bytes required to represent the generated code's numeric results.
   final int resultByteSize;
 
-  /** The maximum number of pointers required to represent the generated code's Value results. */
+  /// The maximum number of pointers required to represent the generated code's Value results.
   final int resultObjSize;
 
-  /** A CallSite that will be linked to the generated code when it has been loaded. */
+  /// A CallSite that will be linked to the generated code when it has been loaded.
   final MutableCallSite mhCaller;
 
-  /** An Op that will call the generated code. */
+  /// An Op that will call the generated code.
   final Op op;
 
   enum State {
-    /** This target's MethodHandle has not yet been set and should not be used. */
+    /// This target's MethodHandle has not yet been set and should not be used.
     NEW,
-    /** Code has been generated for this target and its MethodHandle is now safe to use. */
+    /// Code has been generated for this target and its MethodHandle is now safe to use.
     READY,
-    /**
-     * The code originally generated for this target has been superseded, and its MethodHandle now
-     * points to the {@link #fallback} method.
-     */
+    /// The code originally generated for this target has been superseded, and its MethodHandle now
+    /// points to the [#fallback] method.
     FALLBACK,
-    /**
-     * The code originally generated for this target has been superseded and its MethodHandle now
-     * points to a wrapped version of the newer code.
-     */
+    /// The code originally generated for this target has been superseded and its MethodHandle now
+    /// points to a wrapped version of the newer code.
     FORWARDING
   }
 
   State state = State.NEW;
 
-  /**
-   * A counter that is incremented each time this target's generated code escapes and then completes
-   * or resumes without making changes to the MethodMemo, and reset each time some part of the
-   * memo's structure changes in a way that might affect code generation. When this counter reaches
-   * a threshold it is probably worth re-generating the code (by creating a new CodeGenTarget for
-   * our link).
-   */
+  /// A counter that is incremented each time this target's generated code escapes and then
+  /// completes or resumes without making changes to the MethodMemo, and reset each time some part
+  /// of the memo's structure changes in a way that might affect code generation. When this counter
+  /// reaches a threshold it is probably worth re-generating the code (by creating a new
+  /// CodeGenTarget for our link).
   private volatile int stabilityCounter;
 
-  /** The number of times we have started running this generated code from interpreted code. */
+  /// The number of times we have started running this generated code from interpreted code.
   private volatile int entryCount;
 
-  /**
-   * The number of times we have been unable to run this generated code from interpreted code
-   * because argument values could not be represented.
-   */
+  /// The number of times we have been unable to run this generated code from interpreted code
+  /// because argument values could not be represented.
   private volatile int rejectCount;
 
-  /**
-   * The CodeGen instance used to generate this code. Set to null when code generation completes.
-   */
+  /// The CodeGen instance used to generate this code. Set to null when code generation completes.
   CodeGen codeGen;
 
   private static final VarHandle CALL_COUNT_VAR;
@@ -202,37 +180,37 @@ class CodeGenTarget {
     this.results = results;
   }
 
-  /** May be called from our generated code to increment {@link #callCount}. */
+  /// May be called from our generated code to increment [#callCount].
   void incrementCallCount() {
     var unused = (int) CALL_COUNT_VAR.getAndAdd(this, 1);
   }
 
-  /** Returns the current value of {@link #callCount}. */
+  /// Returns the current value of [#callCount].
   int callCount() {
     return (int) CALL_COUNT_VAR.getVolatile(this);
   }
 
-  /** Returns the current value of {@link #entryCount}. */
+  /// Returns the current value of [#entryCount].
   int entryCount() {
     return (int) ENTRY_COUNT_VAR.getOpaque(this);
   }
 
-  /** Increments {@link #stabilityCounter}; see the comment there for when this is done. */
+  /// Increments [#stabilityCounter]; see the comment there for when this is done.
   void incrementStabilityCounter() {
     var unused = (int) STABILITY_COUNTER_VAR.getAndAdd(this, 1);
   }
 
-  /** Sets {@link #stabilityCounter} to zero; see the comment there for when this is done. */
+  /// Sets [#stabilityCounter] to zero; see the comment there for when this is done.
   void resetStabilityCounter() {
     STABILITY_COUNTER_VAR.setOpaque(this, 0);
   }
 
-  /** Returns the current value of {@link #stabilityCounter}. */
+  /// Returns the current value of [#stabilityCounter].
   int stabilityCounter() {
     return (int) STABILITY_COUNTER_VAR.getOpaque(this);
   }
 
-  /** Called once (from the CodeGenGroup) to generate code for this target. */
+  /// Called once (from the CodeGenGroup) to generate code for this target.
   void generateCode() {
     assert state == State.NEW;
     CodeGen codeGen = this.codeGen;
@@ -256,7 +234,7 @@ class CodeGenTarget {
     state = State.READY;
   }
 
-  /** Load the code from {@code codeGen}. */
+  /// Load the code from `codeGen`.
   private MethodHandle loadGeneratedCode(
       CodeGen codeGen, CodeGenManager.Monitor monitor, String fileName) {
     MethodHandle mh = null;
@@ -273,11 +251,9 @@ class CodeGenTarget {
     return mh;
   }
 
-  /**
-   * Returns an array suitable for passing to {@link #call}, or null if the given arguments cannot
-   * be represented by this target's args templates. The returned array is not included in the
-   * current ResourceTracker's memory use but its references are counted.
-   */
+  /// Returns an array suitable for passing to [#call], or null if the given arguments cannot be
+  /// represented by this target's args templates. The returned array is not included in the current
+  /// ResourceTracker's memory use but its references are counted.
   Object[] prepareArgs(TState tstate, Object[] argValues) {
     ArgSaver saver = new ArgSaver(numJavaArgs);
     for (int i = 0; i < args.size(); i++) {
@@ -290,7 +266,7 @@ class CodeGenTarget {
     return saver.args;
   }
 
-  /** A helper class to simplify {@link #prepareArgs}. */
+  /// A helper class to simplify [#prepareArgs].
   private static class ArgSaver implements VarSink {
     final Object[] args;
 
@@ -300,10 +276,8 @@ class CodeGenTarget {
       this.args = new Object[numArgs];
     }
 
-    /**
-     * Stores one argument value into the args array, using the given template. Returns true if
-     * successful, false if the value cannot be represented by the given template.
-     */
+    /// Stores one argument value into the args array, using the given template. Returns true if
+    /// successful, false if the value cannot be represented by the given template.
     boolean saveArg(TState tstate, Template t, Value v) {
       if (t.setValue(tstate, v, this)) {
         return true;
@@ -342,11 +316,9 @@ class CodeGenTarget {
     }
   }
 
-  /**
-   * Executes this target's generated code with the given arguments array (which should have been
-   * returned by a call to {@link #prepareArgs}); either returns a result in {@code tstate} or
-   * errors or blocks.
-   */
+  /// Executes this target's generated code with the given arguments array (which should have been
+  /// returned by a call to [#prepareArgs]); either returns a result in `tstate` or errors or
+  /// blocks.
   void call(TState tstate, Object[] preparedArgs) {
     assert preparedArgs.length == numJavaArgs && preparedArgs[0] == null;
     preparedArgs[0] = tstate;
@@ -381,14 +353,11 @@ class CodeGenTarget {
     tstate.unwoundFrom = savedUnwoundFrom;
   }
 
-  /**
-   * Returns a formatted summary of the entries, rejects, and (if enabled) calls to this generated
-   * code.
-   *
-   * <p>(Even if {@link CodeGenGroup.Monitor#countCalls} is false we still maintain the other
-   * counters just because that's the easiest thing to do and we don't expect {@link #call} to be a
-   * hotspot.)
-   */
+  /// Returns a formatted summary of the entries, rejects, and (if enabled) calls to this generated
+  /// code.
+  ///
+  /// (Even if [CodeGenGroup.Monitor#countCalls] is false we still maintain the other counters just
+  /// because that's the easiest thing to do and we don't expect [#call] to be a hotspot.)
   String counters() {
     int entries = entryCount();
     int rejects = (int) REJECT_COUNT_VAR.getOpaque(this);
@@ -396,12 +365,10 @@ class CodeGenTarget {
     return String.format("%s:(entry=%d reject=%d total=%d)", name, entries, rejects, calls);
   }
 
-  /**
-   * Sets this target's state to {@link State#FALLBACK} and redirects its MethodHandle to the {@link
-   * #fallback(Object...)} method. Usually used when a CodeGenTarget has been superseded by a newer
-   * version, but could also be used if we wanted to postpone the initial code generation for a
-   * link.
-   */
+  /// Sets this target's state to [State#FALLBACK] and redirects its MethodHandle to the
+  /// [#fallback(Object...)] method. Usually used when a CodeGenTarget has been superseded by a
+  /// newer version, but could also be used if we wanted to postpone the initial code generation for
+  /// a link.
   void setToFallback() {
     // TODO: use this (and test it!)
     synchronized (this) {
@@ -412,11 +379,9 @@ class CodeGenTarget {
     }
   }
 
-  /**
-   * If the code that was generated for this target is now obsolete, {@link #mhCaller} will be
-   * redirected to this generic handler, which finds the most recent version of the code for {@link
-   * #link} and redirects the MutableCallSite to it.
-   */
+  /// If the code that was generated for this target is now obsolete, [#mhCaller] will be redirected
+  /// to this generic handler, which finds the most recent version of the code for [#link] and
+  /// redirects the MutableCallSite to it.
   void fallback(Object... args) {
     MethodHandle handler;
     synchronized (this) {
@@ -453,10 +418,8 @@ class CodeGenTarget {
     }
   }
 
-  /**
-   * Construct a replacement MethodHandle for this target that just wraps an adapter around a more
-   * recent version of the code.
-   */
+  /// Construct a replacement MethodHandle for this target that just wraps an adapter around a more
+  /// recent version of the code.
   private MethodHandle wrap(CodeGenTarget latest) {
     // If our successor reused the callSite (because the signature was unchanged) we shouldn't
     // have been set to fallback (and if we did we would create a MethodHandle that called itself).
@@ -467,7 +430,7 @@ class CodeGenTarget {
     return loadGeneratedCode(codeGen, null, "wrap:" + latest.name);
   }
 
-  /** Emit a method that has the same signature as this target but just calls {@code latest}. */
+  /// Emit a method that has the same signature as this target but just calls `latest`.
   private void emitWrapper(CodeGen codeGen, CodeGenTarget latest) {
     // The CodeGen constructor already allocated the first arg (TState); we need to add the rest
     assert codeGen.cb.numArgs() == 1 && codeGen.cb.register(0).type() == TState.class;
@@ -607,27 +570,23 @@ class CodeGenTarget {
     return "target:" + name;
   }
 
-  /**
-   * A helper class that loads each of the vars in a given template from the TState results into a
-   * new register. If the template has a union we load the vars from all of the choices, which may
-   * cause us to load random bytes for an unused NumVar or null for an unused RefVar, but that will
-   * end up being harmless.
-   *
-   * <p>(We could be smarter and make some of the loads conditional on the other loads, but that
-   * would be more complex, it's unclear whether it would actually be faster, and if there was a
-   * performance difference I wouldn't expect it to have a measurable impact overall.)
-   *
-   * <p>To use it:
-   *
-   * <ul>
-   *   <li>Create a new ResultsLoader.
-   *   <li>Call {@link #loadAllVars} with the results template(s); this will emit code to load all
-   *       the values referenced in the template from the TState into new registers.
-   *   <li>Use {@link #loaded} to determine which register each NumVar and RefVar was loaded into.
-   *   <li>Call {@link #clearResults} to clear the TState's result state before starting to write a
-   *       new result.
-   * </ul>
-   */
+  /// A helper class that loads each of the vars in a given template from the TState results into a
+  /// new register. If the template has a union we load the vars from all of the choices, which may
+  /// cause us to load random bytes for an unused NumVar or null for an unused RefVar, but that will
+  /// end up being harmless.
+  ///
+  /// (We could be smarter and make some of the loads conditional on the other loads, but that would
+  /// be more complex, it's unclear whether it would actually be faster, and if there was a
+  /// performance difference I wouldn't expect it to have a measurable impact overall.)
+  ///
+  /// To use it:
+  ///
+  /// - Create a new ResultsLoader.
+  /// - Call [#loadAllVars] with the results template(s); this will emit code to load all the values
+  ///   referenced in the template from the TState into new registers.
+  /// - Use [#loaded] to determine which register each NumVar and RefVar was loaded into.
+  /// - Call [#clearResults] to clear the TState's result state before starting to write a new
+  ///   result.
   private static class ResultsLoader implements Template.VarVisitor {
     final CodeGen codeGen;
     final Map<Template, Register> loaded = new HashMap<>();

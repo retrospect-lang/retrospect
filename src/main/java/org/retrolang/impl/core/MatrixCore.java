@@ -27,54 +27,46 @@ import org.retrolang.impl.BuiltinMethod.Caller;
 import org.retrolang.impl.BuiltinMethod.Fn;
 import org.retrolang.impl.Err.BuiltinException;
 
-/** Core methods for Matrix. */
+/// Core methods for Matrix.
 public final class MatrixCore {
-  /**
-   * {@code function matrix(sizes)}
-   *
-   * <p>Returns a Matrix with the given sizes, where each element's value is the same as its key.
-   */
+  /// `function matrix(sizes)`
+  ///
+  /// Returns a Matrix with the given sizes, where each element's value is the same as its key.
   @Core.Public static final VmFunctionBuilder matrix1 = VmFunctionBuilder.create("matrix", 1);
 
-  /**
-   * {@code function matrix(sizes, elements)}
-   *
-   * <p>Returns a Matrix with the given sizes and elements; {@code elements} must be a Matrix with
-   * the appropriate number of elements.
-   */
+  /// `function matrix(sizes, elements)`
+  ///
+  /// Returns a Matrix with the given sizes and elements; `elements` must be a Matrix with the
+  /// appropriate number of elements.
   @Core.Public static final VmFunctionBuilder matrix2 = VmFunctionBuilder.create("matrix", 2);
 
-  /** {@code function reverse(vector)} */
+  /// `function reverse(vector)`
   @Core.Public
   static final VmFunctionBuilder reverse1 = VmFunctionBuilder.create("reverse", 1).isOpen();
 
-  /**
-   * {@code open function element(matrix, key)}
-   *
-   * <p>Returns the specified element of a matrix.
-   */
+  /// `open function element(matrix, key)`
+  ///
+  /// Returns the specified element of a matrix.
   @Core.Public
   static final VmFunctionBuilder element = VmFunctionBuilder.create("element", 2).isOpen();
 
-  /**
-   * {@code open function subMatrix(matrix, key)}
-   *
-   * <p>Returns a matrix containing only the specified elements.
-   */
+  /// `open function subMatrix(matrix, key)`
+  ///
+  /// Returns a matrix containing only the specified elements.
   @Core.Public
   static final VmFunctionBuilder subMatrix = VmFunctionBuilder.create("subMatrix", 2).isOpen();
 
-  /** {@code open function newMatrix(sizes)} */
+  /// `open function newMatrix(sizes)`
   @Core.Public static final VmFunctionBuilder newMatrix1 = VmFunctionBuilder.create("newMatrix", 1);
 
-  /** {@code open function newMatrix(sizes, initialValue)} */
+  /// `open function newMatrix(sizes, initialValue)`
   @Core.Public static final VmFunctionBuilder newMatrix2 = VmFunctionBuilder.create("newMatrix", 2);
 
-  /** {@code function concat(vector, vector)} */
+  /// `function concat(vector, vector)`
   @Core.Public
   static final VmFunctionBuilder concat = VmFunctionBuilder.create("concat", 2).isOpen();
 
-  /** {@code procedure concatUpdate(vector=, vector)} */
+  /// `procedure concatUpdate(vector=, vector)`
   @Core.Public
   static final VmFunctionBuilder concatUpdate =
       VmFunctionBuilder.create("concatUpdate", 2).isOpen().hasInoutArg(0).hasNoResult();
@@ -82,144 +74,114 @@ public final class MatrixCore {
   @Core.Private
   static final VmFunctionBuilder joinAndPipe = VmFunctionBuilder.create("joinAndPipe", 3).isOpen();
 
-  /**
-   * {@code private compound SubMatrix is Matrix}
-   *
-   * <p>Elements are {@code matrix}, {@code baseKey}, {@code axes}, {@code sizes}. {@code baseKey},
-   * {@code axes} and {@code sizes} are arrays of ints.
-   *
-   * <p>{@code baseKey} is the key in {@code matrix} of the first element of the submatrix, i.e. the
-   * element with key {@code [1, 1, ..., 1]} in the submatrix.
-   *
-   * <p>{@code axes} contains strictly increasing zero-based indices into keys of {@code matrix},
-   * identifying the dimensions that have a corresponding dimension in the submatrix. The size of
-   * {@code axes} is less than or equal to the number of dimensions of {@code matrix}.
-   *
-   * <p>{@code sizes} is the dimensions of the submatrix; it has the same length as {@code axes},
-   * and all elements of {@code sizes} are greater than zero (instances of SubMatrix cannot be
-   * empty).
-   *
-   * <p>For example, if {@code m} is a 3x4 matrix, then
-   *
-   * <ul>
-   *   <li>{@code SubMatrix_(m, [3, 1], [1], [4])} is a 4-element vector containing the third row of
-   *       {@code m} (it starts at [3, 1], extends only in the second dimension, and contains 4
-   *       elements); and
-   *   <li>{@code SubMatrix_(m, [1, 1], [0, 1], [2, 4])} is a 2x4 matrix containing the other two
-   *       rows of {@code m}).
-   * </ul>
-   */
+  /// `private compound SubMatrix is Matrix`
+  ///
+  /// Elements are `matrix`, `baseKey`, `axes`, `sizes`. `baseKey`, `axes` and `sizes` are arrays of
+  /// ints.
+  ///
+  /// `baseKey` is the key in `matrix` of the first element of the submatrix, i.e. the element with
+  /// key `[1, 1, ..., 1]` in the submatrix.
+  ///
+  /// `axes` contains strictly increasing zero-based indices into keys of `matrix`, identifying the
+  /// dimensions that have a corresponding dimension in the submatrix. The size of `axes` is less
+  /// than or equal to the number of dimensions of `matrix`.
+  ///
+  /// `sizes` is the dimensions of the submatrix; it has the same length as `axes`, and all elements
+  /// of `sizes` are greater than zero (instances of SubMatrix cannot be empty).
+  ///
+  /// For example, if `m` is a 3x4 matrix, then
+  ///
+  /// - `SubMatrix_(m, [3, 1], [1], [4])` is a 4-element vector containing the third row of `m` (it
+  ///   starts at [3, 1], extends only in the second dimension, and contains 4 elements); and
+  /// - `SubMatrix_(m, [1, 1], [0, 1], [2, 4])` is a 2x4 matrix containing the other two rows of
+  ///   `m`).
   @Core.Private
   static final BaseType.Named SUB_MATRIX = Core.newBaseType("SubMatrix", 4, Core.MATRIX);
 
-  /**
-   * {@code private compound BaseMatrix is Matrix}
-   *
-   * <p>Element is an array of sizes; all elements are integers greater than zero.
-   *
-   * <p>A BaseMatrix is returned by {@code matrix(sizes)}; its values are the same as its keys.
-   */
+  /// `private compound BaseMatrix is Matrix`
+  ///
+  /// Element is an array of sizes; all elements are integers greater than zero.
+  ///
+  /// A BaseMatrix is returned by `matrix(sizes)`; its values are the same as its keys.
   @Core.Private
   static final BaseType.Named BASE_MATRIX = Core.newBaseType("BaseMatrix", 1, Core.MATRIX);
 
-  /**
-   * {@code private compound BaseIterator is Iterator}
-   *
-   * <p>Elements are {@code eKind}, {@code prev}, {@code sizes}.
-   */
+  /// `private compound BaseIterator is Iterator`
+  ///
+  /// Elements are `eKind`, `prev`, `sizes`.
   @Core.Private
   static final BaseType.Named BASE_ITERATOR =
       Core.newBaseType("BaseIterator", 3, LoopCore.ITERATOR);
 
-  /**
-   * {@code private compound OffsetKey is Lambda}
-   *
-   * <p>Element is {@code offset}. Equivalent to {@code [[i], v] -> [[i + offset], v]}.
-   */
+  /// `private compound OffsetKey is Lambda`
+  ///
+  /// Element is `offset`. Equivalent to `[[i], v] -> [[i + offset], v]`.
   @Core.Private
   static final BaseType.Named OFFSET_KEY = Core.newBaseType("OffsetKey", 1, Core.LAMBDA);
 
-  /**
-   * {@code private compound Reshaped is Matrix}
-   *
-   * <p>Elements are {@code sizes}, {@code elements}.
-   */
+  /// `private compound Reshaped is Matrix`
+  ///
+  /// Elements are `sizes`, `elements`.
   @Core.Private static final BaseType.Named RESHAPED = Core.newBaseType("Reshaped", 2, Core.MATRIX);
 
-  /**
-   * {@code private compound ReshapedArray is Matrix}
-   *
-   * <p>Elements are {@code sizes}, {@code elements}.
-   *
-   * <p>A variant of Reshaped used when {@code elements} is an Array.
-   */
+  /// `private compound ReshapedArray is Matrix`
+  ///
+  /// Elements are `sizes`, `elements`.
+  ///
+  /// A variant of Reshaped used when `elements` is an Array.
   @Core.Private
   static final BaseType.Named RESHAPED_ARRAY = Core.newBaseType("ReshapedArray", 2, Core.MATRIX);
 
-  /**
-   * {@code private compound KeyConverter is Lambda}
-   *
-   * <p>Elements are {@code inSizes}, {@code outSizes}.
-   */
+  /// `private compound KeyConverter is Lambda`
+  ///
+  /// Elements are `inSizes`, `outSizes`.
   @Core.Private
   static final BaseType.Named KEY_CONVERTER = Core.newBaseType("KeyConverter", 2, Core.LAMBDA);
 
-  /**
-   * {@code private compound ConcatVector is Matrix}
-   *
-   * <p>Elements are {@code size}, {@code v1}, {@code v2}.
-   */
+  /// `private compound ConcatVector is Matrix`
+  ///
+  /// Elements are `size`, `v1`, `v2`.
   @Core.Private
   static final BaseType.Named CONCAT_VECTOR = Core.newBaseType("ConcatVector", 3, Core.MATRIX);
 
-  /**
-   * {@code private compound ConcatIterator is Iterator}
-   *
-   * <p>Elements are {@code it1}, {@code loop1}, {@code it2}, {@code loop2}.
-   */
+  /// `private compound ConcatIterator is Iterator`
+  ///
+  /// Elements are `it1`, `loop1`, `it2`, `loop2`.
   @Core.Private
   static final BaseType.Named CONCAT_ITERATOR =
       Core.newBaseType("ConcatIterator", 4, LoopCore.ITERATOR);
 
-  /**
-   * {@code private compound MatrixUpdater is Lambda}
-   *
-   * <p>Elements are {@code reshaped}, {@code elements}, {@code index}.
-   */
+  /// `private compound MatrixUpdater is Lambda`
+  ///
+  /// Elements are `reshaped`, `elements`, `index`.
   @Core.Private
   static final BaseType.Named MATRIX_UPDATER = Core.newBaseType("MatrixUpdater", 3, Core.LAMBDA);
 
-  /**
-   * {@code private compound BinaryUpdateWithScalar is Loop}
-   *
-   * <p>Elements are {@code lambda} and {@code rhs}. The state is a collection, and inputs are
-   * expected to be keys for that collection. {@code nextState()} updates the specified element of
-   * the collection by calling {@code binaryUpdate(element=, lambda, rhs)}.
-   */
+  /// `private compound BinaryUpdateWithScalar is Loop`
+  ///
+  /// Elements are `lambda` and `rhs`. The state is a collection, and inputs are expected to be keys
+  /// for that collection. `nextState()` updates the specified element of the collection by calling
+  /// `binaryUpdate(element=, lambda, rhs)`.
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_SCALAR =
       Core.newBaseType("BinaryUpdateWithScalar", 2, LoopCore.LOOP);
 
-  /**
-   * {@code private compound BinaryUpdateWithCollection is Loop}
-   *
-   * <p>Element is a Lambda. The state is a collection, and inputs are expected to be {@code [key,
-   * rhsElement]} pairs. {@code nextState()} updates the specified element of the collection by
-   * calling {@code binaryUpdate(element=, lambda, rhsElement)}.
-   */
+  /// `private compound BinaryUpdateWithCollection is Loop`
+  ///
+  /// Element is a Lambda. The state is a collection, and inputs are expected to be `[key,
+  /// rhsElement]` pairs. `nextState()` updates the specified element of the collection by calling
+  /// `binaryUpdate(element=, lambda, rhsElement)`.
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_COLLECTION =
       Core.newBaseType("BinaryUpdateWithCollection", 1, LoopCore.LOOP);
 
-  /**
-   * <pre>
-   * method size(Matrix m) default {
-   *   sizes = sizes(m)
-   *   assert sizes | -&gt; # is Integer and # &gt;= 0 | allTrue
-   *   return sizes | product
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method size(Matrix m) default {
+  ///   sizes = sizes(m)
+  ///   assert sizes | -> # is Integer and # >= 0 | allTrue
+  ///   return sizes | product
+  /// }
+  /// ```
   static class SizeMatrix extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -234,24 +196,22 @@ public final class MatrixCore {
     }
   }
 
-  /** {@code method size(m) (m is Reshaped or m is ReshapedArray) = size(m_.elements)} */
+  /// `method size(m) (m is Reshaped or m is ReshapedArray) = size(m_.elements)`
   @Core.Method("size(Reshaped|ReshapedArray)")
   static void sizeReshaped(TState tstate, Value m, @Fn("size:1") Caller size) {
     tstate.startCall(size, m.element(1));
   }
 
-  /**
-   * <pre>
-   * method matrix(Array sizes) {
-   *   assert sizes | -&gt; # is Integer and # &gt;= 0 | allTrue
-   *   if sizes | -&gt; # == 0 | anyTrue {
-   *     return size(sizes) == 1 ? [] : ReshapedArray_({sizes, elements: []})
-   *   } else {
-   *     return BaseMatrix_(sizes)
-   *   }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method matrix(Array sizes) {
+  ///   assert sizes | -> # is Integer and # >= 0 | allTrue
+  ///   if sizes | -> # == 0 | anyTrue {
+  ///     return size(sizes) == 1 ? [] : ReshapedArray_({sizes, elements: []})
+  ///   } else {
+  ///     return BaseMatrix_(sizes)
+  ///   }
+  /// }
+  /// ```
   @Core.Method("matrix(Array)")
   static void matrix1(TState tstate, @RC.In Value sizes) throws BuiltinException {
     ValueUtil.checkSizes(sizes, Err.INVALID_ARGUMENT);
@@ -272,24 +232,22 @@ public final class MatrixCore {
             () -> tstate.setResult(tstate.compound(RESHAPED_ARRAY, sizes, Core.EMPTY_ARRAY)));
   }
 
-  /**
-   * <pre>
-   * method matrix(Array newSizes, Matrix base) {
-   *   assert newSizes | -&gt; # is Integer and # &gt;= 0 | allTrue
-   *   if base is Reshaped {
-   *     base = base_.elements
-   *   }
-   *   baseSizes = sizes(base)
-   *   assert baseSizes is Array and baseSizes | -&gt; (# is Integer and # &gt;= 0) | allTrue
-   *   if newSizes == baseSizes {
-   *     return base
-   *   }
-   *   assert (newSizes | product) == (baseSizes | product)
-   *   return base is Array ? ReshapedArray_({sizes: newSizes, elements: base})
-   *                        : Reshaped_({sizes: newSizes, elements: base})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method matrix(Array newSizes, Matrix base) {
+  ///   assert newSizes | -> # is Integer and # >= 0 | allTrue
+  ///   if base is Reshaped {
+  ///     base = base_.elements
+  ///   }
+  ///   baseSizes = sizes(base)
+  ///   assert baseSizes is Array and baseSizes | -> (# is Integer and # >= 0) | allTrue
+  ///   if newSizes == baseSizes {
+  ///     return base
+  ///   }
+  ///   assert (newSizes | product) == (baseSizes | product)
+  ///   return base is Array ? ReshapedArray_({sizes: newSizes, elements: base})
+  ///                        : Reshaped_({sizes: newSizes, elements: base})
+  /// }
+  /// ```
   static class Matrix2 extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -337,15 +295,13 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method at(Matrix m, Array key) =
-   *   (key^ is Number | allTrue) ? element(m, Key) : subMatrix(m, key)
-   * </pre>
-   *
-   * If {@code key} contains only numbers, calls {@code element()} to get the result; otherwise
-   * calls {@code subMatrix()}.
-   */
+  /// ```
+  /// method at(Matrix m, Array key) =
+  ///   (key^ is Number | allTrue) ? element(m, Key) : subMatrix(m, key)
+  /// ```
+  ///
+  /// If `key` contains only numbers, calls `element()` to get the result; otherwise calls
+  /// `subMatrix()`.
   @Core.Method("at(Matrix, Array)")
   static void at(
       TState tstate,
@@ -367,54 +323,52 @@ public final class MatrixCore {
     return Condition.TRUE;
   }
 
-  /**
-   * <pre>
-   * method subMatrix(Matrix m, Array key) default {
-   *   sizes = sizes(m)
-   *   assert sizes is Array and (sizes | -&gt; # is Integer and # &gt;= 0 | allTrue)
-   *   assert size(key) == size(sizes)
-   *   for [i]: key_i in key sequential {
-   *     if key_i is Range {
-   *       size = sizes[i]
-   *       min = min(key_i)
-   *       if min is None {
-   *         min = 1
-   *       }
-   *       max = max(key_i)
-   *       if max is None {
-   *         max = size
-   *       }
-   *       newSize = max - (min - 1)
-   *       assert min &gt;= 1 and max &lt;= size and newSize &gt;= 0
-   *       axes &lt;&lt; i
-   *       newSizes &lt;&lt; newSize
-   *       baseKey &lt;&lt; min
-   *       isSubset &lt;&lt; newSize != size
-   *       isEmpty &lt;&lt; newSize == 0
-   *     } else {
-   *       assert key_i is Integer and key_i &gt;= 1 and key_i &lt;= sizes[i]
-   *       baseKey &lt;&lt; key_i
-   *       isSubset &lt;&lt; True
-   *     }
-   *   } collect {
-   *     axes, newSizes =| saveSequential
-   *     baseKey =| save
-   *     isSubset, isEmpty =| anyTrue
-   *   }
-   *   if not isSubset {
-   *     return m
-   *   } else if isEmpty {
-   *     return size(newSizes) == 1 ? [] : ReshapedArray_({sizes: newSizes, elements: []})
-   *   } else {
-   *     return SubMatrix_({matrix: m, baseKey, axes, sizes: newSizes})
-   *   }
-   * }
-   * </pre>
-   *
-   * Checks that {@code key} is an array of the appropriate length and that each {@code key[i]} is
-   * either an integer in {@code 1..sizes()[i]} or a subbrange of that range. Returns an appropriate
-   * SubMatrix (or empty matrix).
-   */
+  /// ```
+  /// method subMatrix(Matrix m, Array key) default {
+  ///   sizes = sizes(m)
+  ///   assert sizes is Array and (sizes | -> # is Integer and # >= 0 | allTrue)
+  ///   assert size(key) == size(sizes)
+  ///   for [i]: key_i in key sequential {
+  ///     if key_i is Range {
+  ///       size = sizes[i]
+  ///       min = min(key_i)
+  ///       if min is None {
+  ///         min = 1
+  ///       }
+  ///       max = max(key_i)
+  ///       if max is None {
+  ///         max = size
+  ///       }
+  ///       newSize = max - (min - 1)
+  ///       assert min >= 1 and max <= size and newSize >= 0
+  ///       axes << i
+  ///       newSizes << newSize
+  ///       baseKey << min
+  ///       isSubset << newSize != size
+  ///       isEmpty << newSize == 0
+  ///     } else {
+  ///       assert key_i is Integer and key_i >= 1 and key_i <= sizes[i]
+  ///       baseKey << key_i
+  ///       isSubset << True
+  ///     }
+  ///   } collect {
+  ///     axes, newSizes =| saveSequential
+  ///     baseKey =| save
+  ///     isSubset, isEmpty =| anyTrue
+  ///   }
+  ///   if not isSubset {
+  ///     return m
+  ///   } else if isEmpty {
+  ///     return size(newSizes) == 1 ? [] : ReshapedArray_({sizes: newSizes, elements: []})
+  ///   } else {
+  ///     return SubMatrix_({matrix: m, baseKey, axes, sizes: newSizes})
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// Checks that `key` is an array of the appropriate length and that each `key[i]` is either an
+  /// integer in `1..sizes()[i]` or a subbrange of that range. Returns an appropriate SubMatrix (or
+  /// empty matrix).
   static class SubMatrix extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -532,19 +486,19 @@ public final class MatrixCore {
     }
   }
 
-  /** {@code method sizes(BaseMatrix base) = base_} */
+  /// `method sizes(BaseMatrix base) = base_`
   @Core.Method("sizes(BaseMatrix)")
   static Value sizesBaseMatrix(Value baseMatrix) {
     return baseMatrix.element(0);
   }
 
-  /** {@code method keys(BaseMatrix base) = base} */
+  /// `method keys(BaseMatrix base) = base`
   @Core.Method("keys(BaseMatrix)")
   static Value keysBaseMatrix(@RC.In Value baseMatrix) {
     return baseMatrix;
   }
 
-  /** {@code method keys(Matrix m) default = matrix(sizes(m))} */
+  /// `method keys(Matrix m) default = matrix(sizes(m))`
   static class KeysMatrix extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -559,7 +513,7 @@ public final class MatrixCore {
     }
   }
 
-  /** {@code method new(BaseMatrix base, initialValue) = newMatrix(sizes(base), initialValue)} */
+  /// `method new(BaseMatrix base, initialValue) = newMatrix(sizes(base), initialValue)`
   @Core.Method("new(BaseMatrix, _)")
   static void newBaseMatrix(TState tstate, ResultsInfo results, Value baseMatrix, Value initial)
       throws BuiltinException {
@@ -568,44 +522,40 @@ public final class MatrixCore {
     newMatrix(tstate, results, sizes, initial);
   }
 
-  /**
-   * The key matrix of an empty multi-dimensional matrix is a reshaped []. No other ReshapedArray is
-   * a valid key matrix.
-   *
-   * <pre>
-   * method new(ReshapedArray empty, initialValue) {
-   *   assert size(empty_.elements) == 0
-   *   return empty
-   * }
-   * </pre>
-   */
+  /// The key matrix of an empty multi-dimensional matrix is a reshaped []. No other ReshapedArray
+  /// is a valid key matrix.
+  ///
+  /// ```
+  /// method new(ReshapedArray empty, initialValue) {
+  ///   assert size(empty_.elements) == 0
+  ///   return empty
+  /// }
+  /// ```
   @Core.Method("new(ReshapedArray, _)")
   static Value newArray(TState tstate, @RC.In Value empty, Value initial) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(empty.peekElement(1).isArrayOfLength(0));
     return empty;
   }
 
-  /** A TProperty for the layout of the Array element of a ReshapedArray result. */
+  /// A TProperty for the layout of the Array element of a ReshapedArray result.
   private static final TProperty<FrameLayout> RESHAPED_ARRAY_LAYOUT =
       TProperty.ARRAY_LAYOUT.elementOf(RESHAPED_ARRAY, 1);
 
-  /** A TProperty for the layout or base type of the Array element of a ReshapedArray result. */
+  /// A TProperty for the layout or base type of the Array element of a ReshapedArray result.
   private static final TProperty<Object> RESHAPED_ARRAY_LAYOUT_OR_BASE_TYPE =
       TProperty.ARRAY_LAYOUT_OR_BASE_TYPE.elementOf(RESHAPED_ARRAY, 1);
 
-  /**
-   * newMatrix() results with more than this many elements will always be represented with a Frame.
-   */
+  /// newMatrix() results with more than this many elements will always be represented with a Frame.
   private static final int MAX_ARRAY_COMPOUND_LENGTH = 6;
 
-  /** {@code method newMatrix(Array sizes) = newMatrix(sizes, Absent)} */
+  /// `method newMatrix(Array sizes) = newMatrix(sizes, Absent)`
   @Core.Method("newMatrix(Array)")
   static void newMatrix(TState tstate, ResultsInfo results, @RC.In Value sizes)
       throws BuiltinException {
     newMatrix(tstate, results, sizes, Core.ABSENT);
   }
 
-  /** {@code method newMatrix(Array sizes, initialValue) = ...} */
+  /// `method newMatrix(Array sizes, initialValue) = ...`
   @Core.Method("newMatrix(Array, _)")
   static void newMatrix(TState tstate, ResultsInfo results, @RC.In Value sizes, Value initial)
       throws BuiltinException {
@@ -691,31 +641,31 @@ public final class MatrixCore {
     }
   }
 
-  /** {@code method sizes(m) (m is Reshaped or m is ReshapedArray) = m_.sizes} */
+  /// `method sizes(m) (m is Reshaped or m is ReshapedArray) = m_.sizes`
   @Core.Method("sizes(Reshaped|ReshapedArray)")
   static Value sizesReshaped(Value m) {
     return m.element(0);
   }
 
-  /** {@code method sizes(TransformedMatrix m) = sizes(m_.base)} */
+  /// `method sizes(TransformedMatrix m) = sizes(m_.base)`
   @Core.Method("sizes(TransformedMatrix)")
   static void sizesTransformedMatrix(TState tstate, Value m, @Fn("sizes:1") Caller sizes) {
     tstate.startCall(sizes, m.element(0));
   }
 
-  /** {@code method sizes(WithKeysMatrix m) = sizes(m_)} */
+  /// `method sizes(WithKeysMatrix m) = sizes(m_)`
   @Core.Method("sizes(WithKeysMatrix)")
   static void sizesWithKeysMatrix(TState tstate, Value m, @Fn("sizes:1") Caller sizes) {
     tstate.startCall(sizes, m.element(0));
   }
 
-  /** {@code method sizes(SubMatrix m) = m_.sizes} */
+  /// `method sizes(SubMatrix m) = m_.sizes`
   @Core.Method("sizes(SubMatrix)")
   static Value sizesSubMatrix(Value m) {
     return m.element(3);
   }
 
-  /** {@code method element(BaseMatrix base, key) = key} */
+  /// `method element(BaseMatrix base, key) = key`
   @Core.Method("element(BaseMatrix, _)")
   static Value elementBaseMatrix(TState tstate, Value baseMatrix, @RC.In Value key)
       throws BuiltinException {
@@ -723,12 +673,10 @@ public final class MatrixCore {
     return key;
   }
 
-  /**
-   * <pre>
-   * method element(m, Array key) (m is Reshaped or m is ReshapedArray) =
-   *     element(m_.elements, convertKey(key, m_.sizes, sizes(m_.elements))
-   * </pre>
-   */
+  /// ```
+  /// method element(m, Array key) (m is Reshaped or m is ReshapedArray) =
+  ///     element(m_.elements, convertKey(key, m_.sizes, sizes(m_.elements))
+  /// ```
   static class ElementReshaped extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -758,13 +706,11 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method replaceElement(ReshapedArray m, Array key, value) {
-   *   arrayKey = convertKey(key, m_.sizes, sizes(m_.elements))
-   *   return ReshapedArray_(m_.sizes, replaceElement(m_.elements, arrayKey, value))
-   * </pre>
-   */
+  /// ```
+  /// method replaceElement(ReshapedArray m, Array key, value) {
+  ///   arrayKey = convertKey(key, m_.sizes, sizes(m_.elements))
+  ///   return ReshapedArray_(m_.sizes, replaceElement(m_.elements, arrayKey, value))
+  /// ```
   @Core.Method("replaceElement(ReshapedArray, Array, _)")
   static Value replaceElement(TState tstate, @RC.In Value matrix, Value key, @RC.In Value value)
       throws BuiltinException {
@@ -780,11 +726,9 @@ public final class MatrixCore {
     return matrix;
   }
 
-  /**
-   * <pre>
-   * method startUpdate(ReshapedArray m=, Array key) { ... }
-   * </pre>
-   */
+  /// ```
+  /// method startUpdate(ReshapedArray m=, Array key) { ... }
+  /// ```
   @Core.Method("startUpdate(ReshapedArray, Array)")
   static void startUpdate(TState tstate, @RC.In Value matrix, Value key) throws BuiltinException {
     Value sizes = matrix.peekElement(0);
@@ -800,11 +744,9 @@ public final class MatrixCore {
         element, tstate.compound(MATRIX_UPDATER, matrix, elements, index.makeStorable(tstate)));
   }
 
-  /**
-   * <pre>
-   * method at(MatrixUpdater updater, newElement) = ...
-   * </pre>
-   */
+  /// ```
+  /// method at(MatrixUpdater updater, newElement) = ...
+  /// ```
   @Core.Method("at(MatrixUpdater, _)")
   static Value atMatrixUpdater(TState tstate, @RC.In Value updater, @RC.In Value v) {
     Value matrix = updater.element(0);
@@ -816,18 +758,16 @@ public final class MatrixCore {
     return matrix.replaceElement(tstate, 1, elements);
   }
 
-  /**
-   * <pre>
-   * method iterator(m, EnumerationKind eKind, loop=, initialState=) (m is Reshaped or m is ReshapedArray) {
-   *   if eKind is not EnumerateValues {
-   *     inSizes = sizes(m_.elements)
-   *     outSizes = m_.sizes
-   *     loop = transformLoop([k, v] -&gt; [convertKey(k, inSizes, outSizes), v], loop)
-   *   }
-   *   return iterator(m_.elements, eKind, loop=, initialState=)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(m, EnumerationKind eKind, loop=, initialState=) (m is Reshaped or m is ReshapedArray) {
+  ///   if eKind is not EnumerateValues {
+  ///     inSizes = sizes(m_.elements)
+  ///     outSizes = m_.sizes
+  ///     loop = transformLoop([k, v] -> [convertKey(k, inSizes, outSizes), v], loop)
+  ///   }
+  ///   return iterator(m_.elements, eKind, loop=, initialState=)
+  /// }
+  /// ```
   static class IteratorReshaped extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -866,7 +806,7 @@ public final class MatrixCore {
     }
   }
 
-  /** {@code method at(OffsetKey ok, [[i], v]) = [[i + ok_], v]} */
+  /// `method at(OffsetKey ok, [[i], v]) = [[i + ok_], v]`
   @Core.Method("at(OffsetKey, Array)")
   static Value atKeyConverter(TState tstate, Value ok, Value pair) throws BuiltinException {
     if (!(ok instanceof RValue) && ok.elementAsIntOrMinusOne(0) == 0) {
@@ -883,7 +823,7 @@ public final class MatrixCore {
   private static final TProperty<Object> ARRAY_LAYOUT_OR_BASETYPE_IN_PAIR =
       TProperty.ARRAY_LAYOUT_OR_BASE_TYPE.elementOf(Core.FixedArrayType.withSize(2), 0);
 
-  /** {@code method at(KeyConverter kc, [k, v]) = [convertKey(k, kc_.inSizes, kc_.outSizes), v]} */
+  /// `method at(KeyConverter kc, [k, v]) = [convertKey(k, kc_.inSizes, kc_.outSizes), v]`
   @Core.Method("at(KeyConverter, Array)")
   static Value atKeyConverter(TState tstate, ResultsInfo results, Value kc, Value pair)
       throws BuiltinException {
@@ -898,11 +838,9 @@ public final class MatrixCore {
     return tstate.arrayValue(convertedKey, pair.element(1));
   }
 
-  /**
-   * <pre>
-   * method element(SubMatrix m, Array key) = element(m_.matrix, offsetKey(key, m))
-   * </pre>
-   */
+  /// ```
+  /// method element(SubMatrix m, Array key) = element(m_.matrix, offsetKey(key, m))
+  /// ```
   @Core.Method("element(SubMatrix, Array)")
   static void elementSubMatrix(TState tstate, Value m, Value key, @Fn("element:2") Caller element)
       throws BuiltinException {
@@ -942,19 +880,17 @@ public final class MatrixCore {
     tstate.startCall(element, base, newKey);
   }
 
-  /** A TProperty for the layout or base type of the prev element of a BaseIterator result. */
+  /// A TProperty for the layout or base type of the prev element of a BaseIterator result.
   private static final TProperty<Object> BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE =
       TProperty.ARRAY_LAYOUT_OR_BASE_TYPE.elementOf(BASE_ITERATOR, 1);
 
-  /**
-   * <pre>
-   * method iterator(SubMatrix m, EnumerationKind eKind, Loop loop=, initialState=) {
-   *   lambda = applyToValues(k -> element(m, k), eKind)
-   *   loop = transformLoop(lambda, loop)
-   *   return iterator(matrix(m_.sizes), eKind, loop=, initialState=)
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(SubMatrix m, EnumerationKind eKind, Loop loop=, initialState=) {
+  ///   lambda = applyToValues(k -> element(m, k), eKind)
+  ///   loop = transformLoop(lambda, loop)
+  ///   return iterator(matrix(m_.sizes), eKind, loop=, initialState=)
+  /// }
+  /// ```
   @Core.Method("iterator(SubMatrix, EnumerationKind, Loop, _)")
   static void iteratorSubMatrix(
       TState tstate,
@@ -979,21 +915,19 @@ public final class MatrixCore {
       Core.FixedArrayType.withSize(2).uncountedOf(Core.EMPTY_ARRAY, Core.EMPTY_ARRAY);
   private static final Value EMPTY_PAIR_ONLY = LoopCore.TRIVIAL_ITERATOR.uncountedOf(EMPTY_PAIR);
 
-  /**
-   * <pre>
-   * method iterator(BaseMatrix m, EnumerationKind eKind, loop=, initialState=) {
-   *   sizes = m_
-   *   if size(sizes) == 0 {
-   *     return oneElementIterator(eKind is EnumerateValues ? [] : [[], []])
-   *   } else {
-   *     nDims = size(sizes)
-   *     prev = newMatrix(nDims, 1)
-   *     prev[nDims] = 0
-   *     return BaseIterator_({eKind, prev, sizes})
-   *   }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(BaseMatrix m, EnumerationKind eKind, loop=, initialState=) {
+  ///   sizes = m_
+  ///   if size(sizes) == 0 {
+  ///     return oneElementIterator(eKind is EnumerateValues ? [] : [[], []])
+  ///   } else {
+  ///     nDims = size(sizes)
+  ///     prev = newMatrix(nDims, 1)
+  ///     prev[nDims] = 0
+  ///     return BaseIterator_({eKind, prev, sizes})
+  ///   }
+  /// }
+  /// ```
   @Core.Method("iterator(BaseMatrix, EnumerationKind, Loop, _)")
   static void iteratorBaseMatrix(
       TState tstate,
@@ -1044,24 +978,22 @@ public final class MatrixCore {
     return tstate.compound(BASE_ITERATOR, eKind, tstate.asArrayValue(prev, nDims), sizes);
   }
 
-  /**
-   * <pre>
-   * method next(BaseIterator it=) {
-   *   {eKind, prev: key, sizes} = it_
-   *   for i in reverse(1..size(key)) sequential key {
-   *     if key[i] &lt; sizes[i] {
-   *       key[i] += 1
-   *       break {
-   *         it_.prev = key
-   *         return eKind is EnumerateValues ? key : [key, key]
-   *       }
-   *     }
-   *     key[i] = 1
-   *   }
-   *   return Absent
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method next(BaseIterator it=) {
+  ///   {eKind, prev: key, sizes} = it_
+  ///   for i in reverse(1..size(key)) sequential key {
+  ///     if key[i] < sizes[i] {
+  ///       key[i] += 1
+  ///       break {
+  ///         it_.prev = key
+  ///         return eKind is EnumerateValues ? key : [key, key]
+  ///       }
+  ///     }
+  ///     key[i] = 1
+  ///   }
+  ///   return Absent
+  /// }
+  /// ```
   @Core.Method("next(BaseIterator)")
   static void nextBaseIterator(TState tstate, @RC.In Value it) {
     @RC.Singleton Value eKind = it.peekElement(0);
@@ -1096,10 +1028,8 @@ public final class MatrixCore {
     tstate.setResults(Core.ABSENT, it);
   }
 
-  /**
-   * Using recursion is the easiest way to implement this but in theory could cause a stack overflow
-   * if key/size were (very) implausibly large.
-   */
+  /// Using recursion is the easiest way to implement this but in theory could cause a stack
+  /// overflow if key/size were (very) implausibly large.
   private static void nextBaseIteratorHelper(
       CodeGen codeGen, int i, int nDims, Value eKind, Value key, Value sizes, Value it) {
     if (i < 0) {
@@ -1127,14 +1057,12 @@ public final class MatrixCore {
             () -> nextBaseIteratorHelper(codeGen, i - 1, nDims, eKind, key, sizes, it));
   }
 
-  /**
-   * <pre>
-   * method join(Matrix c1, Matrix c2) {
-   *   assert sizes(c1) == sizes(c2)
-   *   return JoinedMatrix_({c1, c2})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method join(Matrix c1, Matrix c2) {
+  ///   assert sizes(c1) == sizes(c2)
+  ///   return JoinedMatrix_({c1, c2})
+  /// }
+  /// ```
   static class JoinMatrix extends BuiltinMethod {
     static final Caller sizesM1 = new Caller("sizes:1", "afterSizesM1");
     static final Caller sizesM2 = new Caller("sizes:1", "afterSizesM2");
@@ -1187,28 +1115,24 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method sizes(JoinedMatrix m) = sizes(m_.c1)
-   * </pre>
-   */
+  /// ```
+  /// method sizes(JoinedMatrix m) = sizes(m_.c1)
+  /// ```
   @Core.Method("sizes(JoinedMatrix)")
   static void sizesJoinedMatrix(TState tstate, Value m, @Fn("sizes:1") Caller sizes) {
     tstate.startCall(sizes, m.element(0));
   }
 
-  /**
-   * <pre>
-   * method concat(Matrix v1, Matrix v2) {
-   *   [len1] = sizes(v1)
-   *   [len2] = sizes(v2)
-   *   assert len1 >= 0 and len2 >= 0
-   *   if len1 == 0 { return v2 }
-   *   if len2 == 0 { return v1 }
-   *   return ConcatVector_({size: len1 + len2, v1, v2})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method concat(Matrix v1, Matrix v2) {
+  ///   [len1] = sizes(v1)
+  ///   [len2] = sizes(v2)
+  ///   assert len1 >= 0 and len2 >= 0
+  ///   if len1 == 0 { return v2 }
+  ///   if len2 == 0 { return v1 }
+  ///   return ConcatVector_({size: len1 + len2, v1, v2})
+  /// }
+  /// ```
   static class Concat extends BuiltinMethod {
     static final Caller sizesV1 = new Caller("sizes:1", "afterSizesV1");
     static final Caller sizesV2 = new Caller("sizes:1", "afterSizesV2");
@@ -1254,24 +1178,20 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method sizes(ConcatVector cv) = [cv_.size]
-   * </pre>
-   */
+  /// ```
+  /// method sizes(ConcatVector cv) = [cv_.size]
+  /// ```
   @Core.Method("sizes(ConcatVector)")
   static Value sizesConcatVector(TState tstate, Value cv) {
     return tstate.arrayValue(cv.element(0));
   }
 
-  /**
-   * <pre>
-   * method element(ConcatVector cv, [index]) {
-   *   [len1] = sizes(cv_.v1)
-   *   return index &lt;= len1 ? element(cv_.v1, [index]) : element(cv_.v2, [index - len1])
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method element(ConcatVector cv, [index]) {
+  ///   [len1] = sizes(cv_.v1)
+  ///   return index <= len1 ? element(cv_.v1, [index]) : element(cv_.v2, [index - len1])
+  /// }
+  /// ```
   static class ElementConcat extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -1297,25 +1217,23 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method iterator(ConcatVector cv, EnumerationKind eKind, Loop loop=) {
-   *   loop1 = SimpleLoop
-   *   initialState1 = Absent
-   *   it1 = iterator(cv_.v1, eKind, loop1=, initialState1=)
-   *   assert initialState1 is Absent and isOnlyTransforms(loop1)
-   *   loop2 = SimpleLoop
-   *   if eKind is not EnumerateValues {
-   *     size1 = size(cv_.v1)
-   *     loop2 = transformLoop([[i], v] -> [[i + size1], v], loop2)
-   *   }
-   *   initialState2 = Absent
-   *   it2 = iterator(cv_.v2, eKind, loop2=, initialState2=)
-   *   assert initialState2 is Absent and isOnlyTransforms(loop2)
-   *   return ConcatIterator_({it1, loop1, it2, loop2})
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method iterator(ConcatVector cv, EnumerationKind eKind, Loop loop=) {
+  ///   loop1 = SimpleLoop
+  ///   initialState1 = Absent
+  ///   it1 = iterator(cv_.v1, eKind, loop1=, initialState1=)
+  ///   assert initialState1 is Absent and isOnlyTransforms(loop1)
+  ///   loop2 = SimpleLoop
+  ///   if eKind is not EnumerateValues {
+  ///     size1 = size(cv_.v1)
+  ///     loop2 = transformLoop([[i], v] -> [[i + size1], v], loop2)
+  ///   }
+  ///   initialState2 = Absent
+  ///   it2 = iterator(cv_.v2, eKind, loop2=, initialState2=)
+  ///   assert initialState2 is Absent and isOnlyTransforms(loop2)
+  ///   return ConcatIterator_({it1, loop1, it2, loop2})
+  /// }
+  /// ```
   static class IteratorConcat extends BuiltinMethod {
     static final Caller iterator1 = new Caller("iterator:4", "afterIterator1");
     static final Caller size = new Caller("size:1", "afterSize");
@@ -1411,31 +1329,29 @@ public final class MatrixCore {
                     .and(() -> isOnlyTransforms(value.peekElement(1))));
   }
 
-  /**
-   * <pre>
-   * method next(ConcatIterator it=) {
-   *   for sequential it {
-   *     if it_.it1 is not Absent {
-   *       x = next(it_.it1=)
-   *       if x is Absent {
-   *         it_.it1 = Absent
-   *         continue
-   *       }
-   *       x = nextState(loop1, Absent, x)
-   *     } else {
-   *       x = next(it_.it2=)
-   *       if x is Absent {
-   *         return Absent
-   *       }
-   *       x = nextState(loop2, Absent, x)
-   *     }
-   *     if x is not Absent {
-   *       return x
-   *     }
-   *   }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method next(ConcatIterator it=) {
+  ///   for sequential it {
+  ///     if it_.it1 is not Absent {
+  ///       x = next(it_.it1=)
+  ///       if x is Absent {
+  ///         it_.it1 = Absent
+  ///         continue
+  ///       }
+  ///       x = nextState(loop1, Absent, x)
+  ///     } else {
+  ///       x = next(it_.it2=)
+  ///       if x is Absent {
+  ///         return Absent
+  ///       }
+  ///       x = nextState(loop2, Absent, x)
+  ///     }
+  ///     if x is not Absent {
+  ///       return x
+  ///     }
+  ///   }
+  /// }
+  /// ```
   static class NextConcatIterator extends BuiltinMethod {
     static final Caller next1 = new Caller("next:1", "afterNext1");
     static final Caller nextState1 = new Caller("nextState:3", "afterNextState");
@@ -1500,11 +1416,9 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method concatUpdate(Array lhs, Matrix rhs) = ...
-   * </pre>
-   */
+  /// ```
+  /// method concatUpdate(Array lhs, Matrix rhs) = ...
+  /// ```
   static class ConcatUpdate extends BuiltinMethod {
     static final Caller sizes = new Caller("sizes:1", "afterSizes");
 
@@ -1549,43 +1463,38 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method binaryUpdate(Matrix lhs=, Lambda lambda, rhs) {
-   *   if rhs is Matrix {
-   *     assert sizes(rhs) == sizes(lhs)
-   *     return iterate(rhs, EnumerateAllKeys, BinaryUpdateWithCollection_(lambda), lhs)
-   *   } else {
-   *     return iterate(keys(lhs), EnumerateValues, BinaryUpdateWithScalar_({lambda, rhs}), lhs)
-   *   }
-   * }
-   * </pre>
-   *
-   * {@code binaryUpdate()} is overridden when the left hand side is a Matrix to behave more like an
-   * "in place" update to the matrix:
-   *
-   * <ul>
-   *   <li>The calculation is done eagerly rather than lazily (if we didn't override {@code
-   *       binaryUpdate()}, the default implementation of e.g. "{@code +=}" would use {@code add()},
-   *       which is lazy for matrices).
-   *   <li>The left hand side must be an updatable matrix (generally an Array or ReshapedArray).
-   * </ul>
-   *
-   * Could we parallelize this? Wrapping the update loop in a SaverLoop and replacing iterate() with
-   * enumerate() would "work", but mostly wouldn't help; most or all of the work is done in the
-   * update loop's nextState, which would be serialized by the SaverLoop. The most straightforward
-   * way to parallelize is to switch from update-in-place to something like
-   *
-   * <pre>
-   * method binaryUpdate(Matrix lhs=, Lambda lambda, rhs) {
-   *   if rhs is Matrix {
-   *     return join(lhs, rhs) | lambda | save
-   *   } else {
-   *     return lhs | -&gt; lambda[#, rhs] | save
-   *   }
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method binaryUpdate(Matrix lhs=, Lambda lambda, rhs) {
+  ///   if rhs is Matrix {
+  ///     assert sizes(rhs) == sizes(lhs)
+  ///     return iterate(rhs, EnumerateAllKeys, BinaryUpdateWithCollection_(lambda), lhs)
+  ///   } else {
+  ///     return iterate(keys(lhs), EnumerateValues, BinaryUpdateWithScalar_({lambda, rhs}), lhs)
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// `binaryUpdate()` is overridden when the left hand side is a Matrix to behave more like an "in
+  /// place" update to the matrix:
+  ///
+  /// - The calculation is done eagerly rather than lazily (if we didn't override `binaryUpdate()`,
+  ///   the default implementation of e.g. "`+=`" would use `add()`, which is lazy for matrices).
+  /// - The left hand side must be an updatable matrix (generally an Array or ReshapedArray).
+  ///
+  /// Could we parallelize this? Wrapping the update loop in a SaverLoop and replacing iterate()
+  /// with enumerate() would "work", but mostly wouldn't help; most or all of the work is done in
+  /// the update loop's nextState, which would be serialized by the SaverLoop. The most
+  /// straightforward way to parallelize is to switch from update-in-place to something like
+  ///
+  /// ```
+  /// method binaryUpdate(Matrix lhs=, Lambda lambda, rhs) {
+  ///   if rhs is Matrix {
+  ///     return join(lhs, rhs) | lambda | save
+  ///   } else {
+  ///     return lhs | -> lambda[#, rhs] | save
+  ///   }
+  /// }
+  /// ```
   static class BinaryUpdateMatrix extends BuiltinMethod {
     static final Caller sizesLhs = new Caller("sizes:1", "afterSizesLhs");
     static final Caller sizesRhs = new Caller("sizes:1", "afterSizesRhs");
@@ -1637,22 +1546,20 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method nextState(BinaryUpdateWithScalar loop, lhs, key) {
-   *   { lambda, rhs } = loop_
-   *   binaryUpdate(lhs@key=, lambda, rhs)
-   *   return lhs
-   * }
-   * // Or equivalently:
-   * method nextState(BinaryUpdateWithScalar loop, lhs, key) {
-   *   element = startUpdate(lhs=, key)
-   *   { lambda, rhs } = loop_
-   *   binaryUpdate(element=, lambda, rhs)
-   *   return lhs@element
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method nextState(BinaryUpdateWithScalar loop, lhs, key) {
+  ///   { lambda, rhs } = loop_
+  ///   binaryUpdate(lhs@key=, lambda, rhs)
+  ///   return lhs
+  /// }
+  /// // Or equivalently:
+  /// method nextState(BinaryUpdateWithScalar loop, lhs, key) {
+  ///   element = startUpdate(lhs=, key)
+  ///   { lambda, rhs } = loop_
+  ///   binaryUpdate(element=, lambda, rhs)
+  ///   return lhs@element
+  /// }
+  /// ```
   static class BinaryUpdateWithScalar extends BuiltinMethod {
     static final Caller startUpdate = new Caller("startUpdate:2", "afterStartUpdate");
     static final Caller binaryUpdate = new Caller("binaryUpdate:3", "afterBinaryUpdate");
@@ -1680,18 +1587,16 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method nextState(BinaryUpdateWithCollection loop, lhs, [key, rhsElement]) {
-   *   element = startUpdate(lhs=, key)
-   *   // Skip calling the lambda if both elements are Absent, to be consistent with join()
-   *   if element is not Absent or rhsElement is not Absent {
-   *     binaryUpdate(element=, loop_, rhsElement)
-   *   }
-   *   return lhs@element
-   * }
-   * </pre>
-   */
+  /// ```
+  /// method nextState(BinaryUpdateWithCollection loop, lhs, [key, rhsElement]) {
+  ///   element = startUpdate(lhs=, key)
+  ///   // Skip calling the lambda if both elements are Absent, to be consistent with join()
+  ///   if element is not Absent or rhsElement is not Absent {
+  ///     binaryUpdate(element=, loop_, rhsElement)
+  ///   }
+  ///   return lhs@element
+  /// }
+  /// ```
   static class BinaryUpdateWithCollection extends BuiltinMethod {
     static final Caller startUpdate = new Caller("startUpdate:2", "afterStartUpdate");
     static final Caller binaryUpdate = new Caller("binaryUpdate:3", "afterBinaryUpdate");
@@ -1733,11 +1638,9 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method joinAndPipe(Matrix m1, Matrix m2, Lambda lambda) = join(m1, m2) | lambda
-   * </pre>
-   */
+  /// ```
+  /// method joinAndPipe(Matrix m1, Matrix m2, Lambda lambda) = join(m1, m2) | lambda
+  /// ```
   static class JoinAndPipe extends BuiltinMethod {
     static final Caller join = new Caller("join:2", "afterJoin");
 
@@ -1752,15 +1655,13 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * A wrapper for a binary VmFunction that supports mapping it over a Matrix with a constant left
-   * or right argument.
-   *
-   * <p>Calls to these functions with a Matrix as one argument and a Number as the other are
-   * implicitly distributed, but the usual implementation of distributed operations (where the
-   * compiler defines a new lambda type) would be awkward here, so instead we create
-   * PartialApplication baseTypes (which were defined just to support this use).
-   */
+  /// A wrapper for a binary VmFunction that supports mapping it over a Matrix with a constant left
+  /// or right argument.
+  ///
+  /// Calls to these functions with a Matrix as one argument and a Number as the other are
+  /// implicitly distributed, but the usual implementation of distributed operations (where the
+  /// compiler defines a new lambda type) would be awkward here, so instead we create
+  /// PartialApplication baseTypes (which were defined just to support this use).
   private enum BinaryOp {
     ADD(Core.add.fn()),
     SUBTRACT(Core.subtract.fn()),
@@ -1770,16 +1671,10 @@ public final class MatrixCore {
     EXPONENT(Core.exponent.fn()),
     ELEMENT(element.fn());
 
-    /**
-     * A single-element Lambda baseType whose {@code at(self, arg)} method calls {@code op(self_,
-     * arg)}.
-     */
+    /// A single-element Lambda baseType whose `at(self, arg)` method calls `op(self_, arg)`.
     final BaseType partialLeft;
 
-    /**
-     * A single-element Lambda baseType whose {@code at(self, arg)} method calls {@code op(arg,
-     * self_)}.
-     */
+    /// A single-element Lambda baseType whose `at(self, arg)` method calls `op(arg, self_)`.
     final BaseType partialRight;
 
     BinaryOp(VmFunction function) {
@@ -1787,14 +1682,14 @@ public final class MatrixCore {
       partialRight = function.partialApplication(0);
     }
 
-    /** Returns {@code fn(^m, rightValue)} (aka {@code m | # -> function(#, rightValue)}). */
+    /// Returns `fn(^m, rightValue)` (aka `m | # -> function(#, rightValue)`).
     @RC.Out
     Value applyMatrixLeft(TState tstate, @RC.In Value m, @RC.In Value rightValue) {
       return tstate.compound(
           CollectionCore.TRANSFORMED_MATRIX, m, tstate.compound(partialRight, rightValue));
     }
 
-    /** Returns {@code fn(leftValue, ^m)} (aka {@code m | # -> function(leftValue, #)}). */
+    /// Returns `fn(leftValue, ^m)` (aka `m | # -> function(leftValue, #)`).
     @RC.Out
     Value applyMatrixRight(TState tstate, @RC.In Value m, @RC.In Value leftValue) {
       return tstate.compound(
@@ -1802,198 +1697,160 @@ public final class MatrixCore {
     }
   }
 
-  /**
-   * <pre>
-   * method negative(Matrix m) = m | -&gt; -#
-   * </pre>
-   */
+  /// ```
+  /// method negative(Matrix m) = m | -> -#
+  /// ```
   @Core.Method("negative(Matrix)")
   static Value negativeMatrix(TState tstate, @RC.In Value m) {
     return tstate.compound(
         CollectionCore.TRANSFORMED_MATRIX, m, NumberCore.negative.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method add(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x + y)  // x ^+^ y
-   * </pre>
-   */
+  /// ```
+  /// method add(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x + y)  // x ^+^ y
+  /// ```
   @Core.Method("add(Matrix, Matrix)")
   static void addMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.add.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method add(Matrix m, Number x) = m | -&gt; # + x
-   * </pre>
-   */
+  /// ```
+  /// method add(Matrix m, Number x) = m | -> # + x
+  /// ```
   @Core.Method("add(Matrix, Number)")
   static Value addMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.ADD.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method add(Number x, Matrix m) = m | -&gt; x + #
-   * </pre>
-   */
+  /// ```
+  /// method add(Number x, Matrix m) = m | -> x + #
+  /// ```
   @Core.Method("add(Number, Matrix)")
   static Value addNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.ADD.applyMatrixRight(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method subtract(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x - y)  // x ^-^ y
-   * </pre>
-   */
+  /// ```
+  /// method subtract(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x - y)  // x ^-^ y
+  /// ```
   @Core.Method("subtract(Matrix, Matrix)")
   static void subtractMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.subtract.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method subtract(Matrix m, Number x) = m | -&gt; # - x
-   * </pre>
-   */
+  /// ```
+  /// method subtract(Matrix m, Number x) = m | -> # - x
+  /// ```
   @Core.Method("subtract(Matrix, Number)")
   static Value subtractMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.SUBTRACT.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method subtract(Number x, Matrix m) = m | -&gt; x - #
-   * </pre>
-   */
+  /// ```
+  /// method subtract(Number x, Matrix m) = m | -> x - #
+  /// ```
   @Core.Method("subtract(Number, Matrix)")
   static Value subtractNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.SUBTRACT.applyMatrixRight(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method multiply(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x * y)  // x ^*^ y
-   * </pre>
-   */
+  /// ```
+  /// method multiply(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x * y)  // x ^*^ y
+  /// ```
   @Core.Method("multiply(Matrix, Matrix)")
   static void multiplyMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.multiply.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method multiply(Matrix m, Number x) = m | -&gt; # * x
-   * </pre>
-   */
+  /// ```
+  /// method multiply(Matrix m, Number x) = m | -> # * x
+  /// ```
   @Core.Method("multiply(Matrix, Number)")
   static Value multiplyMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.MULTIPLY.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method multiply(Number x, Matrix m) = m | -&gt; x * #
-   * </pre>
-   */
+  /// ```
+  /// method multiply(Number x, Matrix m) = m | -> x * #
+  /// ```
   @Core.Method("multiply(Number, Matrix)")
   static Value multiplyNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.MULTIPLY.applyMatrixRight(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method divide(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x / y)  // x ^/^ y
-   * </pre>
-   */
+  /// ```
+  /// method divide(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x / y)  // x ^/^ y
+  /// ```
   @Core.Method("divide(Matrix, Matrix)")
   static void divideMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.divide.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method divide(Matrix m, Number x) = m | -&gt; # / x
-   * </pre>
-   */
+  /// ```
+  /// method divide(Matrix m, Number x) = m | -> # / x
+  /// ```
   @Core.Method("divide(Matrix, Number)")
   static Value divideMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.DIVIDE.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method divide(Number x, Matrix m) = m | -&gt; x / #
-   * </pre>
-   */
+  /// ```
+  /// method divide(Number x, Matrix m) = m | -> x / #
+  /// ```
   @Core.Method("divide(Number, Matrix)")
   static Value divideNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.DIVIDE.applyMatrixRight(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method modulo(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x % y)  // x ^%^ y
-   * </pre>
-   */
+  /// ```
+  /// method modulo(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x % y)  // x ^%^ y
+  /// ```
   @Core.Method("modulo(Matrix, Matrix)")
   static void moduloMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.modulo.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method modulo(Matrix m, Number x) = m | -&gt; # % x
-   * </pre>
-   */
+  /// ```
+  /// method modulo(Matrix m, Number x) = m | -> # % x
+  /// ```
   @Core.Method("modulo(Matrix, Number)")
   static Value moduloMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.MODULO.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method modulo(Number x, Matrix m) = m | -&gt; x % #
-   * </pre>
-   */
+  /// ```
+  /// method modulo(Number x, Matrix m) = m | -> x % #
+  /// ```
   @Core.Method("modulo(Number, Matrix)")
   static Value moduloNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.MODULO.applyMatrixRight(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method exponent(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -&gt; x ** y)  // x ^**^ y
-   * </pre>
-   */
+  /// ```
+  /// method exponent(Matrix m1, Matrix m2) = joinAndPipe(m1, m2, [x, y] -> x ** y)  // x ^**^ y
+  /// ```
   @Core.Method("exponent(Matrix, Matrix)")
   static void exponentMatrixMatrix(
       TState tstate, @RC.In Value m1, @RC.In Value m2, @Fn("joinAndPipe:3") Caller joinAndPipe) {
     tstate.startCall(joinAndPipe, m1, m2, Core.exponent.asLambdaExpr());
   }
 
-  /**
-   * <pre>
-   * method exponent(Matrix m, Number x) = m | -&gt; # ** x
-   * </pre>
-   */
+  /// ```
+  /// method exponent(Matrix m, Number x) = m | -> # ** x
+  /// ```
   @Core.Method("exponent(Matrix, Number)")
   static Value exponentMatrixNumber(TState tstate, @RC.In Value m, @RC.In Value x) {
     return BinaryOp.EXPONENT.applyMatrixLeft(tstate, m, x);
   }
 
-  /**
-   * <pre>
-   * method exponent(Number x, Matrix m) = m | -&gt; x ** #
-   * </pre>
-   */
+  /// ```
+  /// method exponent(Number x, Matrix m) = m | -> x ** #
+  /// ```
   @Core.Method("exponent(Number, Matrix)")
   static Value exponentNumberMatrix(TState tstate, @RC.In Value x, @RC.In Value m) {
     return BinaryOp.EXPONENT.applyMatrixRight(tstate, m, x);

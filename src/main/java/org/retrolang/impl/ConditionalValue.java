@@ -21,26 +21,20 @@ import org.retrolang.code.CodeValue;
 import org.retrolang.code.Register;
 import org.retrolang.impl.Condition.ValueSupplier;
 
-/**
- * ConditionalValue are used only during code generation, and only for a few purposes. A
- * ConditionalValue can be used with setResults(), startCall()/saving(), or jump(), but almost
- * nowhere else.
- */
+/// ConditionalValue are used only during code generation, and only for a few purposes. A
+/// ConditionalValue can be used with setResults(), startCall()/saving(), or jump(), but almost
+/// nowhere else.
 public abstract class ConditionalValue implements Value {
 
-  /**
-   * Converts a ConditionalValue to an RValue, by allocating registers to match the given template
-   * and emitting blocks to store this value in them. Escapes if this value does not fit in the
-   * template.
-   */
+  /// Converts a ConditionalValue to an RValue, by allocating registers to match the given template
+  /// and emitting blocks to store this value in them. Escapes if this value does not fit in the
+  /// template.
   public Value materialize(CodeGen codeGen, Template t) {
     return materialize(codeGen, t.toBuilder()::build);
   }
 
-  /**
-   * Converts a ConditionalValue to an RValue, by allocating registers using the given builder and
-   * emitting blocks to store this value in them.
-   */
+  /// Converts a ConditionalValue to an RValue, by allocating registers using the given builder and
+  /// emitting blocks to store this value in them.
   Value materialize(CodeGen codeGen, Function<TemplateBuilder.VarAllocator, Template> builder) {
     int registerStart = codeGen.cb.numRegisters();
     Template dst = builder.apply(codeGen.newAllocator());
@@ -48,10 +42,8 @@ public abstract class ConditionalValue implements Value {
     return RValue.fromTemplate(dst);
   }
 
-  /**
-   * Emits blocks to set the registers in {@code dst} (whose indices must be in the range {@code
-   * registerStart..registerEnd}) from this ConditionalValue.
-   */
+  /// Emits blocks to set the registers in `dst` (whose indices must be in the range
+  /// `registerStart..registerEnd`) from this ConditionalValue.
   abstract void emitStore(CodeGen codeGen, Template dst, int registerStart, int registerEnd);
 
   static class Simple extends ConditionalValue {

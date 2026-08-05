@@ -20,25 +20,23 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.retrolang.util.SizeOf;
 
-/**
- * A TStack represents an in-progress computation, unwound into a sequence of stack entry Values.
- *
- * <p>The first entry of a TStack is the most deeply nested stack entry; for a stack capturing an
- * error this will be the error itself, for a stack captured by a trace instruction this will refer
- * to the trace instruction. The following entries identify the call instructions that led to that
- * point.
- */
+/// A TStack represents an in-progress computation, unwound into a sequence of stack entry Values.
+///
+/// The first entry of a TStack is the most deeply nested stack entry; for a stack capturing an
+/// error this will be the error itself, for a stack captured by a trace instruction this will refer
+/// to the trace instruction. The following entries identify the call instructions that led to that
+/// point.
 class TStack extends RefCounted {
 
   // BASE_SIZE has nothing to do with BASE or BASE_TYPE
   static final long BASE_SIZE = RefCounted.BASE_SIZE + 4 * SizeOf.PTR;
   private static final long OBJ_SIZE = SizeOf.object(BASE_SIZE);
 
-  /** A Singleton used as the last (bottom-most) entry in all TStacks. */
+  /// A Singleton used as the last (bottom-most) entry in all TStacks.
   static final BaseType.SimpleStackEntryType BASE_TYPE =
       new BaseType.SimpleStackEntryType("StackBase");
 
-  /** The ultimate tail of all TStacks. */
+  /// The ultimate tail of all TStacks.
   static final TStack BASE;
 
   static {
@@ -46,30 +44,23 @@ class TStack extends RefCounted {
     BASE.set(BASE_TYPE.asValue());
   }
 
-  /**
-   * The first stack entry of this stack, or null if {@link #set} has not yet been called.
-   *
-   * <p>If {@code first} is non-null, {@code first.baseType()} will be a {@link
-   * BaseType.StackEntryType}.
-   */
+  /// The first stack entry of this stack, or null if [#set] has not yet been called.
+  ///
+  /// If `first` is non-null, `first.baseType()` will be a [BaseType.StackEntryType].
   @RC.Counted private Value first;
 
-  /** The stack entries after the first, or null if {@link #set} has not yet been called. */
+  /// The stack entries after the first, or null if [#set] has not yet been called.
   @RC.Counted private TStack rest;
 
-  /**
-   * The ResultsInfo that will be passed to {@link BaseType.StackEntryType#resume} if this stack is
-   * resumed. Ignored if this stack is not resumed.
-   */
+  /// The ResultsInfo that will be passed to [BaseType.StackEntryType#resume] if this stack is
+  /// resumed. Ignored if this stack is not resumed.
   private ResultsInfo results;
 
-  /**
-   * The MethodMemo that will be passed to {@link BaseType.StackEntryType#resume} if this stack is
-   * resumed. Ignored if this stack is not resumed.
-   */
+  /// The MethodMemo that will be passed to [BaseType.StackEntryType#resume] if this stack is
+  /// resumed. Ignored if this stack is not resumed.
   private MethodMemo methodMemo;
 
-  /** Creates a new, uninitialized TStack. */
+  /// Creates a new, uninitialized TStack.
   @RC.Out
   TStack(Allocator allocator) {
     allocator.recordAlloc(this, OBJ_SIZE);
@@ -78,58 +69,49 @@ class TStack extends RefCounted {
   // For use by the ForTrace subclass only
   private TStack() {}
 
-  /** True if {@link #set} has been called. */
+  /// True if [#set] has been called.
   boolean isSet() {
     return first != null;
   }
 
-  /** Returns the first entry of this stack. Should only be called when {@link #isSet} is true. */
+  /// Returns the first entry of this stack. Should only be called when [#isSet] is true.
   Value first() {
     assert isSet();
     return first;
   }
 
-  /**
-   * Returns true if the top of this stack is an Err. Should only be called when {@link #isSet} is
-   * true.
-   */
+  /// Returns true if the top of this stack is an Err. Should only be called when [#isSet] is true.
   boolean hasErr() {
     return first().baseType() instanceof Err;
   }
 
-  /**
-   * Returns the stack entries after the first, or null if this is {@link #BASE}. Should only be
-   * called when {@link #isSet} is true.
-   */
+  /// Returns the stack entries after the first, or null if this is [#BASE]. Should only be called
+  /// when [#isSet] is true.
   TStack rest() {
     assert isSet();
     return rest;
   }
 
-  /**
-   * Returns the ResultsInfo to be used if this entry is resumed; may be null if the entry cannot be
-   * resumed or does not need a ResultsInfo. Should only be called when {@link #isSet} is true.
-   */
+  /// Returns the ResultsInfo to be used if this entry is resumed; may be null if the entry cannot
+  /// be resumed or does not need a ResultsInfo. Should only be called when [#isSet] is true.
   ResultsInfo results() {
     assert isSet();
     return results;
   }
 
-  /**
-   * Returns the MethodMemo to be used if this entry is resumed; may be null if the entry cannot be
-   * resumed or does not need a MethodMemo. Should only be called when {@link #isSet} is true.
-   */
+  /// Returns the MethodMemo to be used if this entry is resumed; may be null if the entry cannot be
+  /// resumed or does not need a MethodMemo. Should only be called when [#isSet] is true.
   MethodMemo methodMemo() {
     assert isSet();
     return methodMemo;
   }
 
-  /** Equivalent to {@code set(first, null, null)}. */
+  /// Equivalent to `set(first, null, null)`.
   void set(@RC.In Value first) {
     set(first, null, null);
   }
 
-  /** One of the set() methods must be called once on each TStack. */
+  /// One of the set() methods must be called once on each TStack.
   void set(@RC.In Value first, ResultsInfo results, MethodMemo methodMemo) {
     assert !isSet() && first.baseType() instanceof BaseType.StackEntryType;
     this.first = first;
@@ -137,24 +119,20 @@ class TStack extends RefCounted {
     this.methodMemo = methodMemo;
   }
 
-  /** Must be called exactly once on each TStack (except BASE). */
+  /// Must be called exactly once on each TStack (except BASE).
   void setRest(@RC.In TStack rest) {
     assert isSet() && this.rest == null && this != BASE;
     this.rest = rest;
   }
 
-  /**
-   * Returns a sequential stream beginning with this TStack, following the rest links. Note that the
-   * final TStack in the sequence may not be set.
-   */
+  /// Returns a sequential stream beginning with this TStack, following the rest links. Note that
+  /// the final TStack in the sequence may not be set.
   Stream<TStack> stream() {
     return Stream.iterate(this, t -> t != null, t -> t.rest);
   }
 
-  /**
-   * Returns the entries on this stack as a stream of Strings. If the final TStack is unset, the
-   * final String will be "(incomplete)"
-   */
+  /// Returns the entries on this stack as a stream of Strings. If the final TStack is unset, the
+  /// final String will be "(incomplete)"
   Stream<String> stringStream() {
     return stream().map(tStack -> tStack.first == null ? "(incomplete)" : tStack.first.toString());
   }
@@ -171,25 +149,19 @@ class TStack extends RefCounted {
     return stringStream().collect(Collectors.joining("\n"));
   }
 
-  /**
-   * A subclass of TStack that captures additional information associated with trace instructions.
-   */
+  /// A subclass of TStack that captures additional information associated with trace instructions.
   static class ForTrace extends TStack {
     static final long OBJ_SIZE = SizeOf.object(TStack.BASE_SIZE + SizeOf.LONG + SizeOf.INT);
 
-    /**
-     * The number of nanoseconds (as reported by {@link System#nanoTime}) from the time the
-     * ResourceTracker was initialized until the execution of the trace instruction that created
-     * this TStack.
-     */
+    /// The number of nanoseconds (as reported by [System#nanoTime]) from the time the
+    /// ResourceTracker was initialized until the execution of the trace instruction that created
+    /// this TStack.
     @SuppressWarnings("GoodTime") // revisit?
     long nanoTime;
 
-    /**
-     * Each TStack created for a given trace instruction within a single computation will have a
-     * sequentially increasing index, beginning with 1; we use the indices to determine when traces
-     * have been dropped to stay within limits.
-     */
+    /// Each TStack created for a given trace instruction within a single computation will have a
+    /// sequentially increasing index, beginning with 1; we use the indices to determine when traces
+    /// have been dropped to stay within limits.
     int index;
 
     @RC.Out
@@ -198,7 +170,7 @@ class TStack extends RefCounted {
       allocator.recordAlloc(this, OBJ_SIZE);
     }
 
-    /** Set this TStack's {@link #index} and {@link #nanoTime}. */
+    /// Set this TStack's [#index] and [#nanoTime].
     @SuppressWarnings("GoodTime") // revisit?
     void setIndex(int index, long nanoTime) {
       assert this.index == 0;

@@ -42,7 +42,7 @@ import org.retrolang.testing.TestMonitor;
 import org.retrolang.testing.TestdataScanner;
 import org.retrolang.testing.TestdataScanner.TestProgram;
 
-/** Generates bytecodes for each of the .r8t files in the testdata/codegen directory. */
+/// Generates bytecodes for each of the .r8t files in the testdata/codegen directory.
 @RunWith(TestParameterInjector.class)
 public class CodeGenTest {
 
@@ -50,40 +50,36 @@ public class CodeGenTest {
   private static final Path SCRIPTS = TESTDATA.resolve("codegen");
   private static final Path TEST_INPUTS = TESTDATA.resolve("inputs");
 
-  /**
-   * Each .r8t file is expected to have source code followed by a comment that begins "{@code /*
-   * CODEGEN } fnName ...", where fnName is the name of a function defined in the source code.
-   * fnName is followed an optional "{@code ESCAPE_COUNT=}n", and then by RETURNS or ERRORS (e.g.
-   * {@code CODEGEN foo ESCAPE_COUNT=2 RETURNS}).
-   *
-   * <p>The source code will be executed twice, the first time with the {@code prep} argument set to
-   * {@code True}, and the second time with it set to {@code False}. In between the two executions
-   * it will force code generation for the method(s) of any function named fnName, so that the
-   * second execution will use the generated code.
-   *
-   * <p>If ESCAPE_COUNT is not specified or is 0, the second execution is expected to complete
-   * without any escapes from the generated code; otherwise the generated is expected to escape that
-   * many times.
-   *
-   * <p>The rest of the CODEGEN comment is 3 or 4 parts separated by lines containing just "---".
-   *
-   * <p>The first part depends on whether the first line said RETURNS or ERRORS:
-   *
-   * <ul>
-   *   <li>RETURNS: The second execution is expected to succeed, and this part contains a printed
-   *       representation of the expected return value.
-   *   <li>ERRORS: The second execution is expected to fail, and this part contains a printed
-   *       representation of the expected RuntimeError.
-   * </ul>
-   *
-   * <p>The second part is the blocks that are expected to be generated for the method(s) of the
-   * named function (and any other exlined methods they call).
-   *
-   * <p>If the program contains any trace instructions, there should be four parts and the third
-   * part contains the expected output from the traces; otherwise there should be three parts.
-   *
-   * <p>The final part of the comment has expected memory statistics for the second execution.
-   */
+  /// Each .r8t file is expected to have source code followed by a comment that begins "`/* CODEGEN`
+  /// fnName ...", where fnName is the name of a function defined in the source code. fnName is
+  /// followed an optional "`ESCAPE_COUNT=`n", and then by RETURNS or ERRORS (e.g. `CODEGEN foo
+  /// ESCAPE_COUNT=2 RETURNS`).
+  ///
+  /// The source code will be executed twice, the first time with the `prep` argument set to `True`,
+  /// and the second time with it set to `False`. In between the two executions it will force code
+  /// generation for the method(s) of any function named fnName, so that the second execution will
+  /// use the generated code.
+  ///
+  /// If ESCAPE\_COUNT is not specified or is 0, the second execution is expected to complete
+  /// without any escapes from the generated code; otherwise the generated is expected to escape
+  /// that many times.
+  ///
+  /// The rest of the CODEGEN comment is 3 or 4 parts separated by lines containing just "---".
+  ///
+  /// The first part depends on whether the first line said RETURNS or ERRORS:
+  ///
+  /// - RETURNS: The second execution is expected to succeed, and this part contains a printed
+  ///   representation of the expected return value.
+  /// - ERRORS: The second execution is expected to fail, and this part contains a printed
+  ///   representation of the expected RuntimeError.
+  ///
+  /// The second part is the blocks that are expected to be generated for the method(s) of the named
+  /// function (and any other exlined methods they call).
+  ///
+  /// If the program contains any trace instructions, there should be four parts and the third part
+  /// contains the expected output from the traces; otherwise there should be three parts.
+  ///
+  /// The final part of the comment has expected memory statistics for the second execution.
   private static final Pattern COMMENT_PATTERN =
       Pattern.compile("\n/\\* CODEGEN (.*?)\\*/\\n*", Pattern.DOTALL);
 
@@ -93,10 +89,8 @@ public class CodeGenTest {
     }
   }
 
-  /**
-   * A pattern to parse the first line of a CODEGEN comment (beginning immediately after the "/*
-   * CODEGEN ").
-   */
+  /// A pattern to parse the first line of a CODEGEN comment (beginning immediately after the "/\*
+  /// CODEGEN ").
   private static final Pattern FIRST_LINE_PATTERN =
       Pattern.compile(
           " *(?<fn>\\w+) +(ESCAPE_COUNT *= *(?<escapes>\\d+) *)?(?<returns>RETURNS|ERRORS)\n");
@@ -249,25 +243,21 @@ public class CodeGenTest {
     }
   }
 
-  /** Returns true if {@code method} is for a function with the given name in the given module. */
+  /// Returns true if `method` is for a function with the given name in the given module.
   private static boolean isExlined(VmMethod method, String fnName, ModuleBuilder module) {
     return method.function.name.equals(fnName) && method.impl.module() == module.module;
   }
 
-  /**
-   * Removes all whitespace at the beginning and end of lines in the given output, and removes all
-   * completely blank lines.
-   */
+  /// Removes all whitespace at the beginning and end of lines in the given output, and removes all
+  /// completely blank lines.
   private static String cleanLines(String output) {
     return output.replaceAll(" *\n[ \n]*", "\n").trim();
   }
 
   private static final Pattern AT_HEX = Pattern.compile("@[0-9a-f]{3,}");
 
-  /**
-   * Removes comments and preceding whitespace from the ends of lines in the given output. Replaces
-   * 3 or more hex digits following an "@" with "x"s.
-   */
+  /// Removes comments and preceding whitespace from the ends of lines in the given output. Replaces
+  /// 3 or more hex digits following an "@" with "x"s.
   private static String cleanBlocks(String output) {
     String s = output.replaceAll(" *//.*", "").trim();
     return AT_HEX
@@ -275,20 +265,18 @@ public class CodeGenTest {
         .replaceAll(mr -> "@xxxxx".substring(0, Math.min(6, mr.end() - mr.start())));
   }
 
-  /**
-   * Replaces unpredictable hex strings following "RThread@" or a future symbol ("□", "⊡", or "⊠")
-   * with "xxxx".
-   */
+  /// Replaces unpredictable hex strings following "RThread@" or a future symbol ("□", "⊡", or "⊠")
+  /// with "xxxx".
   private static String cleanIds(String output) {
     return output.replaceAll("(RThread@|[□⊡⊠])[0-9a-f]+\\b", "$1xxxx");
   }
 
-  /** Removes whitespace at the beginning and end of lines, and replaces newlines with spaces. */
+  /// Removes whitespace at the beginning and end of lines, and replaces newlines with spaces.
   private static String cleanValue(String output) {
     return output.replaceAll(" *\n *", " ").trim();
   }
 
-  /** Executes the given instruction block, passing {@code arg} as the argument. */
+  /// Executes the given instruction block, passing `arg` as the argument.
   private Value run(InstructionBlock ib, MethodMemo mMemo, Vm.Value arg) throws Vm.RuntimeError {
     try {
       return ib.applyToArgs(tracker, mMemo, arg);
@@ -298,7 +286,7 @@ public class CodeGenTest {
     }
   }
 
-  /** Logs the result of {@link ResourceTracker#takeTraces()} and returns it. */
+  /// Logs the result of [ResourceTracker#takeTraces()] and returns it.
   private static String getTraces(ResourceTracker tracker) {
     String traces = tracker.takeTraces();
     if (!traces.isEmpty()) {

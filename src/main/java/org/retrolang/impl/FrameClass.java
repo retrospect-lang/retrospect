@@ -36,147 +36,104 @@ import org.retrolang.impl.Frame.Replacement;
 import org.retrolang.impl.RcOp.RcOpBuilder;
 import org.retrolang.util.SizeOf;
 
-/**
- * Each subclass of Frame has a corresponding instance of FrameClass that provides information and
- * access methods.
- */
+/// Each subclass of Frame has a corresponding instance of FrameClass that provides information and
+/// access methods.
 class FrameClass {
-  /** The class described by this FrameClass instance. */
+  /// The class described by this FrameClass instance.
   final Class<? extends Frame> javaClass;
 
-  /** A short, readable name for the class; used only for output. */
+  /// A short, readable name for the class; used only for output.
   final String name;
 
-  /**
-   * A distinct, sequential index is assigned to each Frame subclass; this gives us a fast way to
-   * get from a Frame to its FrameClass, and might also be useful if we want to e.g. index into an
-   * array.
-   */
+  /// A distinct, sequential index is assigned to each Frame subclass; this gives us a fast way to
+  /// get from a Frame to its FrameClass, and might also be useful if we want to e.g. index into an
+  /// array.
   final int index;
 
-  /** A Supplier that allocates a new instance of the class. */
+  /// A Supplier that allocates a new instance of the class.
   final Supplier<?> alloc;
 
-  /**
-   * The number of generic pointer (Object) fields in this subclass. Currently constrained to be
-   * even and at least two.
-   */
+  /// The number of generic pointer (Object) fields in this subclass. Currently constrained to be
+  /// even and at least two.
   final int nPtrs;
 
-  /**
-   * The number of generic int fields in this subclass. These fields may be used to store any
-   * non-pointer data (bytes, ints, or doubles). Currently constrained to be odd.
-   */
+  /// The number of generic int fields in this subclass. These fields may be used to store any
+  /// non-pointer data (bytes, ints, or doubles). Currently constrained to be odd.
   final int nInts;
 
-  /**
-   * The offset (in bytes) from the start of the object to the first pointer field. All pointer
-   * fields must be contiguous and each occupies SizeOf.PTR bytes.
-   */
+  /// The offset (in bytes) from the start of the object to the first pointer field. All pointer
+  /// fields must be contiguous and each occupies SizeOf.PTR bytes.
   final int ptrBase;
 
-  /**
-   * The offset (in bytes) from the start of the object to the first int field. All int fields must
-   * be contiguous and each occupies SizeOf.INT bytes.
-   */
+  /// The offset (in bytes) from the start of the object to the first int field. All int fields must
+  /// be contiguous and each occupies SizeOf.INT bytes.
   final int intBase;
 
-  /** The total size in bytes of an instance of this class. */
+  /// The total size in bytes of an instance of this class.
   final int byteSize;
 
-  /** The expected name of an int field. */
+  /// The expected name of an int field.
   private static final Pattern INT_FIELD_NAME = Pattern.compile("i\\d+");
 
-  /** The expected name of an Object field. */
+  /// The expected name of an Object field.
   private static final Pattern PTR_FIELD_NAME = Pattern.compile("x\\d+");
 
-  /** Ignore weird fields added by coverage analysis. */
+  /// Ignore weird fields added by coverage analysis.
   private static final Pattern IGNORED_FIELD_NAME = Pattern.compile("__.*__");
 
-  /**
-   * An Op to return the value of each int field from an instance of this subclass; length is {@code
-   * nInts}.
-   *
-   * <p>Applying {@code getIntField.get(i)} to {@code f} is equivalent to calling {@code getI(f,
-   * i)}.
-   */
+  /// An Op to return the value of each int field from an instance of this subclass; length is
+  /// `nInts`.
+  ///
+  /// Applying `getIntField.get(i)` to `f` is equivalent to calling `getI(f, i)`.
   final ImmutableList<Op> getIntField;
 
-  /**
-   * An Op to set the value of each int field in an instance of this subclass; length is {@code
-   * nInts}.
-   *
-   * <p>Applying {@code setIntField.get(i)} to {@code f} and {@code v} is equivalent to calling
-   * {@code setI(f, i, v)}.
-   */
+  /// An Op to set the value of each int field in an instance of this subclass; length is `nInts`.
+  ///
+  /// Applying `setIntField.get(i)` to `f` and `v` is equivalent to calling `setI(f, i, v)`.
   final ImmutableList<Op> setIntField;
 
-  /**
-   * An Op to return the value of each Object field from an instance of this subclass; length is
-   * {@code nPtrs}.
-   *
-   * <p>Applying {@code getPtrField.get(i)} to {@code f} is equivalent to calling {@code getX(f,
-   * i)}.
-   */
+  /// An Op to return the value of each Object field from an instance of this subclass; length is
+  /// `nPtrs`.
+  ///
+  /// Applying `getPtrField.get(i)` to `f` is equivalent to calling `getX(f, i)`.
   final ImmutableList<Op> getPtrField;
 
-  /**
-   * An Op to return the value of each Object field from an instance of this subclass as a Value;
-   * length is {@code nPtrs}.
-   *
-   * <p>Applying {@code getValueField.get(i)} to {@code f} is equivalent to calling {@code
-   * getValue(f, i)}.
-   */
+  /// An Op to return the value of each Object field from an instance of this subclass as a Value;
+  /// length is `nPtrs`.
+  ///
+  /// Applying `getValueField.get(i)` to `f` is equivalent to calling `getValue(f, i)`.
   final ImmutableList<Op> getValueField;
 
-  /**
-   * An Op to set the value of each Object field in an instance of this subclass; length is {@code
-   * nPtrs}.
-   *
-   * <p>Applying {@code setPtrField.get(i)} to {@code f} and {@code v} is equivalent to calling
-   * {@code setX(f, i, v)}.
-   */
+  /// An Op to set the value of each Object field in an instance of this subclass; length is
+  /// `nPtrs`.
+  ///
+  /// Applying `setPtrField.get(i)` to `f` and `v` is equivalent to calling `setX(f, i, v)`.
   final ImmutableList<Op> setPtrField;
 
-  /**
-   * An Op to return the value of each Object field in an instance of this subclass and set it to
-   * null; length is {@code nPtrs}.
-   *
-   * <p>Applying {@code takePtrField.get(i)} to {@code f} is equivalent to calling {@code takeX(f,
-   * i)}.
-   */
+  /// An Op to return the value of each Object field in an instance of this subclass and set it to
+  /// null; length is `nPtrs`.
+  ///
+  /// Applying `takePtrField.get(i)` to `f` is equivalent to calling `takeX(f, i)`.
   final ImmutableList<Op> takePtrField;
 
-  /**
-   * An Op to return each byte in an instance of this subclass; length is {@code 4 * nInts}.
-   *
-   * <p>Applying {@code getByteField.get(i)} to {@code f} is equivalent to calling {@code getB(f,
-   * i)}.
-   */
+  /// An Op to return each byte in an instance of this subclass; length is `4 * nInts`.
+  ///
+  /// Applying `getByteField.get(i)` to `f` is equivalent to calling `getB(f, i)`.
   final ImmutableList<Op> getByteField;
 
-  /**
-   * An Op to set each byte in an instance of this subclass; length is {@code 4 * nInts}.
-   *
-   * <p>Applying {@code setByteField.get(i)} to {@code f} and {@code v} is equivalent to calling
-   * {@code setB(f, i, v)}.
-   */
+  /// An Op to set each byte in an instance of this subclass; length is `4 * nInts`.
+  ///
+  /// Applying `setByteField.get(i)` to `f` and `v` is equivalent to calling `setB(f, i, v)`.
   final ImmutableList<Op> setByteField;
 
-  /**
-   * An Op to return each double in an instance of this subclass; length is {@code nInts / 2}.
-   *
-   * <p>Applying {@code getDoubleField.get(i)} to {@code f} is equivalent to calling {@code getD(f,
-   * i)}.
-   */
+  /// An Op to return each double in an instance of this subclass; length is `nInts / 2`.
+  ///
+  /// Applying `getDoubleField.get(i)` to `f` is equivalent to calling `getD(f, i)`.
   final ImmutableList<Op> getDoubleField;
 
-  /**
-   * An Op to set each double in an instance of this subclass; length is {@code nInts / 2}.
-   *
-   * <p>Applying {@code setDoubleField.get(i)} to {@code f} and {@code v} is equivalent to calling
-   * {@code getD(f, i, v)}.
-   */
+  /// An Op to set each double in an instance of this subclass; length is `nInts / 2`.
+  ///
+  /// Applying `setDoubleField.get(i)` to `f` and `v` is equivalent to calling `getD(f, i, v)`.
   final ImmutableList<Op> setDoubleField;
 
   FrameClass(Class<? extends Frame> javaClass) {
@@ -334,10 +291,8 @@ class FrameClass {
     }
   }
 
-  /**
-   * Sets the specified element of {@code list} (which must be null) to {@code element}. If {@code
-   * list}'s size is less than or equal to {@code index}, first pads it with nulls.
-   */
+  /// Sets the specified element of `list` (which must be null) to `element`. If `list`'s size is
+  /// less than or equal to `index`, first pads it with nulls.
   private static <T> void add(List<T> list, int index, T element) {
     if (list.size() > index) {
       Preconditions.checkState(list.set(index, element) == null);
@@ -347,10 +302,8 @@ class FrameClass {
     }
   }
 
-  /**
-   * Chooses an optimal FrameClass to use for a layout that requires the specified number of ints
-   * and pointers.
-   */
+  /// Chooses an optimal FrameClass to use for a layout that requires the specified number of ints
+  /// and pointers.
   static FrameClass select(int nInts, int nPtrs) {
     // Find the FrameClass that requires the least total memory, taking any required overflow
     // arrays into account.
@@ -405,7 +358,7 @@ class FrameClass {
   private static final Op ALLOC_OP =
       RcOp.forRcMethod(FrameClass.class, "alloc", Allocator.class).build();
 
-  /** Returns a new instance of this subclass, updating memory counters accordingly. */
+  /// Returns a new instance of this subclass, updating memory counters accordingly.
   Frame alloc(Allocator allocator) {
     // TODO: investigate adding a free list to MemoryHelper, as we currently do for arrays
     Frame result = (Frame) alloc.get();
@@ -413,37 +366,32 @@ class FrameClass {
     return result;
   }
 
-  /** Returns a CodeValue that calls {@link #alloc(Allocator)} on this FrameClass. */
+  /// Returns a CodeValue that calls [#alloc(Allocator)] on this FrameClass.
   CodeValue emitAlloc(Register tstate) {
     return ALLOC_OP.result(CodeValue.of(this), tstate);
   }
 
-  /**
-   * Multiple methods in this class use Unsafe to access an instance of this FrameClass. Before
-   * doing so they should always call checkUnsafe with the instance (to ensure that it is actually
-   * an instance of this FrameClass) and whatever other tests are necessary to confirm the safety of
-   * the access. These tests should never fail, but we want to make sure that a bug somewhere else
-   * won't cause these methods to do something terrible.
-   */
+  /// Multiple methods in this class use Unsafe to access an instance of this FrameClass. Before
+  /// doing so they should always call checkUnsafe with the instance (to ensure that it is actually
+  /// an instance of this FrameClass) and whatever other tests are necessary to confirm the safety
+  /// of the access. These tests should never fail, but we want to make sure that a bug somewhere
+  /// else won't cause these methods to do something terrible.
   private void checkUnsafe(Object f, boolean safetyCheck) {
     Preconditions.checkArgument(javaClass.isInstance(f) && safetyCheck);
   }
 
-  /** Returns true if given a valid byte offset into this FrameClass's non-pointer region. */
+  /// Returns true if given a valid byte offset into this FrameClass's non-pointer region.
   private boolean isValidByteOffset(long offset) {
     return offset >= 0 && offset < nInts * (long) SizeOf.INT;
   }
 
-  /**
-   * Returns true if given a valid byte offset for an int in this FrameClass's non-pointer region.
-   */
+  /// Returns true if given a valid byte offset for an int in this FrameClass's non-pointer region.
   private boolean isValidIntOffset(long offset) {
     return isValidByteOffset(offset) && (offset & 3) == 0;
   }
 
-  /**
-   * Returns true if given a valid byte offset for a double in this FrameClass's non-pointer region.
-   */
+  /// Returns true if given a valid byte offset for a double in this FrameClass's non-pointer
+  /// region.
   private boolean isValidDoubleOffset(long offset) {
     // Our constructor verified that intBase is 4 mod 8, so this check ensures that intBase + offset
     // is double-aligned.  Because nInts is always odd we don't have to worry about the double
@@ -451,25 +399,21 @@ class FrameClass {
     return isValidByteOffset(offset) && (offset & 7) == 4;
   }
 
-  /** Returns true if given a valid index for an entry in this FrameClass's pointer region. */
+  /// Returns true if given a valid index for an entry in this FrameClass's pointer region.
   private boolean isValidPtrIndex(int index) {
     return index >= 0 && index < nPtrs;
   }
 
-  /**
-   * Returns the offset (from the beginning of an instance) of the pointer field with the given
-   * index.
-   */
+  /// Returns the offset (from the beginning of an instance) of the pointer field with the given
+  /// index.
   private int ptrOffset(int index) {
     return ptrBase + index * SizeOf.PTR;
   }
 
-  /**
-   * Implements {@link RefCounted#visitRefs} for a Frame using this FrameClass.
-   *
-   * @param nPtrs the number of pointers in the Frame's pointer region, including those for any
-   *     overflow arrays but not including pointers in the overflow arrays.
-   */
+  /// Implements [RefCounted#visitRefs] for a Frame using this FrameClass.
+  ///
+  /// @param nPtrs the number of pointers in the Frame's pointer region, including those for any
+  ///   overflow arrays but not including pointers in the overflow arrays.
   long visitRefs(Frame f, RefVisitor visitor, int nPtrs) {
     if (nPtrs > 0) {
       // Make sure that a bug elsewhere won't cause us to do something bad with Unsafe below.
@@ -491,92 +435,74 @@ class FrameClass {
     return byteSize;
   }
 
-  /**
-   * Returns the unsigned byte at the specified offset in the given object, which must be an
-   * instance of this FrameClass.
-   */
+  /// Returns the unsigned byte at the specified offset in the given object, which must be an
+  /// instance of this FrameClass.
   int getB(Object f, int offset) {
     checkUnsafe(f, isValidByteOffset(offset));
     return Unsafe.getByte(f, intBase + offset) & 255;
   }
 
-  /**
-   * Sets the byte at the specified offset in the given object, which must be an instance of this
-   * FrameClass.
-   */
+  /// Sets the byte at the specified offset in the given object, which must be an instance of this
+  /// FrameClass.
   void setB(Object f, long offset, int value) {
     assert value >= 0 && value < 256;
     checkUnsafe(f, isValidByteOffset(offset));
     Unsafe.putByte(f, intBase + offset, (byte) value);
   }
 
-  /**
-   * Returns the int at the specified offset in the given object, which must be an instance of this
-   * FrameClass.
-   */
+  /// Returns the int at the specified offset in the given object, which must be an instance of this
+  /// FrameClass.
   int getI(Object f, int offset) {
     checkUnsafe(f, isValidIntOffset(offset));
     return Unsafe.getInt(f, intBase + offset);
   }
 
-  /**
-   * Sets the int at the specified offset in the given object, which must be an instance of this
-   * FrameClass.
-   */
+  /// Sets the int at the specified offset in the given object, which must be an instance of this
+  /// FrameClass.
   void setI(Object f, long offset, int value) {
     checkUnsafe(f, isValidIntOffset(offset));
     Unsafe.putInt(f, intBase + offset, value);
   }
 
-  /**
-   * Returns the double at the specified offset in the given object, which must be an instance of
-   * this FrameClass.
-   */
+  /// Returns the double at the specified offset in the given object, which must be an instance of
+  /// this FrameClass.
   double getD(Object f, int offset) {
     checkUnsafe(f, isValidDoubleOffset(offset));
     return Unsafe.getDouble(f, intBase + offset);
   }
 
-  /**
-   * Sets the double at the specified offset in the given object, which must be an instance of this
-   * FrameClass.
-   */
+  /// Sets the double at the specified offset in the given object, which must be an instance of this
+  /// FrameClass.
   void setD(Object f, long offset, double value) {
     checkUnsafe(f, isValidDoubleOffset(offset));
     Unsafe.putDouble(f, intBase + offset, value);
   }
 
-  /**
-   * Returns the specified pointer from the given object, which must be an instance of this
-   * FrameClass.
-   */
+  /// Returns the specified pointer from the given object, which must be an instance of this
+  /// FrameClass.
   Object getX(Frame f, int index) {
     checkUnsafe(f, isValidPtrIndex(index));
     return Unsafe.getObject(f, ptrOffset(index));
   }
 
-  /** Returns the same value as {@link #getX}, but cast to a byte[]. */
+  /// Returns the same value as [#getX], but cast to a byte[].
   byte[] getBytes(Frame f, int index) {
     return (byte[]) getX(f, index);
   }
 
-  /** Returns the same value as {@link #getX}, but cast to a Value. */
+  /// Returns the same value as [#getX], but cast to a Value.
   Value getValue(Frame f, int index) {
     return (Value) checkForReplacement(index, getX(f, index), f);
   }
 
-  /**
-   * A MethodHandle of type `Object <- (FrameClass, int, Object, Frame)` that calls {@link
-   * #checkForReplacement}.
-   */
+  /// A MethodHandle of type \`Object <- (FrameClass, int, Object, Frame)\` that calls
+  /// [#checkForReplacement].
   private static final MethodHandle CHECK_FOR_REPLACEMENT =
       Handle.forMethod(
           FrameClass.class, "checkForReplacement", int.class, Object.class, Frame.class);
 
-  /**
-   * Checks the value we've just read from the specified pointer field to see if it's a Frame that
-   * has evolved. If so, returns its replacement and tries to update the field in {@code f}.
-   */
+  /// Checks the value we've just read from the specified pointer field to see if it's a Frame that
+  /// has evolved. If so, returns its replacement and tries to update the field in `f`.
   Object checkForReplacement(int index, Object v, Frame f) {
     if (v instanceof Frame vf) {
       Replacement replacement = Frame.getReplacement(vf);
@@ -605,22 +531,18 @@ class FrameClass {
     return v;
   }
 
-  /**
-   * Sets the specified pointer in the given object, which must be an instance of this FrameClass.
-   */
+  /// Sets the specified pointer in the given object, which must be an instance of this FrameClass.
   void setX(Frame f, int index, Object value) {
     checkUnsafe(f, isValidPtrIndex(index));
     Unsafe.putObject(f, ptrOffset(index), value);
   }
 
-  /**
-   * Nulls the specified pointer in the given object (which must be an instance of this FrameClass)
-   * and returns its previous value.
-   *
-   * <p>(The read/write is not atomic, so if another thread were performing the same action both
-   * might see the same non-null value; in practice this method is only used when we know the object
-   * is unshared.)
-   */
+  /// Nulls the specified pointer in the given object (which must be an instance of this FrameClass)
+  /// and returns its previous value.
+  ///
+  /// (The read/write is not atomic, so if another thread were performing the same action both might
+  /// see the same non-null value; in practice this method is only used when we know the object is
+  /// unshared.)
   @RC.Out
   Object takeX(Frame f, int index) {
     checkUnsafe(f, isValidPtrIndex(index));

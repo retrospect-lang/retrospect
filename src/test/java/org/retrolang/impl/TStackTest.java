@@ -26,12 +26,10 @@ import org.retrolang.impl.BaseType.SimpleStackEntryType;
 @RunWith(JUnit4.class)
 public class TStackTest {
 
-  /** A SimpleStackEntryType for a function call that saves one local. */
+  /// A SimpleStackEntryType for a function call that saves one local.
   private static final SimpleStackEntryType CALL = new SimpleStackEntryType("myCall", "saved");
 
-  /**
-   * Builds a simple call stack for two levels of nested function ending in an undefined variable.
-   */
+  /// Builds a simple call stack for two levels of nested function ending in an undefined variable.
   @Test
   public void simple() {
     // Set up a ResourceTracker and TState
@@ -74,14 +72,11 @@ public class TStackTest {
     assertThat(tracker.allReleased()).isTrue();
   }
 
-  /**
-   * Implements the proper stack handling for a function call, as described at {@link
-   * TState#startCall}.
-   *
-   * <p>If {@code save} is null, the body is expected to complete without requiring that a stack
-   * entry be created. Otherwise a stack entry should be requested, and we'll create one that wraps
-   * the value of {@code save}.
-   */
+  /// Implements the proper stack handling for a function call, as described at [TState#startCall].
+  ///
+  /// If `save` is null, the body is expected to complete without requiring that a stack entry be
+  /// created. Otherwise a stack entry should be requested, and we'll create one that wraps the
+  /// value of `save`.
   private static void doCall(TState tstate, String save, Runnable body) {
     assertThat(tstate.unwindStarted()).isFalse();
     TStack prev = tstate.beforeCall();

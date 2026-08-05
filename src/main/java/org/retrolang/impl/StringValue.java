@@ -24,22 +24,18 @@ import org.retrolang.impl.core.CollectionCore;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
 
-/**
- * An implementation of Value for strings.
- *
- * <p>For now this is a minimal placeholder; I expect to replace it with something more complete
- * later.
- */
+/// An implementation of Value for strings.
+///
+/// For now this is a minimal placeholder; I expect to replace it with something more complete
+/// later.
 public class StringValue extends RefCounted implements Value {
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + SizeOf.PTR);
 
   public final String value;
 
-  /**
-   * Assumes that value is unshared, and will be released when we are dropped. Will overcount if
-   * value is shared, but that's probably harmless.
-   */
+  /// Assumes that value is unshared, and will be released when we are dropped. Will overcount if
+  /// value is shared, but that's probably harmless.
   public StringValue(Allocator allocator, String value) {
     int nChars = value.length();
     // To keep this fast and simple we want to use length() and charAt() rather than
@@ -53,7 +49,7 @@ public class StringValue extends RefCounted implements Value {
     allocator.recordAlloc(this, OBJ_SIZE + SizeOf.string(value));
   }
 
-  /** Creates an uncounted StringValue. */
+  /// Creates an uncounted StringValue.
   public static StringValue uncounted(String value) {
     return new StringValue(Allocator.UNCOUNTED, value);
   }
@@ -84,7 +80,7 @@ public class StringValue extends RefCounted implements Value {
     return StringUtil.escape(value);
   }
 
-  /** {@code method size(String s) = ...} */
+  /// `method size(String s) = ...`
   @Core.Method("size(String)")
   public static Value size(TState tstate, Value s) {
     if (s instanceof StringValue sv) {
@@ -94,19 +90,17 @@ public class StringValue extends RefCounted implements Value {
     return codeGen.intToValue(LENGTH_OP.result(codeGen.asCodeValue(s)));
   }
 
-  /** {@code open function codePoints(string)} */
+  /// `open function codePoints(string)`
   @Core.Public
   static final VmFunctionBuilder codePoints = VmFunctionBuilder.create("codePoints", 1).isOpen();
 
-  /**
-   * {@code private compound ToCodePoint is Lambda}
-   *
-   * <p>Input is an index; output the corresponding code point from the wrapped String.
-   */
+  /// `private compound ToCodePoint is Lambda`
+  ///
+  /// Input is an index; output the corresponding code point from the wrapped String.
   @Core.Private
   static final BaseType.Named TO_CODE_POINT = Core.newBaseType("ToCodePoint", 1, Core.LAMBDA);
 
-  /** {@code method codePoints(String s) = 1..size(s) | ToCodePoint_(s)} */
+  /// `method codePoints(String s) = 1..size(s) | ToCodePoint_(s)`
   @Core.Method("codePoints(String)")
   static Value codePoints(TState tstate, @RC.In Value s) {
     Value length = size(tstate, s);
@@ -123,7 +117,7 @@ public class StringValue extends RefCounted implements Value {
             });
   }
 
-  /** {@code method at(ToCodePoint cp, Number index) = ...} */
+  /// `method at(ToCodePoint cp, Number index) = ...`
   @Core.Method("at(ToCodePoint, Number)")
   static Value atToCodePoint(TState tstate, Value cp, Value index) throws BuiltinException {
     Value result = codePoint(tstate, cp.peekElement(0), index, 1);
@@ -131,10 +125,8 @@ public class StringValue extends RefCounted implements Value {
     return result;
   }
 
-  /**
-   * Returns the code point of {@code s} identified by {@code index} (which may be zero-based or
-   * one-based), or -1 if {@code index} is invalid.
-   */
+  /// Returns the code point of `s` identified by `index` (which may be zero-based or one-based), or
+  /// -1 if `index` is invalid.
   @RC.Out
   public static Value codePoint(TState tstate, Value s, Value index, int firstIndex)
       throws BuiltinException {
@@ -149,14 +141,14 @@ public class StringValue extends RefCounted implements Value {
     }
   }
 
-  /** If {@code index} is an int, returns {@code index - firstIndex}; otherwise escapes. */
+  /// If `index` is an int, returns `index - firstIndex`; otherwise escapes.
   private static CodeValue verifyAndAdjust(CodeGen codeGen, Value index, int firstIndex)
       throws BuiltinException {
     CodeValue result = codeGen.verifyInt(index);
     return (firstIndex == 0) ? result : Op.SUBTRACT_INTS.result(result, CodeValue.of(firstIndex));
   }
 
-  /** {@code method at(String, Array) = ...} */
+  /// `method at(String, Array) = ...`
   @Core.Method("at(String, Array)")
   static Value atStringRange(TState tstate, Value s, Value range) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(range.isArrayOfLength(1));
@@ -169,13 +161,11 @@ public class StringValue extends RefCounted implements Value {
     return substring(tstate, s, min, max, 1);
   }
 
-  /**
-   * Returns the substring from {@code start - firstIndex} (inclusive) to {@code end} (exclusive).
-   * If {@code end} is -1, the end of the string is used.
-   *
-   * <p>(Note that when {@code firstIndex} is 1, {@code end} is effectively inclusive since we do
-   * not subtract {@code firstIndex} from it.)
-   */
+  /// Returns the substring from `start - firstIndex` (inclusive) to `end` (exclusive). If `end` is
+  /// -1, the end of the string is used.
+  ///
+  /// (Note that when `firstIndex` is 1, `end` is effectively inclusive since we do not subtract
+  /// `firstIndex` from it.)
   @RC.Out
   public static Value substring(TState tstate, Value s, Value start, Value end, int firstIndex)
       throws BuiltinException {
@@ -202,10 +192,9 @@ public class StringValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * If the characters beginning at {@code start} are an optional '+' or '-' followed by one or more
-   * digits, returns the position of the first non-digit following the digits; otherwise returns -1.
-   */
+  /// If the characters beginning at `start` are an optional '+' or '-' followed by one or more
+  /// digits, returns the position of the first non-digit following the digits; otherwise returns
+  /// -1.
   @RC.Out
   public static Value skipInt(TState tstate, Value s, Value start) {
     if (!(s instanceof RValue || start instanceof RValue)) {
@@ -224,7 +213,7 @@ public class StringValue extends RefCounted implements Value {
     }
   }
 
-  /** {@code function parseInt(string)} */
+  /// `function parseInt(string)`
   @Core.Public static final VmFunctionBuilder parseInt = VmFunctionBuilder.create("parseInt", 1);
 
   @Core.Method("parseInt(String)")
@@ -235,10 +224,8 @@ public class StringValue extends RefCounted implements Value {
     return parseInt(tstate, results, s, NumValue.ZERO, end);
   }
 
-  /**
-   * The substring of {@code sv} from {@code start} (inclusive) to {@code end} (exclusive) must be
-   * an optional '+' or '-' followed by one or more digits; returns the corresponding number.
-   */
+  /// The substring of `sv` from `start` (inclusive) to `end` (exclusive) must be an optional '+' or
+  /// '-' followed by one or more digits; returns the corresponding number.
   @RC.Out
   public static Value parseInt(TState tstate, ResultsInfo results, Value sv, Value start, Value end)
       throws BuiltinException {
@@ -290,10 +277,7 @@ public class StringValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * A Condition that is true if the length of {@code s} (a StringValue) is equal to {@code n} (an
-   * integer).
-   */
+  /// A Condition that is true if the length of `s` (a StringValue) is equal to `n` (an integer).
   public static Condition lengthIs(TState tstate, Value s, Value n) {
     if (s instanceof StringValue sv && n instanceof NumValue) {
       return Condition.of(NumValue.equals(n, sv.value.length()));
@@ -303,10 +287,8 @@ public class StringValue extends RefCounted implements Value {
     return Condition.intEq(codeGen.asCodeValue(n), length);
   }
 
-  /**
-   * A Condition that is true if {@code start} is a valid index in {@code s}, and the substring of
-   * {@code s} beginning at {@code start} starts with {@code sub}.
-   */
+  /// A Condition that is true if `start` is a valid index in `s`, and the substring of `s`
+  /// beginning at `start` starts with `sub`.
   public static Condition substringStartsWith(TState tstate, Value s, Value start, Value sub)
       throws BuiltinException {
     if (s instanceof StringValue sv
@@ -329,10 +311,8 @@ public class StringValue extends RefCounted implements Value {
         });
   }
 
-  /**
-   * A Condition that is true if {@code s} contains the code point {@code cp}; caller is responsible
-   * for verifying that {@code cp} is an integer.
-   */
+  /// A Condition that is true if `s` contains the code point `cp`; caller is responsible for
+  /// verifying that `cp` is an integer.
   public static Condition containsCodePoint(TState tstate, Value s, Value cp) {
     if (s instanceof StringValue sv && cp instanceof NumValue) {
       return Condition.of(containsCodePoint(sv, NumValue.asInt(cp)));
@@ -351,7 +331,7 @@ public class StringValue extends RefCounted implements Value {
   static final Op CODE_POINT_OP =
       RcOp.forRcMethod(StringValue.class, "codePoint", int.class).withConstSimplifier().build();
 
-  /** Returns the code point at the given index, or -1 if {@code index} is invalid. */
+  /// Returns the code point at the given index, or -1 if `index` is invalid.
   public int codePoint(int index) {
     if (index >= 0 && index < value.length()) {
       return value.charAt(index);
@@ -365,10 +345,8 @@ public class StringValue extends RefCounted implements Value {
           .withConstSimplifier()
           .build();
 
-  /**
-   * Returns the substring from {@code start} (inclusive) to {@code end} (exclusive). If {@code end}
-   * is -1, the end of the string is used.
-   */
+  /// Returns the substring from `start` (inclusive) to `end` (exclusive). If `end` is -1, the end
+  /// of the string is used.
   @RC.Out
   public StringValue substring(TState tstate, int start, int end) {
     int size = value.length();
@@ -392,10 +370,9 @@ public class StringValue extends RefCounted implements Value {
     return c >= '0' && c <= '9';
   }
 
-  /**
-   * If the characters beginning at {@code pos} are an optional '+' or '-' followed by one or more
-   * digits, returns the position of the first non-digit following the digits; otherwise returns -1.
-   */
+  /// If the characters beginning at `pos` are an optional '+' or '-' followed by one or more
+  /// digits, returns the position of the first non-digit following the digits; otherwise returns
+  /// -1.
   public int skipInt(int start) {
     if (start < 0) {
       return -1;

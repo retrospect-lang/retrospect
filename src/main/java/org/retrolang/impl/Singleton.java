@@ -18,10 +18,8 @@ package org.retrolang.impl;
 
 import org.retrolang.Vm;
 
-/**
- * Each BaseType with {@code size == 0} has a corresponding {@code Singleton} representing the value
- * of that type.
- */
+/// Each BaseType with `size == 0` has a corresponding `Singleton` representing the value of that
+/// type.
 public final class Singleton extends VmExpr.Constant implements Value, Vm.Singleton {
   final BaseType baseType;
   final Template.Constant asTemplate;

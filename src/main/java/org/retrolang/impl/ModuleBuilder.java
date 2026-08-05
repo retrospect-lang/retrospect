@@ -28,48 +28,39 @@ import org.retrolang.Vm;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
 
-/** Implements Vm.ModuleBuilder. */
+/// Implements Vm.ModuleBuilder.
 class ModuleBuilder implements Vm.ModuleBuilder {
 
-  /**
-   * The module being built.
-   *
-   * <p>Note that the ModuleBuilder will be dropped after it has been built, so objects that will
-   * live on as part of the Module (such as types and functions) should refer to the Module
-   * (available from this field), not the ModuleBuilder.
-   */
+  /// The module being built.
+  ///
+  /// Note that the ModuleBuilder will be dropped after it has been built, so objects that will live
+  /// on as part of the Module (such as types and functions) should refer to the Module (available
+  /// from this field), not the ModuleBuilder.
   final VmModule module;
 
-  /**
-   * Any public types that have been constructed by {@link #newSingleton}, {@link #newCompoundType},
-   * {@link #newUnionType}, or {@link #newTypeFromUnion}, keyed by their name.
-   */
+  /// Any public types that have been constructed by [#newSingleton], [#newCompoundType],
+  /// [#newUnionType], or [#newTypeFromUnion], keyed by their name.
   private Map<String, VmType> types = new HashMap<>();
 
-  /**
-   * All types (public or private) that have been constructed by {@link #newSingleton}, {@link
-   * #newCompoundType}, {@link #newUnionType}, or {@link #newTypeFromUnion}.
-   */
+  /// All types (public or private) that have been constructed by [#newSingleton],
+  /// [#newCompoundType], [#newUnionType], or [#newTypeFromUnion].
   private List<VmType> allTypes = new ArrayList<>();
 
-  /**
-   * Any public functions that have been constructed by {@link #newFunction}, with keys created by
-   * {@link VmFunction#key}.
-   */
+  /// Any public functions that have been constructed by [#newFunction], with keys created by
+  /// [VmFunction#key].
   private Map<String, VmFunction> functions = new HashMap<>();
 
-  /** All functions (public or private) that have been constructed by {@link #newFunction}. */
+  /// All functions (public or private) that have been constructed by [#newFunction].
   private List<VmFunction.General> allFunctions = new ArrayList<>();
 
-  /** The function that implements the "_" suffix operator for this module. */
+  /// The function that implements the "\_" suffix operator for this module.
   private final VmFunction unCompound;
 
-  /**
-   * The function that implements the "_" suffix operator when used on the left-hand side of an "=".
-   */
+  /// The function that implements the "\_" suffix operator when used on the left-hand side of an
+  /// "=".
   private final VmFunction updateCompound;
 
-  /** Creates a new ModuleBuilder and the corresponding VmModule. */
+  /// Creates a new ModuleBuilder and the corresponding VmModule.
   ModuleBuilder(String name) {
     this.module = new VmModule(name, this);
     this.types = new HashMap<>();
@@ -81,11 +72,9 @@ class ModuleBuilder implements Vm.ModuleBuilder {
         new VmFunction.Simple("_update", 2, module::updateCompoundMethod, "compound");
   }
 
-  /**
-   * Creates a stub ModuleBuilder for the Core module. This ModuleBuilder has no state and none of
-   * its methods work; the actual module initialization is handled by the static initializers of
-   * {@link Core}.
-   */
+  /// Creates a stub ModuleBuilder for the Core module. This ModuleBuilder has no state and none of
+  /// its methods work; the actual module initialization is handled by the static initializers of
+  /// [Core].
   ModuleBuilder() {
     this.module = new VmModule("Core", this);
     this.unCompound = null;
@@ -190,11 +179,9 @@ class ModuleBuilder implements Vm.ModuleBuilder {
     module.initialize(types, functions);
   }
 
-  /**
-   * Adds a new method. If this is a method for a function not created by this ModuleBuilder, the
-   * method must have a MethodPredicate that restricts at least one argument to a type created by
-   * this ModuleBuilder.
-   */
+  /// Adds a new method. If this is a method for a function not created by this ModuleBuilder, the
+  /// method must have a MethodPredicate that restricts at least one argument to a type created by
+  /// this ModuleBuilder.
   synchronized void addMethod(VmMethod method) {
     checkNotBuilt();
     VmFunction.General fn = (VmFunction.General) method.function;
@@ -234,7 +221,7 @@ class ModuleBuilder implements Vm.ModuleBuilder {
     }
   }
 
-  /** A BaseType created by {@link #newCompoundType}. */
+  /// A BaseType created by [#newCompoundType].
   static class Compound extends BaseType.Named {
     private final String[] elementNames;
     final VmCompound vmCompound;
@@ -245,10 +232,7 @@ class ModuleBuilder implements Vm.ModuleBuilder {
       vmCompound = new VmCompound(this);
     }
 
-    /**
-     * Returns true if {@link #elementNames} is null, which includes all non-built-in compound
-     * types.
-     */
+    /// Returns true if [#elementNames] is null, which includes all non-built-in compound types.
     boolean isSimple() {
       return elementNames == null;
     }

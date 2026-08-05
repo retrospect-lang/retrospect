@@ -20,35 +20,26 @@ import com.google.common.collect.ImmutableSet;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 
-/**
- * Implements Vm.MethodPredicate, and provides support for determining when a method is attachable
- * in a module.
- */
+/// Implements Vm.MethodPredicate, and provides support for determining when a method is attachable
+/// in a module.
 abstract class MethodPredicate implements Vm.MethodPredicate {
 
-  /**
-   * Returns true if this MethodPredicate is true for the given args.
-   *
-   * <p>The {@code args} array must contain a Value for each argument of the associated method; any
-   * additional elements are ignored.
-   */
+  /// Returns true if this MethodPredicate is true for the given args.
+  ///
+  /// The `args` array must contain a Value for each argument of the associated method; any
+  /// additional elements are ignored.
   abstract Condition test(Object[] args);
 
-  /**
-   * Tries to find a set of {@link Simple}s such that
-   *
-   * <ul>
-   *   <li>each Simple in the returned set is positive and is for a type in the given module; and
-   *   <li>this MethodPredicate is true for a given sequence of args only if at least one of the
-   *       returned Simples' type is an explicit supertype of the corresponding argument's base
-   *       type.
-   * </ul>
-   *
-   * <p>Returns null if it is unable to find such a set.
-   */
+  /// Tries to find a set of [Simple]s such that
+  ///
+  /// - each Simple in the returned set is positive and is for a type in the given module; and
+  /// - this MethodPredicate is true for a given sequence of args only if at least one of the
+  ///   returned Simples' type is an explicit supertype of the corresponding argument's base type.
+  ///
+  /// Returns null if it is unable to find such a set.
   abstract ImmutableSet<Simple> asArgRestriction(VmModule module);
 
-  /** The trivial MethodPredicate that is true of any args. */
+  /// The trivial MethodPredicate that is true of any args.
   static final MethodPredicate TRUE =
       new MethodPredicate() {
         @Override
@@ -67,10 +58,8 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
         }
       };
 
-  /**
-   * A MethodPredicate which is true if the argument in position {@code argIndex} is ({@code
-   * positive}=true) or is not ({@code positive}=false) a value of the given type.
-   */
+  /// A MethodPredicate which is true if the argument in position `argIndex` is (`positive` true) or
+  /// is not (`positive` false) a value of the given type.
   static class Simple extends MethodPredicate {
     final int argIndex;
     final VmType type;

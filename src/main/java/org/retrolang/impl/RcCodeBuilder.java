@@ -40,72 +40,62 @@ import org.retrolang.code.ValueInfo.BinaryOps;
 import org.retrolang.util.Bits;
 import org.retrolang.util.SmallIntMap;
 
-/**
- * A specialized subclass of CodeBuilder that does an additional analysis pass after optimizations
- * and the first step of register assignment are complete, before the second step of register
- * assignment.
- *
- * <p>See docs/rc_code_builder.md for details.
- */
+/// A specialized subclass of CodeBuilder that does an additional analysis pass after optimizations
+/// and the first step of register assignment are complete, before the second step of register
+/// assignment.
+///
+/// See docs/rc\_code\_builder.md for details.
 public class RcCodeBuilder extends CodeBuilder {
 
-  /**
-   * A BlockExtra for each Block that existed when our analysis started, ordered by the natural
-   * order of the corresponding blocks.
-   */
+  /// A BlockExtra for each Block that existed when our analysis started, ordered by the natural
+  /// order of the corresponding blocks.
   private BlockExtra[] blockExtras;
 
-  /**
-   * An array with the same elements as {@link #blockExtras}, but indexed by {@link Block#index()}.
-   * May have nulls at the end if blocks have been deleted.
-   */
+  /// An array with the same elements as [#blockExtras], but indexed by [Block#index()]. May have
+  /// nulls at the end if blocks have been deleted.
   private BlockExtra[] blockExtraByBlockIndex;
 
-  /** A LoopExtra for each Loop, indexed by {@link Loop#index()}. */
+  /// A LoopExtra for each Loop, indexed by [Loop#index()].
   private LoopExtra[] loopExtraByLoopIndex;
 
-  /**
-   * Each register that may contain a ref-counted object (i.e. whose type is a subclass or
-   * superclass of RefCounted, or an array) is assigned a distinct "tracked register index" which we
-   * use in place of the register index to keep Bits and SmallIntMaps more compact.
-   *
-   * <p>This array maps {@link Register#index} to the corresponding tracked register index, or -1
-   * for registers that are never live or cannot contain a ref-counted object (including all numeric
-   * registers).
-   */
+  /// Each register that may contain a ref-counted object (i.e. whose type is a subclass or
+  /// superclass of RefCounted, or an array) is assigned a distinct "tracked register index" which
+  /// we use in place of the register index to keep Bits and SmallIntMaps more compact.
+  ///
+  /// This array maps [Register#index] to the corresponding tracked register index, or -1 for
+  /// registers that are never live or cannot contain a ref-counted object (including all numeric
+  /// registers).
   private int[] registerToTri;
 
-  /**
-   * Maps each valid "tracked register index" to the corresponding {@link Register#index}; see
-   * {@link #registerToTri} for what that means.
-   */
+  /// Maps each valid "tracked register index" to the corresponding [Register#index]; see
+  /// [#registerToTri] for what that means.
   private int[] triToRegister;
 
   RcCodeBuilder(BinaryOps binaryOps) {
     super(binaryOps);
   }
 
-  /** Returns the BlockExtra corresponding to the given block. */
+  /// Returns the BlockExtra corresponding to the given block.
   BlockExtra blockExtra(Block b) {
     return blockExtraByBlockIndex[b.index()];
   }
 
-  /** Returns the LoopExtra corresponding to the given loop. */
+  /// Returns the LoopExtra corresponding to the given loop.
   LoopExtra loopExtra(Loop loop) {
     return loopExtraByLoopIndex[loop.index()];
   }
 
-  /** Returns the TRI for the given register, or -1 if {@code r} is not tracked. */
+  /// Returns the TRI for the given register, or -1 if `r` is not tracked.
   private int registerToTri(Register r) {
     return registerToTri[r.index];
   }
 
-  /** Returns the register with the given TRI. */
+  /// Returns the register with the given TRI.
   private Register triToRegister(int tri) {
     return register(triToRegister[tri]);
   }
 
-  /** If the register with index {@code ri} is tracked, adds its TRI to {@code builder}. */
+  /// If the register with index `ri` is tracked, adds its TRI to `builder`.
   private void setTriFromRegisterIndex(Bits.Builder builder, int ri) {
     int tri = registerToTri[ri];
     if (tri >= 0) {
@@ -113,12 +103,12 @@ public class RcCodeBuilder extends CodeBuilder {
     }
   }
 
-  /** Given a set of register indices, adds the corresponding TRIs to {@code builder}. */
+  /// Given a set of register indices, adds the corresponding TRIs to `builder`.
   private void setTriFromRegisterIndices(Bits.Builder builder, Bits registers) {
     registers.forEach(ri -> setTriFromRegisterIndex(builder, ri));
   }
 
-  /** Given a set of TRIs, adds the corresponding register indices to {@code builder}. */
+  /// Given a set of TRIs, adds the corresponding register indices to `builder`.
   private void setRegisterIndicesFromTris(Bits.Builder builder, Bits tris) {
     tris.forEach(tri -> builder.set(triToRegister[tri]));
   }
@@ -177,7 +167,7 @@ public class RcCodeBuilder extends CodeBuilder {
     return s;
   }
 
-  /** Run the full analysis. */
+  /// Run the full analysis.
   private void analyzeRefCounts(RegisterAssigner assigner) {
     // First create a BlockExtra for each block, and store them in the blockExtraByBlockIndex array.
     int n = numBlocks();
@@ -214,7 +204,7 @@ public class RcCodeBuilder extends CodeBuilder {
     new ForwardPass(assigner).run();
   }
 
-  /** Returns true if a register with the given type may store ref-counted objects. */
+  /// Returns true if a register with the given type may store ref-counted objects.
   private static boolean isCountable(Class<?> type) {
     if (type.isPrimitive()) {
       return false;
@@ -232,24 +222,16 @@ public class RcCodeBuilder extends CodeBuilder {
     }
   }
 
-  /**
-   * The first pass over the blocks
-   *
-   * <ul>
-   *   <li>identifies the tracked registers and assigns a TRI to each one;
-   *   <li>computes {@link BlockExtra#assignedTrsAfter} and {@link BlockExtra#liveTrs} for each
-   *       block; and
-   *   <li>computes {@link LoopExtra#loopTrs} for each loop.
-   * </ul>
-   */
+  /// The first pass over the blocks
+  ///
+  /// - identifies the tracked registers and assigns a TRI to each one;
+  /// - computes [BlockExtra#assignedTrsAfter] and [BlockExtra#liveTrs] for each block; and
+  /// - computes [LoopExtra#loopTrs] for each loop.
   private class SetupPass {
-    /** Scratch for use by {@link #run} and {@link #process}. */
+    /// Scratch for use by [#run] and [#process].
     private final Bits.Builder scratch = new Bits.Builder();
 
-    /**
-     * Scratch for use by {@link #assignedTrsAfter} and {@link #liveTrs} (both are called from
-     * {@link #process}).
-     */
+    /// Scratch for use by [#assignedTrsAfter] and [#liveTrs] (both are called from [#process]).
     private final Bits.Builder scratch2 = new Bits.Builder();
 
     void run() {
@@ -297,11 +279,8 @@ public class RcCodeBuilder extends CodeBuilder {
       Arrays.stream(blockExtras).forEach(this::process);
     }
 
-    /**
-     * Computes {@link BlockExtra#assignedTrsAfter} and {@link BlockExtra#liveTrs} for the given
-     * block. Assumes that all of the block's inlinks (other than BackRefs) have already been
-     * processed.
-     */
+    /// Computes [BlockExtra#assignedTrsAfter] and [BlockExtra#liveTrs] for the given block. Assumes
+    /// that all of the block's inlinks (other than BackRefs) have already been processed.
     private void process(BlockExtra extra) {
       Block b = extra.block;
       // Start with all the registers that were assigned before this block was executed...
@@ -326,13 +305,10 @@ public class RcCodeBuilder extends CodeBuilder {
       extra.liveTrs = scratch.build();
     }
 
-    /**
-     * Returns {@link BlockExtra#assignedTrsAfter} for the given block, unless it is a BackRef.
-     *
-     * <p>If {@code src} is a BackRef its {@code assignedTrsAfter} has not yet been computed, so
-     * instead we return the {@link LoopExtra#assignedTrsBefore} for the loop (computing it if
-     * necessary).
-     */
+    /// Returns [BlockExtra#assignedTrsAfter] for the given block, unless it is a BackRef.
+    ///
+    /// If `src` is a BackRef its `assignedTrsAfter` has not yet been computed, so instead we return
+    /// the [LoopExtra#assignedTrsBefore] for the loop (computing it if necessary).
     private Bits assignedTrsAfter(Block src, boolean recursive) {
       BlockExtra srcExtra = blockExtra(src);
       if (srcExtra.assignedTrsAfter != null) {
@@ -359,10 +335,8 @@ public class RcCodeBuilder extends CodeBuilder {
       return loopExtra.assignedTrsBefore;
     }
 
-    /**
-     * If {@code loop} is null, returns EMPTY; otherwise returns the TRIs for the {@link
-     * Loop#extraLive()} of {@code loop} and any enclosing loops.
-     */
+    /// If `loop` is null, returns EMPTY; otherwise returns the TRIs for the [Loop#extraLive()] of
+    /// `loop` and any enclosing loops.
     private Bits liveTrs(Loop loop) {
       if (loop == null) {
         return Bits.EMPTY;
@@ -379,15 +353,13 @@ public class RcCodeBuilder extends CodeBuilder {
     }
   }
 
-  /** Returns {@code bits} unless it is empty, otherwise null. */
+  /// Returns `bits` unless it is empty, otherwise null.
   private static Bits dropEmpty(Bits bits) {
     return bits.isEmpty() ? null : bits;
   }
 
-  /**
-   * The second pass over the blocks computes {@link BlockExtra#dropped}, {@link
-   * BlockExtra#mustBeCounted}, and {@link BlockExtra#noDeps} for each block.
-   */
+  /// The second pass over the blocks computes [BlockExtra#dropped], [BlockExtra#mustBeCounted], and
+  /// [BlockExtra#noDeps] for each block.
   private class BackwardPass {
     // The BlockExtra for the block we are currently processing
     private BlockExtra extra;
@@ -410,11 +382,9 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Computes {@link BlockExtra#dropped}, {@link BlockExtra#mustBeCounted}, and {@link
-     * BlockExtra#noDeps} for the given block. Assumes that all of the block's outlinks have already
-     * been processed, unless it is a BackRef.
-     */
+    /// Computes [BlockExtra#dropped], [BlockExtra#mustBeCounted], and [BlockExtra#noDeps] for the
+    /// given block. Assumes that all of the block's outlinks have already been processed, unless it
+    /// is a BackRef.
     private void process(BlockExtra extra) {
       this.extra = extra;
       Block b = extra.block;
@@ -532,10 +502,8 @@ public class RcCodeBuilder extends CodeBuilder {
       extra.noDeps = buildNoDeps();
     }
 
-    /**
-     * The current block writes to the given register; update noDepsBuilder and mustBeCountedBuilder
-     * accordingly.
-     */
+    /// The current block writes to the given register; update noDepsBuilder and
+    /// mustBeCountedBuilder accordingly.
     private void updateNoDepsForWrite(Register lhs) {
       int tri = registerToTri(lhs);
       if (tri < 0) {
@@ -574,11 +542,9 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Update noDepsBuilder to reflect the constraints introduced by an operation that drops the
-     * final refCount on the tracked registers in {@code dropped} (which is either {@link
-     * #droppedBuilder} or a subset of it).
-     */
+    /// Update noDepsBuilder to reflect the constraints introduced by an operation that drops the
+    /// final refCount on the tracked registers in `dropped` (which is either [#droppedBuilder] or a
+    /// subset of it).
     void addNoDeps(Bits.Builder dropped) {
       // dropped should already be included in droppedBuilder (which may contain other registers,
       // if other @RC.In ops have already been processed by this block).
@@ -598,11 +564,9 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * We can't process a BackRef using the same logic, since its next block hasn't yet been
-     * processed. Instead we look at the exit link(s) from its loop, which will have all been
-     * processed.
-     */
+    /// We can't process a BackRef using the same logic, since its next block hasn't yet been
+    /// processed. Instead we look at the exit link(s) from its loop, which will have all been
+    /// processed.
     private void processBackRef() {
       Loop loop = ((BackRef) extra.block).loop();
       LoopExtra loopExtra = processLoop(loop);
@@ -611,10 +575,8 @@ public class RcCodeBuilder extends CodeBuilder {
       extra.noDeps = loopExtra.noDeps;
     }
 
-    /**
-     * Ensures that {@link LoopExtra#mustBeCounted} and {@link LoopExtra#noDeps} have been computed
-     * for this loop.
-     */
+    /// Ensures that [LoopExtra#mustBeCounted] and [LoopExtra#noDeps] have been computed for this
+    /// loop.
     private LoopExtra processLoop(Loop loop) {
       LoopExtra loopExtra = loopExtra(loop);
       // The first time we encounter a backRef for a loop we'll compute its mustBeCounted and
@@ -646,19 +608,14 @@ public class RcCodeBuilder extends CodeBuilder {
       return loopExtra;
     }
 
-    /**
-     * Does a final clean-up of {@link #noDepsBuilder} by eliminating registers that are no longer
-     * live and redundancy with {@code mustBeCounted} (registers in mustBeCounted can't depend on
-     * any other register, so needn't be in any noDeps value).
-     */
+    /// Does a final clean-up of [#noDepsBuilder] by eliminating registers that are no longer live
+    /// and redundancy with `mustBeCounted` (registers in mustBeCounted can't depend on any other
+    /// register, so needn't be in any noDeps value).
     private void cleanUpNoDeps(Bits worthKeeping) {
       noDepsBuilder.updateEntries((k, v) -> dropEmpty(Bits.Op.INTERSECTION.apply(v, worthKeeping)));
     }
 
-    /**
-     * Returns a SmallIntMap built from {@link #noDepsBuilder} to be used as {@code
-     * blockExtra(b).noDeps}.
-     */
+    /// Returns a SmallIntMap built from [#noDepsBuilder] to be used as `blockExtra(b).noDeps`.
     private SmallIntMap<Bits> buildNoDeps() {
       // Since (we assume) noDeps will often be unchanged from one block to the next, we try to
       // avoid creating multiple copies of the same SmallIntMap by checking whether we can reuse
@@ -679,10 +636,7 @@ public class RcCodeBuilder extends CodeBuilder {
       return noDepsBuilder.build();
     }
 
-    /**
-     * Returns a SmallIntMap built from {@link #noDepsBuilder} to be used as {@code
-     * loopExtra(loop).noDeps}.
-     */
+    /// Returns a SmallIntMap built from [#noDepsBuilder] to be used as `loopExtra(loop).noDeps`.
     private SmallIntMap<Bits> buildLoopNoDeps(Loop loop) {
       // This is the same idea as buildNoDeps, trying to reuse an existing SmallIntMap before
       // building another, but this time we check the loop exits rather than the block outlinks.
@@ -697,34 +651,30 @@ public class RcCodeBuilder extends CodeBuilder {
       return noDepsBuilder.build();
     }
 
-    /**
-     * Updates {@link #liveTrsBuilder}, {@link #mustBeCountedBuilder}, and {@link #noDepsBuilder} to
-     * reflect the code that will be emitted by the given {@link Op.Result} (including the code
-     * emitted for each of its arguments).
-     *
-     * <p>If there are no calls to Ops with @RC.In args, this just adds any tracked registers to
-     * {@link #liveTrsBuilder}. If there are @RC.In args there are additional steps, depending on
-     * the type of CodeValue provided for that argument:
-     *
-     * <ul>
-     *   <li>If it is a constant, no update is needed (constants are always uncounted).
-     *   <li>If it is a register and this the last use of the register, we add the register to
-     *       {@link #mustBeCountedBuilder} and update {@link #noDepsBuilder} to ensure that no
-     *       register that is live after this point depends on the @RC.In register.
-     *   <li>If it is a register and this is not the last use of the register, we set the
-     *       corresponding bit in the RcOpResult's argNeedsAddRef so that the emitted code will
-     *       include an addRef to that register.
-     *   <li>If it is a nested Op.Result for an @RC.Out Op, no update is needed.
-     *   <li>If it is a nested Op.Result for an Op that is not @RC.Out, we set the corresponding bit
-     *       in the RcOpResult's argNeedsAddRef.
-     * </ul>
-     *
-     * <p>(There is one case that isn't covered above: the result of an @RC.Out Op passed as a
-     * non-@RC.In argument. Correct code for that case would require saving that argument until
-     * after the enclosing Op returns and then calling dropRef, but that's a little tricky and it's
-     * easier to just prohibit that combination. Since @RC.Out Ops are always marked as having a
-     * side effect, {@link Op.Result#couldSubstitute} will not introduce these.)
-     */
+    /// Updates [#liveTrsBuilder], [#mustBeCountedBuilder], and [#noDepsBuilder] to reflect the code
+    /// that will be emitted by the given [Op.Result] (including the code emitted for each of its
+    /// arguments).
+    ///
+    /// If there are no calls to Ops with @RC.In args, this just adds any tracked registers to
+    /// [#liveTrsBuilder]. If there are @RC.In args there are additional steps, depending on the
+    /// type of CodeValue provided for that argument:
+    ///
+    /// - If it is a constant, no update is needed (constants are always uncounted).
+    /// - If it is a register and this the last use of the register, we add the register to
+    ///   [#mustBeCountedBuilder] and update [#noDepsBuilder] to ensure that no register that is
+    ///   live after this point depends on the @RC.In register.
+    /// - If it is a register and this is not the last use of the register, we set the corresponding
+    ///   bit in the RcOpResult's argNeedsAddRef so that the emitted code will include an addRef to
+    ///   that register.
+    /// - If it is a nested Op.Result for an @RC.Out Op, no update is needed.
+    /// - If it is a nested Op.Result for an Op that is not @RC.Out, we set the corresponding bit in
+    ///   the RcOpResult's argNeedsAddRef.
+    ///
+    /// (There is one case that isn't covered above: the result of an @RC.Out Op passed as a
+    /// non-@RC.In argument. Correct code for that case would require saving that argument until
+    /// after the enclosing Op returns and then calling dropRef, but that's a little tricky and it's
+    /// easier to just prohibit that combination. Since @RC.Out Ops are always marked as having a
+    /// side effect, [Op.Result#couldSubstitute] will not introduce these.)
     private CodeValue processInput(CodeValue input) {
       if (!(input instanceof Op.Result opResult)) {
         return input;
@@ -798,20 +748,15 @@ public class RcCodeBuilder extends CodeBuilder {
       return needAddRef.isEmpty() ? result : new RcOpResult(result, needAddRef);
     }
 
-    /**
-     * Merges the given noDeps map and mustBeCounted bits into {@link #noDepsBuilder} and {@link
-     * #mustBeCountedBuilder}.
-     *
-     * <p>mustBeCounted is easy: we just intersect the sets.
-     *
-     * <p>noDeps is trickier: we want noDeps(r1) to include r2 if:
-     *
-     * <ul>
-     *   <li>noDeps(r1) included r2 on both branches, or
-     *   <li>noDeps(r1) included r2 on one of the branches, and mustBeCounted contained r2 on the
-     *       other
-     * </ul>
-     */
+    /// Merges the given noDeps map and mustBeCounted bits into [#noDepsBuilder] and
+    /// [#mustBeCountedBuilder].
+    ///
+    /// mustBeCounted is easy: we just intersect the sets.
+    ///
+    /// noDeps is trickier: we want noDeps(r1) to include r2 if:
+    ///
+    /// - noDeps(r1) included r2 on both branches, or
+    /// - noDeps(r1) included r2 on one of the branches, and mustBeCounted contained r2 on the other
     private void combineNoDeps(SmallIntMap<Bits> noDeps, Bits mbc) {
       scratch.setAll(mustBeCountedBuilder);
       Bits.Op.SYMM_DIFF.into(scratch, mbc);
@@ -848,11 +793,9 @@ public class RcCodeBuilder extends CodeBuilder {
     }
   }
 
-  /**
-   * The third (and final) pass over the blocks computes {@link BlockExtra#initialDependencies},
-   * {@link BlockExtra#nextDependencies}, {@link BlockExtra#alternateDependencies}, {@link
-   * BlockExtra#initialCounted}, and {@link BlockExtra#countedAfter} for each block.
-   */
+  /// The third (and final) pass over the blocks computes [BlockExtra#initialDependencies],
+  /// [BlockExtra#nextDependencies], [BlockExtra#alternateDependencies],
+  /// [BlockExtra#initialCounted], and [BlockExtra#countedAfter] for each block.
   private class ForwardPass {
     final RegisterAssigner assigner;
 
@@ -866,7 +809,7 @@ public class RcCodeBuilder extends CodeBuilder {
     private final List<InlinkExtra> linkExtras = new ArrayList<>();
     private int numInlinks = 0;
 
-    /** RefFixBlocks that have been inserted before the current block. */
+    /// RefFixBlocks that have been inserted before the current block.
     private final List<RefFixBlock> refFixes = new ArrayList<>();
 
     ForwardPass(RegisterAssigner assigner) {
@@ -878,11 +821,9 @@ public class RcCodeBuilder extends CodeBuilder {
       Arrays.stream(blockExtras).forEach(this::process);
     }
 
-    /**
-     * Increment {@link #numInlinks} and initialize the next element of {@link #linkExtras} to save
-     * our analysis of {@code link}. If {@code link}'s origin has not yet been analyzed (i.e. if it
-     * is a BackRef), use the loop entry information to initialize it.
-     */
+    /// Increment [#numInlinks] and initialize the next element of [#linkExtras] to save our
+    /// analysis of `link`. If `link`'s origin has not yet been analyzed (i.e. if it is a BackRef),
+    /// use the loop entry information to initialize it.
     private void addInlink(Link link) {
       if (linkExtras.size() <= numInlinks) {
         linkExtras.add(new InlinkExtra());
@@ -895,12 +836,10 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Since this is a forward pass, if we encounter an inlink from a block that we have not yet
-     * analyzed it must be a BackRef. We can initialize it by merging information from loop entries
-     * (we can't encounter a BackRef until we're inside the loop, which means that we must have
-     * already processed all the entry sources).
-     */
+    /// Since this is a forward pass, if we encounter an inlink from a block that we have not yet
+    /// analyzed it must be a BackRef. We can initialize it by merging information from loop entries
+    /// (we can't encounter a BackRef until we're inside the loop, which means that we must have
+    /// already processed all the entry sources).
     private void fixLoopBackRefs(BlockExtra extra) {
       BackRef backRef = (BackRef) extra.block;
       Loop loop = backRef.loop();
@@ -917,10 +856,8 @@ public class RcCodeBuilder extends CodeBuilder {
       extra.countedAfter = loopExtra.entryCounted;
     }
 
-    /**
-     * Determine the registers that will be counted at the beginning of a block or loop iteration,
-     * given the registers that are live and the known dependencies.
-     */
+    /// Determine the registers that will be counted at the beginning of a block or loop iteration,
+    /// given the registers that are live and the known dependencies.
     private Bits getCounted(Bits liveCrs, SmallIntMap<Bits> dependencies) {
       if (dependencies.isEmpty()) {
         // If there are no dependencies, all live registers must be counted.
@@ -939,12 +876,10 @@ public class RcCodeBuilder extends CodeBuilder {
       return scratchBits.build();
     }
 
-    /**
-     * Computes {@link BlockExtra#initialDependencies}, {@link BlockExtra#nextDependencies}, {@link
-     * BlockExtra#alternateDependencies}, {@link BlockExtra#initialCounted}, and {@link
-     * BlockExtra#countedAfter} for the given block. Assumes that all of the block's inlinks have
-     * already been processed, except those that come from BackRefs.
-     */
+    /// Computes [BlockExtra#initialDependencies], [BlockExtra#nextDependencies],
+    /// [BlockExtra#alternateDependencies], [BlockExtra#initialCounted], and
+    /// [BlockExtra#countedAfter] for the given block. Assumes that all of the block's inlinks have
+    /// already been processed, except those that come from BackRefs.
     private void process(BlockExtra extra) {
       Block b = extra.block;
       // Load this block's inlinks into linkExtras
@@ -1039,10 +974,8 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * {@code r} is a register that is modified by the given block; update {@code
-     * extra.countedAfter} and/or {@code extra.nextDependencies} as appropriate.
-     */
+    /// `r` is a register that is modified by the given block; update `extra.countedAfter` and/or
+    /// `extra.nextDependencies` as appropriate.
     private void updateForRegisterMod(BlockExtra extra, Register r) {
       NonTerminal b = (NonTerminal) extra.block;
       int tri = registerToTri(r);
@@ -1091,10 +1024,8 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Update {@code extra.countedAfter} and/or {@code extra.nextDependencies} for a set block whose
-     * lhs is a tracked register.
-     */
+    /// Update `extra.countedAfter` and/or `extra.nextDependencies` for a set block whose lhs is a
+    /// tracked register.
     private void updateForSet(BlockExtra extra, Register lhs) {
       Block b = extra.block;
       assert b instanceof SetBlock || b instanceof SetBlock.WithCatch;
@@ -1170,11 +1101,9 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * This is a call to a non-@RC.Out op; construct a dependency set by finding all the arguments
-     * (possibly nested) that are tracked registers, and adding either the register (if it is
-     * counted) or its dependencies to {@code deps}.
-     */
+    /// This is a call to a non-@RC.Out op; construct a dependency set by finding all the arguments
+    /// (possibly nested) that are tracked registers, and adding either the register (if it is
+    /// counted) or its dependencies to `deps`.
     private void getDependencies(BlockExtra extra, Op.Result opResult, Bits.Builder deps) {
       // I don't think we can end up here with an op that has @RC.In or @RC.Out args;
       // if we do we'll need to think harder.
@@ -1196,10 +1125,8 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * If any of this block's inlinks have different assumptions about which registers are counted,
-     * insert RefFixBlocks as needed to addRef/dropRef before reaching this block.
-     */
+    /// If any of this block's inlinks have different assumptions about which registers are counted,
+    /// insert RefFixBlocks as needed to addRef/dropRef before reaching this block.
     private void fixInlinks(BlockExtra extra) {
       refFixes.clear();
       for (int i = 0; i < numInlinks; i++) {
@@ -1233,13 +1160,11 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Combines the dependency maps from one or more inlinks to {@code extra.block}.
-     *
-     * <p>If a dependency entry is null on any inlink (i.e. the register is counted), it will be
-     * null in the result. Otherwise it will be the union of the incoming dependency entries, unless
-     * {@link BlockExtra#filterDependency} returns null.
-     */
+    /// Combines the dependency maps from one or more inlinks to `extra.block`.
+    ///
+    /// If a dependency entry is null on any inlink (i.e. the register is counted), it will be null
+    /// in the result. Otherwise it will be the union of the incoming dependency entries, unless
+    /// [BlockExtra#filterDependency] returns null.
     SmallIntMap<Bits> mergeDeps(BlockExtra extra, int numLinks, IntFunction<Link> links) {
       assert numLinks > 0;
       // First pass: ensure that if any of the loops come from a BackRef, we've computed their
@@ -1293,11 +1218,9 @@ public class RcCodeBuilder extends CodeBuilder {
       return scratchDeps.build();
     }
 
-    /**
-     * Combine dependency sets {@code prev} and {@code toAdd} for {@code tri}. Both must be
-     * contained in {@code counted} to be valid. {@code prev} has already been checked by {@link
-     * BlockExtra#filterDependency} but {@code toAdd} has not.
-     */
+    /// Combine dependency sets `prev` and `toAdd` for `tri`. Both must be contained in `counted` to
+    /// be valid. `prev` has already been checked by [BlockExtra#filterDependency] but `toAdd` has
+    /// not.
     private static Bits combineDependencies(
         BlockExtra extra, int tri, Bits prev, Bits toAdd, Bits.Builder counted) {
       if (!(counted.testAll(prev) && counted.testAll(toAdd))) {
@@ -1317,19 +1240,17 @@ public class RcCodeBuilder extends CodeBuilder {
   private class InlinkExtra {
     Link link;
 
-    /** TRIs of the registers that need an addRef when traversing this link. */
+    /// TRIs of the registers that need an addRef when traversing this link.
     Bits addRef;
 
-    /** TRIs of the registers that need a dropRef when traversing this link. */
+    /// TRIs of the registers that need a dropRef when traversing this link.
     Bits dropRef;
 
-    /**
-     * Compares {@link BlockExtra#countedAfter} from this link's source with {@code counted}; if
-     * they are different, determines which registers need an addRef or dropRef. Sets {@link
-     * #addRef} and {@link #dropRef} accordingly.
-     *
-     * @param scratch may be overwritten
-     */
+    /// Compares [BlockExtra#countedAfter] from this link's source with `counted`; if they are
+    /// different, determines which registers need an addRef or dropRef. Sets [#addRef] and
+    /// [#dropRef] accordingly.
+    ///
+    /// @param scratch may be overwritten
     void getRefFixes(Bits counted, Bits.Builder scratch) {
       BlockExtra srcExtra = blockExtra(link.origin);
       if (counted.equals(srcExtra.countedAfter)) {
@@ -1368,20 +1289,15 @@ public class RcCodeBuilder extends CodeBuilder {
           });
     }
 
-    /**
-     * If the given register is known to be equal to some other register, return the canonical
-     * register's tracked register index; otherwise return {@code tri}.
-     */
+    /// If the given register is known to be equal to some other register, return the canonical
+    /// register's tracked register index; otherwise return `tri`.
     private int canonicalize(int tri) {
       ValueInfo info = link.info.register(triToRegister[tri]);
       return (info instanceof Register r) ? registerToTri(r) : tri;
     }
   }
 
-  /**
-   * Computes {@code DIFFERENCE(left, right)}, but omits any elements for which {@code skip} returns
-   * true.
-   */
+  /// Computes `DIFFERENCE(left, right)`, but omits any elements for which `skip` returns true.
   private static Bits diff(Bits left, Bits right, IntPredicate skip, Bits.Builder scratch) {
     scratch.setAll(left);
     Bits.Op.DIFFERENCE.into(scratch, right);
@@ -1395,105 +1311,79 @@ public class RcCodeBuilder extends CodeBuilder {
     return scratch.build();
   }
 
-  /**
-   * RcCodeBuilder creates one BlockExtra for each block in the block graph, to save the results of
-   * its analysis. They are created at the beginning of {@link #analyzeRefCounts} and kept until
-   * analysis is complete, with each pass adding more information to them.
-   */
+  /// RcCodeBuilder creates one BlockExtra for each block in the block graph, to save the results of
+  /// its analysis. They are created at the beginning of [#analyzeRefCounts] and kept until analysis
+  /// is complete, with each pass adding more information to them.
   private class BlockExtra {
     final Block block;
 
-    /**
-     * Tracked registers that have a value after execution of this block.
-     *
-     * <p>Computed by {@link SetupPass}.
-     */
+    /// Tracked registers that have a value after execution of this block.
+    ///
+    /// Computed by [SetupPass].
     Bits assignedTrsAfter;
 
-    /**
-     * Tracked registers that are live before execution of this block.
-     *
-     * <p>Computed by {@link SetupPass}.
-     */
+    /// Tracked registers that are live before execution of this block.
+    ///
+    /// Computed by [SetupPass].
     Bits liveTrs;
 
-    /**
-     * Tracked registers whose reference count will be decremented by this block, by passing them as
-     * an {@code @RC.In} argument without a corresponding call to {@link RefCounted#addRef}. Must
-     * not include registers that are still live after this block completes.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// Tracked registers whose reference count will be decremented by this block, by passing them
+    /// as an `@RC.In` argument without a corresponding call to [RefCounted#addRef]. Must not
+    /// include registers that are still live after this block completes.
+    ///
+    /// Computed by [ForwardPass].
     Bits dropped;
 
-    /**
-     * Tracked registers that are passed as an {@code @RC.In} argument without a corresponding call
-     * to {@link RefCounted#addRef} by this block or a following block; we will not allow these to
-     * be dependent on any other register (since we know we need to addRef these eventually, we
-     * might as well do that ASAP and potentially dropRef the register it depends on sooner).
-     *
-     * <p>Computed by {@link BackwardPass}.
-     */
+    /// Tracked registers that are passed as an `@RC.In` argument without a corresponding call to
+    /// [RefCounted#addRef] by this block or a following block; we will not allow these to be
+    /// dependent on any other register (since we know we need to addRef these eventually, we might
+    /// as well do that ASAP and potentially dropRef the register it depends on sooner).
+    ///
+    /// Computed by [BackwardPass].
     Bits mustBeCounted;
 
-    /**
-     * If {@code noDeps.get(r1).test(r2)}, we will not allow {@code r2} to depend on {@code r1}
-     * (where {@code r1} and {@code r2} are TRIs). Set if {@code r2} is still live after {@code r1}
-     * is modified.
-     *
-     * <p>Computed by {@link BackwardPass}.
-     */
+    /// If `noDeps.get(r1).test(r2)`, we will not allow `r2` to depend on `r1` (where `r1` and `r2`
+    /// are TRIs). Set if `r2` is still live after `r1` is modified.
+    ///
+    /// Computed by [BackwardPass].
     SmallIntMap<Bits> noDeps;
 
-    /**
-     * If {@code initialDependencies.get(r)} is non-null, {@code r}'s reference is not counted on
-     * entry to this block because we know that it is reachable from at least one of the TRIs in
-     * that Bits (if the Bits is empty, {@code r}'s value is known to be uncounted). If {@code
-     * initialDependencies.get(r)} is null and {@code r} is live then the reference from {@code r}
-     * is counted.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// If `initialDependencies.get(r)` is non-null, `r`'s reference is not counted on entry to this
+    /// block because we know that it is reachable from at least one of the TRIs in that Bits (if
+    /// the Bits is empty, `r`'s value is known to be uncounted). If `initialDependencies.get(r)` is
+    /// null and `r` is live then the reference from `r` is counted.
+    ///
+    /// Computed by [ForwardPass].
     SmallIntMap<Bits> initialDependencies;
 
-    /**
-     * Interpreted in the same way as {@link #initialDependencies}, but applies to the state when
-     * this block's next link is reached. Null for Terminals.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// Interpreted in the same way as [#initialDependencies], but applies to the state when this
+    /// block's next link is reached. Null for Terminals.
+    ///
+    /// Computed by [ForwardPass].
     SmallIntMap<Bits> nextDependencies;
 
-    /**
-     * Interpreted in the same way as {@link #initialDependencies}, but applies to the state when
-     * this block's alternate link is reached. Null for blocks that are not Splits.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// Interpreted in the same way as [#initialDependencies], but applies to the state when this
+    /// block's alternate link is reached. Null for blocks that are not Splits.
+    ///
+    /// Computed by [ForwardPass].
     SmallIntMap<Bits> alternateDependencies;
 
-    /**
-     * Tracked registers that will be counted on entry to this block.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// Tracked registers that will be counted on entry to this block.
+    ///
+    /// Computed by [ForwardPass].
     Bits initialCounted;
 
-    /**
-     * Tracked registers that will be counted when this block completes.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// Tracked registers that will be counted when this block completes.
+    ///
+    /// Computed by [ForwardPass].
     Bits countedAfter;
 
     BlockExtra(Block block) {
       this.block = block;
     }
 
-    /**
-     * {@code outlink} must be this block's next link or alternate link; returns {@link
-     * #nextDependencies} or {@link #alternateDependencies} as appropriate.
-     */
+    /// `outlink` must be this block's next link or alternate link; returns [#nextDependencies] or
+    /// [#alternateDependencies] as appropriate.
     SmallIntMap<Bits> dependencies(Link outlink) {
       if (outlink == ((NonTerminal) block).next) {
         return nextDependencies;
@@ -1503,14 +1393,12 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /**
-     * Given a dependency from the previous block (i.e. an entry in the previous block's {@link
-     * #nextDependencies} or {@link #alternateDependencies}), returns it unchanged if it is still
-     * valid, or null if it should be dropped.
-     *
-     * @param tri the key in the dependencies SmallIntMap
-     * @param deps the value in the dependencies SmallIntMap
-     */
+    /// Given a dependency from the previous block (i.e. an entry in the previous block's
+    /// [#nextDependencies] or [#alternateDependencies]), returns it unchanged if it is still valid,
+    /// or null if it should be dropped.
+    ///
+    /// @param tri the key in the dependencies SmallIntMap
+    /// @param deps the value in the dependencies SmallIntMap
     Bits filterDependency(int tri, Bits deps) {
       if (!liveTrs.test(tri)) {
         // Registers that are no longer live should not have a dependency entry
@@ -1531,16 +1419,14 @@ public class RcCodeBuilder extends CodeBuilder {
       }
     }
 
-    /** Returns true if {@link #noDeps} says that {@code tri} should not depend on {@code dep}. */
+    /// Returns true if [#noDeps] says that `tri` should not depend on `dep`.
     boolean excludedByNoDeps(int tri, int dep) {
       Bits noDep = noDeps.get(dep);
       return noDep != null && noDep.test(tri);
     }
 
-    /**
-     * Returns true if there is a loop containing this block that for which we've chosen to make the
-     * given register counted.
-     */
+    /// Returns true if there is a loop containing this block that for which we've chosen to make
+    /// the given register counted.
     boolean isLoopCounted(int tri) {
       for (Loop loop = block.containingLoop(); loop != null; loop = loop.nestedIn()) {
         if (loopExtra(loop).entryCounted.test(tri)) {
@@ -1552,70 +1438,54 @@ public class RcCodeBuilder extends CodeBuilder {
   }
 
   private static class LoopExtra {
-    /**
-     * The tracked registers that are updated by this loop.
-     *
-     * <p>Computed by {@link SetupPass}.
-     */
+    /// The tracked registers that are updated by this loop.
+    ///
+    /// Computed by [SetupPass].
     Bits loopTrs;
 
-    /**
-     * The tracked registers that have a value on all entry links of this loop.
-     *
-     * <p>Computed by {@link SetupPass}.
-     */
+    /// The tracked registers that have a value on all entry links of this loop.
+    ///
+    /// Computed by [SetupPass].
     Bits assignedTrsBefore;
 
-    /**
-     * Tracked registers that are live throughout the execution of this loop; must be included in
-     * {@link BlockExtra#liveTrs} for each block contained in the loop.
-     *
-     * <p>Computed by {@link SetupPass}.
-     */
+    /// Tracked registers that are live throughout the execution of this loop; must be included in
+    /// [BlockExtra#liveTrs] for each block contained in the loop.
+    ///
+    /// Computed by [SetupPass].
     Bits liveTrs;
 
-    /**
-     * The tracked registers that must be counted on exit from this loop, computed by merging {@link
-     * BlockExtra#mustBeCounted} from each exit link target and adding {@link #loopTrs}.
-     *
-     * <p>Computed by {@link BackwardPass}.
-     */
+    /// The tracked registers that must be counted on exit from this loop, computed by merging
+    /// [BlockExtra#mustBeCounted] from each exit link target and adding [#loopTrs].
+    ///
+    /// Computed by [BackwardPass].
     Bits mustBeCounted;
 
-    /**
-     * Prohibited dependency relations on exit from this loop, computed by merging {@link
-     * BlockExtra#noDeps} from each exit link target.
-     *
-     * <p>Computed by {@link BackwardPass}.
-     */
+    /// Prohibited dependency relations on exit from this loop, computed by merging
+    /// [BlockExtra#noDeps] from each exit link target.
+    ///
+    /// Computed by [BackwardPass].
     SmallIntMap<Bits> noDeps;
 
-    /**
-     * The dependency state on entry to this loop, computed by merging the {@link
-     * BlockExtra#dependencies} from each entry link source.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// The dependency state on entry to this loop, computed by merging the
+    /// [BlockExtra#dependencies] from each entry link source.
+    ///
+    /// Computed by [ForwardPass].
     SmallIntMap<Bits> entryDeps;
 
-    /**
-     * The tracked registers that are counted on entry to this loop, computed by merging the {@link
-     * BlockExtra#countedAfter} from each entry link source.
-     *
-     * <p>Computed by {@link ForwardPass}.
-     */
+    /// The tracked registers that are counted on entry to this loop, computed by merging the
+    /// [BlockExtra#countedAfter] from each entry link source.
+    ///
+    /// Computed by [ForwardPass].
     Bits entryCounted;
   }
 
-  /**
-   * A Block that calls addRef or dropRef on one or more registers. RefFixBlocks are inserted during
-   * the final stage of analysis to adjust reference counts.
-   */
+  /// A Block that calls addRef or dropRef on one or more registers. RefFixBlocks are inserted
+  /// during the final stage of analysis to adjust reference counts.
   private class RefFixBlock extends NonTerminal {
-    /** {@link #emit} will addRef each of these registers. */
+    /// [#emit] will addRef each of these registers.
     private final Bits addRef;
 
-    /** {@link #emit} will dropRef each of these registers. */
+    /// [#emit] will dropRef each of these registers.
     private final Bits dropRef;
 
     RefFixBlock(Bits addRef, Bits dropRef) {
@@ -1626,11 +1496,9 @@ public class RcCodeBuilder extends CodeBuilder {
       this.dropRef = dropRef;
     }
 
-    /**
-     * Initialize {@link Block#live}. Normally this would be done by the CodeBuilder's optimization
-     * phase, but we're inserting these blocks after optimization is complete so we need to do it
-     * ourselves.
-     */
+    /// Initialize [Block#live]. Normally this would be done by the CodeBuilder's optimization
+    /// phase, but we're inserting these blocks after optimization is complete so we need to do it
+    /// ourselves.
     void setLive(Bits.Builder scratch) {
       // Start with the live set for the following block.
       Bits live = next.targetBlock().live();
@@ -1666,13 +1534,11 @@ public class RcCodeBuilder extends CodeBuilder {
     }
   }
 
-  /**
-   * If the given block is a {@link IsEq} comparison of a pointer-valued register with a constant
-   * value (probably null or a Singleton), return the register; otherwise return null.
-   *
-   * <p>Used by {@link ForwardPass#process} to recognize a case when subsequent addRefs or dropRefs
-   * would be no-ops (and hence can be optimized away).
-   */
+  /// If the given block is a [IsEq] comparison of a pointer-valued register with a constant value
+  /// (probably null or a Singleton), return the register; otherwise return null.
+  ///
+  /// Used by [ForwardPass#process] to recognize a case when subsequent addRefs or dropRefs would be
+  /// no-ops (and hence can be optimized away).
   private static Register uncountedOnNext(Block block) {
     if (block instanceof IsEq isEq) {
       if (isEq.opCodeType == OpCodeType.OBJ) {
@@ -1688,21 +1554,19 @@ public class RcCodeBuilder extends CodeBuilder {
     return null;
   }
 
-  /** Emit a call to {@link RefCounted#addRef(Object)} with the given register. */
+  /// Emit a call to [RefCounted#addRef(Object)] with the given register.
   void emitAddRef(Register r, Emitter emitter) {
     // We shouldn't be here if r is known to be an array (addRef() will error).
     assert !r.type().isArray();
     RefCounted.ADD_REF_OP.emit(emitter, r);
   }
 
-  /**
-   * Emit a call to dropRef() with the given register.
-   *
-   * <p>If the register type is known we may be able to choose one of {@link
-   * MemoryHelper#dropReference(RefCounted)}, {@link MemoryHelper#dropValue(Value)}, {@link
-   * MemoryHelper#dropReference(byte[])}, or {@link MemoryHelper#dropReference(Object[])}; otherwise
-   * we just call {@link MemoryHelper#dropAny(Object)} and sort it out at runtime.
-   */
+  /// Emit a call to dropRef() with the given register.
+  ///
+  /// If the register type is known we may be able to choose one of
+  /// [MemoryHelper#dropReference(RefCounted)], [MemoryHelper#dropValue(Value)],
+  /// [MemoryHelper#dropReference(byte\[\])], or [MemoryHelper#dropReference(Object\[\])]; otherwise
+  /// we just call [MemoryHelper#dropAny(Object)] and sort it out at runtime.
   void emitDropRef(Register r, Emitter emitter) {
     Op op;
     if (RefCounted.class.isAssignableFrom(r.type())) {
@@ -1719,7 +1583,7 @@ public class RcCodeBuilder extends CodeBuilder {
     op.emit(emitter, register(CodeGen.TSTATE_REGISTER_INDEX), r);
   }
 
-  /** A custom {@link OpEmit} used to implement {@link #PUSH_AND_DROP_REF}. */
+  /// A custom [OpEmit] used to implement [#PUSH_AND_DROP_REF].
   private static final OpEmit PUSH_AND_DROP_EMITTER =
       new OpEmit() {
         @Override
@@ -1734,11 +1598,9 @@ public class RcCodeBuilder extends CodeBuilder {
         }
       };
 
-  /**
-   * A three-argument Op (result, tstate, toDrop) that pushes {@code result} on the stack, calls
-   * {@code tstate.dropReference(toDrop)}, and then returns {@code result}; used to ensure that
-   * computation done for {@code result} is completed before the reference is dropped.
-   */
+  /// A three-argument Op (result, tstate, toDrop) that pushes `result` on the stack, calls
+  /// `tstate.dropReference(toDrop)`, and then returns `result`; used to ensure that computation
+  /// done for `result` is completed before the reference is dropped.
   private static final Op PUSH_AND_DROP_REF =
       Op.simple(
               "pushAndDropRef",
@@ -1749,30 +1611,26 @@ public class RcCodeBuilder extends CodeBuilder {
               Object.class)
           .build();
 
-  /** Returns a string description of the register with the given tri. */
+  /// Returns a string description of the register with the given tri.
   private String triToString(int tri, PrintOptions options) {
     return triToRegister(tri).toString(options);
   }
 
-  /** Returns a string description of the given set of tracked registers. */
+  /// Returns a string description of the given set of tracked registers.
   private String trsToString(Bits bits, PrintOptions options) {
     return bits.stream()
         .mapToObj(i -> triToString(i, options))
         .collect(Collectors.joining(", ", "{", "}"));
   }
 
-  /**
-   * Returns a string description of a SmallIntMap from tracked register to sets of tracked
-   * registers.
-   */
+  /// Returns a string description of a SmallIntMap from tracked register to sets of tracked
+  /// registers.
   private String depsToString(SmallIntMap<Bits> deps, PrintOptions options) {
     return deps.toString(k -> triToString(k, options), v -> trsToString(v, options));
   }
 
-  /**
-   * Emits instructions to call {@link RefCounted#addRef(Object)} with the object on the top of the
-   * stack, leaving the stack unchanged.
-   */
+  /// Emits instructions to call [RefCounted#addRef(Object)] with the object on the top of the
+  /// stack, leaving the stack unchanged.
   private static void emitAddRefTopOfStack(Emitter emitter) {
     int stackDepth = emitter.currentStackDepth();
     emitter.mv.visitInsn(Opcodes.DUP);
@@ -1781,9 +1639,7 @@ public class RcCodeBuilder extends CodeBuilder {
     emitter.setStackDepth(stackDepth);
   }
 
-  /**
-   * A subclass of {@link Op.Result} that will addRef one or more of its arguments before the call.
-   */
+  /// A subclass of [Op.Result] that will addRef one or more of its arguments before the call.
   static class RcOpResult extends Op.Result {
     final Bits argNeedsAddRef;
 

@@ -21,7 +21,7 @@ import java.util.Arrays;
 import org.retrolang.code.Op;
 import org.retrolang.util.SizeOf;
 
-/** Implementations of Value for ints and doubles. */
+/// Implementations of Value for ints and doubles.
 public abstract class NumValue extends RefCounted implements Value {
 
   public static final NumValue.I ZERO;
@@ -36,7 +36,7 @@ public abstract class NumValue extends RefCounted implements Value {
   private static final int MIN_CACHED_INT = -1;
   private static final int MAX_CACHED_INT = 255;
 
-  /** We preallocate uncounted NumValues for integers between -1 and 255 inclusive. */
+  /// We preallocate uncounted NumValues for integers between -1 and 255 inclusive.
   private static final NumValue.I[] intCache;
 
   static {
@@ -58,15 +58,13 @@ public abstract class NumValue extends RefCounted implements Value {
   static final Op IS_UINT8_OP = RcOp.forRcMethod(NumValue.class, "isUint8", Value.class).build();
   static final Op AS_INT_OP = RcOp.forRcMethod(NumValue.class, "asInt", Value.class).build();
 
-  /**
-   * Returns a NumValue.I for the given int, which must be between MIN_CACHED_INT and MAX_CACHED_INT
-   * inclusive.
-   */
+  /// Returns a NumValue.I for the given int, which must be between MIN\_CACHED\_INT and
+  /// MAX\_CACHED\_INT inclusive.
   private static NumValue.I fromCache(int i) {
     return intCache[i - MIN_CACHED_INT];
   }
 
-  /** Returns a NumValue.I for the given int. */
+  /// Returns a NumValue.I for the given int.
   @RC.Out
   public static NumValue.I of(int i, Allocator allocator) {
     if (i >= MIN_CACHED_INT && i <= MAX_CACHED_INT) {
@@ -76,14 +74,14 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Returns a NumValue.D for the given double, which must not be NaN. */
+  /// Returns a NumValue.D for the given double, which must not be NaN.
   @RC.Out
   public static NumValue.D of(double d, Allocator allocator) {
     assert !Double.isNaN(d);
     return new NumValue.D(allocator, d);
   }
 
-  /** Returns a NumValue for the given Number, which must not be NaN. */
+  /// Returns a NumValue for the given Number, which must not be NaN.
   @RC.Out
   public static NumValue of(Number number, Allocator allocator) {
     if (number instanceof Double || number instanceof Float) {
@@ -93,19 +91,19 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Returns a NumValue.D for the given double, or None if the double is NaN. */
+  /// Returns a NumValue.D for the given double, or None if the double is NaN.
   @RC.Out
   public static Value orNan(double d, Allocator allocator) {
     return Double.isNaN(d) ? Core.NONE : new NumValue.D(allocator, d);
   }
 
-  /** Returns true if the given value is a NumValue for an int. */
+  /// Returns true if the given value is a NumValue for an int.
   public static boolean isInt(Value v) {
     assert !(v instanceof RValue);
     return (v instanceof I) || (v instanceof D nd && nd.isInt());
   }
 
-  /** Returns true if the given value is a NumValue for an int >= 0. */
+  /// Returns true if the given value is a NumValue for an int >= 0.
   public static boolean isNonNegativeInt(Value v) {
     if (v instanceof I ni) {
       return ni.value >= 0;
@@ -118,12 +116,12 @@ public abstract class NumValue extends RefCounted implements Value {
     return false;
   }
 
-  /** Returns true if the given value is a NumValue for an int in 0..255. */
+  /// Returns true if the given value is a NumValue for an int in 0..255.
   public static boolean isUint8(Value v) {
     return isBoundedInt(v, 0, 255);
   }
 
-  /** Returns true if the given value is a NumValue for an int in min..max. */
+  /// Returns true if the given value is a NumValue for an int in min..max.
   public static boolean isBoundedInt(Value v, int min, int max) {
     int i;
     if (v instanceof I ni) {
@@ -141,19 +139,15 @@ public abstract class NumValue extends RefCounted implements Value {
     return i >= min && i <= max;
   }
 
-  /**
-   * Returns the given Value as an int. Should only be called with Values for which {@link #isInt}
-   * returns true.
-   */
+  /// Returns the given Value as an int. Should only be called with Values for which [#isInt]
+  /// returns true.
   public static int asInt(Value v) {
     assert isInt(v);
     return toInt(v);
   }
 
-  /**
-   * Returns the given Value as NumValue.I. Should only be called with Values for which {@link
-   * #isInt} returns true.
-   */
+  /// Returns the given Value as NumValue.I. Should only be called with Values for which [#isInt]
+  /// returns true.
   @RC.Out
   public static NumValue.I asInt(Value v, Allocator allocator) {
     assert isInt(v);
@@ -167,7 +161,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Returns the given Value as a transient NumValue.I or throws the specified Err. */
+  /// Returns the given Value as a transient NumValue.I or throws the specified Err.
   public static NumValue.I verifyInt(Value v, Err err) throws Err.BuiltinException {
     if (v instanceof I ni) {
       return ni;
@@ -180,10 +174,8 @@ public abstract class NumValue extends RefCounted implements Value {
     throw err.asException();
   }
 
-  /**
-   * Returns the given Value as a transient NumValue.I or throws an INVALID_ARGUMENT
-   * BuiltinException.
-   */
+  /// Returns the given Value as a transient NumValue.I or throws an INVALID\_ARGUMENT
+  /// BuiltinException.
   public static NumValue.I verifyBoundedInt(Value v, int min, int max) throws Err.BuiltinException {
     if (v instanceof I ni && ni.value >= min && ni.value <= max) {
       return ni;
@@ -196,9 +188,8 @@ public abstract class NumValue extends RefCounted implements Value {
     throw Err.INVALID_ARGUMENT.asException();
   }
 
-  /**
-   * If the given value is a NumValue for an int, returns its value as an int; otherwise returns -1.
-   */
+  /// If the given value is a NumValue for an int, returns its value as an int; otherwise returns
+  /// -1.
   public static int asIntOrMinusOne(Value v) {
     if (v instanceof I ni) {
       return ni.value;
@@ -211,7 +202,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Given a NumValue, coerces it to an int. */
+  /// Given a NumValue, coerces it to an int.
   public static int toInt(Value v) {
     assert v instanceof NumValue;
     if (v instanceof I ni) {
@@ -221,7 +212,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Returns the given NumValue as a double. */
+  /// Returns the given NumValue as a double.
   public static double asDouble(Value v) {
     assert v instanceof NumValue;
     if (v instanceof I ni) {
@@ -231,7 +222,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Returns the given NumValue as an Integer or Double. */
+  /// Returns the given NumValue as an Integer or Double.
   public static Number asNumber(Value v) {
     if (v instanceof I ni) {
       return ni.value;
@@ -240,11 +231,9 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * Returns true if the given Object is a NumValue with the given int value.
-   *
-   * <p>Equivalent to NumValue.of(i, Allocator.UNBOUNDED).equals(x), but more efficient.
-   */
+  /// Returns true if the given Object is a NumValue with the given int value.
+  ///
+  /// Equivalent to NumValue.of(i, Allocator.UNBOUNDED).equals(x), but more efficient.
   public static boolean equals(Object x, int i) {
     if (x instanceof I ni) {
       return i == ni.value;
@@ -254,11 +243,9 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * Returns true if the given Object is a NumValue with the given double value.
-   *
-   * <p>Equivalent to NumValue.of(d, Allocator.UNBOUNDED).equals(x), but more efficient.
-   */
+  /// Returns true if the given Object is a NumValue with the given double value.
+  ///
+  /// Equivalent to NumValue.of(d, Allocator.UNBOUNDED).equals(x), but more efficient.
   public static boolean equals(Object x, double d) {
     if (x instanceof I ni) {
       return d == ni.value;
@@ -297,7 +284,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Subclass for ints. */
+  /// Subclass for ints.
   public static class I extends NumValue {
     private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + SizeOf.INT);
 
@@ -309,7 +296,7 @@ public abstract class NumValue extends RefCounted implements Value {
       allocator.recordAlloc(this, OBJ_SIZE);
     }
 
-    /** Only used for tests. */
+    /// Only used for tests.
     @Override
     public boolean equals(Object other) {
       return equals(other, value);
@@ -328,7 +315,7 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /** Subclass for doubles. */
+  /// Subclass for doubles.
   public static class D extends NumValue {
     private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + SizeOf.DOUBLE);
 
@@ -345,7 +332,7 @@ public abstract class NumValue extends RefCounted implements Value {
       return value == (int) value;
     }
 
-    /** Only used for tests. */
+    /// Only used for tests.
     @Override
     public boolean equals(Object other) {
       return equals(other, value);
@@ -371,12 +358,10 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * A subclass of NumValue.I used only when VERIFY_TRANSIENT_USE is set in CompoundValue (i.e.
-   * while running tests). This subclass retains an (uncounted) pointer to the original NumValue and
-   * returns it from {@link #makeStorable}, which ensures that VERIFY_TRANSIENT_USE doesn't cause us
-   * to create extra copies of NumValues (making the allocated numbers misleading).
-   */
+  /// A subclass of NumValue.I used only when VERIFY\_TRANSIENT\_USE is set in CompoundValue (i.e.
+  /// while running tests). This subclass retains an (uncounted) pointer to the original NumValue
+  /// and returns it from [#makeStorable], which ensures that VERIFY\_TRANSIENT\_USE doesn't cause
+  /// us to create extra copies of NumValues (making the allocated numbers misleading).
   static class DebugTransientI extends I {
     final I original;
 
@@ -394,10 +379,8 @@ public abstract class NumValue extends RefCounted implements Value {
     }
   }
 
-  /**
-   * A subclass of NumValue.D used only when VERIFY_TRANSIENT_USE is set in CompoundValue; see the
-   * comment on {@link DebugTransientI} for details.
-   */
+  /// A subclass of NumValue.D used only when VERIFY\_TRANSIENT\_USE is set in CompoundValue; see
+  /// the comment on [DebugTransientI] for details.
   static class DebugTransientD extends D {
     final D original;
 

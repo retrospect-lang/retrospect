@@ -1,0 +1,173 @@
+table = pqCollection("yellow_tripdata_2025-02.parquet")
+inFirst10 = countBigTips(table, 10)
+inFirst1000 = countBigTips(table, 1000)
+return { inFirst10, inFirst1000 }
+
+// function countBigTips(table) = table | filter(-> #.tip_amount > 10) | count
+
+function countBigTips(table, limit) {
+  rowCount = 0
+  bigTipCount = 0
+  for row in table sequential rowCount, bigTipCount {
+    if (row.tip_amount > 10) {
+      bigTipCount += 1
+    }
+    rowCount += 1
+    if rowCount == limit { break }
+  }
+  return bigTipCount
+}
+
+/* CODEGEN countBigTips RETURNS
+{inFirst10: 0, inFirst1000: 15}
+---
+countBigTips_x0(x1:PQCollection, i2):
+   1: CodeGenTarget.incrementCallCount(target:countBigTips_x0);
+   2: X3 ← MemoryHelper.allocObjectArray(X0, 1);
+   3: setObject[](X3, 0, NumValue.of(I2, X0));
+   4: X3 ← CompoundValue.create(X0, loop@11, X3);
+   5: X4 ← ParquetCore.startRead(X0, X1, X3, loop@11_state⸨rowCount=0, bigTipCount=0⸩);
+   6: dropRef{X1, X3};
+   7: I3 ← 0;
+   8: I5 ← 0;
+   9: I1 ← 0;
+  10: X6 ← EmptyBatch;
+= 11: test I1 < Batch.numRows(X6); T:→ 21
+  12: X7 ← FutureValue.doWaitFor(X4, X0);
+  13: test X7 == null; T:→ 132
+  14: test X7 instanceof Frame; T:→ 139
+  15: test array2 == Value.baseType(X7); F:→ 139
+  16: X8 ← Value.peekElement(X7, 0);
+  17: test X8 instanceof Batch; F:→ 139
+  18: X7 ← Value.peekElement(X7, 1);
+  19: test X7 instanceof FutureValue; F:→ 139
+  20: I9 ← 0; → 24
+- 21: I9 ← I1;
+  22: X8 ← X6;
+  23: X7 ← X4;
+- 24: test Objects.equals({Airport_fee: double?(1) Airport_fee, DOLocationID: int32?(3) DOLocationID, PULocationID: int32?(5) PULocationID, RatecodeID: int64?(7) RatecodeID, VendorID: int32?(9) VendorID, cbd_congestion_fee: double?(11) cbd_congestion_fee, congestion_surcharge: double?(13) congestion_surcharge, extra: double?(15) extra, fare_amount: double?(17) fare_amount, improvement_surcharge: double?(19) improvement_surcharge, mta_tax: double?(21) mta_tax, passenger_count: int64?(23) passenger_count, payment_type: int64?(25) payment_type, store_and_fwd_flag: string?(27) store_and_fwd_flag, tip_amount: double?(30) tip_amount, tolls_amount: double?(32) tolls_amount, total_amount: double?(34) total_amount, tpep_dropoff_datetime: int64?(36) tpep_dropoff_datetime, tpep_pickup_datetime: int64?(38) tpep_pickup_datetime, trip_distance: double?(40) trip_distance}, Batch.row(X8)) == 0; T:→ 139
+  25: test Batch.isNull(X8, 0, I9) == 0; F:→ 139
+  26: D11 ← Batch.getDouble(X8, 1, I9);
+  27: test Double.isNaN(D11) == 0; F:→ 139
+  28: test Batch.isNull(X8, 2, I9) == 0; F:→ 139
+  29: test Batch.isNull(X8, 4, I9) == 0; F:→ 139
+  30: test Batch.isNull(X8, 6, I9) == 0; F:→ 139
+  31: D13 ← Batch.getLong(X8, 7, I9);
+  32: test Double.isNaN(D13) == 0; F:→ 139
+  33: I15 ← d2i(D13);
+  34: test D13 == I15; F:→ 139
+  35: test Batch.isNull(X8, 8, I9) == 0; F:→ 139
+  36: test Batch.isNull(X8, 10, I9) == 0; F:→ 139
+  37: D17 ← Batch.getDouble(X8, 11, I9);
+  38: test Double.isNaN(D17) == 0; F:→ 139
+  39: test Batch.isNull(X8, 12, I9) == 0; F:→ 139
+  40: D19 ← Batch.getDouble(X8, 13, I9);
+  41: test Double.isNaN(D19) == 0; F:→ 139
+  42: test Batch.isNull(X8, 14, I9) == 0; F:→ 139
+  43: D21 ← Batch.getDouble(X8, 15, I9);
+  44: test Double.isNaN(D21) == 0; F:→ 139
+  45: test Batch.isNull(X8, 16, I9) == 0; F:→ 139
+  46: D23 ← Batch.getDouble(X8, 17, I9);
+  47: test Double.isNaN(D23) == 0; F:→ 139
+  48: test Batch.isNull(X8, 18, I9) == 0; F:→ 139
+  49: D13 ← Batch.getDouble(X8, 19, I9);
+  50: test Double.isNaN(D13) == 0; F:→ 139
+  51: I25 ← d2i(D13);
+  52: test D13 == I25; F:→ 139
+  53: test Batch.isNull(X8, 20, I9) == 0; F:→ 139
+  54: D26 ← Batch.getDouble(X8, 21, I9);
+  55: test Double.isNaN(D26) == 0; F:→ 139
+  56: test Batch.isNull(X8, 22, I9) == 0; F:→ 139
+  57: D13 ← Batch.getLong(X8, 23, I9);
+  58: test Double.isNaN(D13) == 0; F:→ 139
+  59: I28 ← d2i(D13);
+  60: test D13 == I28; F:→ 139
+  61: test Batch.isNull(X8, 24, I9) == 0; F:→ 139
+  62: D13 ← Batch.getLong(X8, 25, I9);
+  63: test Double.isNaN(D13) == 0; F:→ 139
+  64: I29 ← d2i(D13);
+  65: test D13 == I29; F:→ 139
+  66: test Batch.isNull(X8, 26, I9) == 0; F:→ 139
+  67: I10 ← iAdd(I9, 1);
+  68: I13 ← Batch.getInt(X8, 3, I9);
+  69: I14 ← Batch.getInt(X8, 5, I9);
+  70: I16 ← Batch.getInt(X8, 9, I9);
+  71: X30 ← Batch.getString(X8, X0, 27, I9);
+  72: test Batch.isNull(X8, 29, I9) == 0; F:→ 137
+  73: D31 ← Batch.getDouble(X8, 30, I9);
+  74: test Double.isNaN(D31) == 0; F:→ 137
+  75: test Batch.isNull(X8, 31, I9) == 0; F:→ 137
+  76: D33 ← Batch.getDouble(X8, 32, I9);
+  77: test Double.isNaN(D33) == 0; F:→ 137
+  78: test Batch.isNull(X8, 33, I9) == 0; F:→ 137
+  79: D35 ← Batch.getDouble(X8, 34, I9);
+  80: test Double.isNaN(D35) == 0; F:→ 137
+  81: test Batch.isNull(X8, 35, I9) == 0; F:→ 137
+  82: D37 ← Batch.getLong(X8, 36, I9);
+  83: test Double.isNaN(D37) == 0; F:→ 137
+  84: test Batch.isNull(X8, 37, I9) == 0; F:→ 137
+  85: D39 ← Batch.getLong(X8, 38, I9);
+  86: test Double.isNaN(D39) == 0; F:→ 137
+  87: test Batch.isNull(X8, 39, I9) == 0; F:→ 137
+  88: D41 ← Batch.getDouble(X8, 40, I9);
+  89: test Double.isNaN(D41) == 0; F:→ 137
+  90: X9 ← RecordLayout.alloc(*{Airport_fee: d4, DOLocationID: i0, PULocationID: i12, RatecodeID: b16, VendorID: b17, cbd_congestion_fee: d20, congestion_surcharge: d28, extra: d36, fare_amount: d44, improvement_surcharge: i52, mta_tax: d60, passenger_count: b18, payment_type: b19, store_and_fwd_flag: x0:String, tip_amount: d68, tolls_amount: d76, total_amount: d84, tpep_dropoff_datetime: d92, tpep_pickup_datetime: d100, trip_distance: d108}@xxxx, X0, 0);
+  91: Frame7i2x.d0.set(X9, D11);
+  92: Frame7i2x.i0.set(X9, I13);
+  93: Frame7i2x.i3.set(X9, I14);
+  94: test I15 isUint8; F:→ 138
+  95: Frame7i2x.b16.set(X9, I15);
+  96: test I16 isUint8; F:→ 138
+  97: Frame7i2x.b17.set(X9, I16);
+  98: Frame7i2x.d2.set(X9, D17);
+  99: setDouble[](Frame7i2x.x0(X9), 0, D19);
+ 100: setDouble[](Frame7i2x.x0(X9), 8, D21);
+ 101: setDouble[](Frame7i2x.x0(X9), 16, D23);
+ 102: setInt[](Frame7i2x.x0(X9), 24, I25);
+ 103: setDouble[](Frame7i2x.x0(X9), 32, D26);
+ 104: test I28 isUint8; F:→ 138
+ 105: Frame7i2x.b18.set(X9, I28);
+ 106: test I29 isUint8; F:→ 138
+ 107: Frame7i2x.b19.set(X9, I29);
+ 108: Frame7i2x.x1.set(X9, X30);
+ 109: setDouble[](Frame7i2x.x0(X9), 40, D31);
+ 110: setDouble[](Frame7i2x.x0(X9), 48, D33);
+ 111: setDouble[](Frame7i2x.x0(X9), 56, D35);
+ 112: setDouble[](Frame7i2x.x0(X9), 64, D37);
+ 113: setDouble[](Frame7i2x.x0(X9), 72, D39);
+ 114: setDouble[](Frame7i2x.x0(X9), 80, D41);
+ 115: test 10 < double[](Frame7i2x.x0(X9), 40); F:→ 118
+ 116: dropRef{X9};
+ 117: I9 ← Math.addExact(I5, 1); → 120, ArithmeticException:→ 139
+-118: dropRef{X9};
+ 119: I9 ← I5;
+-120: I11 ← Math.addExact(I3, 1); ArithmeticException:→ 139
+ 121: test I11 == I2; T:→ 128
+ 122: addRef{X8, X7} dropRef{X4, X6};
+ 123: I3 ← I11;
+ 124: I5 ← I9;
+ 125: I1 ← I10;
+ 126: X6 ← X8;
+ 127: X4 ← X7; → 11
+-128: dropRef{X4, X6};
+ 129: TState.setResultTemplates(X0, [i0]);
+ 130: setInt[](TState.fnResultBytes(X0, 4), 0, I9);
+ 131: return
+-132: dropRef{X4, X6};
+ 133: X1 ← TState.takeStackRest(X0);
+ 134: X1 ← TState.fillStackEntry(X0, X1, ⟦ParquetCore.NextPQIterator.waitFor⟧, ⟨x0:*@xxxx, PQIterator(i0, x0:PQBatch, x0:Future), loop@11⸨limit=i0⸩, loop@11_state⸨rowCount=i0, bigTipCount=b0⸩⟩, mMemo_2@xxxx, null);
+ 135: X4 ← newStackEntry(⟦LoopCore.Iterate.next ∥ loop=loop@11⸨limit=I2⸩, state=loop@11_state⸨rowCount=I3, bigTipCount=I5⸩⟧);
+ 136: X1 ← TState.fillStackEntry(X0, X1, X4, ⟨LoopExit(loop@11_break⸨bigTipCount=b0⸩)⟩, LmMemo_17@xxxx, null); → 141
+-137: dropRef{X30}; → 139
+-138: dropRef{X9, X30};
+-139: X7 ← newStackEntry(⟦LoopCore.Iterate.afterNextState ∥ state=loop@11_state⸨rowCount=I3, bigTipCount=I5⸩, loop=loop@11⸨limit=I2⸩, it=PQIterator(I1, X6, X4)⟧);
+ 140: X1 ← TState.fillStackEntry(X0, null, X7, ⟨LoopExit(loop@11_break⸨bigTipCount=b0⸩)⟩, LmMemo_17@xxxx, null);
+-141: X1 ← TState.fillStackEntry(X0, X1, ⟦parquet.r8t+0:11_2 _t0 = iterate(table, EnumerateValues, loop@11⸨limit=limit⸩, loop@11_state⸨rowCount=rowCount, bigTipCount=bigTipCount⸩)⟧, ⟨b0⟩, mMemo_x@xxxx, null);
+ 142: TState.setStackRest(X0, X1);
+ 143: TState.setUnwoundFrom(X0, target:countBigTips_x0);
+ 144: return
+---
+allocated=15562968/43116, peak=7130888
+*/
+
+

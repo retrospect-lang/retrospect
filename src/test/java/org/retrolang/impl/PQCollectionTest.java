@@ -30,6 +30,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.retrolang.Vm;
 import org.retrolang.compiler.Compiler;
+import org.retrolang.testing.TestMonitor;
 import org.retrolang.util.Pair;
 import org.retrolang.util.StringUtil;
 
@@ -48,22 +49,15 @@ public class PQCollectionTest {
   /// simple arrays.
   static final String TEST_PROGRAM =
       """
-      return save(^pqCollection(f)) | saveSequential
+      return load(f)
 
-      function save(x) = (x is Collection) ? save(^x) | save : x
+      // Call copyLists() on each row of the table, and then return an array of rows.
+      function load(f) = copyLists(^pqCollection(f)) | saveSequential
+
+      function copyLists(x) = (x is Collection) ? copyLists(^x) | save : x
       """;
 
   static final long BYTE_LIMIT = 16_000_000;
-
-  private static final VirtualMachine vm = new VirtualMachine();
-  private static final Vm.InstructionBlock instBlock;
-
-  static {
-    vm.scope.setRootDir(INPUTS);
-    Vm.ModuleBuilder module = vm.newModule("(input)");
-    instBlock = Compiler.compile(CharStreams.fromString(TEST_PROGRAM), "read_pq", vm, module, "f");
-    module.build();
-  }
 
   @Before
   public void setup() {
@@ -75,31 +69,60 @@ public class PQCollectionTest {
       throws IOException, Vm.RuntimeError {
     // The simplest way to compare the output of RowReader to the output of ParquetCore is to
     // convert them both to strings (one line per row).
-    StringBuilder expected = new StringBuilder();
+    StringBuilder sb = new StringBuilder();
     try (ParquetFileReader fileReader =
         ParquetFileReader.open(InputFile.of(INPUTS.resolve(fileName)))) {
       System.out.println(fileReader.getFileSchema());
       RowReader rowReader = fileReader.rowReader();
       while (rowReader.hasNext()) {
         rowReader.next();
-        expected.append(structToString(rowReader)).append("\n");
+        sb.append(structToString(rowReader)).append("\n");
       }
     }
+    String expected = sb.toString();
+
+    // Create a VM and configure it to exline the `load` function.
+    VirtualMachine vm = new VirtualMachine();
+    vm.scope.setRootDir(INPUTS);
+    vm.scope.codeGenManager.setMonitor(new TestMonitor(false));
+    ModuleBuilder module = (ModuleBuilder) vm.newModule("(input)");
+    vm.scope.setForceExlined(
+        method -> method.function.name.equals("load") && method.impl.module() == module.module);
+    Vm.InstructionBlock instBlock =
+        Compiler.compile(CharStreams.fromString(TEST_PROGRAM), "read_pq", vm, module, "f");
+    InstructionBlock ib = ((VmInstructionBlock) instBlock).ib;
+    module.build();
+    MethodMemo mMemo = ib.memoForApply();
+
+    String result = run(vm, ib, mMemo, fileName);
+    assertThat(result).isEqualTo(expected);
+
+    vm.scope.generateCodeForForcedMethods();
+    String result2 = run(vm, ib, mMemo, fileName);
+    assertThat(result2).isEqualTo(expected);
+  }
+
+  private static String run(
+      VirtualMachine vm, InstructionBlock ib, MethodMemo mMemo, String fileName)
+      throws Vm.RuntimeError {
     ResourceTracker tracker = vm.newResourceTracker(BYTE_LIMIT, /* maxTraces= */ 6, false);
-    StringBuilder returned = new StringBuilder();
-    Vm.Value arg = tracker.asValue(fileName);
-    try (Vm.Value result = instBlock.applyToArgs(tracker, arg)) {
-      assertThat(ForkJoinPool.commonPool().awaitQuiescence(2, TimeUnit.SECONDS)).isTrue();
-      Value v = VmValue.asValue(result, tracker);
+    TState.resetAndGet().bindTo(tracker);
+    StringBuilder sb = new StringBuilder();
+    try {
+      Value v = ib.applyToArgs(tracker, mMemo, tracker.asValue(fileName));
       int size = v.numElements();
       for (int i = 0; i < size; i++) {
-        returned.append(v.peekElement(i)).append("\n");
+        sb.append(v.peekElement(i)).append("\n");
       }
       TState.dropReferenceWithTracker(tracker, (RefCounted) v);
+    } finally {
+      // If any async threads are still executing, let them complete before we check anything else.
+      assertThat(ForkJoinPool.commonPool().awaitQuiescence(2, TimeUnit.SECONDS)).isTrue();
     }
-    assertThat(returned.toString()).isEqualTo(expected.toString());
+    System.out.println(tracker.takeTraces(1, false));
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
     System.out.println(tracker);
+    return sb.toString();
   }
 
   /// Converts the output of a RowReader to what `toString()` should return on the resulting

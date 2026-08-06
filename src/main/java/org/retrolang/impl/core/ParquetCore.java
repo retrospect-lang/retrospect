@@ -26,10 +26,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-
+import org.retrolang.code.CodeValue;
+import org.retrolang.code.Op;
+import org.retrolang.code.Register;
+import org.retrolang.code.ValueInfo;
 import org.retrolang.impl.Allocator;
 import org.retrolang.impl.BaseType;
 import org.retrolang.impl.BuiltinMethod;
+import org.retrolang.impl.CodeGen;
 import org.retrolang.impl.Condition;
 import org.retrolang.impl.Core;
 import org.retrolang.impl.Err;
@@ -38,16 +42,21 @@ import org.retrolang.impl.MemoryHelper;
 import org.retrolang.impl.MethodMemo;
 import org.retrolang.impl.NumValue;
 import org.retrolang.impl.RC;
+import org.retrolang.impl.RValue;
+import org.retrolang.impl.RcOp;
 import org.retrolang.impl.RefCounted;
 import org.retrolang.impl.RefVisitor;
 import org.retrolang.impl.ResourceTracker;
 import org.retrolang.impl.Scope;
+import org.retrolang.impl.SetMemoExtension;
 import org.retrolang.impl.StringValue;
 import org.retrolang.impl.StructType;
 import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
+import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
 import org.retrolang.util.ArrayUtil;
+import org.retrolang.util.Canonical;
 import org.retrolang.util.Pair;
 import org.retrolang.util.SizeOf;
 
@@ -105,8 +114,9 @@ public class ParquetCore {
   static final BaseType.Named ITERATOR = Core.newBaseType("PQIterator", 3, LoopCore.ITERATOR);
 
   @Core.Method("pqCollection(String)")
-  static Value pqCollection(TState tstate, Value fileNames) throws Err.BuiltinException {
-    Value result = newPQCollection.call(tstate, fileNames);
+  static Value pqCollection(TState tstate, MethodMemo.Extended mMemo, Value fileNames)
+      throws Err.BuiltinException {
+    Value result = newPQCollection.call(tstate, mMemo, fileNames);
     Err.INVALID_ARGUMENT.when(Condition.isNull(result));
     return result;
   }
@@ -115,8 +125,11 @@ public class ParquetCore {
       new BuiltinMethod.SimpleRuntimeHelper();
 
   /// Implements [#pqCollection]; returns null if the call should error.
+  ///
+  /// If a new Schema is created it will be added to the extension of `mMemo`.
   @RC.Out
-  public static PQCollection newPQCollection(TState tstate, StringValue fileNames) {
+  public static PQCollection newPQCollection(
+      TState tstate, MethodMemo.Extended mMemo, StringValue fileNames) {
     List<InputFile> files = expandFileNames(tstate.scope().rootDir(), fileNames.value);
     if (files == null || files.isEmpty()) {
       return null;
@@ -138,6 +151,11 @@ public class ParquetCore {
       safelyClose(reader);
       return null;
     }
+    // If we execute this call multiple times (probably rare) and the opened files share the same
+    // schema (probably common?), using a SetMemoExtension to canonicalize them will enable us to
+    // reuse the code generated for previous executions.
+    SetMemoExtension.add(tstate, schema, mMemo);
+    schema = (Element) schema.getCanonical();
     fileNames.addRef();
     return new PQCollection(tstate, fileNames, files, reader, schema);
   }
@@ -261,18 +279,26 @@ public class ParquetCore {
 
     @Core.Method("next(PQIterator)")
     static void begin(TState tstate, @RC.In Value it) {
-      // TODO: need to support codegen
-      int next = it.elementAsInt(0);
-      Batch batch = (Batch) it.peekElement(1);
       // If there are still unread rows in the current batch, just return the next one; otherwise
       // we need to wait for the next batch.
-      if (next < batch.numRows) {
-        tstate.jump("getNext", it);
+      Condition hasNext;
+      if (!(it instanceof RValue)) {
+        int next = it.elementAsInt(0);
+        Batch batch = (Batch) it.peekElement(1);
+        hasNext = Condition.of(next < batch.numRows);
       } else {
-        Value future = it.element(2);
-        tstate.dropValue(it);
-        tstate.startCall(waitFor, future);
+        CodeGen codeGen = tstate.codeGen();
+        CodeValue next = codeGen.asCodeValue(it.peekElement(0));
+        CodeValue batch = codeGen.asCodeValue(it.peekElement(1));
+        hasNext = Condition.intLessThan(next, Batch.NUM_ROWS.result(batch));
       }
+      hasNext.test(
+          () -> tstate.jump("getNext", it),
+          () -> {
+            Value future = it.element(2);
+            tstate.dropValue(it);
+            tstate.startCall(waitFor, future);
+          });
     }
 
     @Continuation
@@ -291,12 +317,31 @@ public class ParquetCore {
 
     @Continuation(order = 2)
     static void getNext(TState tstate, MethodMemo.Extended mMemo, @RC.In Value it) {
-      // TODO: need to support codegen
-      int next = it.elementAsInt(0);
-      Batch batch = (Batch) it.peekElement(1);
-      Value result = batch.get(tstate, next);
-      Value updatedIt = it.replaceElement(tstate, 0, NumValue.of(next + 1, tstate));
-      tstate.setResults(result, updatedIt);
+      if (!tstate.hasCodeGen()) {
+        int next = it.elementAsInt(0);
+        Batch batch = (Batch) it.peekElement(1);
+        SetMemoExtension.add(tstate, batch.row, mMemo);
+        Value result = batch.get(tstate, next);
+        Value updatedIt = it.replaceElement(tstate, 0, NumValue.of(next + 1, tstate));
+        tstate.setResults(result, updatedIt);
+        return;
+      }
+      CodeGen codeGen = tstate.codeGen();
+      CodeValue next = codeGen.asCodeValue(it.peekElement(0));
+      CodeValue batch = codeGen.asCodeValue(it.peekElement(1));
+      // In most programs we expect there to be only a single Schema for this call site, but
+      // in the general case we may have to handle more than one.
+      SetMemoExtension.find(
+          Element.class,
+          codeGen,
+          mMemo,
+          Batch.ROW.result(batch),
+          row -> {
+            Value result = row.value(codeGen, batch, next);
+            Value nextNext = ValueUtil.addInts(tstate, it.peekElement(0), NumValue.ONE);
+            Value updatedIt = it.replaceElement(tstate, 0, nextNext);
+            tstate.setResults(result, updatedIt);
+          });
     }
   }
 
@@ -557,8 +602,10 @@ public class ParquetCore {
   /// Elements are Values so that they can be part of a [#PQ_LIST] compound. They are never exposed
   /// outside this module.
   ///
+  /// Element extends Canonical to ensure that the test in [#atList] is fast.
+  ///
   /// TODO: add support for Parquet's Map and Variant types.
-  abstract static class Element implements Value {
+  abstract static class Element extends Canonical implements Value {
     // hardwood's name for this element.
     final String path;
 
@@ -574,7 +621,8 @@ public class ParquetCore {
     /// additional data slot at `index - 1` for their Validity.
     final boolean hasValidity;
 
-    private Element(String path, int index, boolean hasValidity) {
+    private Element(String path, int index, boolean hasValidity, int hashCode) {
+      super(hashCode);
       this.path = path;
       this.index = index;
       this.hasValidity = hasValidity;
@@ -597,6 +645,9 @@ public class ParquetCore {
     @RC.Out
     abstract Value valueImpl(TState tstate, Batch batch, int row);
 
+    /// Emits code to compute the result of [#valueImpl(TState, Batch, int)].
+    abstract Value valueImpl(CodeGen codeGen, CodeValue batch, CodeValue row);
+
     /// Returns the value of this element at the given position. `row` is usually the row number,
     /// but for elements nested in a ListElement it will depend on the both the row and the position
     /// in the list.
@@ -608,6 +659,16 @@ public class ParquetCore {
       }
       // ... but the rest we leave to the type-specific code.
       return valueImpl(tstate, batch, row);
+    }
+
+    /// Emits code to compute the result of [#value(TState, Batch, int)].
+    final Value value(CodeGen codeGen, CodeValue batch, CodeValue row) {
+      if (!hasValidity) {
+        return valueImpl(codeGen, batch, row);
+      }
+      Condition isNull =
+          Condition.isNonZero(BATCH_IS_NULL.result(batch, CodeValue.of(index - 1), row));
+      return isNull.choose(() -> Core.ABSENT, () -> valueImpl(codeGen, batch, row));
     }
 
     @Override
@@ -629,7 +690,7 @@ public class ParquetCore {
     final LeafType type;
 
     LeafElement(String path, int index, boolean hasValidity, LeafType type) {
-      super(path, index, hasValidity);
+      super(path, index, hasValidity, Objects.hash(path, index, hasValidity, type));
       this.type = type;
     }
 
@@ -657,12 +718,12 @@ public class ParquetCore {
     }
 
     @Override
-    public int hashCode() {
-      return Objects.hash(path, index, hasValidity, type);
+    Value valueImpl(CodeGen codeGen, CodeValue batch, CodeValue row) {
+      return type.valueImpl(codeGen, batch, index, row);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean slowEquals(Object obj) {
       return (obj instanceof LeafElement other)
           && other.index == index
           && other.hasValidity == hasValidity
@@ -689,7 +750,7 @@ public class ParquetCore {
         boolean hasValidity,
         StructType structType,
         ImmutableList<Element> elements) {
-      super(path, index, hasValidity);
+      super(path, index, hasValidity, Objects.hash(path, index, hasValidity, structType, elements));
       this.structType = structType;
       this.elements = elements;
     }
@@ -740,12 +801,17 @@ public class ParquetCore {
     }
 
     @Override
-    public int hashCode() {
-      return Objects.hash(path, index, hasValidity, structType, elements);
+    Value valueImpl(CodeGen codeGen, CodeValue batch, CodeValue index) {
+      int n = structType.size();
+      Object[] v = new Object[n];
+      for (int i = 0; i < n; i++) {
+        v[i] = elements.get(i).value(codeGen, batch, index);
+      }
+      return codeGen.tstate().asCompoundValue(structType, v);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean slowEquals(Object obj) {
       return (obj instanceof StructElement other)
           && other.structType == structType
           && other.index == index
@@ -768,7 +834,7 @@ public class ParquetCore {
     final Element element;
 
     ListElement(String path, int index, boolean hasValidity, Element element) {
-      super(path, index, hasValidity);
+      super(path, index, hasValidity, Objects.hash(path, index, hasValidity, element));
       this.element = element;
     }
 
@@ -802,12 +868,22 @@ public class ParquetCore {
     }
 
     @Override
-    public int hashCode() {
-      return Objects.hash(path, index, hasValidity, element);
+    Value valueImpl(CodeGen codeGen, CodeValue batch, CodeValue row) {
+      CodeValue dataPos = CodeValue.of(index);
+      CodeValue start = codeGen.materialize(BATCH_GET_INT.result(batch, dataPos, row), int.class);
+      CodeValue end = BATCH_GET_INT.result(batch, dataPos, Op.ADD_INTS.result(row, CodeValue.ONE));
+      end = codeGen.materialize(Op.SUBTRACT_INTS.result(end, CodeValue.ONE), int.class);
+      return Batch.newVector(
+          codeGen.tstate(),
+          codeGen.toValue(batch, BATCH),
+          codeGen.toValue(start),
+          codeGen.toValue(end),
+          PQ_LIST,
+          element);
     }
 
     @Override
-    public boolean equals(Object obj) {
+    public boolean slowEquals(Object obj) {
       return (obj instanceof ListElement other)
           && other.index == index
           && other.hasValidity == hasValidity
@@ -833,6 +909,9 @@ public class ParquetCore {
     @RC.Out
     Value valueImpl(TState tstate, Batch batch, int dataPos, int row);
 
+    /// Returns one of this leave's values.
+    Value valueImpl(CodeGen codeGen, CodeValue batch, int dataPos, CodeValue row);
+
     static LeafType forNode(SchemaNode.PrimitiveNode node, FileSchema schema) {
       return switch (node.type()) {
         case BOOLEAN -> SimpleLeafType.BOOLEAN;
@@ -855,19 +934,21 @@ public class ParquetCore {
   }
 
   enum SimpleLeafType implements LeafType {
-    BOOLEAN(1),
-    INT32(1),
-    INT64(1),
-    FLOAT(1),
-    DOUBLE(1),
-    BYTE_ARRAY(2),
-    STRING(2);
+    BOOLEAN(1, BATCH_GET_BOOLEAN),
+    INT32(1, BATCH_GET_INT),
+    INT64(1, BATCH_GET_LONG),
+    FLOAT(1, BATCH_GET_FLOAT),
+    DOUBLE(1, BATCH_GET_DOUBLE),
+    BYTE_ARRAY(2, null),
+    STRING(2, null);
 
     final int numDataEntries;
     final String name;
+    final Op batchGetOp;
 
-    SimpleLeafType(int numDataEntries) {
+    SimpleLeafType(int numDataEntries, Op batchGetOp) {
       this.numDataEntries = numDataEntries;
+      this.batchGetOp = batchGetOp;
       this.name = name().toLowerCase();
     }
 
@@ -925,6 +1006,38 @@ public class ParquetCore {
     }
 
     @Override
+    public Value valueImpl(CodeGen codeGen, CodeValue batch, int dataPos, CodeValue row) {
+      if (batchGetOp != null) {
+        CodeValue cv = batchGetOp.result(batch, CodeValue.of(dataPos), row);
+        if (batchGetOp.resultType == double.class) {
+          return codeGen.checkForNaN(cv, false);
+        } else if (this != BOOLEAN) {
+          return codeGen.toValue(codeGen.materialize(cv, batchGetOp.resultType));
+        } else {
+          return RValue.intToBoolean((Register) codeGen.materialize(cv, int.class));
+        }
+      }
+      return switch (this) {
+        case STRING ->
+            codeGen.toValue(
+                codeGen.materialize(
+                    BATCH_GET_STRING.result(
+                        batch, codeGen.tstateRegister(), CodeValue.of(dataPos), row),
+                    StringValue.class),
+                Core.STRING);
+        case BYTE_ARRAY ->
+            Batch.newVectorFromOffsets(
+                codeGen,
+                batch,
+                CodeValue.of(dataPos + 1),
+                row,
+                PQ_BYTES,
+                NumValue.of(dataPos, Allocator.UNCOUNTED));
+        default -> throw new AssertionError();
+      };
+    }
+
+    @Override
     public String toString() {
       return name;
     }
@@ -947,6 +1060,14 @@ public class ParquetCore {
       int start = row * byteSize;
       int end = start + byteSize - 1;
       return batch.newVector(tstate, start, end, PQ_BYTES, NumValue.of(dataPos, tstate));
+    }
+
+    @Override
+    public Value valueImpl(CodeGen codeGen, CodeValue batch, int dataPos, CodeValue row) {
+      CodeValue start = Op.MULTIPLY_INTS.result(row, CodeValue.of(byteSize));
+      CodeValue end = Op.ADD_INTS.result(start, CodeValue.of(byteSize - 1));
+      return Batch.newVector(
+          codeGen, batch, start, end, PQ_BYTES, NumValue.of(dataPos, Allocator.UNCOUNTED));
     }
 
     @Override
@@ -983,6 +1104,9 @@ public class ParquetCore {
     /// An estimate of the total memory consumed by this object, including the [#data] array and its
     /// contents.
     final long byteSize;
+
+    static final Op ROW = Op.getField(Batch.class, "row", Element.class);
+    static final Op NUM_ROWS = Op.getField(Batch.class, "numRows", int.class);
 
     Batch(Allocator allocator, Element row, Object[] data, int numRows, long byteSize) {
       this.row = row;
@@ -1071,9 +1195,22 @@ public class ParquetCore {
 
     /// Returns a subsequence of a column's values (for byte array or list elements). Equivalent to
     /// the Retrospect code `start..end | lambda(batch, arg)`.
-    ///
-    /// If `lambda` is [#PQ_LIST], `arg` should be the list's element; otherwise `lambda` is
-    /// [#PQ_BYTES] and `arg` is the byte array element's dataPos.
+    static Value newVector(
+        CodeGen codeGen,
+        CodeValue batch,
+        CodeValue start,
+        CodeValue end,
+        BaseType lambda,
+        Value arg) {
+      return newVector(
+          codeGen.tstate(),
+          codeGen.toValue(batch, BATCH),
+          codeGen.toValue(start),
+          codeGen.toValue(end),
+          lambda,
+          arg);
+    }
+
     @RC.Out
     private static Value newVector(
         TState tstate,
@@ -1098,6 +1235,23 @@ public class ParquetCore {
       return newVector(tstate, start, end, lambda, arg);
     }
 
+    /// Returns a subsequence of a column's values (for byte array or list elements); the start and
+    /// end of the subsequence are loaded from an offsets array at `dataPos`.
+    @RC.Out
+    public static Value newVectorFromOffsets(
+        CodeGen codeGen,
+        CodeValue batch,
+        CodeValue dataPos,
+        CodeValue index,
+        BaseType lambda,
+        Value arg) {
+      CodeValue start = codeGen.materialize(BATCH_GET_INT.result(batch, dataPos, index), int.class);
+      CodeValue end =
+          BATCH_GET_INT.result(batch, dataPos, Op.ADD_INTS.result(index, CodeValue.ONE));
+      end = codeGen.materialize(Op.SUBTRACT_INTS.result(end, CodeValue.ONE), int.class);
+      return newVector(codeGen, batch, start, end, lambda, arg);
+    }
+
     @Override
     public String toString() {
       return (this == EMPTY) ? "EmptyBatch" : super.toString();
@@ -1116,12 +1270,28 @@ public class ParquetCore {
   /// Returns one element of a ListElement's value; `i` is the offset for the start of the value
   /// plus the position within the list. See [Batch#newVector].
   @Core.Method("at(PQList, _)")
-  static Value atList(TState tstate, Value list, Value i) throws Err.BuiltinException {
+  static void atList(TState tstate, MethodMemo.Extended mMemo, Value list, Value i)
+      throws Err.BuiltinException {
     i = i.verifyInt(Err.INVALID_ARGUMENT);
-    // TODO: need to support codegen
-    Batch batch = (Batch) list.peekElement(0);
-    Element element = (Element) list.peekElement(1);
-    return element.value(tstate, batch, NumValue.asInt(i));
+    if (!tstate.hasCodeGen()) {
+      Batch batch = (Batch) list.peekElement(0);
+      Element element = (Element) list.peekElement(1);
+      SetMemoExtension.add(tstate, element, mMemo);
+      tstate.setResult(element.value(tstate, batch, NumValue.asInt(i)));
+      return;
+    }
+    CodeGen codeGen = tstate.codeGen();
+    CodeValue batch = codeGen.asCodeValue(list.peekElement(0));
+    CodeValue elementCv = codeGen.asCodeValue(list.peekElement(1));
+    CodeValue iCv = codeGen.asCodeValue(i);
+    // In most programs we expect there to be only a single Element for this call site, but
+    // in the general case we may have to handle more than one.
+    SetMemoExtension.find(
+        Element.class,
+        codeGen,
+        mMemo,
+        elementCv,
+        element -> tstate.setResult(element.value(codeGen, batch, iCv)));
   }
 
   /// `method at(PQBytes bytes, i) = ...`
@@ -1135,4 +1305,24 @@ public class ParquetCore {
     Value dataPos = bytes.peekElement(1);
     return uint8FromBatch.call(tstate, batch, dataPos, i);
   }
+
+  /// A ValueInfo for Ops that return Java booleans.
+  private static final ValueInfo BOOLEAN_INT = ValueInfo.IntRange.of(0, 1);
+
+  private static final Op BATCH_IS_NULL =
+      RcOp.forRcMethod(Batch.class, "isNull", int.class, int.class).build();
+  private static final Op BATCH_GET_BOOLEAN =
+      RcOp.forRcMethod(Batch.class, "getBoolean", int.class, int.class)
+          .withInfo((args, registerInfo) -> BOOLEAN_INT)
+          .build();
+  private static final Op BATCH_GET_INT =
+      RcOp.forRcMethod(Batch.class, "getInt", int.class, int.class).build();
+  private static final Op BATCH_GET_LONG =
+      RcOp.forRcMethod(Batch.class, "getLong", int.class, int.class).build();
+  private static final Op BATCH_GET_FLOAT =
+      RcOp.forRcMethod(Batch.class, "getFloat", int.class, int.class).build();
+  private static final Op BATCH_GET_DOUBLE =
+      RcOp.forRcMethod(Batch.class, "getDouble", int.class, int.class).build();
+  private static final Op BATCH_GET_STRING =
+      RcOp.forRcMethod(Batch.class, "getString", TState.class, int.class, int.class).build();
 }

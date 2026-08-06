@@ -1,9 +1,9 @@
 pq = pqCollection("yellow_tripdata_2025-02.parquet")
 return pq | filter(-> #.tip_amount > 10) | count
 
-/* RUN () NO_CODEGEN RETURNS
+/* RUN () RETURNS
 157943
 ---
-allocated=4605573688/125377405, peak=6000000‥16000000
+allocated=1432923600/9931111, peak=6000000‥16000000
 $0 = *{Airport_fee: b0⸨0:d4; 1:Absent⸩, DOLocationID: i12, PULocationID: i16, RatecodeID: b1⸨0:b2; 1:Absent⸩, VendorID: b3, cbd_congestion_fee: d20, congestion_surcharge: b28⸨0:d36; 1:Absent⸩, extra: d44, fare_amount: d52, improvement_surcharge: d60, mta_tax: d68, passenger_count: b29⸨0:b30; 1:Absent⸩, payment_type: b31, store_and_fwd_flag: ⸨Absent; x0:String⸩, tip_amount: d76, tolls_amount: d84, total_amount: d92, tpep_dropoff_datetime: d100, tpep_pickup_datetime: d108, trip_distance: d116}
 */

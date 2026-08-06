@@ -83,7 +83,7 @@ public abstract class Canonical {
   protected abstract boolean slowEquals(Object other);
 
   @Override
-  public boolean equals(Object obj) {
+  public final boolean equals(Object obj) {
     if (canonical == obj) {
       return true;
     } else if (!(obj instanceof Canonical other)) {
@@ -103,7 +103,7 @@ public abstract class Canonical {
   }
 
   @Override
-  public int hashCode() {
+  public final int hashCode() {
     return hash;
   }
 }

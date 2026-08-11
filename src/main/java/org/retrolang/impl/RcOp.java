@@ -38,6 +38,17 @@ public class RcOp extends Op {
   /// invoking the Op. See [RC.In].
   final Bits argIsRcIn;
 
+  /// Returns true if each caller of `op` is responsible for decrementing the root count of the
+  /// result. See [RC.Out].
+  public static boolean isResultRcOut(Op op) {
+    return (op instanceof RcOp rcOp) && rcOp.resultIsRcOut;
+  }
+
+  /// Returns a Bits that contains `i` if the corresponding arg of `op` is annotated [RC.In].
+  public static Bits isArgRcIn(Op op) {
+    return (op instanceof RcOp rcOp) ? rcOp.argIsRcIn : Bits.EMPTY;
+  }
+
   /// A Builder is used to construct a new RcOp.
   public static class RcOpBuilder extends Op.Builder {
     private boolean resultIsRcOut;
@@ -105,7 +116,13 @@ public class RcOp extends Op {
   /// and @RC.In annotations.
   public static RcOpBuilder forRcMethod(
       MethodHandles.Lookup lookup, Class<?> klass, String name, Class<?>... argTypes) {
-    Method m = getDeclaredMethod(klass, name, argTypes);
+    return forRcMethod(lookup, getDeclaredMethod(klass, name, argTypes));
+  }
+
+  /// Returns an RcOpBuilder for an Op that calls the specified method, which must be accessible
+  /// with the given Lookup. Sets `resultIsRcOut` and `argIsRcIn` based on the method's @Rc.Out
+  /// and @RC.In annotations.
+  public static RcOpBuilder forRcMethod(MethodHandles.Lookup lookup, Method m) {
     Op op = Op.forMethod(lookup, m).build();
     Parameter[] params = m.getParameters();
     int firstParam = Modifier.isStatic(m.getModifiers()) ? 0 : 1;

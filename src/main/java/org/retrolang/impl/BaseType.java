@@ -244,7 +244,7 @@ public abstract class BaseType {
       super(module, name, -1, sortOrder, superTypes);
       assert Value.class.isAssignableFrom(javaType);
       this.javaType = javaType;
-      asRefVar = new Template.RefVar(0, this);
+      asRefVar = (javaType == NumValue.class) ? null : new Template.RefVar(0, this);
       ptrInfo = new PtrInfo.NonCompositional(this);
     }
 

@@ -252,6 +252,22 @@ public abstract class Condition {
     }
   }
 
+  /// Returns a Condition that is true if `v` is null.
+  public static Condition isNull(Value v) {
+    if (v instanceof RValue) {
+      return new Condition() {
+        @Override
+        public void addTest(CodeGen codeGen, FutureBlock elseBranch) {
+          new IsEq(OpCodeType.OBJ, codeGen.asCodeValue(v), CodeValue.NULL)
+              .setBranch(false, elseBranch)
+              .addTo(codeGen.cb);
+        }
+      };
+    } else {
+      return Condition.of(v == null);
+    }
+  }
+
   /// Returns a Condition that is true if `v1` and `v2` are equal; both must be of type int.
   public static Condition intEq(CodeValue v1, CodeValue v2) {
     if ((v1 instanceof CodeValue.Const) && (v2 instanceof CodeValue.Const)) {

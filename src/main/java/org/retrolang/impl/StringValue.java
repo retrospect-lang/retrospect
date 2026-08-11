@@ -90,6 +90,16 @@ public class StringValue extends RefCounted implements Value {
     return codeGen.intToValue(LENGTH_OP.result(codeGen.asCodeValue(s)));
   }
 
+  /// A Condition that is true if the length of `s` (a StringValue) is equal to `n` (an integer).
+  public static Condition lengthIs(TState tstate, Value s, Value n) {
+    if (s instanceof StringValue sv && n instanceof NumValue) {
+      return Condition.of(NumValue.equals(n, sv.value.length()));
+    }
+    CodeGen codeGen = tstate.codeGen();
+    CodeValue length = LENGTH_OP.result(codeGen.asCodeValue(s));
+    return Condition.intEq(codeGen.asCodeValue(n), length);
+  }
+
   /// `open function codePoints(string)`
   @Core.Public
   static final VmFunctionBuilder codePoints = VmFunctionBuilder.create("codePoints", 1).isOpen();
@@ -120,32 +130,12 @@ public class StringValue extends RefCounted implements Value {
   /// `method at(ToCodePoint cp, Number index) = ...`
   @Core.Method("at(ToCodePoint, Number)")
   static Value atToCodePoint(TState tstate, Value cp, Value index) throws BuiltinException {
-    Value result = codePoint(tstate, cp.peekElement(0), index, 1);
+    index = index.verifyInt(Err.INVALID_ARGUMENT);
+    index = ValueUtil.subtractInts(tstate, index, NumValue.ONE);
+    Value result = codePoint.call(tstate, cp.peekElement(0), index);
+    tstate.dropValue(index);
     Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, result));
-    return result;
-  }
-
-  /// Returns the code point of `s` identified by `index` (which may be zero-based or one-based), or
-  /// -1 if `index` is invalid.
-  @RC.Out
-  public static Value codePoint(TState tstate, Value s, Value index, int firstIndex)
-      throws BuiltinException {
-    if (!(s instanceof RValue || index instanceof RValue)) {
-      int result = ((StringValue) s).codePoint(NumValue.asIntOrMinusOne(index) - firstIndex);
-      return NumValue.of(result, tstate);
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      return codeGen.intToValue(
-          CODE_POINT_OP.result(
-              codeGen.asCodeValue(s), verifyAndAdjust(codeGen, index, firstIndex)));
-    }
-  }
-
-  /// If `index` is an int, returns `index - firstIndex`; otherwise escapes.
-  private static CodeValue verifyAndAdjust(CodeGen codeGen, Value index, int firstIndex)
-      throws BuiltinException {
-    CodeValue result = codeGen.verifyInt(index);
-    return (firstIndex == 0) ? result : Op.SUBTRACT_INTS.result(result, CodeValue.of(firstIndex));
+    return result.makeStorable(tstate);
   }
 
   /// `method at(String, Array) = ...`
@@ -156,61 +146,13 @@ public class StringValue extends RefCounted implements Value {
     Err.INVALID_ARGUMENT.unless(range.isa(Core.RANGE));
     Value min = range.peekElement(0);
     min = min.is(Core.NONE).choose(NumValue.ONE, min);
+    min = ValueUtil.subtractInts(tstate, min, NumValue.ONE);
     Value max = range.peekElement(1);
     max = max.is(Core.NONE).choose(NumValue.NEGATIVE_ONE, max);
-    return substring(tstate, s, min, max, 1);
-  }
-
-  /// Returns the substring from `start - firstIndex` (inclusive) to `end` (exclusive). If `end` is
-  /// -1, the end of the string is used.
-  ///
-  /// (Note that when `firstIndex` is 1, `end` is effectively inclusive since we do not subtract
-  /// `firstIndex` from it.)
-  @RC.Out
-  public static Value substring(TState tstate, Value s, Value start, Value end, int firstIndex)
-      throws BuiltinException {
-    if (!(s instanceof RValue || start instanceof RValue || end instanceof RValue)) {
-      Value result =
-          ((StringValue) s)
-              .substring(
-                  tstate,
-                  NumValue.asIntOrMinusOne(start) - firstIndex,
-                  NumValue.asIntOrMinusOne(end));
-      Err.INVALID_ARGUMENT.when(result == null);
-      return result;
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      CodeValue result =
-          SUBSTRING_OP.result(
-              codeGen.asCodeValue(s),
-              codeGen.tstateRegister(),
-              verifyAndAdjust(codeGen, start, firstIndex),
-              codeGen.verifyInt(end));
-      result = codeGen.materialize(result, StringValue.class);
-      Err.INVALID_ARGUMENT.when(Condition.isNull(result));
-      return codeGen.toValue(result, Core.STRING);
-    }
-  }
-
-  /// If the characters beginning at `start` are an optional '+' or '-' followed by one or more
-  /// digits, returns the position of the first non-digit following the digits; otherwise returns
-  /// -1.
-  @RC.Out
-  public static Value skipInt(TState tstate, Value s, Value start) {
-    if (!(s instanceof RValue || start instanceof RValue)) {
-      int result = ((StringValue) s).skipInt(NumValue.asIntOrMinusOne(start));
-      return NumValue.of(result, tstate);
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      CodeValue startCv;
-      try {
-        startCv = codeGen.verifyInt(start);
-      } catch (BuiltinException e) {
-        // Could just escape and return NumValue.ZERO, but I don't think this is possible
-        throw new AssertionError();
-      }
-      return codeGen.intToValue(SKIP_INT_OP.result(codeGen.asCodeValue(s), startCv));
-    }
+    Value result = substring.call(tstate, s, min, max);
+    tstate.dropValue(min);
+    Err.INVALID_ARGUMENT.when(Condition.isNull(result));
+    return result;
   }
 
   /// `function parseInt(string)`
@@ -219,7 +161,7 @@ public class StringValue extends RefCounted implements Value {
   @Core.Method("parseInt(String)")
   public static Value parseInt(TState tstate, ResultsInfo results, Value s)
       throws BuiltinException {
-    Value end = StringValue.skipInt(tstate, s, NumValue.ZERO);
+    Value end = skipInt.call(tstate, s, NumValue.ZERO);
     Err.INVALID_ARGUMENT.unless(lengthIs(tstate, s, end));
     return parseInt(tstate, results, s, NumValue.ZERO, end);
   }
@@ -266,59 +208,7 @@ public class StringValue extends RefCounted implements Value {
 
   @Core.Method("concat(String, String)")
   static Value concatStrings(TState tstate, Value x, Value y) {
-    if (!(x instanceof RValue || y instanceof RValue)) {
-      return concat(tstate, (StringValue) x, (StringValue) y);
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      CodeValue result =
-          CONCAT_OP.result(
-              codeGen.tstateRegister(), codeGen.asCodeValue(x), codeGen.asCodeValue(y));
-      return codeGen.toValue(codeGen.materialize(result, StringValue.class), Core.STRING);
-    }
-  }
-
-  /// A Condition that is true if the length of `s` (a StringValue) is equal to `n` (an integer).
-  public static Condition lengthIs(TState tstate, Value s, Value n) {
-    if (s instanceof StringValue sv && n instanceof NumValue) {
-      return Condition.of(NumValue.equals(n, sv.value.length()));
-    }
-    CodeGen codeGen = tstate.codeGen();
-    CodeValue length = LENGTH_OP.result(codeGen.asCodeValue(s));
-    return Condition.intEq(codeGen.asCodeValue(n), length);
-  }
-
-  /// A Condition that is true if `start` is a valid index in `s`, and the substring of `s`
-  /// beginning at `start` starts with `sub`.
-  public static Condition substringStartsWith(TState tstate, Value s, Value start, Value sub)
-      throws BuiltinException {
-    if (s instanceof StringValue sv
-        && start instanceof NumValue
-        && sub instanceof StringValue sv2) {
-      Err.INVALID_ARGUMENT.unless(NumValue.isInt(start));
-      return Condition.of(substringStartsWith(sv, NumValue.asInt(start), sv2));
-    }
-    return Condition.isNonZero(
-        codeGen -> {
-          Value iStart;
-          try {
-            iStart = start.verifyInt(Err.INVALID_ARGUMENT);
-          } catch (BuiltinException e) {
-            codeGen.escape();
-            return CodeValue.ZERO;
-          }
-          return SUBSTRING_STARTS_WITH_OP.result(
-              codeGen.asCodeValue(s), codeGen.asCodeValue(iStart), codeGen.asCodeValue(sub));
-        });
-  }
-
-  /// A Condition that is true if `s` contains the code point `cp`; caller is responsible for
-  /// verifying that `cp` is an integer.
-  public static Condition containsCodePoint(TState tstate, Value s, Value cp) {
-    if (s instanceof StringValue sv && cp instanceof NumValue) {
-      return Condition.of(containsCodePoint(sv, NumValue.asInt(cp)));
-    }
-    return Condition.isNonZero(
-        codeGen -> CONTAINS_OP.result(codeGen.asCodeValue(s), codeGen.asCodeValue(cp)));
+    return concat.call(tstate, x, y);
   }
 
   static final Op LENGTH_OP =
@@ -328,60 +218,58 @@ public class StringValue extends RefCounted implements Value {
     return value.length();
   }
 
-  static final Op CODE_POINT_OP =
-      RcOp.forRcMethod(StringValue.class, "codePoint", int.class).withConstSimplifier().build();
+  public static final BuiltinMethod.SimpleRuntimeHelper codePoint =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
 
   /// Returns the code point at the given index, or -1 if `index` is invalid.
-  public int codePoint(int index) {
-    if (index >= 0 && index < value.length()) {
-      return value.charAt(index);
+  public static int codePoint(StringValue s, int index) {
+    if (index >= 0 && index < s.value.length()) {
+      return s.value.charAt(index);
     } else {
       return -1;
     }
   }
 
-  static final Op SUBSTRING_OP =
-      RcOp.forRcMethod(StringValue.class, "substring", TState.class, int.class, int.class)
-          .withConstSimplifier()
-          .build();
+  public static final BuiltinMethod.SimpleRuntimeHelper substring =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
 
   /// Returns the substring from `start` (inclusive) to `end` (exclusive). If `end` is -1, the end
   /// of the string is used.
   @RC.Out
-  public StringValue substring(TState tstate, int start, int end) {
-    int size = value.length();
+  public static StringValue substring(TState tstate, StringValue s, int start, int end) {
+    int size = s.value.length();
     if (end == -1) {
       end = size;
     }
     if (start == 0 && end == size) {
-      addRef();
-      return this;
+      s.addRef();
+      return s;
     } else if (start < 0 || end > size || start > end) {
       return null;
     } else {
-      return new StringValue(tstate, value.substring(start, end));
+      return new StringValue(tstate, s.value.substring(start, end));
     }
   }
-
-  static final Op SKIP_INT_OP =
-      RcOp.forRcMethod(StringValue.class, "skipInt", int.class).withConstSimplifier().build();
 
   private static boolean isDigit(char c) {
     return c >= '0' && c <= '9';
   }
 
-  /// If the characters beginning at `pos` are an optional '+' or '-' followed by one or more
+  public static final BuiltinMethod.SimpleRuntimeHelper skipInt =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
+
+  /// If the characters beginning at `start` are an optional '+' or '-' followed by one or more
   /// digits, returns the position of the first non-digit following the digits; otherwise returns
   /// -1.
-  public int skipInt(int start) {
+  public static int skipInt(StringValue s, int start) {
     if (start < 0) {
       return -1;
     }
     int pos = start;
-    int size = value.length();
+    int size = s.value.length();
     int result = -1;
     while (pos < size) {
-      char c = value.charAt(pos);
+      char c = s.value.charAt(pos);
       if (isDigit(c)) {
         result = ++pos;
       } else if (pos == start && (c == '-' || c == '+')) {
@@ -417,10 +305,8 @@ public class StringValue extends RefCounted implements Value {
     return Double.parseDouble(value.substring(start, end));
   }
 
-  static final Op CONCAT_OP =
-      RcOp.forRcMethod(
-              StringValue.class, "concat", TState.class, StringValue.class, StringValue.class)
-          .build();
+  public static final BuiltinMethod.SimpleRuntimeHelper concat =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
 
   @RC.Out
   public static StringValue concat(TState tstate, StringValue x, StringValue y) {
@@ -434,25 +320,19 @@ public class StringValue extends RefCounted implements Value {
     return new StringValue(tstate, x.value.concat(y.value));
   }
 
-  static final Op SUBSTRING_STARTS_WITH_OP =
-      RcOp.forRcMethod(
-              StringValue.class,
-              "substringStartsWith",
-              StringValue.class,
-              int.class,
-              StringValue.class)
-          .withConstSimplifier()
-          .build();
+  public static final BuiltinMethod.SimpleRuntimeHelper substringStartsWith =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
 
+  /// True if `start` is a valid index in `s`, and the substring of `s` beginning at `start` starts
+  /// with `sub`.
   public static boolean substringStartsWith(StringValue x, int n, StringValue y) {
     return x.value.startsWith(y.value, n);
   }
 
-  static final Op CONTAINS_OP =
-      RcOp.forRcMethod(StringValue.class, "containsCodePoint", StringValue.class, int.class)
-          .withConstSimplifier()
-          .build();
+  public static final BuiltinMethod.SimpleRuntimeHelper containsCodePoint =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
 
+  /// True if `s` contains the code point `cp`.
   public static boolean containsCodePoint(StringValue x, int cp) {
     return x.value.indexOf(cp) >= 0;
   }

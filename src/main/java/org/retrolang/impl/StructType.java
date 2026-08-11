@@ -22,16 +22,9 @@ import com.google.common.collect.ImmutableMap;
 import java.util.function.IntFunction;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
-import org.retrolang.code.Op;
 
 /// A BaseType for structs with a specific set of keys.
 public class StructType extends BaseType {
-
-  public static final Op INDEX_OP =
-      RcOp.forRcMethod(StructType.class, "index", Value.class).withConstSimplifier().build();
-
-  public static final Op KEY_OP =
-      RcOp.forRcMethod(StructType.class, "key", int.class).withConstSimplifier().build();
 
   @Core.Private
   static final VmType STRUCT_KEYS =
@@ -109,12 +102,15 @@ public class StructType extends BaseType {
     }
   }
 
+  public static final BuiltinMethod.SimpleRuntimeHelper keyToIndex =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
+
   /// If `key` is one of the keys of this compound, returns its index (in 0..size-1); otherwise
   /// returns -1.
-  public int index(Value key) {
+  public static int keyToIndex(StructType type, Value key) {
     assert !(key instanceof RValue);
     if (key instanceof StringValue s) {
-      Integer result = keyMap.get(s.value);
+      Integer result = type.keyMap.get(s.value);
       if (result != null) {
         return result;
       }
@@ -122,8 +118,11 @@ public class StructType extends BaseType {
     return -1;
   }
 
-  public StringValue key(int index) {
-    return keysAsStringValues.get(index);
+  public static final BuiltinMethod.SimpleRuntimeHelper indexToKey =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
+
+  public static StringValue indexToKey(StructType type, int index) {
+    return type.keysAsStringValues.get(index);
   }
 
   @Override

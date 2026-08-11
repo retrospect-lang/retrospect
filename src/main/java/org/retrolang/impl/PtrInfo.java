@@ -242,7 +242,6 @@ public interface PtrInfo extends ValueInfo {
     /// If baseType is null, test for Frame; otherwise test for the corresponding java type.
     TestClass(CodeValue value, BaseType.NonCompositional baseType) {
       super(value, null);
-      assert baseType == null || baseType.javaType != null;
       this.baseType = baseType;
     }
 

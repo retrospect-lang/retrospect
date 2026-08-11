@@ -199,7 +199,7 @@ public abstract class VmFunctionBuilder {
       int n = op.argTypes.size();
       // Call NumValue.asDouble on each arg
       for (int i = 0; i < n; i++) {
-        wrappedMh = MethodHandles.filterArguments(wrappedMh, i, NumValue.AS_DOUBLE);
+        wrappedMh = MethodHandles.filterArguments(wrappedMh, i, NumValue.AS_DOUBLE_OP.mh);
       }
       // Convert multiple Value args to a single Object[] arg
       wrappedMh = BuiltinSupport.spreadObjArray(wrappedMh, n);

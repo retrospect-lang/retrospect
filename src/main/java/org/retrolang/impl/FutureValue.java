@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.function.Consumer;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
-import org.retrolang.code.Register;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.SizeOf;
 import org.retrolang.util.StringUtil;
@@ -71,10 +70,6 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
 
   private static final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
-  private static final Op NEW_COMPLETED =
-      RcOp.forRcMethod(lookup, FutureValue.class, "newCompleted", Allocator.class, Value.class)
-          .build();
-
   private static final Op NEW_FOR_TEST =
       RcOp.forRcMethod(lookup, FutureValue.class, "newForTest", Allocator.class).build();
 
@@ -87,12 +82,22 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     return new FutureValue(allocator, Core.TO_BE_SET, producer);
   }
 
+  static final BuiltinMethod.SimpleRuntimeHelper newCompleted =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
+
   /// Creates a FutureValue whose result is already known.
   @RC.Out
   public static FutureValue newCompleted(Allocator allocator, @RC.In Value result) {
-    assert result != Core.TO_BE_SET && !(result.baseType() instanceof Err);
+    assert !(result.baseType() instanceof Err);
+    if (result == Core.TO_BE_SET) {
+      // Probably not possible, but just in case...
+      result = Core.ABSENT;
+    }
     return new FutureValue(allocator, result, null);
   }
+
+  static final BuiltinMethod.SimpleRuntimeHelper newForTest =
+      new BuiltinMethod.SimpleRuntimeHelper();
 
   /// Creates a FutureValue whose result will be set by a call to [#setTestFuture].
   @RC.Out
@@ -115,11 +120,6 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     return tstate.compound(Err.FUTURE_ERROR, tstate.asArrayValue(entries, size));
   }
 
-  @RC.Out
-  static FutureValue newWithError(TState tstate, @RC.In TStack errorStack) {
-    return new FutureValue(tstate, stackAsValue(tstate, errorStack), null);
-  }
-
   static class FutureMethod extends BuiltinMethod {
     static final Caller at = new Caller("at:2", "afterAt").detach();
 
@@ -129,59 +129,38 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     }
 
     @DetachedContinuation
-    static Value afterAt(TState tstate, MethodMemo mMemo, @RC.In Value result) {
-      if (!tstate.unwindStarted()) {
-        assert result != null;
-        if (result == Core.TO_BE_SET) {
-          // Probably not possible, but just in case...
-          result = Core.ABSENT;
-        }
-        if (!tstate.hasCodeGen()) {
-          return newCompleted(tstate, result); // harmonizeResult(tstate, mMemo, result));
-        } else {
-          CodeGen codeGen = tstate.codeGen();
-          CodeValue fv =
-              NEW_COMPLETED.result(
-                  codeGen.tstateRegister(),
-                  StoreEmitter.toCodeValue(codeGen, RValue.toTemplate(result)));
-          return codeGen.toValue(codeGen.materialize(fv, FutureValue.class), FUTURE_TYPE);
-        }
-      }
-      assert result == null;
-      if (!tstate.hasCodeGen()) {
-        return afterUnwind(tstate);
+    static Value afterAt(TState tstate, @RC.In Value result) {
+      if (tstate.unwindStarted()) {
+        assert result == null;
+        return afterUnwind.call(tstate);
       } else {
-        CodeGen codeGen = tstate.codeGen();
-        CodeValue fv = AFTER_UNWIND.result(codeGen.tstateRegister());
-        return codeGen.toValue(codeGen.materialize(fv, FutureValue.class), FUTURE_TYPE);
+        // The second `tstate` is newCompleted's first argument (an Allocator)
+        return newCompleted.call(tstate, tstate, result);
       }
     }
+  }
 
-    static final Op AFTER_UNWIND =
-        RcOp.forRcMethod(lookup, FutureMethod.class, "afterUnwind", TState.class).build();
+  static final BuiltinMethod.SimpleRuntimeHelper afterUnwind =
+      new BuiltinMethod.SimpleRuntimeHelper();
 
-    static FutureValue afterUnwind(TState tstate) {
-      TStack tstack = tstate.takeUnwind();
-      if (tstack.hasErr()) {
-        return newWithError(tstate, tstack);
-      } else {
-        FutureValue fv = new FutureValue(tstate);
-        fv.lambdaThread.setSuspended(tstate, tstack);
-        return fv;
-      }
+  /// `tstate` must have started unwinding, due to an error, escape, or blocking. Takes the TStack
+  /// and creates a FutureValue from it.
+  @RC.Out
+  public static FutureValue afterUnwind(TState tstate) {
+    TStack tstack = tstate.takeUnwind();
+    if (tstack.hasErr()) {
+      return new FutureValue(tstate, stackAsValue(tstate, tstack), null);
+    } else {
+      FutureValue fv = new FutureValue(tstate);
+      fv.lambdaThread.setSuspended(tstate, tstack);
+      return fv;
     }
   }
 
   @Core.Method("testFuture()")
   static Value testFuture(TState tstate) {
-    if (!tstate.hasCodeGen()) {
-      return newForTest(tstate);
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      CodeValue result = NEW_FOR_TEST.result(codeGen.tstateRegister());
-      result = codeGen.materialize(result, Value.class);
-      return codeGen.toValue((Register) result, FUTURE_TYPE);
-    }
+    // The second `tstate` is newForTest's argument (an Allocator)
+    return newForTest.call(tstate, tstate);
   }
 
   @Core.Method("waitFor(Future)")
@@ -216,19 +195,16 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   @Core.Method("setTestFuture(Future, _)")
   static void setTestFuture(TState tstate, Value future, @RC.In Value result)
       throws BuiltinException {
-    if (future instanceof FutureValue fv) {
-      Err.INVALID_ARGUMENT.unless(fv.setTest(tstate, result));
-    } else {
-      CodeGen codeGen = tstate.codeGen();
-      CodeValue success =
-          SET_TEST.result(
-              codeGen.asCodeValue(future),
-              codeGen.tstateRegister(),
-              StoreEmitter.toCodeValue(codeGen, RValue.toTemplate(result)));
-      success = codeGen.materialize(success, int.class);
-      codeGen.escapeUnless(Condition.isNonZero(success));
-      tstate.setResults();
-    }
+    Err.INVALID_ARGUMENT.unless(setTest.asCondition(tstate, future, result));
+    tstate.setResults();
+  }
+
+  static final BuiltinMethod.SimpleRuntimeHelper setTest = new BuiltinMethod.SimpleRuntimeHelper();
+
+  /// If `future` was created by [#testFuture] and has not already had its result set, sets its
+  /// result and returns true; otherwise returns false.
+  public static boolean setTest(TState tstate, FutureValue future, @RC.In Value result) {
+    return future.lambdaThread == null && future.setResult(tstate, result);
   }
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + 3 * SizeOf.PTR);
@@ -281,13 +257,6 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
     this.producer = producer;
     this.result = result;
     allocator.recordAlloc(this, OBJ_SIZE);
-  }
-
-  static final Op SET_TEST =
-      RcOp.forRcMethod(lookup, FutureValue.class, "setTest", TState.class, Value.class).build();
-
-  boolean setTest(TState tstate, @RC.In Value result) {
-    return lambdaThread == null && setResult(tstate, result);
   }
 
   /// Called when the RThread completes (for FutureValues with a lambda), the producer calls

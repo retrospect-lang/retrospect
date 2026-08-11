@@ -30,7 +30,7 @@ aoc1_x0(x1:String):
   7: test I5 < 0; T:→ 36
   8: test StringValue.containsCodePoint("LR", I5) == 0; T:→ 36
   9: I5 ← iAdd(I4, 1);
- 10: X6 ← StringValue.substring(X1, X0, I4, I5);
+ 10: X6 ← StringValue.substring(X0, X1, I4, I5);
  11: test X6 == null; T:→ 36
  12: I7 ← StringValue.skipInt(X1, I5);
  13: test I7 < 0; T:→ 35

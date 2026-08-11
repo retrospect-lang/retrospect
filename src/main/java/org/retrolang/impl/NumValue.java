@@ -16,7 +16,6 @@
 
 package org.retrolang.impl;
 
-import java.lang.invoke.MethodHandle;
 import java.util.Arrays;
 import org.retrolang.code.Op;
 import org.retrolang.util.SizeOf;
@@ -47,12 +46,12 @@ public abstract class NumValue extends RefCounted implements Value {
     NEGATIVE_ONE = fromCache(-1);
   }
 
-  static final MethodHandle AS_DOUBLE = Handle.forMethod(NumValue.class, "asDouble", Value.class);
-
   static final Op OF_INT_OP =
       RcOp.forRcMethod(NumValue.class, "of", int.class, Allocator.class).build();
   static final Op OF_DOUBLE_OP =
       RcOp.forRcMethod(NumValue.class, "of", double.class, Allocator.class).build();
+  static final Op OR_NAN_OP =
+      RcOp.forRcMethod(NumValue.class, "orNan", double.class, Allocator.class).build();
   static final Op AS_DOUBLE_OP = RcOp.forRcMethod(NumValue.class, "asDouble", Value.class).build();
   static final Op IS_INT_OP = RcOp.forRcMethod(NumValue.class, "isInt", Value.class).build();
   static final Op IS_UINT8_OP = RcOp.forRcMethod(NumValue.class, "isUint8", Value.class).build();

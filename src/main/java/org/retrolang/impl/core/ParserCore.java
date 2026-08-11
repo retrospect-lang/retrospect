@@ -221,12 +221,10 @@ public final class ParserCore {
       throws Err.BuiltinException {
     Err.INVALID_ARGUMENT.unless(StringValue.lengthIs(tstate, firstChar, NumValue.ONE));
     Err.INVALID_ARGUMENT.unless(StringValue.lengthIs(tstate, lastChar, NumValue.ONE));
-    Value first = StringValue.codePoint(tstate, firstChar, NumValue.ZERO, 0);
-    tstate.dropOnThrow(first);
-    Value last = StringValue.codePoint(tstate, lastChar, NumValue.ZERO, 0);
-    tstate.dropOnThrow(last);
+    Value first = StringValue.codePoint.call(tstate, firstChar, NumValue.ZERO);
+    Value last = StringValue.codePoint.call(tstate, lastChar, NumValue.ZERO);
     Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(first, last));
-    return tstate.compound(ONE_OF_RANGE, first, last);
+    return tstate.compound(ONE_OF_RANGE, first.makeStorable(tstate), last.makeStorable(tstate));
   }
 
   /// `method choose(Guarded first, Parser second) = Choose_({first, second})`
@@ -369,7 +367,9 @@ public final class ParserCore {
       nextChar
           .is(Core.NONE)
           .not()
-          .and(() -> StringValue.containsCodePoint(tstate, oneOf.peekElement(0), nextChar))
+          .and(
+              () ->
+                  StringValue.containsCodePoint.asCondition(tstate, oneOf.peekElement(0), nextChar))
           .testExcept(
               () -> {
                 tstate.setResults(Core.EMPTY_ARRAY, pos);
@@ -616,7 +616,7 @@ public final class ParserCore {
       nextChar
           .is(Core.NONE)
           .not()
-          .and(() -> StringValue.containsCodePoint(tstate, LINE_ENDS, nextChar))
+          .and(() -> StringValue.containsCodePoint.asCondition(tstate, LINE_ENDS, nextChar))
           .testExcept(
               () -> {
                 Condition.numericEq(nextChar, CR_CODE_POINT)
@@ -1061,13 +1061,14 @@ public final class ParserCore {
   /// ```
   @Core.Method("takeChar(String, Number)")
   static void takeCharString(TState tstate, Value s, Value pos) throws Err.BuiltinException {
-    Value result = StringValue.codePoint(tstate, s, pos, 0);
+    Value p = pos.verifyInt(Err.INVALID_ARGUMENT);
+    Value result = StringValue.codePoint.call(tstate, s, p);
     Condition.numericLessThan(result, NumValue.ZERO)
         .test(
-            () -> tstate.setResults(Core.NONE, addRef(pos)),
+            () -> tstate.setResults(Core.NONE, addRef(p)),
             () -> {
-              Value newPos = ValueUtil.addInts(tstate, pos, NumValue.ONE);
-              tstate.setResults(result, newPos);
+              Value newPos = ValueUtil.addInts(tstate, p, NumValue.ONE);
+              tstate.setResults(result.makeStorable(tstate), newPos);
             });
   }
 
@@ -1077,25 +1078,30 @@ public final class ParserCore {
   @Core.Method("getString(String, Number, Number)")
   static Value getStringString(TState tstate, Value s, Value start, Value end)
       throws Err.BuiltinException {
-    return StringValue.substring(tstate, s, start, end, 0);
+    start = start.verifyInt(Err.INVALID_ARGUMENT);
+    end = end.verifyInt(Err.INVALID_ARGUMENT);
+    Value result = StringValue.substring.call(tstate, s, start, end);
+    Err.INVALID_ARGUMENT.when(Condition.isNull(result));
+    return result;
   }
 
   /// ```
   /// method matchString(String s, Number pos=, String sub) = ...
   /// ```
   @Core.Method("matchString(String, Number, String)")
-  static void matchStringString(TState tstate, Value s, @RC.In Value pos, Value sub)
+  static void matchStringString(TState tstate, Value s, Value pos, Value sub)
       throws Err.BuiltinException {
-    StringValue.substringStartsWith(tstate, s, pos, sub)
+    Value iPos = pos.verifyInt(Err.INVALID_ARGUMENT);
+    StringValue.substringStartsWith
+        .asCondition(tstate, s, iPos, sub)
         .test(
             () -> {
               Value subSize = StringValue.size(tstate, sub);
-              Value endPos = ValueUtil.addInts(tstate, pos, subSize);
-              tstate.dropValue(pos);
+              Value endPos = ValueUtil.addInts(tstate, iPos, subSize);
               tstate.dropValue(subSize);
               tstate.setResults(Core.TRUE, endPos);
             },
-            () -> tstate.setResults(Core.FALSE, pos));
+            () -> tstate.setResults(Core.FALSE, iPos.makeStorable(tstate)));
   }
 
   /// ```
@@ -1106,13 +1112,13 @@ public final class ParserCore {
   @Core.Method("parseInt(String, Number)")
   static void parseIntString(TState tstate, ResultsInfo results, Value s, Value start)
       throws Err.BuiltinException {
-    Value end = StringValue.skipInt(tstate, s, start);
+    Value end = StringValue.skipInt.call(tstate, s, start);
     Condition.numericLessThan(end, NumValue.ZERO)
         .testExcept(
             () -> tstate.setResults(Core.NONE, start),
             () -> {
               Value result = StringValue.parseInt(tstate, results, s, start, end);
-              tstate.setResults(result, end);
+              tstate.setResults(result, end.makeStorable(tstate));
             });
   }
 }

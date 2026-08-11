@@ -21,7 +21,15 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import java.lang.invoke.MethodHandle;
+import java.util.Arrays;
 import java.util.Map;
+import org.retrolang.code.CodeBuilder;
+import org.retrolang.code.CodeValue;
+import org.retrolang.code.FutureBlock;
+import org.retrolang.code.Op;
+import org.retrolang.code.Register;
+import org.retrolang.code.TestBlock;
 import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.BuiltinSupport.BuiltinImpl;
 import org.retrolang.impl.BuiltinSupport.ContinuationMethod;
@@ -99,6 +107,94 @@ public abstract class BuiltinMethod {
   /// values that should be passed to the call's continuation.
   public interface Saver {
     void saving(Value... args);
+  }
+
+  public static class SimpleRuntimeHelper {
+    boolean canSimplifyConstants;
+
+    /// The underlying Java method
+    private Op op;
+
+    /// 1 if the first argument of [#op] is a TState, 0 otherwise.
+    private int argStart;
+
+    /// [#op] wrapped to take two arguments (TState, Object[]) and return a Value. The result is
+    /// [RC.Out] iff `RcOp.isResultRcOut(op)` is true, and the `i`th element of the Object[] is
+    /// [RC.In] iff `RcOp.isArgRcIn(op)` contains `i` (the array itself is never [RC.In]).
+    private MethodHandle mh;
+
+    private BaseType.NonCompositional resultType;
+
+    public SimpleRuntimeHelper canSimplifyConstants() {
+      assert op == null;
+      canSimplifyConstants = true;
+      return this;
+    }
+
+    void initialize(Op op, MethodHandle mh, BaseType.NonCompositional resultType) {
+      this.op = op;
+      this.argStart = (op.argTypes.get(0) == TState.class) ? 1 : 0;
+      this.mh = mh;
+      this.resultType = resultType;
+    }
+
+    public Op op() {
+      assert op != null;
+      return op;
+    }
+
+    private boolean callNow(TState tstate, Object[] args) {
+      assert args.length == op.argTypes.size() - argStart;
+      if (!tstate.hasCodeGen()) {
+        return true;
+      } else {
+        return canSimplifyConstants && Arrays.stream(args).noneMatch(arg -> arg instanceof RValue);
+      }
+    }
+
+    public Value call(TState tstate, Object... args) {
+      if (callNow(tstate, args)) {
+        return callWrapped(tstate, args);
+      } else {
+        CodeGen codeGen = tstate.codeGen();
+        Register r = BuiltinSupport.emitCall(op, argStart, codeGen, args);
+        if (resultType != null) {
+          return codeGen.toValue(r, resultType);
+        } else if (op.resultType != boolean.class) {
+          return codeGen.toValue(r);
+        } else {
+          return RValue.intToBoolean(r);
+        }
+      }
+    }
+
+    public Condition asCondition(TState tstate, Object... args) {
+      assert op.resultType == boolean.class;
+      if (callNow(tstate, args)) {
+        Value result = callWrapped(tstate, args);
+        return Condition.of(result == Core.TRUE);
+      } else {
+        return new Condition() {
+          @Override
+          public void addTest(CodeGen codeGen, FutureBlock elseBranch) {
+            Register r = BuiltinSupport.emitCall(op, argStart, codeGen, args);
+            new TestBlock.IsEq(CodeBuilder.OpCodeType.INT, r, CodeValue.ZERO)
+                .setBranch(true, elseBranch)
+                .addTo(codeGen.cb);
+          }
+        };
+      }
+    }
+
+    private Value callWrapped(TState tstate, Object... args) {
+      try {
+        return (Value) mh.invokeExact(tstate, args);
+      } catch (RuntimeException | Error e) {
+        throw e;
+      } catch (Throwable e) {
+        throw new AssertionError(e);
+      }
+    }
   }
 
   /// A distinguished Continuation used as the value of [Caller#continuation] for Callers that

@@ -30,6 +30,7 @@ import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -38,7 +39,9 @@ import java.util.function.ToIntFunction;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.IntStream;
+import org.retrolang.code.CodeValue;
 import org.retrolang.code.Loop;
+import org.retrolang.code.Op;
 import org.retrolang.code.Register;
 import org.retrolang.impl.BaseType.SimpleStackEntryType;
 import org.retrolang.impl.BuiltinMethod.BuiltinStatic;
@@ -47,6 +50,7 @@ import org.retrolang.impl.BuiltinMethod.Continuation;
 import org.retrolang.impl.BuiltinMethod.DetachedContinuation;
 import org.retrolang.impl.BuiltinMethod.LoopContinuation;
 import org.retrolang.impl.BuiltinMethod.Saved;
+import org.retrolang.impl.BuiltinMethod.SimpleRuntimeHelper;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.util.Bits;
 import org.retrolang.util.StringUtil;
@@ -662,6 +666,88 @@ class BuiltinSupport {
     }
   }
 
+  static void initializeRuntimeHelpers(
+      Class<?> klass,
+      ImmutableMap<Class<? extends Value>, BaseType.NonCompositional> nonCompositionals) {
+    String cName = klass.getSimpleName();
+    // A map containing each static method in `klass` that has a unique name, keyed by name;
+    // names shared by more than one static method map to FALSE.
+    HashMap<String, Object> methods = new HashMap<>();
+    for (Method m : klass.getDeclaredMethods()) {
+      if (Modifier.isStatic(m.getModifiers())) {
+        methods.merge(m.getName(), m, (m1, m2) -> Boolean.FALSE);
+      }
+    }
+    for (Field f : klass.getDeclaredFields()) {
+      if (f.getType() == SimpleRuntimeHelper.class) {
+        String name = f.getName();
+        String where = cName + "." + name;
+        int modifiers = f.getModifiers();
+        Preconditions.checkArgument(
+            Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers),
+            "Should be static final (%s)",
+            where);
+        Object m = methods.get(name);
+        Preconditions.checkArgument(
+            m instanceof Method,
+            "%s method for RuntimeHelper %s",
+            (m == null) ? "No" : "Ambiguous",
+            where);
+        SimpleRuntimeHelper helper = (SimpleRuntimeHelper) getStatic(f);
+        Op.Builder builder = RcOp.forRcMethod(MethodHandles.publicLookup(), (Method) m);
+        if (helper.canSimplifyConstants) {
+          builder.withConstSimplifier();
+        }
+        Op op = builder.build();
+        BaseType.NonCompositional resultType;
+        if (op.resultType.isPrimitive()) {
+          resultType = null;
+        } else {
+          resultType = nonCompositionals.get(op.resultType);
+          Preconditions.checkArgument(
+              resultType != null, "Invalid result type for helper %s", where);
+        }
+        helper.initialize(op, wrapRuntimeHelper(op.mh, where), resultType);
+      }
+    }
+  }
+
+  static Register emitCall(Op op, int argsStart, CodeGen codeGen, Object[] argValues) {
+    assert op.argTypes.size() == argsStart + argValues.length;
+    CodeValue[] args = new CodeValue[argsStart + argValues.length];
+    if (argsStart != 0) {
+      args[0] = codeGen.tstateRegister();
+    }
+    for (int i = argsStart; i < args.length; ++i) {
+      Object x = argValues[i - argsStart];
+      CodeValue arg;
+      if (x instanceof TState) {
+        assert x == codeGen.tstate();
+        arg = codeGen.tstateRegister();
+      } else if (!(x instanceof Value v)) {
+        arg = CodeValue.Const.of(x);
+      } else if (op.argTypes.get(i) == Value.class) {
+        arg = StoreEmitter.toCodeValue(codeGen, RValue.toTemplate(v));
+        if (arg instanceof Op.Result argResult
+            && RcOp.isResultRcOut(argResult.op)
+            && !RcOp.isArgRcIn(op).test(i)) {
+          // Passing an @RC.Out Op.Result as a non-@RC.In arg isn't supported, so we need to put it
+          // into a register (enabling RcCodeBuilder to add the drop after `op` returns).
+          Register scratch = codeGen.cb.newRegister(Value.class);
+          codeGen.emitSet(scratch, arg);
+          arg = scratch;
+        }
+      } else {
+        arg = codeGen.asCodeValue(v);
+      }
+      args[i] = arg;
+    }
+    Register result =
+        codeGen.cb.newRegister(op.resultType == boolean.class ? int.class : op.resultType);
+    codeGen.emitSet(result, op.result(args));
+    return result;
+  }
+
   private static final String[] EMPTY_STRINGS = new String[0];
 
   /// The result of parsing the string that appears in a @Core.Method annotation.
@@ -1150,16 +1236,83 @@ class BuiltinSupport {
             Modifier.isStatic(modifiers) && Modifier.isFinal(modifiers),
             "Should be static final (%s)",
             where);
-        f.setAccessible(true);
-        BuiltinStatic value;
-        try {
-          value = (BuiltinStatic) f.get(null);
-        } catch (IllegalAccessException e) {
-          throw new AssertionError(e);
-        }
+        BuiltinStatic value = (BuiltinStatic) getStatic(f);
         value.setup(where, impl, functions);
       }
     }
     impl.createMethod(signature);
+  }
+
+  private static final MethodType RUNTIME_HELPER_TYPE =
+      MethodType.methodType(Value.class, TState.class, Object[].class);
+
+  private static MethodHandle wrapRuntimeHelper(MethodHandle mh, String where) {
+    MethodType type = mh.type();
+    int firstArg = (type.parameterType(0) == TState.class) ? 1 : 0;
+    int n = type.parameterCount() - firstArg;
+    MethodHandle[] argFilters =
+        IntStream.range(0, n)
+            .mapToObj(i -> runtimeHelperArgFilter(type.parameterType(i + firstArg), where))
+            .toArray(MethodHandle[]::new);
+    mh = MethodHandles.filterArguments(mh, firstArg, argFilters);
+    if (firstArg == 0) {
+      mh = MethodHandles.dropArguments(mh, 0, TState.class);
+    }
+    mh = mh.asSpreader(1, Object[].class, n);
+    Class<?> result = type.returnType();
+    if (result.isPrimitive()) {
+      mh = MethodHandles.filterReturnValue(mh, runtimeHelperResultFilter(result, where));
+    } else {
+      assert Value.class.isAssignableFrom(result);
+    }
+    return mh.asType(RUNTIME_HELPER_TYPE);
+  }
+
+  private static final MethodHandle AS_BOOLEAN =
+      Handle.forMethod(BuiltinSupport.class, "asBoolean", Value.class);
+
+  static boolean asBoolean(Value v) {
+    assert v == Core.TRUE || v == Core.FALSE;
+    return v == Core.TRUE;
+  }
+
+  private static MethodHandle runtimeHelperArgFilter(Class<?> type, String where) {
+    if (!type.isPrimitive()) {
+      return null;
+    } else if (type == double.class) {
+      return NumValue.AS_DOUBLE_OP.mh;
+    } else if (type == int.class) {
+      return NumValue.AS_INT_OP.mh;
+    } else if (type == boolean.class) {
+      return AS_BOOLEAN;
+    }
+    throw new IllegalArgumentException("Invalid argument type for helper " + where);
+  }
+
+  private static final MethodHandle FROM_DOUBLE =
+      MethodHandles.insertArguments(NumValue.OR_NAN_OP.mh, 1, Allocator.TRANSIENT);
+  private static final MethodHandle FROM_INT =
+      MethodHandles.insertArguments(NumValue.OF_INT_OP.mh, 1, Allocator.TRANSIENT);
+  private static final MethodHandle FROM_BOOLEAN =
+      Handle.forMethod(Core.class, "bool", boolean.class);
+
+  private static MethodHandle runtimeHelperResultFilter(Class<?> type, String where) {
+    if (type == double.class) {
+      return FROM_DOUBLE;
+    } else if (type == int.class) {
+      return FROM_INT;
+    } else if (type == boolean.class) {
+      return FROM_BOOLEAN;
+    }
+    throw new IllegalArgumentException("Invalid result type for helper " + where);
+  }
+
+  private static Object getStatic(Field f) {
+    f.setAccessible(true);
+    try {
+      return f.get(null);
+    } catch (IllegalAccessException e) {
+      throw new AssertionError(e);
+    }
   }
 }

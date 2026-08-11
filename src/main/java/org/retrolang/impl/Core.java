@@ -502,6 +502,9 @@ public class Core {
     /// All StructTypes created by the core.
     static final ImmutableMap<ImmutableList<String>, StructType> ALL_STRUCTS;
 
+    /// All instances of [BaseType.NonCompositional] created by the core, keyed by their Java class.
+    static final ImmutableMap<Class<? extends Value>, BaseType.NonCompositional> NON_COMPOSITIONAL;
+
     static {
       // Initialize the type and function maps by scanning these classes for static fields of type
       // VmType, Singleton, or VmFunction.
@@ -526,6 +529,8 @@ public class Core {
       Builder<String, VmFunction> functionsBuilder =
           new Builder<>(true, fn -> VmFunction.key(fn.name, fn.numArgs));
       Builder<ImmutableList<String>, StructType> structsBuilder = new Builder<>(false, t -> t.keys);
+      Builder<Class<? extends Value>, BaseType.NonCompositional> nonCompositionalBuilder =
+          new Builder<>(false, t -> t.javaType);
       synchronized (CORE.builder()) {
         for (Class<?> klass : classes) {
           // VmTypes are just thrown in the map.
@@ -537,11 +542,14 @@ public class Core {
           functionsBuilder.addAllFrom(
               klass, VmFunctionBuilder.class, builder -> builder.build(CORE));
           structsBuilder.addAllFrom(klass, StructType.class, t -> t);
+          nonCompositionalBuilder.addAllFrom(klass, BaseType.NonCompositional.class, t -> t);
         }
         ALL_TYPES = typesBuilder.allItems.buildOrThrow();
         ALL_FUNCTIONS = functionsBuilder.allItems.buildOrThrow();
         ALL_STRUCTS = structsBuilder.allItems.buildOrThrow();
+        NON_COMPOSITIONAL = nonCompositionalBuilder.allItems.buildOrThrow();
         for (Class<?> klass : classes) {
+          BuiltinSupport.initializeRuntimeHelpers(klass, NON_COMPOSITIONAL);
           BuiltinSupport.addMethodsFrom(klass, ALL_TYPES, ALL_FUNCTIONS);
         }
         // Since we don't use the ModuleBuilder for CORE, we need to do the same finalization its
@@ -585,11 +593,10 @@ public class Core {
         if (Modifier.isStatic(f.getModifiers()) && ofClass.isAssignableFrom(f.getType())) {
           boolean isPublic = f.isAnnotationPresent(Public.class);
           boolean isPrivate = f.isAnnotationPresent(Private.class);
-          int take = (isPublic ? 1 : 0) + (isPrivate ? 1 : 0) + (needPublicOrPrivate ? 0 : 1);
-          if (take != 0) {
-            // We shouldn't have both Public and Private, and if needPublicOrPrivate is false we
-            // shouldn't have either.
-            assert take == 1;
+          int take = (isPublic ? 1 : 0) + (isPrivate ? 1 : 0);
+          // We shouldn't have both Public and Private
+          assert take < 2;
+          if (take != 0 || !needPublicOrPrivate) {
             f.setAccessible(true);
             T2 fValue;
             try {
@@ -600,7 +607,7 @@ public class Core {
             T extracted = extract.apply(fValue);
             Keys key = keyFn.apply(extracted);
             allItems.put(key, extracted);
-            if (isPublic) {
+            if (publicItems != null && isPublic) {
               publicItems.put(key, extracted);
             }
           }

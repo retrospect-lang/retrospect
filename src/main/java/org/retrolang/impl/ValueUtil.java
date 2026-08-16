@@ -160,19 +160,6 @@ public class ValueUtil {
     }
     Template arrayT = RValue.toTemplate(array);
     CodeBuilder cb = codeGen.cb;
-    if (newElement == Core.TO_BE_SET) {
-      FutureBlock done = new FutureBlock();
-      codeGen.emitSwitch(
-          indexCV,
-          firstIndex,
-          firstIndex + size - 1,
-          i -> {
-            clear(codeGen, arrayT.element(i - firstIndex));
-            cb.branchTo(done);
-          });
-      cb.setNext(done);
-      return array;
-    }
     Template[] elements = new Template[size];
     Arrays.setAll(elements, arrayT::element);
     Template[] merged = Arrays.copyOf(elements, size);
@@ -203,8 +190,6 @@ public class ValueUtil {
           int i = ii - firstIndex;
           if (merged[i] != elements[i]) {
             codeGen.emitStore(newElementT, merged[i], registerStart[i], registerStart[i + 1]);
-          } else {
-            assert newElementT instanceof Template.Constant && merged[i].equals(newElementT);
           }
           cb.branchTo(done);
         });
@@ -216,7 +201,7 @@ public class ValueUtil {
   private static void clear(CodeGen codeGen, Template t) {
     // If t contains a Union we may end up emitting multiple instructions that set the same Register
     // to null.  That's OK; the optimizer will clean it up (all but the last will be removed since
-    // they're setting a register that's never read).  I don't expect that to have often enough to
+    // they're setting a register that's never read).  I don't expect that to happen often enough to
     // be worth the (minor) hassle that would be involved in not emitting them in the first place.
     Template.visitVars(t, refVar -> codeGen.emitSet(codeGen.register(refVar), CodeValue.NULL));
   }

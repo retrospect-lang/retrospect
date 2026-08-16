@@ -989,15 +989,17 @@ public class CodeGen {
     assert index instanceof Register;
     toTest.forEach(
         i -> {
-          FutureBlock next = new FutureBlock();
-          new TestBlock.IsEq(OpCodeType.INT, index, CodeValue.of(i))
-              .setBranch(false, next)
-              .addTo(cb);
           if (cb.nextIsReachable()) {
-            emitter.accept(i);
-            assert !cb.nextIsReachable();
+            FutureBlock next = new FutureBlock();
+            new TestBlock.IsEq(OpCodeType.INT, index, CodeValue.of(i))
+                .setBranch(false, next)
+                .addTo(cb);
+            if (cb.nextIsReachable()) {
+              emitter.accept(i);
+              assert !cb.nextIsReachable();
+            }
+            cb.setNext(next);
           }
-          cb.setNext(next);
         });
   }
 

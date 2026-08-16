@@ -73,7 +73,7 @@ public class RecordLayout extends FrameLayout {
 
   /// Builds a template with the given builder, and creates a RecordLayout using the result.
   static RecordLayout newFromBuilder(Scope scope, TemplateBuilder builder) {
-    VarAllocator allocator = VarAllocator.newForRecordLayout();
+    VarAllocator allocator = VarAllocator.newForRecordLayout().setDropToBeSetFromUnions();
     Template.Compound template = (Template.Compound) builder.build(allocator);
     RecordLayout result = newWithAllocator(scope, template, allocator);
     scope.evolver.recordNewLayout(result);
@@ -93,6 +93,7 @@ public class RecordLayout extends FrameLayout {
       ptrEnd[i] = end;
     }
     assert end == alloc.ptrSize();
+    assert !containsToBeSet(template);
     return new RecordLayout(scope, frameClass, template, alloc, ptrEnd);
   }
 

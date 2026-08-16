@@ -140,6 +140,7 @@ public class VArrayLayout extends FrameLayout {
       Template template,
       NumEncoding[] nvEncodings) {
     super(scope, Core.VARRAY, frameClass, Math.min(ptrSize, frameClass.nPtrs));
+    assert !containsToBeSet(template);
     this.template = template;
     this.nvEncodings = nvEncodings;
     // Since ptrSize includes one array for each NumVar and one array for each RefVar,

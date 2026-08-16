@@ -519,8 +519,15 @@ public class RcCodeBuilder extends CodeBuilder {
       //  * we don't need to put r in the noDeps value if r is already in mustBeCounted
       Bits noDepsEntry = null;
       Block b = extra.block;
+      // If b is a simple register copy, the TRI of the source register.
+      int rhsTri =
+          (b instanceof SetBlock && b.input(0) instanceof Register rhs) ? registerToTri(rhs) : -1;
       if (b.anyInlink(link -> blockExtra(link.origin).assignedTrsAfter.test(tri))) {
         scratch.setAll(liveTrsBuilder);
+        if (rhsTri >= 0) {
+          // If b is a simple register copy the rhs must not depend on the lhs
+          scratch.set(rhsTri);
+        }
         Bits.Op.DIFFERENCE.into(scratch, mustBeCountedBuilder);
         // We don't need to record that this register shouldn't depend on itself
         scratch.clear(tri);
@@ -534,11 +541,8 @@ public class RcCodeBuilder extends CodeBuilder {
       // But if it was previously in mustBeCounted *and* it is just being copied from another
       // register, then add the rhs to mustBeCounted (in the hopes that we can just take its
       // refcount).
-      if (mustBeCountedBuilder.clear(tri) && b instanceof SetBlock) {
-        CodeValue rhs = b.input(0);
-        if (rhs instanceof Register r) {
-          mustBeCountedBuilder.set(registerToTri(r));
-        }
+      if (mustBeCountedBuilder.clear(tri) && rhsTri >= 0) {
+        mustBeCountedBuilder.set(rhsTri);
       }
     }
 
@@ -1033,14 +1037,13 @@ public class RcCodeBuilder extends CodeBuilder {
       assert extra.nextDependencies == extra.initialDependencies;
       CodeValue rhs = b.input(0);
       int tri = registerToTri(lhs);
-      if (extra.countedAfter.test(tri)) {
-        // We've got something like `x = op(x)` where x was counted and op is not @RC.In; after
-        // evaluating `op(x)` but before overwriting x we need a call to `dropRef(x)`
-        b.setInput(0, PUSH_AND_DROP_REF.result(rhs, register(CodeGen.TSTATE_REGISTER_INDEX), lhs));
-      }
+      // If the lhs was already counted that must be because the rhs has a non-trivial dependency on
+      // it, which we'll handle below.
+      assert !extra.countedAfter.test(tri) || rhs instanceof Op.Result;
       // We will set nextDependencies[lhs] to newDeps
       Bits newDeps;
       if (rhs instanceof Const) {
+        assert !extra.countedAfter.test(tri);
         newDeps = Bits.EMPTY;
       } else if (rhs instanceof Register r) {
         int rhsTri = registerToTri(r);
@@ -1087,6 +1090,20 @@ public class RcCodeBuilder extends CodeBuilder {
           scratchBits.clearAll();
           getDependencies(extra, opResult, scratchBits);
           newDeps = scratchBits.build();
+        }
+        if (extra.countedAfter.test(tri)) {
+          // We've got something like `x = op(y)` where y was dependent on x (or was x and was
+          // counted) and op is not @RC.In; after evaluating `op(x)` but before overwriting x we
+          // need to
+          // * addRef the result of `op()` if it isn't @RC.Out, and then
+          // * call `dropRef(x)`
+          Op op = PUSH_AND_DROP_REF;
+          if (newDeps != null) {
+            op = PUSH_ADD_REF_AND_DROP_REF;
+            newDeps = null;
+          }
+          rhs = op.result(rhs, register(CodeGen.TSTATE_REGISTER_INDEX), lhs);
+          b.setInput(0, rhs);
         }
       }
       if (newDeps == null) {
@@ -1584,19 +1601,23 @@ public class RcCodeBuilder extends CodeBuilder {
   }
 
   /// A custom [OpEmit] used to implement [#PUSH_AND_DROP_REF].
-  private static final OpEmit PUSH_AND_DROP_EMITTER =
-      new OpEmit() {
-        @Override
-        public void emit(Emitter emitter, Result result) {
-          throw new AssertionError();
-        }
+  private static OpEmit pushAndDropEmitter(boolean addRef) {
+    return new OpEmit() {
+      @Override
+      public void emit(Emitter emitter, Result result) {
+        throw new AssertionError();
+      }
 
-        @Override
-        public void emit(Emitter emitter, Result result, Class<?> type) {
-          result.pushArg(emitter, 0, type);
-          TState.DROP_REFERENCE_OP.emit(emitter, result.args.get(1), result.args.get(2));
+      @Override
+      public void emit(Emitter emitter, Result result, Class<?> type) {
+        result.pushArg(emitter, 0, type);
+        if (addRef) {
+          emitAddRefTopOfStack(emitter);
         }
-      };
+        TState.DROP_REFERENCE_OP.emit(emitter, result.args.get(1), result.args.get(2));
+      }
+    };
+  }
 
   /// A three-argument Op (result, tstate, toDrop) that pushes `result` on the stack, calls
   /// `tstate.dropReference(toDrop)`, and then returns `result`; used to ensure that computation
@@ -1604,7 +1625,18 @@ public class RcCodeBuilder extends CodeBuilder {
   private static final Op PUSH_AND_DROP_REF =
       Op.simple(
               "pushAndDropRef",
-              PUSH_AND_DROP_EMITTER,
+              pushAndDropEmitter(false),
+              Object.class,
+              Object.class,
+              TState.class,
+              Object.class)
+          .build();
+
+  /// Like [#PUSH_AND_DROP_REF], except that it calls addRef on the result before calling dropRef.
+  private static final Op PUSH_ADD_REF_AND_DROP_REF =
+      Op.simple(
+              "pushAddRefAndDropRef",
+              pushAndDropEmitter(true),
               Object.class,
               Object.class,
               TState.class,

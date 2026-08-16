@@ -20,6 +20,7 @@ import com.google.errorprone.annotations.Keep;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.VarHandle;
 import java.util.function.IntFunction;
+import java.util.stream.IntStream;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
@@ -613,5 +614,30 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
   /// Returns `"*"` (for RecordLayouts) or `"*[]"` (for VArrayLayouts).
   private String toStringPrefix() {
     return (this instanceof RecordLayout) ? "*" : "*[]";
+  }
+
+  /// Layout templates should never contain ToBeSet; used only for assertions.
+  static boolean containsToBeSet(Template template) {
+    return switch (template) {
+      case Template.Constant c -> containsToBeSet(c.value);
+      case Template.RefVar rv -> false;
+      case Template.NumVar nv -> false;
+      case Template.Empty e -> false;
+      case Template.Compound c ->
+          IntStream.range(0, c.baseType.size()).anyMatch(i -> containsToBeSet(c.element(i)));
+      case Template.Union u ->
+          (u.tag != null)
+              && IntStream.range(0, u.numChoices()).anyMatch(i -> containsToBeSet(u.choice(i)));
+      default -> throw new AssertionError();
+    };
+  }
+
+  private static boolean containsToBeSet(Value v) {
+    if (v == Core.TO_BE_SET) {
+      return true;
+    }
+    BaseType baseType = v.baseType();
+    return baseType.isCompositional()
+        && IntStream.range(0, baseType.size()).anyMatch(i -> containsToBeSet(v.element(i)));
   }
 }

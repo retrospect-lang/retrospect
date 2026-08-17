@@ -92,13 +92,24 @@ class RThread extends RefCounted {
 
   void setSuspended(TState tstate, @RC.In TStack stack) {
     assert suspended == null;
-    Value topOfStack = Value.addRef(stack.first());
-    // After storing stack we no longer own its reference count, which is why we needed to
-    // increment the refCount on topOfStack first.
+    Value topOfStack = stack.first();
+    BaseType.BlockingEntryType blockingType;
+    if (topOfStack.baseType() instanceof BaseType.BlockingEntryType bet) {
+      blockingType = bet;
+      // After storing stack we no longer own its reference count, so increment this first.
+      RefCounted.addRef(topOfStack);
+    } else {
+      // This thread escaped, so we can resume it immediately.
+      blockingType = null;
+      topOfStack = null;
+    }
     SUSPENDED.setRelease(this, stack);
-    BaseType.BlockingEntryType blockingType = (BaseType.BlockingEntryType) topOfStack.baseType();
-    blockingType.suspended(tstate, topOfStack, this);
-    tstate.dropValue(topOfStack);
+    if (blockingType != null) {
+      blockingType.suspended(tstate, topOfStack, this);
+      tstate.dropValue(topOfStack);
+    } else {
+      resumeAsync(tstate.tracker(), null);
+    }
   }
 
   /// Returns the suspended stack and atomically sets it to null.
@@ -106,28 +117,32 @@ class RThread extends RefCounted {
     return (TStack) SUSPENDED.getAndSetAcquire(this, null);
   }
 
-  /// Resumes an RThread that was previously passed to [BaseType.BlockingEntryType#suspended] on a
-  /// separate Java thread. If `value` is an error the RThread's stack will unwind with that error;
-  /// otherwise the blocking entry will be resumed with `value` as its result.
+  /// Resumes an RThread that was previously suspended, using a separate Java thread. If it was
+  /// suspended due to a blocking operation, `value` should be either an error (and the RThread's
+  /// stack will unwind with that error) or the result of the blocking operation. If the RThread was
+  /// suspended due to an escape `value` should be null.
   void resumeAsync(ResourceTracker tracker, @RC.In Value value) {
-    ForkJoinPool.commonPool()
-        .execute(
-            () ->
-                run(
-                    tracker,
-                    tstate -> {
-                      TStack suspended = takeSuspended();
-                      if (suspended == null) {
-                        assert isCancelled();
-                        tstate.dropValue(value);
-                      } else if (value.baseType() instanceof Err) {
-                        tstate.setStackRest(suspended);
-                        tstate.pushUnwind(value);
-                      } else {
-                        tstate.setResult(value);
-                        tstate.resumeStack(suspended, TStack.BASE);
-                      }
-                    }));
+    ForkJoinPool.commonPool().execute(() -> run(tracker, tstate -> resumeSync(tstate, value)));
+  }
+
+  private void resumeSync(TState tstate, @RC.In Value value) {
+    TStack suspended = takeSuspended();
+    if (suspended == null) {
+      assert isCancelled();
+      tstate.dropValue(value);
+      return;
+    }
+    assert (value != null) == (suspended.first().baseType() instanceof BaseType.BlockingEntryType);
+    if (value != null) {
+      if (value.baseType() instanceof Err) {
+        tstate.setStackRest(suspended);
+        tstate.pushUnwind(value);
+        return;
+      } else {
+        tstate.setResult(value);
+      }
+    }
+    tstate.resumeStack(suspended, TStack.BASE);
   }
 
   /// Executes `runner` on the current Java thread; when it returns one of these should be true:

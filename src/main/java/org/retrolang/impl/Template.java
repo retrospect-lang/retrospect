@@ -405,7 +405,7 @@ public sealed interface Template {
       }
       // We've got two fixed-length arrays of different lengths; make a new VArrayLayout that can
       // hold any of their elements
-      return TemplateBuilder.newVarray(EMPTY.addElements(value).addElements(v));
+      return EMPTY.addElements(value).addElements(v).newVarray().asRefVar;
     }
 
     @Override
@@ -415,7 +415,7 @@ public sealed interface Template {
 
     @Override
     Template build(VarAllocator allocator) {
-      return this;
+      return (value == Core.TO_BE_SET && allocator.dropToBeSetFromUnions()) ? Template.EMPTY : this;
     }
 
     @Override

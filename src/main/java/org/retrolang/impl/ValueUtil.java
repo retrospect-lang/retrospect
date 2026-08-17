@@ -670,7 +670,7 @@ public class ValueUtil {
       preChecked = true;
     }
     Value keepPrefix = atEnd ? size : NumValue.ZERO;
-    array = ValueUtil.removeRange(tstate, array, keepPrefix, NumValue.ZERO, numAdded, resultLayout);
+    array = removeRange(tstate, array, keepPrefix, NumValue.ZERO, numAdded, resultLayout);
     CodeGen.EscapeState prevEscape = null;
     if (preChecked) {
       CodeGen codeGen = tstate.codeGen();
@@ -680,7 +680,7 @@ public class ValueUtil {
     for (int i = 0; i < newElements.length; i++) {
       Value pos = NumValue.of(i, Allocator.TRANSIENT);
       if (atEnd) {
-        pos = ValueUtil.addInts(tstate, pos, size);
+        pos = addInts(tstate, pos, size);
       }
       array = replaceElement(tstate, array, pos, 0, newElements[i]);
       if (atEnd) {
@@ -730,7 +730,7 @@ public class ValueUtil {
     // Both are varrays
     Value size2 = numElements(tstate, array2);
     Value size1 = tstate.getArraySizeAndReserveForChange(array1, size2, null);
-    array1 = ValueUtil.removeRange(tstate, array1, size1, NumValue.ZERO, size2, resultLayout);
+    array1 = removeRange(tstate, array1, size1, NumValue.ZERO, size2, resultLayout);
     VArrayLayout layout1 = (VArrayLayout) array1.layout();
     VArrayLayout layout2 = (VArrayLayout) array2.layout();
     if (layout2.template.equals(layout1.template)) {

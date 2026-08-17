@@ -47,7 +47,7 @@ public enum NumEncoding {
     this.nBytesLog2 = Integer.numberOfTrailingZeros(nBytes);
   }
 
-  public boolean isUint8(int i) {
+  public static boolean isUint8(int i) {
     return i >= 0 && i <= 255;
   }
 

@@ -244,7 +244,8 @@ public class RecordLayout extends FrameLayout {
   /// Returns a CodeValue that calls [#alloc] on this RecordLayout.
   CodeValue emitAlloc(CodeBuilder cb) {
     // The size argument is ignored, so we just pass zero.
-    return ALLOC_OP.result(CodeValue.of(this), CodeGen.tstateRegister(cb), CodeValue.ZERO);
+    return ALLOC_OP.resultWithInfo(
+        notSharedInfo, CodeValue.of(this), CodeGen.tstateRegister(cb), CodeValue.ZERO);
   }
 
   @Override

@@ -202,7 +202,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
   ///
   /// Requires that `value.baseType().sortOrder == this.baseType().sortOrder`.
   @RC.Out
-  Frame cast(TState tstate, Value value) {
+  public Frame cast(TState tstate, Value value) {
     assert value.baseType().sortOrder == baseType().sortOrder;
     if (value instanceof Frame f) {
       FrameLayout fLayout = f.layout();
@@ -329,11 +329,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
     assert numElements > 0;
     FrameLayout layout = initialLayout;
     if (initialLayout == null) {
-      TemplateBuilder element =
-          (initialValue == Core.TO_BE_SET)
-              ? Template.EMPTY
-              : TemplateBuilder.newBuilder(initialValue);
-      layout = VArrayLayout.newFromBuilder(tstate.scope(), element);
+      layout = TemplateBuilder.newBuilder(initialValue).newVarray(tstate);
     } else if (initialLayout instanceof RecordLayout rLayout
         && rLayout.template.baseType.size() != numElements) {
       // initialLayout is a RecordLayout of the wrong length
@@ -478,7 +474,7 @@ public abstract class FrameLayout extends Frame.LayoutOrReplacement implements P
               .addElements(array, 0, keepPrefix)
               .addElements(array, keepPrefix + removeSize, size);
       if (resultLayout == null) {
-        layout = VArrayLayout.newFromBuilder(tstate.scope(), element);
+        layout = element.newVarray(tstate);
       } else {
         // If we make a new layout it will just be merged with this RecordLayout anyway, so we might
         // as well evolve the RecordLayout

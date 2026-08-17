@@ -78,7 +78,7 @@ public abstract class TemplateBuilder {
 
   /// Returns a TemplateBuilder that includes all values included by this TemplateBuilder as well as
   /// the given value. The result may or may not be identical to this.
-  final TemplateBuilder add(Value v) {
+  public final TemplateBuilder add(Value v) {
     if (this == Template.EMPTY
         || this instanceof UnionBase
         || v.baseType().sortOrder == baseType().sortOrder) {
@@ -89,17 +89,27 @@ public abstract class TemplateBuilder {
   }
 
   /// Adds each element of the given array value to this TemplateBuilder.
-  final TemplateBuilder addElements(Value v) {
+  public final TemplateBuilder addElements(Value v) {
     return addElements(v, 0, v.numElements());
   }
 
   /// Adds the specified elements of the given value to this TemplateBuilder.
-  final TemplateBuilder addElements(Value v, int start, int end) {
+  public final TemplateBuilder addElements(Value v, int start, int end) {
     TemplateBuilder result = this;
     for (int i = start; i < end; i++) {
       result = result.add(v.peekElement(i));
     }
     return result;
+  }
+
+  /// Creates a new VArrayLayout with element template built from this TemplateBuilder.
+  public VArrayLayout newVarray(TState tstate) {
+    return VArrayLayout.newFromBuilder(tstate.scope(), this);
+  }
+
+  /// Returns the same result as [#newVarray(TState)] when the TState isn't available.
+  VArrayLayout newVarray() {
+    return newVarray(TState.get());
   }
 
   /// Returns a TemplateBuilder that includes all values included by this TemplateBuilder or the
@@ -129,10 +139,10 @@ public abstract class TemplateBuilder {
   }
 
   /// Returns a Value equal to v and suitable for storing in storage described by this
-  /// TemplateBuilder (e.g. this is a RefVar with a FrameLayout, the result will be a Frame with
+  /// TemplateBuilder (e.g. if this is a RefVar with a FrameLayout, the result will be a Frame with
   /// that layout). If the given value cannot be cast to this TemplateBuilder, returns null.
   ///
-  /// The given value may be have been returned by an [RC.Transient] method; this method will call
+  /// The given value may have been returned by an [RC.Transient] method; this method will call
   /// [Value#makeStorable] before returning it.
   @RC.Out
   final @Nullable Value cast(TState tstate, Value v) {
@@ -421,11 +431,6 @@ public abstract class TemplateBuilder {
     return new CompoundBuilder(baseType, elements);
   }
 
-  /// Creates a new VArrayLayout with the given element layout, and returns a RefVar for it.
-  static Template.RefVar newVarray(TemplateBuilder element) {
-    return VArrayLayout.newFromBuilder(TState.get().scope(), element).asRefVar;
-  }
-
   /// A shared base class for (immutable) Compound and (mutable) CompoundBuilder.
   abstract static class CompoundBase extends TemplateBuilder {
     final BaseType baseType;
@@ -516,7 +521,7 @@ public abstract class TemplateBuilder {
       if (vBaseType == baseType) {
         return withElements(i -> elementBuilder(i).add(v.peekElement(i)));
       }
-      return newVarray(mergeElementsInto(Template.EMPTY).addElements(v));
+      return mergeElementsInto(Template.EMPTY).addElements(v).newVarray().asRefVar;
     }
 
     @Override
@@ -528,7 +533,10 @@ public abstract class TemplateBuilder {
       if (otherCompound.baseType == baseType) {
         return withElements(i -> elementBuilder(i).merge(otherCompound.elementBuilder(i)));
       }
-      return newVarray(otherCompound.mergeElementsInto(mergeElementsInto(Template.EMPTY)));
+      return otherCompound
+          .mergeElementsInto(mergeElementsInto(Template.EMPTY))
+          .newVarray()
+          .asRefVar;
     }
 
     @Override
@@ -623,7 +631,7 @@ public abstract class TemplateBuilder {
       }
       assert totalWeight() >= targetWeight;
       if (preferVarray()) {
-        return newVarray(mergeElementsInto(Template.EMPTY));
+        return mergeElementsInto(Template.EMPTY).newVarray().asRefVar;
       } else {
         return RecordLayout.newFromBuilder(TState.get().tracker().scope, this).asRefVar;
       }

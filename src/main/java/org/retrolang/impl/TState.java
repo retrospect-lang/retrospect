@@ -949,16 +949,9 @@ public final class TState extends MemoryHelper {
       stackHead = null;
       stackRest = null;
       resumeStack(head, rest);
-      // After that returns, see what state the resumed execution left the stack in.
-      if (stackRest == null && !rest.isNotShared()) {
-        // It didn't unwind, but we still need stack entries from our caller for traces that were
-        // done before the escape.
-        stackRest = rest;
-      } else {
-        // The current stack state is fine.
-        assert stackRest == null || stackRest == rest;
-        dropReference(rest);
-      }
+      // Restore stackRest
+      dropReference(stackRest);
+      stackRest = rest;
     }
     // We've successfully completed the call
     if (escaped && codeGenDebugging != null) {
@@ -1352,6 +1345,7 @@ public final class TState extends MemoryHelper {
   void resumeStack(@RC.In TStack stack, TStack base) {
     cgParent = CodeGenParent.INVALID;
     for (; ; ) {
+      assert stackHead == null && stackRest == null;
       // Pop the top entry off the stack, saving its rest as the TState's stackRest and the
       // other fields in local variables.
       Value first = Value.addRef(stack.first());

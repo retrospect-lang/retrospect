@@ -1,13 +1,18 @@
 package org.retrolang.impl.core;
 
+import static org.retrolang.impl.Value.addRef;
+
 import com.google.common.collect.ImmutableList;
 import com.google.common.flogger.FluentLogger;
 import dev.hardwood.HardwoodContext;
 import dev.hardwood.InputFile;
 import dev.hardwood.metadata.LogicalType;
+import dev.hardwood.metadata.PhysicalType;
 import dev.hardwood.metadata.RepetitionType;
+import dev.hardwood.metadata.SchemaElement;
 import dev.hardwood.reader.ColumnReader;
 import dev.hardwood.reader.ColumnReaders;
+import dev.hardwood.reader.FilterPredicate;
 import dev.hardwood.reader.ParquetFileReader;
 import dev.hardwood.reader.Validity;
 import dev.hardwood.schema.ColumnProjection;
@@ -19,13 +24,15 @@ import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.IntStream;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
 import org.retrolang.code.Register;
@@ -38,8 +45,12 @@ import org.retrolang.impl.Condition;
 import org.retrolang.impl.Core;
 import org.retrolang.impl.Err;
 import org.retrolang.impl.FutureValue;
+import org.retrolang.impl.LoopAnalyzer;
+import org.retrolang.impl.LoopAnalyzer.Scenario;
+import org.retrolang.impl.LoopAnalyzer.Symbol;
 import org.retrolang.impl.MemoryHelper;
 import org.retrolang.impl.MethodMemo;
+import org.retrolang.impl.NumEncoding;
 import org.retrolang.impl.NumValue;
 import org.retrolang.impl.RC;
 import org.retrolang.impl.RValue;
@@ -49,6 +60,7 @@ import org.retrolang.impl.RefVisitor;
 import org.retrolang.impl.ResourceTracker;
 import org.retrolang.impl.Scope;
 import org.retrolang.impl.SetMemoExtension;
+import org.retrolang.impl.Singleton;
 import org.retrolang.impl.StringValue;
 import org.retrolang.impl.StructType;
 import org.retrolang.impl.TState;
@@ -56,9 +68,11 @@ import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
 import org.retrolang.util.ArrayUtil;
+import org.retrolang.util.Bits;
 import org.retrolang.util.Canonical;
 import org.retrolang.util.Pair;
 import org.retrolang.util.SizeOf;
+import org.retrolang.util.StringUtil;
 
 /// Types and methods for reading [Parquet](https://parquet.apache.org) files as Retrospect
 /// collections.
@@ -73,6 +87,24 @@ public class ParquetCore {
   /// field of the struct corresponds to a column.
   @Core.Public
   static final VmFunctionBuilder pqCollection = VmFunctionBuilder.create("pqCollection", 1);
+
+  /// Returns a synthetic collection to enable testing without data files.
+  ///
+  /// The collection's schema contains these elements:
+  /// - `required int32 i0`, `optional int32 i1`, `repeated int32 i2`
+  /// - `required int64 j0`, `optional int64 j1`
+  /// - `required float f0`, `optional float f1`
+  /// - `required double d0`, `optional double d1`
+  /// - `required boolean b0`, `optional boolean b1`
+  /// - `required string s0`, `optional string s1`
+  ///
+  /// ... as well as two nested groups (`g0` (required) and `g1` (optional)) that each contain the
+  /// same 13 elements.
+  ///
+  /// The test collection currently contains no rows (it is used only for testing the loop analysis
+  /// logic).
+  @Core.Public
+  static final VmFunctionBuilder pqTestCollection = VmFunctionBuilder.create("pqTestCollection", 0);
 
   /// A collection defined by the contents of one or more Parquet files.
   @Core.Private
@@ -112,6 +144,11 @@ public class ParquetCore {
   /// creates a new Batch.
   @Core.Private
   static final BaseType.Named ITERATOR = Core.newBaseType("PQIterator", 3, LoopCore.ITERATOR);
+
+  /// `singleton NotRead`
+  ///
+  /// Used as a filler value for struct elements that we have determined need not be read.
+  @Core.Private public static final Singleton NOT_READ = Core.newSingleton("NotRead");
 
   @Core.Method("pqCollection(String)")
   static Value pqCollection(TState tstate, MethodMemo.Extended mMemo, Value fileNames)
@@ -221,6 +258,12 @@ public class ParquetCore {
     return paths.stream().map(InputFile::of).collect(ImmutableList.toImmutableList());
   }
 
+  @Core.Method("pqTestCollection()")
+  static Value pqTestCollection(TState tstate) {
+    Element schema = new SchemaBuilder(tstate.scope(), TestSchemaBuilder.TEST_SCHEMA).build();
+    return new PQCollection(tstate, new StringValue(tstate, "test!"), null, null, schema);
+  }
+
   @Core.Method("iterator(PQCollection, EnumerationKind, Loop, _)")
   static void iteratorPQCollection(
       TState tstate,
@@ -244,14 +287,108 @@ public class ParquetCore {
   @RC.Out
   public static FutureValue startRead(
       TState tstate, PQCollection pqc, Value loop, Value initialState) {
-    AtomicInteger next = new AtomicInteger(0);
-    Element row = pqc.schema.assignDataSlots(next);
-    ColumnReaders readers = pqc.reader.columnReaders(ColumnProjection.all());
-    pqc.addRef();
-    return newFuture(tstate.tracker(), pqc, readers, row, next.getPlain());
+    return new ReaderBuilder(pqc).build(tstate, loop, initialState);
   }
 
-  private static final Value EMPTY_FUTURE =
+  private static final BaseType.StackEntryType TRACE_NEW_READER =
+      new BaseType.SimpleStackEntryType("readPQ", "fileNames", "select", "filter", "limit");
+
+  /// Writes a trace record on each call to [#startRead], so that we can verify filters,
+  /// projections, and limits are being propagated to hardwood as expected.
+  private static void trace(
+      TState tstate,
+      Value fileNames,
+      ColumnProjection projection,
+      FilterPredicate filterPredicate,
+      Integer limitInt) {
+    // ColumnProjection and FilterPredicate are not Retrospect values, so we just convert them to
+    // StringValues (or None) for the trace entry.
+    Value select =
+        projection.projectsAll()
+            ? Core.NONE
+            : new StringValue(tstate, String.join(", ", projection.getProjectedColumnNames()));
+    Value filter;
+    if (filterPredicate == null) {
+      filter = Core.NONE;
+    } else {
+      StringBuilder sb = new StringBuilder();
+      append(filterPredicate, sb);
+      filter = new StringValue(tstate, sb.toString());
+    }
+    Value limit = (limitInt == null) ? Core.NONE : NumValue.of(limitInt, tstate);
+    Value trace = tstate.compound(TRACE_NEW_READER, addRef(fileNames), select, filter, limit);
+    tstate.trace(trace);
+  }
+
+  /// Converts a FilterPredicate to a readable string, appending the results to `output`.
+  private static void append(FilterPredicate filter, StringBuilder output) {
+    switch (filter) {
+      case FilterPredicate.And and -> appendList(and.filters(), " and ", output);
+      case FilterPredicate.Or or -> appendList(or.filters(), " or ", output);
+      case FilterPredicate.IsNullPredicate p -> append(p.column(), "isNull", output);
+      case FilterPredicate.IsNotNullPredicate p -> append(p.column(), "isNotNull", output);
+      case FilterPredicate.BooleanColumnPredicate p -> {
+        if (p.op() == FilterPredicate.Operator.EQ && p.value()) {
+          append(p.column(), "isTrue", output);
+        } else if (p.op() == FilterPredicate.Operator.NOT_EQ && p.value()) {
+          append(p.column(), "isFalse", output);
+        } else {
+          // I don't believe that we'll ever get here
+          append("", p.column(), p.op(), p.value(), output);
+        }
+      }
+      case FilterPredicate.IntColumnPredicate p ->
+          append("i", p.column(), p.op(), p.value(), output);
+      case FilterPredicate.LongColumnPredicate p ->
+          append("j", p.column(), p.op(), p.value(), output);
+      case FilterPredicate.FloatColumnPredicate p ->
+          append("f", p.column(), p.op(), p.value(), output);
+      case FilterPredicate.DoubleColumnPredicate p ->
+          append("d", p.column(), p.op(), p.value(), output);
+      case FilterPredicate.BinaryColumnPredicate p -> {
+        String v = new String(p.value(), StandardCharsets.UTF_8);
+        append("", p.column(), p.op(), StringUtil.escape(v), output);
+      }
+      default -> output.append(filter);
+    }
+  }
+
+  /// Appends something like `(col1 isNull)` or `(col2 isTrue)` to `output`.
+  private static void append(String column, String op, StringBuilder output) {
+    output.append("(").append(column).append(" ").append(op).append(")");
+  }
+
+  /// Appends something like `(col1 iEQ 3)` or `(col2 dLT 4.1)` to `output`.
+  private static void append(
+      String prefix, String column, FilterPredicate.Operator op, Object v, StringBuilder output) {
+    output
+        .append("(")
+        .append(column)
+        .append(" ")
+        .append(prefix)
+        .append(op)
+        .append(" ")
+        .append(v)
+        .append(")");
+  }
+
+  /// Appends something like `(... AND ... AND ...)` to `output` (where each `...` is the string
+  /// representation of a FilterPredicate).
+  private static void appendList(List<FilterPredicate> filters, String sep, StringBuilder output) {
+    output.append("(");
+    boolean first = true;
+    for (FilterPredicate filter : filters) {
+      if (first) {
+        first = false;
+      } else {
+        output.append(sep);
+      }
+      append(filter, output);
+    }
+    output.append(")");
+  }
+
+  private static final FutureValue EMPTY_FUTURE =
       FutureValue.newCompleted(Allocator.UNCOUNTED, Core.ABSENT);
   private static final Value EMPTY_ITERATOR =
       ITERATOR.uncountedOf(NumValue.ZERO, Batch.EMPTY, EMPTY_FUTURE);
@@ -373,7 +510,7 @@ public class ParquetCore {
     protected long visitRefs(RefVisitor visitor) {
       visitor.visitRefCounted(fileNames);
       // Close the ParquetFileReader when this value is released.
-      if (MemoryHelper.isReleaser(visitor)) {
+      if (reader != null && MemoryHelper.isReleaser(visitor)) {
         safelyClose(reader);
       }
       return byteSize;
@@ -509,6 +646,425 @@ public class ParquetCore {
     }
   }
 
+  /// Used by [LoopAnalyzer] to represent the result of a call to `next(PQIterator)`, or one of its
+  /// nested elements.
+  record ElementSymbol(Element e, ReaderBuilder builder) implements Symbol {
+    @Override
+    public List<BaseType> baseTypes() {
+      List<BaseType> baseTypes = e.valueBaseTypes();
+      if (e.hasValidity) {
+        ImmutableList.Builder<BaseType> result =
+            ImmutableList.builderWithExpectedSize(baseTypes.size() + 1);
+        result.add(Core.ABSENT.baseType());
+        result.addAll(baseTypes);
+        return result.build();
+      } else {
+        return baseTypes;
+      }
+    }
+
+    @Override
+    public Symbol element(int index, Scenario scenario) {
+      if (e instanceof StructElement struct) {
+        return new ElementSymbol(struct.elements.get(index), builder);
+      } else {
+        return LoopAnalyzer.UNKNOWN;
+      }
+    }
+
+    @Override
+    public void markUsed() {
+      builder.markUsedRecursively(e);
+    }
+
+    @Override
+    public LoopAnalyzer.Split isa(BaseType baseType, Scenario scenario) {
+      int split;
+      if (baseType == Core.ABSENT.baseType()) {
+        assert e.hasValidity;
+        split = builder.splitForIsNull(e);
+      } else {
+        switch (((LeafElement) e).type) {
+          case SimpleLeafType.BOOLEAN -> {
+            split = builder.splitForBoolean(e);
+          }
+          case SimpleLeafType.FLOAT, SimpleLeafType.DOUBLE -> {
+            split = builder.splitForIsNaN(e);
+          }
+          default -> throw new AssertionError();
+        }
+      }
+      return scenario.split(split);
+    }
+
+    @Override
+    public boolean equal(Symbol other, Scenario scenario, LoopAnalyzer analyzer) {
+      if (other instanceof Symbol.ForValue(Value v)) {
+        compare(FilterPredicate.Operator.EQ, v, scenario, analyzer);
+      } else {
+        markUsed();
+        other.markUsed();
+        if (!(other instanceof ElementSymbol)) {
+          scenario = analyzer.mayFail(scenario);
+        }
+        analyzer.resultUnknownBoolean(scenario);
+      }
+      return true;
+    }
+
+    @Override
+    public boolean equal(Value other, Scenario scenario, LoopAnalyzer analyzer) {
+      compare(FilterPredicate.Operator.EQ, other, scenario, analyzer);
+      return true;
+    }
+
+    @Override
+    public boolean lessThan(Symbol other, Scenario scenario, LoopAnalyzer analyzer) {
+      if (other instanceof Symbol.ForValue(Value v)) {
+        compare(FilterPredicate.Operator.LT, v, scenario, analyzer);
+      } else {
+        markUsed();
+        other.markUsed();
+        // Inequality comparisons between two non-optional integral columns would never fail,
+        // but it doesn't seem worth special-casing them.
+        analyzer.resultUnknownBoolean(analyzer.mayFail(scenario));
+      }
+      return true;
+    }
+
+    @Override
+    public boolean greaterThan(Value other, Scenario scenario, LoopAnalyzer analyzer) {
+      compare(FilterPredicate.Operator.GT, other, scenario, analyzer);
+      return true;
+    }
+
+    @Override
+    public boolean at(Value arg, Scenario scenario, LoopAnalyzer analyzer) {
+      if (e instanceof StructElement se) {
+        int i = StructType.keyToIndex(se.structType, arg);
+        if (i >= 0) {
+          if (e.hasValidity) {
+            scenario = analyzer.failOnSplit(scenario, builder.splitForIsNull(e), true);
+            if (scenario == null) {
+              return true;
+            }
+          }
+          Symbol result = new ElementSymbol(se.elements.get(i), builder);
+          analyzer.addResult(result, scenario);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    /// Implements analysis of a call to `equal()` or `lessThan()` with this element as an argument.
+    /// When possible we create an ElementFilter representing the comparison, split on that, and
+    /// return the appropriate result, which may then enable us to propagate the filter to hardwood.
+    private void compare(
+        FilterPredicate.Operator op, Value other, Scenario scenario, LoopAnalyzer analyzer) {
+      assert op != FilterPredicate.Operator.NOT_EQ;
+      /// Equality comparison with a singleton should be handled by [#isa].
+      assert !(op == FilterPredicate.Operator.EQ && other instanceof Singleton);
+      markUsed();
+      ElementFilter filter = e.newFilter(op, other);
+      if (filter == null) {
+        if (op != FilterPredicate.Operator.EQ) {
+          scenario = analyzer.mayFail(scenario);
+        }
+        analyzer.resultUnknownBoolean(scenario);
+        return;
+      }
+      if (e.hasValidity) {
+        LoopAnalyzer.Split split = scenario.split(builder.splitForIsNull(e));
+        if (split.ifTrue() != null) {
+          if (op == FilterPredicate.Operator.EQ) {
+            // EQ should return False if the value is Absent, since `other` can't be.
+            analyzer.addResult(false, split.ifTrue());
+          } else {
+            // For any inequality, comparison with Absent is an error
+            analyzer.fails(split.ifTrue());
+          }
+        }
+        scenario = split.ifFalse();
+        if (scenario == null) {
+          return;
+        }
+      }
+      if (op != FilterPredicate.Operator.EQ
+          && e instanceof LeafElement leaf
+          && leaf.type.isFloatingPoint()) {
+        // Floating point inequality comparisons error if the value is NaN
+        scenario = analyzer.failOnSplit(scenario, builder.splitForIsNaN(e), true);
+        if (scenario == null) {
+          return;
+        }
+      }
+      analyzer.addSplitAsResult(analyzer.newSplit(filter), true, scenario);
+    }
+  }
+
+  /// A ReaderBuilder prepares to read the elements of a PQCollection, constructing a FutureValue
+  /// for the first Batch.
+  private static class ReaderBuilder {
+    /// The collection
+    final PQCollection pqc;
+
+    private LoopAnalyzer analyzer;
+
+    /// Saves the results returned from [LoopAnalyzer#newSplit] for testing an element's validity.
+    /// Initialized to all -1; entries that correspond to non-optional elements are not used.
+    private final short[] splitForNull;
+
+    /// Saves the results returned from [LoopAnalyzer#newSplit] for testing a boolean leaf's value
+    /// or a float/double leaf's NaN-ness. Initialized to all -1; entries that correspond to
+    /// elements other than boolean/float/double leaves are not used.
+    private final short[] splitForLeafCheck;
+
+    /// Records the elements that have been accessed (and so must be included in the projection).
+    Bits.Builder elementUsed = new Bits.Builder();
+
+    ArrayList<String> columnNames = new ArrayList<>();
+
+    /// The next available slot in [Batch#data].
+    int nextSlot;
+
+    ReaderBuilder(PQCollection pqc) {
+      this.pqc = pqc;
+      int maxElementIndex = maxElementIndex(pqc.schema);
+      splitForNull = new short[maxElementIndex];
+      Arrays.fill(splitForNull, (short) -1);
+      splitForLeafCheck = new short[maxElementIndex];
+      Arrays.fill(splitForLeafCheck, (short) -1);
+    }
+
+    /// Returns the largest [Element#index] found in `schema` and its nested Elements.
+    private static int maxElementIndex(Element schema) {
+      int result = -1;
+      for (; ; ) {
+        result = Math.max(result, schema.index);
+        switch (schema) {
+          case LeafElement leaf -> {
+            return result;
+          }
+          case StructElement struct -> {
+            schema = struct.elements.getLast();
+          }
+          case ListElement list -> {
+            schema = list.element;
+          }
+          default -> throw new AssertionError();
+        }
+      }
+    }
+
+    /// Records that the given element has been accessed while running LoopAnalyzer.
+    private void markUsed(Element e) {
+      elementUsed.set(e.index);
+    }
+
+    /// Records that the given element and any nested elements have been accessed while running
+    /// LoopAnalyzer.
+    private void markUsedRecursively(Element e) {
+      markUsed(e);
+      switch (e) {
+        case LeafElement leaf -> {}
+        case StructElement struct -> struct.elements.forEach(this::markUsedRecursively);
+        case ListElement list -> markUsedRecursively(list.element);
+        default -> throw new AssertionError();
+      }
+    }
+
+    /// Prepares to run `loop` with the elements of [#pqc]:
+    /// * Uses LoopAnalyzer to determine the best filter, projection, and limit that can be used.
+    /// * Copies the schema, replacing any columns that were omitted from the projection with
+    ///   NotRead and configuring each of the others with slots in [Batch#data].
+    /// * Creates a hardwood ColumnReaders to start the reading the data, and a future to wrap the
+    ///   data in a Batch when it becomes available.
+    FutureValue build(TState tstate, Value loop, Value initialState) {
+      Symbol rowSymbol = new ElementSymbol(pqc.schema, this);
+      analyzer = new LoopAnalyzer();
+      analyzer.analyze(new Symbol.ForValue(loop), rowSymbol);
+      if (analyzer.allRowsSkipped()) {
+        // This seems likely to be user error, but for now just return an empty collection
+        Value trace =
+            tstate.compound(
+                TRACE_NEW_READER, addRef(pqc.fileNames), Core.NONE, NOT_READ, Core.NONE);
+        tstate.trace(trace);
+        return EMPTY_FUTURE;
+      }
+      FilterPredicate[] filters =
+          analyzer.filters().stream().map(this::filter).toArray(FilterPredicate[]::new);
+      FilterPredicate allFilters =
+          switch (filters.length) {
+            case 0 -> null;
+            case 1 -> filters[0];
+            default -> FilterPredicate.and(filters);
+          };
+      Element row = assignDataSlots(pqc.schema, false);
+      if (columnNames.isEmpty()) {
+        // No columns are referenced (we're probably just counting the rows in a table), but we
+        // still need to load one.
+        row = assignDataSlots(pqc.schema, true);
+      }
+      ColumnProjection projection = ColumnProjection.columns(columnNames.toArray(String[]::new));
+      Integer limit = null;
+      if (analyzer.canUseLimit()) {
+        if (initialState.isArrayOfLength(2).asBoolean()) {
+          int fromState = initialState.elementAsIntOrMinusOne(0);
+          if (fromState > 0) {
+            limit = fromState;
+          }
+        }
+        if (limit == null) {
+          logger.atWarning().log("Unable to extract limit from %s", initialState);
+        }
+      }
+      trace(tstate, pqc.fileNames, projection, allFilters, limit);
+      if (pqc.reader == null) {
+        // TODO: return some rows here!
+        return EMPTY_FUTURE;
+      }
+      ParquetFileReader.ColumnReadersBuilder readersBuilder =
+          pqc.reader.buildColumnReaders(projection);
+      if (allFilters != null) {
+        readersBuilder.filter(allFilters);
+      }
+      // TODO: add limit when https://github.com/hardwood-hq/hardwood/issues/433 is resolved
+      ResourceTracker tracker = tstate.tracker();
+      ColumnReaders readers = readersBuilder.build();
+      pqc.addRef();
+      return newFuture(tracker, pqc, readers, row, nextSlot);
+    }
+
+    /// Creates a copy of `element`, assigning [Element#index] values that correspond to data slots.
+    /// Adds all used column names to [#columnNames].
+    ///
+    /// `addUnusedColumnHack` is a clumsy workaround for the (expected to be rare) situation where
+    /// we need to be able to test a struct or list's validity, but don't need to access any of its
+    /// elements. Since the current hardwood API only allows us to access that validity by loading a
+    /// column, we arbitrarily mark one of its contained columns as used.
+    ///
+    /// TODO: file a hardwood bug to get a better answer
+    private Element assignDataSlots(Element element, boolean addUnusedColumnHack) {
+      boolean isUsed = addUnusedColumnHack || elementUsed.test(element.index);
+      // For structs and lists, this lets us check whether any nested columns are being used.
+      int before = columnNames.size();
+      switch (element) {
+        case LeafElement leaf -> {
+          if (isUsed) {
+            columnNames.add(leaf.path);
+            int dataPos = nextSlot + (element.hasValidity ? 1 : 0);
+            nextSlot = dataPos + leaf.type.numDataEntries();
+            return leaf.withIndex(dataPos);
+          } else {
+            return NOT_READ_ELEMENT;
+          }
+        }
+        case StructElement struct -> {
+          Element[] newElements = new Element[struct.elements.size()];
+          for (int i = 0; i < newElements.length; i++) {
+            // If we're trying again with the addUnusedColumnHack, we only need to do that on
+            // one of our elements.
+            newElements[i] =
+                assignDataSlots(struct.elements.get(i), addUnusedColumnHack && (i == 0));
+          }
+          if (columnNames.size() == before) {
+            // None of our nested columns were marked as used.
+            assert !addUnusedColumnHack
+                && Arrays.stream(newElements).allMatch(e -> e == NOT_READ_ELEMENT);
+            if (!isUsed) {
+              // We weren't either, so we can drop this whole tree.
+              return NOT_READ_ELEMENT;
+            } else if (struct.hasValidity) {
+              // In order to get our validity data we have to go back and force some column to be
+              // loaded.
+              newElements[0] = assignDataSlots(struct.elements.get(0), true);
+            }
+          }
+          int dataPos = -1;
+          if (isUsed && struct.hasValidity) {
+            // Note that we set our dataPos to 1 more than the slot we actually use, since validity
+            // slots are always one less than the dataPos.
+            dataPos = ++nextSlot;
+          }
+          return struct.withIndex(dataPos, ImmutableList.copyOf(newElements));
+        }
+        case ListElement list -> {
+          Element newElement = assignDataSlots(list.element, addUnusedColumnHack);
+          if (columnNames.size() == before) {
+            // None of our nested columns were marked as used.
+            assert !addUnusedColumnHack && newElement == NOT_READ_ELEMENT;
+            if (!isUsed) {
+              // We weren't either, so we can drop this whole tree.
+              return NOT_READ_ELEMENT;
+            } else {
+              // In order to get our validity data we have to go back and force some column to be
+              // loaded.
+              newElement = assignDataSlots(list.element, true);
+            }
+          }
+          int dataPos = nextSlot + (list.hasValidity ? 1 : 0);
+          nextSlot = dataPos + 1;
+          return list.withIndex(dataPos, newElement);
+        }
+        default -> throw new AssertionError();
+      }
+    }
+
+    /// Returns the result of [LoopAnalyzer#newSplit] for testing if `e` is null. The result is
+    /// cached so that multiple calls for the same element will return the same split.
+    int splitForIsNull(Element e) {
+      assert e.hasValidity;
+      return getSplit(e, ElementFilter::isNull, splitForNull);
+    }
+
+    /// Returns the result of [LoopAnalyzer#newSplit] for testing the value of a boolean leaf. The
+    /// result is cached so that multiple calls for the same element will return the same split.
+    int splitForBoolean(Element e) {
+      assert e instanceof LeafElement leaf && leaf.type == SimpleLeafType.BOOLEAN;
+      return getSplit(e, ElementFilter::booleanIsTrue, splitForLeafCheck);
+    }
+
+    /// Returns the result of [LoopAnalyzer#newSplit] for testing whether a float or double leaf is
+    /// NaN. The result is cached so that multiple calls for the same element will return the same
+    /// split.
+    int splitForIsNaN(Element e) {
+      assert e instanceof LeafElement leaf && leaf.type.isFloatingPoint();
+      return getSplit(e, ElementFilter::isNaN, splitForLeafCheck);
+    }
+
+    private int getSplit(Element e, Function<Element, ElementFilter> createFilter, short[] cache) {
+      int result = cache[e.index];
+      if (result < 0) {
+        markUsed(e);
+        result = analyzer.newSplit(createFilter.apply(e));
+        cache[e.index] = (short) result;
+      }
+      return result;
+    }
+
+    /// Returns a FilterPredicate representing the splits included in `bits`. Because `bits`
+    /// represents a set of splits that led to skipping this row, we want to negate them to get a
+    /// hardwood filter.
+    private FilterPredicate filter(Bits bits) {
+      if (bits.count() == 1) {
+        return negatedFilter(bits.min());
+      }
+      // All of the splits had to be true for the row to be skipped, so we need to keep rows where
+      // any of the splits is false.
+      FilterPredicate[] disjuncts =
+          bits.stream().mapToObj(this::negatedFilter).toArray(FilterPredicate[]::new);
+      return FilterPredicate.or(disjuncts);
+    }
+
+    /// Returns a FilterPredicate corresponding to the split identified by `i`.
+    private FilterPredicate negatedFilter(int i) {
+      ElementFilter filter = (ElementFilter) analyzer.splitId(Bits.propFromBit(i));
+      // Note the negation here.
+      return filter.asFilterPredicate(!Bits.propIsPositive(i));
+    }
+  }
+
   /// A SchemaBuilder translates hardwood's SchemaNodes into the corresponding Elements. The
   /// SchemaBuilder is not reusable.
   private static class SchemaBuilder {
@@ -628,11 +1184,14 @@ public class ParquetCore {
       this.hasValidity = hasValidity;
     }
 
-    // Creates a copy of this element, assigning [#index] values corresponding to data slots
-    // beginning at `next`.
-    abstract Element assignDataSlots(AtomicInteger next);
+    /// Returns all possible baseTypes of values returned [#valueImpl].
+    abstract List<BaseType> valueBaseTypes();
 
-    /// Populates this element's slots in the builder's data array from its ColumnReaders. `depth`
+    ElementFilter newFilter(FilterPredicate.Operator op, Value value) {
+      return null;
+    }
+
+    /// Populates this element's slots in the builder's data array from the ColumnReaders. `depth`
     /// is 0 for the schema root, and is incremented as we descend into lists and optional structs
     /// (non-optional structs don't increment depth; see
     /// https://hardwood.dev/latest/concepts/nested-columns/#layers for details).
@@ -683,6 +1242,40 @@ public class ParquetCore {
     }
   }
 
+  private static final List<BaseType> NOT_READ_BASETYPES = ImmutableList.of(NOT_READ.baseType());
+  private static final Element NOT_READ_ELEMENT =
+      new Element(null, -1, false, 20111103) {
+        @Override
+        List<BaseType> valueBaseTypes() {
+          return NOT_READ_BASETYPES;
+        }
+
+        @Override
+        ColumnReader buildBatch(BatchBuilder builder, int depth) {
+          throw new AssertionError();
+        }
+
+        @Override
+        Value valueImpl(TState tstate, Batch batch, int row) {
+          return NOT_READ;
+        }
+
+        @Override
+        Value valueImpl(CodeGen codeGen, CodeValue batch, CodeValue row) {
+          return NOT_READ;
+        }
+
+        @Override
+        protected boolean slowEquals(Object other) {
+          return false;
+        }
+
+        @Override
+        public String toString() {
+          return "NotRead";
+        }
+      };
+
   /// A LeafElement corresponds to a primitive schema node; its value is a Number, String, or Matrix
   /// depending on its LeafType. (TODO: support more types -- unsigned ints, decimal, float16, date,
   /// time, timestamp, interval, uuid, json, bson, geometry, geography.)
@@ -694,11 +1287,18 @@ public class ParquetCore {
       this.type = type;
     }
 
+    LeafElement withIndex(int newIndex) {
+      return new LeafElement(path, newIndex, hasValidity, type);
+    }
+
     @Override
-    Element assignDataSlots(AtomicInteger next) {
-      int dataPos = next.getPlain() + (hasValidity ? 1 : 0);
-      next.setPlain(dataPos + type.numDataEntries());
-      return new LeafElement(path, dataPos, hasValidity, type);
+    List<BaseType> valueBaseTypes() {
+      return type.baseTypes();
+    }
+
+    @Override
+    ElementFilter newFilter(FilterPredicate.Operator op, Value value) {
+      return type.canCompare(op, value) ? new ElementFilter(this, op, value) : null;
     }
 
     @Override
@@ -755,20 +1355,13 @@ public class ParquetCore {
       this.elements = elements;
     }
 
+    StructElement withIndex(int newIndex, ImmutableList<Element> newElements) {
+      return new StructElement(path, newIndex, hasValidity, structType, newElements);
+    }
+
     @Override
-    Element assignDataSlots(AtomicInteger next) {
-      int dataPos = -1;
-      if (hasValidity) {
-        // Note that we set our dataPos to 1 more than the slot we actually use, since validity
-        // slots are always one less than the dataPos.
-        dataPos = next.getPlain() + 1;
-        next.setPlain(dataPos);
-      }
-      ImmutableList<Element> newElements =
-          elements.stream()
-              .map(e -> e.assignDataSlots(next))
-              .collect(ImmutableList.toImmutableList());
-      return new StructElement(path, dataPos, hasValidity, structType, newElements);
+    List<BaseType> valueBaseTypes() {
+      return ImmutableList.of(structType);
     }
 
     @Override
@@ -777,6 +1370,9 @@ public class ParquetCore {
       int childDepth = depth + (hasValidity ? 1 : 0);
       ColumnReader firstReader = null;
       for (Element e : elements) {
+        if (e == NOT_READ_ELEMENT) {
+          continue;
+        }
         ColumnReader reader = e.buildBatch(builder, childDepth);
         if (firstReader == null) {
           firstReader = reader;
@@ -838,12 +1434,13 @@ public class ParquetCore {
       this.element = element;
     }
 
+    ListElement withIndex(int newIndex, Element newElement) {
+      return new ListElement(path, newIndex, hasValidity, newElement);
+    }
+
     @Override
-    Element assignDataSlots(AtomicInteger next) {
-      int dataPos = next.getPlain() + (hasValidity ? 1 : 0);
-      next.setPlain(dataPos + 1);
-      Element newElement = element.assignDataSlots(next);
-      return new ListElement(path, dataPos, hasValidity, newElement);
+    List<BaseType> valueBaseTypes() {
+      return ImmutableList.of(CollectionCore.TRANSFORMED_MATRIX);
     }
 
     @Override
@@ -898,6 +1495,9 @@ public class ParquetCore {
   }
 
   interface LeafType {
+    /// All possible baseTypes of for leaves of this type.
+    List<BaseType> baseTypes();
+
     /// The number of data slots used by `required` leaves of this type. (`optional` leaves will use
     /// one additional data slot, for their Validity.)
     int numDataEntries();
@@ -911,6 +1511,15 @@ public class ParquetCore {
 
     /// Returns one of this leave's values.
     Value valueImpl(CodeGen codeGen, CodeValue batch, int dataPos, CodeValue row);
+
+    boolean canCompare(FilterPredicate.Operator op, Value v);
+
+    FilterPredicate newFilter(String path, FilterPredicate.Operator op, Value v);
+
+    /// Returns true if this is a floating-point numeric type.
+    default boolean isFloatingPoint() {
+      return this == SimpleLeafType.FLOAT || this == SimpleLeafType.DOUBLE;
+    }
 
     static LeafType forNode(SchemaNode.PrimitiveNode node, FileSchema schema) {
       return switch (node.type()) {
@@ -933,23 +1542,34 @@ public class ParquetCore {
     }
   }
 
+  /// Most LeafTypes need no additional information and so can just be elements of this enum.
   enum SimpleLeafType implements LeafType {
-    BOOLEAN(1, BATCH_GET_BOOLEAN),
-    INT32(1, BATCH_GET_INT),
-    INT64(1, BATCH_GET_LONG),
-    FLOAT(1, BATCH_GET_FLOAT),
-    DOUBLE(1, BATCH_GET_DOUBLE),
-    BYTE_ARRAY(2, null),
-    STRING(2, null);
+    BOOLEAN(ImmutableList.of(Core.TRUE.baseType(), Core.FALSE.baseType()), 1, 1, BATCH_GET_BOOLEAN),
+    INT32(ImmutableList.of(Core.NUMBER), 1, SizeOf.INT, BATCH_GET_INT),
+    INT64(ImmutableList.of(Core.NUMBER), 1, SizeOf.LONG, BATCH_GET_LONG),
+    FLOAT(ImmutableList.of(Core.NONE.baseType(), Core.NUMBER), 1, SizeOf.FLOAT, BATCH_GET_FLOAT),
+    DOUBLE(ImmutableList.of(Core.NONE.baseType(), Core.NUMBER), 1, SizeOf.DOUBLE, BATCH_GET_DOUBLE),
+    BYTE_ARRAY(ImmutableList.of(CollectionCore.TRANSFORMED_MATRIX), 2, 20, null),
+    STRING(ImmutableList.of(Core.STRING), 2, 20, null);
 
+    final ImmutableList<BaseType> baseTypes;
     final int numDataEntries;
-    final String name;
+    final int byteSize;
     final Op batchGetOp;
+    final String name;
 
-    SimpleLeafType(int numDataEntries, Op batchGetOp) {
+    SimpleLeafType(
+        ImmutableList<BaseType> baseTypes, int numDataEntries, int byteSize, Op batchGetOp) {
+      this.baseTypes = baseTypes;
       this.numDataEntries = numDataEntries;
+      this.byteSize = byteSize;
       this.batchGetOp = batchGetOp;
       this.name = name().toLowerCase();
+    }
+
+    @Override
+    public List<BaseType> baseTypes() {
+      return baseTypes;
     }
 
     @Override
@@ -1038,12 +1658,154 @@ public class ParquetCore {
     }
 
     @Override
+    public boolean canCompare(FilterPredicate.Operator op, Value v) {
+      // Equality comparisons with singletons are handled elsewhere.
+      assert op != FilterPredicate.Operator.NOT_EQ;
+      assert !(op == FilterPredicate.Operator.EQ && v instanceof Singleton);
+      return switch (this) {
+        case BOOLEAN -> false;
+        case INT32, INT64, FLOAT, DOUBLE -> (v instanceof NumValue);
+        case STRING -> (v instanceof StringValue);
+        case BYTE_ARRAY -> isByteArray(v);
+      };
+    }
+
+    @Override
+    public FilterPredicate newFilter(String path, FilterPredicate.Operator op, Value v) {
+      return switch (this) {
+        case BOOLEAN -> new FilterPredicate.BooleanColumnPredicate(path, op, v == Core.TRUE);
+        case INT32 -> newIntFilter(path, false, op, v);
+        case INT64 -> newIntFilter(path, true, op, v);
+        case FLOAT -> newFloatFilter(path, op, v);
+        case DOUBLE -> new FilterPredicate.DoubleColumnPredicate(path, op, doubleFilterValue(v));
+        case STRING -> new FilterPredicate.BinaryColumnPredicate(path, op, stringFilterValue(v));
+        case BYTE_ARRAY -> new FilterPredicate.BinaryColumnPredicate(path, op, bytesFilterValue(v));
+      };
+    }
+
+    private static FilterPredicate newIntFilter(
+        String path, boolean isInt64, FilterPredicate.Operator op, Value v) {
+      // This is a little tricky, since converting a double to an int or long may change it.
+      long asLong;
+      if (v instanceof NumValue.I iValue) {
+        asLong = iValue.value;
+      } else {
+        double d = NumValue.asDouble(v);
+        asLong = (long) d;
+        if (d != (isInt64 ? asLong : (int) asLong)) {
+          Boolean fixedResult = null;
+          switch (op) {
+            case EQ -> fixedResult = false;
+            case NOT_EQ -> fixedResult = true;
+            default -> {
+              boolean isLessThan =
+                  (op == FilterPredicate.Operator.LT) || (op == FilterPredicate.Operator.LT_EQ);
+              if (d > (isInt64 ? Long.MAX_VALUE : Integer.MAX_VALUE)) {
+                fixedResult = isLessThan;
+              } else if (d < (isInt64 ? Long.MIN_VALUE : Integer.MIN_VALUE)) {
+                fixedResult = !isLessThan;
+              } else {
+                boolean shouldRoundUp =
+                    (op == FilterPredicate.Operator.LT) || (op == FilterPredicate.Operator.GT_EQ);
+                boolean roundedUp = asLong > d;
+                if (roundedUp != shouldRoundUp) {
+                  asLong = shouldRoundUp ? asLong + 1 : asLong - 1;
+                }
+              }
+            }
+          }
+          if (fixedResult != null) {
+            // Perhaps creating an always-fail filter should be an error, and always-pass filters
+            // should return null and be dropped by our caller?  For now do the easier thing.
+            logger.atWarning().log(
+                "Always-%s %s comparison of %s column %s with %s",
+                fixedResult ? "pass" : "fail", op, (isInt64 ? "long" : "int"), path, d);
+            op = fixedResult ? FilterPredicate.Operator.LT_EQ : FilterPredicate.Operator.GT;
+            asLong = isInt64 ? Long.MAX_VALUE : Integer.MAX_VALUE;
+          }
+        }
+      }
+      return isInt64
+          ? new FilterPredicate.LongColumnPredicate(path, op, asLong)
+          : new FilterPredicate.IntColumnPredicate(path, op, (int) asLong);
+    }
+
+    private static FilterPredicate newFloatFilter(
+        String path, FilterPredicate.Operator op, Value v) {
+      if (v == Core.NONE) {
+        assert op == FilterPredicate.Operator.EQ || op == FilterPredicate.Operator.NOT_EQ;
+        return new FilterPredicate.FloatColumnPredicate(path, op, Float.NaN);
+      }
+      // This is a little tricky, since converting a double to a float may change it.
+      double d = NumValue.asDouble(v);
+      float f = (float) d;
+      if (f != d) {
+        switch (op) {
+          case EQ -> {
+            // No row can pass the Retrospect filter, since no float can equal this double.
+            // It might be worth making this an error, but for now we'll just log it and hoist
+            // the float predicate (and hope it's selective, since we'll just discard whatever
+            // it passes).
+            logger.atWarning().log("Always-fail EQ comparison of float column %s with %s", path, d);
+          }
+          case NOT_EQ -> {
+            // All rows will pass the Retrospect filter.  Hoisting the translated float
+            // predicate would be wrong, since it could exclude some rows that should pass.
+            // The easiest thing to here is create an always-pass filter; hardwood uses
+            // Float.compare(), which makes everything <= NaN.
+            logger.atWarning().log(
+                "Always-pass NOT_EQ comparison of float column %s with %s", path, d);
+            op = FilterPredicate.Operator.LT_EQ;
+            f = Float.NaN;
+          }
+          default -> {
+            boolean shouldRoundUp =
+                (op == FilterPredicate.Operator.LT) || (op == FilterPredicate.Operator.GT_EQ);
+            boolean roundedUp = f > d;
+            if (roundedUp != shouldRoundUp) {
+              f = shouldRoundUp ? Math.nextUp(f) : Math.nextDown(f);
+            }
+          }
+        }
+      }
+      return new FilterPredicate.FloatColumnPredicate(path, op, f);
+    }
+
+    private static double doubleFilterValue(Value v) {
+      return (v == Core.NONE) ? Double.NaN : NumValue.asDouble(v);
+    }
+
+    private static byte[] stringFilterValue(Value v) {
+      return ((StringValue) v).value.getBytes(StandardCharsets.UTF_8);
+    }
+
+    @Override
     public String toString() {
       return name;
     }
   }
 
+  private static boolean isByteArray(Value v) {
+    return v.baseType().isArray()
+        && IntStream.range(0, v.numElements())
+            .allMatch(i -> NumEncoding.isUint8(v.elementAsIntOrMinusOne(i)));
+  }
+
+  private static byte[] bytesFilterValue(Value v) {
+    byte[] result = new byte[v.numElements()];
+    for (int i = 0; i < result.length; i++) {
+      result[i] = (byte) v.elementAsInt(i);
+    }
+    return result;
+  }
+
+  /// Fixed-length byte arrays are currently the only LeafType with additional information.
   record FixedLenLeafType(int byteSize) implements LeafType {
+    @Override
+    public List<BaseType> baseTypes() {
+      return ImmutableList.of(CollectionCore.TRANSFORMED_MATRIX);
+    }
+
     @Override
     public int numDataEntries() {
       return 1;
@@ -1071,8 +1833,66 @@ public class ParquetCore {
     }
 
     @Override
+    public boolean canCompare(FilterPredicate.Operator op, Value v) {
+      if (!isByteArray(v)) {
+        return false;
+      } else if (op == FilterPredicate.Operator.EQ || op == FilterPredicate.Operator.NOT_EQ) {
+        // hardwood considers it an error to try to construct an equality comparison with a byte[]
+        // of the wrong length.  Not hoisting it is fine for a NOT_EQ (since it would always
+        // succeed anyway).  Not hoisting an EQ is a theoretically wasteful (we should instead
+        // hoist some other filter that will always fail), but for now I'm assuming that this will
+        // never happen so it's not worth caring about.
+        return v.numElements() == byteSize;
+      } else {
+        // Any byte[] is OK for an inequality comparison.
+        return true;
+      }
+    }
+
+    @Override
+    public FilterPredicate newFilter(String path, FilterPredicate.Operator op, Value v) {
+      return new FilterPredicate.BinaryColumnPredicate(path, op, bytesFilterValue(v));
+    }
+
+    @Override
     public String toString() {
       return "bytes_" + byteSize;
+    }
+  }
+
+  /// An ElementFilter is passed to [LoopAnalyzer#newSplit] to represent the FilterPredicate we will
+  /// pass to hardwood if we are able to hoist this split.
+  ///
+  /// If `op` and `value` are null, this is a isNull test on `e`; otherwise both are non-null and
+  private record ElementFilter(Element e, FilterPredicate.Operator op, Value value) {
+    private ElementFilter {
+      assert (op == null) == (value == null);
+    }
+
+    static ElementFilter isNull(Element e) {
+      return new ElementFilter(e, null, null);
+    }
+
+    static ElementFilter booleanIsTrue(Element e) {
+      return new ElementFilter(e, FilterPredicate.Operator.EQ, Core.TRUE);
+    }
+
+    static ElementFilter isNaN(Element e) {
+      return new ElementFilter(e, FilterPredicate.Operator.EQ, Core.NONE);
+    }
+
+    /// Returns the corresponding FilterPredicate.
+    FilterPredicate asFilterPredicate(boolean positive) {
+      // A null `op` means this is an isNull (or isNotNull) test.
+      if (op == null) {
+        return positive
+            ? new FilterPredicate.IsNullPredicate(e.path)
+            : new FilterPredicate.IsNotNullPredicate(e.path);
+      }
+      // A non-null `op` means a comparison with a constant.
+      LeafElement leaf = (LeafElement) e;
+      FilterPredicate.Operator op = positive ? this.op : this.op.invert();
+      return leaf.type.newFilter(e.path, op, value);
     }
   }
 
@@ -1106,6 +1926,7 @@ public class ParquetCore {
     final long byteSize;
 
     static final Op ROW = Op.getField(Batch.class, "row", Element.class);
+    static final Op DATA = Op.getField(Batch.class, "data", Object[].class);
     static final Op NUM_ROWS = Op.getField(Batch.class, "numRows", int.class);
 
     Batch(Allocator allocator, Element row, Object[] data, int numRows, long byteSize) {
@@ -1211,6 +2032,8 @@ public class ParquetCore {
           arg);
     }
 
+    /// All of the `newVector()` and `newVectorFromOffsets()` methods end up here, to construct a
+    /// Retrospect value that looks like `start..end | lambda(batch, arg)`.
     @RC.Out
     private static Value newVector(
         TState tstate,
@@ -1325,4 +2148,58 @@ public class ParquetCore {
       RcOp.forRcMethod(Batch.class, "getDouble", int.class, int.class).build();
   private static final Op BATCH_GET_STRING =
       RcOp.forRcMethod(Batch.class, "getString", TState.class, int.class, int.class).build();
+
+  static class TestSchemaBuilder {
+    static final FileSchema TEST_SCHEMA = buildTestSchema();
+
+    /// The only API that I can find for building a FileSchema by hand takes Thrift SchemaElements
+    /// as input.
+    private static FileSchema buildTestSchema() {
+      List<SchemaElement> leaves = new ArrayList<>();
+      leaves.add(primitive("i0", PhysicalType.INT32, RepetitionType.REQUIRED));
+      leaves.add(primitive("i1", PhysicalType.INT32, RepetitionType.OPTIONAL));
+      leaves.add(primitive("i2", PhysicalType.INT32, RepetitionType.REPEATED));
+      leaves.add(primitive("j0", PhysicalType.INT64, RepetitionType.REQUIRED));
+      leaves.add(primitive("j1", PhysicalType.INT64, RepetitionType.OPTIONAL));
+      leaves.add(primitive("f0", PhysicalType.FLOAT, RepetitionType.REQUIRED));
+      leaves.add(primitive("f1", PhysicalType.FLOAT, RepetitionType.OPTIONAL));
+      leaves.add(primitive("d0", PhysicalType.DOUBLE, RepetitionType.REQUIRED));
+      leaves.add(primitive("d1", PhysicalType.DOUBLE, RepetitionType.OPTIONAL));
+      leaves.add(primitive("b0", PhysicalType.BOOLEAN, RepetitionType.REQUIRED));
+      leaves.add(primitive("b1", PhysicalType.BOOLEAN, RepetitionType.OPTIONAL));
+      leaves.add(string("s0", RepetitionType.REQUIRED));
+      leaves.add(string("s1", RepetitionType.OPTIONAL));
+      List<SchemaElement> schema = new ArrayList<>(3 * leaves.size() + 2);
+      schema.add(group("", RepetitionType.REQUIRED, leaves.size() + 2));
+      schema.addAll(leaves);
+      schema.add(group("g0", RepetitionType.REQUIRED, leaves.size()));
+      schema.addAll(leaves);
+      schema.add(group("g1", RepetitionType.OPTIONAL, leaves.size()));
+      schema.addAll(leaves);
+      return FileSchema.fromSchemaElements(schema);
+    }
+
+    private static SchemaElement primitive(
+        String name, PhysicalType type, RepetitionType repetition) {
+      return new SchemaElement(name, type, null, repetition, null, null, null, null, null, null);
+    }
+
+    private static SchemaElement string(String name, RepetitionType repetition) {
+      return new SchemaElement(
+          name,
+          PhysicalType.BYTE_ARRAY,
+          null,
+          repetition,
+          null,
+          null,
+          null,
+          null,
+          null,
+          new LogicalType.StringType());
+    }
+
+    private static SchemaElement group(String name, RepetitionType repetition, int size) {
+      return new SchemaElement(name, null, null, repetition, size, null, null, null, null, null);
+    }
+  }
 }

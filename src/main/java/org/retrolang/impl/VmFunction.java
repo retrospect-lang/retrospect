@@ -104,6 +104,11 @@ public abstract class VmFunction implements Vm.Function {
   /// methods.
   abstract VmMethod findMethod(Object... args) throws MultipleMethodsException;
 
+  /// `args` has a list of possible baseTypes for each of this function's arguments. If a single
+  /// method is applicable whenever the args have any the given baseTypes, returns it; otherwise
+  /// returns null.
+  public abstract VmMethod findMethodForBaseTypes(List<List<BaseType>> args);
+
   /// Executes this function with the given arguments.
   ///
   /// The caller should assume that any call to `doCall()` has indirectly called
@@ -222,6 +227,11 @@ public abstract class VmFunction implements Vm.Function {
     }
 
     @Override
+    public VmMethod findMethodForBaseTypes(List<List<BaseType>> args) {
+      return method;
+    }
+
+    @Override
     public void execute(
         TState tstate, ResultsInfo results, MethodMemo mMemo, @RC.In Object[] args) {
       try {
@@ -325,20 +335,100 @@ public abstract class VmFunction implements Vm.Function {
     ///
     /// If no matching method is found (or the list is null), return `prior`.
     ///
-    /// If one matching method is found and `prior` was null, return the matching method.
+    /// If one matching method is found and `prior` was null or the matching method, return the
+    /// matching method.
     ///
-    /// Otherwise (a matching method is found with a prior, or more than one matching method is
-    /// found) throw a [MultipleMethodsException].
+    /// Otherwise (a matching method is found with a different prior, or more than one matching
+    /// method is found) throw a [MultipleMethodsException].
     private static VmMethod findMethod(
         VmMethod prior, ImmutableList<VmMethod> methods, Object[] args, boolean isDefault)
         throws MultipleMethodsException {
       if (methods != null) {
         for (VmMethod m : methods) {
-          if (m.isDefault == isDefault && m.predicate.test(args).asBoolean()) {
-            if (prior == null) {
-              prior = m;
-            } else if (prior != m) {
+          if (m != prior && m.isDefault == isDefault && m.predicate.test(args).asBoolean()) {
+            if (prior != null) {
               throw new MultipleMethodsException(prior, m);
+            }
+            prior = m;
+          }
+        }
+      }
+      return prior;
+    }
+
+    @Override
+    public VmMethod findMethodForBaseTypes(List<List<BaseType>> args) {
+      // First look for a preferred method; if that fails, look for a default method.
+      for (boolean isDefault = false; ; isDefault = true) {
+        // First check for methods attached to the function.
+        Object result =
+            findMethodForBaseTypes(null, (ImmutableList<VmMethod>) methods, args, isDefault);
+        if (result == UNCERTAIN) {
+          return null;
+        }
+        if (argKeys != null) {
+          // Check for methods attached to an argument type.
+          for (int i = 0; i < argKeys.length; i++) {
+            ArgKey argKey = argKeys[i];
+            if (argKey == null) {
+              continue;
+            }
+            List<BaseType> baseTypes = args.get(i);
+            if (baseTypes == null) {
+              return null;
+            }
+            for (BaseType baseType : baseTypes) {
+              VmType argType = baseType.vmType();
+              result =
+                  findMethodForBaseTypes(
+                      (VmMethod) result, argType.getMethods(argKey), args, isDefault);
+              if (result == UNCERTAIN) {
+                return null;
+              }
+              for (VmType superType : argType.superTypes.asSet) {
+                result =
+                    findMethodForBaseTypes(
+                        (VmMethod) result, superType.getMethods(argKey), args, isDefault);
+                if (result == UNCERTAIN) {
+                  return null;
+                }
+              }
+            }
+          }
+        }
+        if (isDefault || result != null) {
+          return (VmMethod) result;
+        }
+      }
+    }
+
+    /// A flag value returned from [#findMethodForBaseTypes] when there is more than one matching
+    /// method.
+    private static final Object UNCERTAIN = new Object();
+
+    /// Checks each of the methods in the given list, looking for one that (a) has the default flag
+    /// as specified, and (b) is applicable to the given arguments.
+    ///
+    /// If no matching method is found (or the list is null), return `prior`.
+    ///
+    /// If one matching method is found and `prior` was null or the matching method, return the
+    /// matching method.
+    ///
+    /// Otherwise (a matching method is found with a different prior, or more than one matching
+    /// method is found) return [#UNCERTAIN].
+    private static Object findMethodForBaseTypes(
+        VmMethod prior,
+        ImmutableList<VmMethod> methods,
+        List<List<BaseType>> args,
+        boolean isDefault) {
+      if (methods != null) {
+        for (VmMethod m : methods) {
+          if (m != prior && m.isDefault == isDefault) {
+            Boolean b = m.predicate.partialTest(args);
+            if (b == Boolean.TRUE && prior == null) {
+              prior = m;
+            } else if (b != Boolean.FALSE) {
+              return UNCERTAIN;
             }
           }
         }

@@ -17,6 +17,8 @@
 package org.retrolang.impl;
 
 import com.google.common.collect.ImmutableSet;
+import java.util.List;
+import java.util.stream.IntStream;
 import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 
@@ -29,6 +31,12 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
   /// The `args` array must contain a Value for each argument of the associated method; any
   /// additional elements are ignored.
   abstract Condition test(Object[] args);
+
+  /// `args` has a list of possible baseTypes for each of the method arguments. Returns TRUE if this
+  /// MethodPredicate is true whenever its args have any the given baseTypes, FALSE if it is false
+  /// whenever its args have any of the given baseTypes, and null if its truth differs depending on
+  /// which the possible baseTypes is chosen.
+  abstract Boolean partialTest(List<List<BaseType>> args);
 
   /// Tries to find a set of [Simple]s such that
   ///
@@ -45,6 +53,11 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
         @Override
         Condition test(Object[] args) {
           return Condition.TRUE;
+        }
+
+        @Override
+        Boolean partialTest(List<List<BaseType>> args) {
+          return true;
         }
 
         @Override
@@ -79,6 +92,19 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
       // The caller is responsible for ensuring that all args are instances of Value.
       Condition c = ((Value) args[argIndex]).isa(type);
       return positive ? c : c.not();
+    }
+
+    @Override
+    Boolean partialTest(List<List<BaseType>> args) {
+      List<BaseType> arg = args.get(argIndex);
+      if (arg == null) {
+        return null;
+      }
+      boolean result = type.contains(arg.get(0));
+      if (IntStream.range(1, arg.size()).anyMatch(i -> type.contains(arg.get(i)) != result)) {
+        return null;
+      }
+      return positive == result;
     }
 
     @Override
@@ -126,6 +152,19 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
       }
 
       @Override
+      Boolean partialTest(List<List<BaseType>> args) {
+        Boolean t1 = p1.partialTest(args);
+        Boolean t2 = p2.partialTest(args);
+        if (t1 == Boolean.FALSE || t2 == Boolean.FALSE) {
+          return Boolean.FALSE;
+        } else if (t1 == null || t2 == null) {
+          return null;
+        } else {
+          return Boolean.TRUE;
+        }
+      }
+
+      @Override
       ImmutableSet<Simple> asArgRestriction(VmModule module) {
         ImmutableSet<Simple> r1 = p1.asArgRestriction(module);
         ImmutableSet<Simple> r2 = p2.asArgRestriction(module);
@@ -157,6 +196,19 @@ abstract class MethodPredicate implements Vm.MethodPredicate {
       @Override
       Condition test(Object[] args) {
         return p1.test(args).or(() -> p2.test(args));
+      }
+
+      @Override
+      Boolean partialTest(List<List<BaseType>> args) {
+        Boolean t1 = p1.partialTest(args);
+        Boolean t2 = p2.partialTest(args);
+        if (t1 == Boolean.TRUE || t2 == Boolean.TRUE) {
+          return Boolean.TRUE;
+        } else if (t1 == null || t2 == null) {
+          return null;
+        } else {
+          return Boolean.FALSE;
+        }
       }
 
       @Override

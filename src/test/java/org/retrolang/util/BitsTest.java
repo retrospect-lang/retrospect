@@ -419,4 +419,51 @@ public class BitsTest {
     assertEquals(
         "{3, 5, 6, 9, 10}", Bits.fromPredicate(10, i -> Integer.bitCount(i) == 2).toString());
   }
+
+  @Test
+  public void getProp() {
+    assertThat(Bits.forRange(0, 31).getProp(100)).isNull();
+    assertThat(Bits.forRange(11, 12).getProp(4)).isNull();
+    assertThat(Bits.forRange(11, 12).getProp(5)).isFalse();
+    assertThat(Bits.forRange(11, 12).getProp(6)).isTrue();
+    assertThat(Bits.forRange(101, 102).getProp(4000)).isNull();
+    assertThat(Bits.forRange(101, 102).getProp(49)).isNull();
+    assertThat(Bits.forRange(101, 102).getProp(50)).isFalse();
+    assertThat(Bits.forRange(101, 102).getProp(51)).isTrue();
+  }
+
+  @Test
+  public void hasConflict1() {
+    assertThat(Bits.EMPTY.hasConflict()).isFalse();
+    assertThat(Bits.forRange(0, 1).hasConflict()).isTrue();
+    assertThat(Bits.forRange(1, 2).hasConflict()).isFalse();
+    assertThat(Bits.forRange(1, 30).hasConflict()).isTrue();
+    assertThat(Bits.forRange(63, 64).hasConflict()).isFalse();
+    assertThat(Bits.forRange(1000, 1001).hasConflict()).isTrue();
+    assertThat(Bits.fromPredicate(100, i -> (i & 1) == 0).hasConflict()).isFalse();
+  }
+
+  @Test
+  public void hasConflict2() {
+    assertThat(Bits.of(4).hasConflict(Bits.of(3))).isFalse();
+    assertThat(Bits.of(4).hasConflict(Bits.of(5))).isTrue();
+    assertThat(Bits.of(4).set(100).hasConflict(Bits.of(3))).isFalse();
+    assertThat(Bits.of(4).set(100).hasConflict(Bits.of(5))).isTrue();
+    assertThat(Bits.of(1000).hasConflict(Bits.of(1001))).isTrue();
+  }
+
+  @Test
+  public void simplifyConjunction() {
+    assertThat(Bits.of(9).simplifyConjunction(Bits.of(8))).isEqualTo(Bits.EMPTY);
+    assertThat(Bits.of(7).simplifyConjunction(Bits.of(8))).isNull();
+    assertThat(Bits.of(7).set(8).simplifyConjunction(Bits.of(9))).isEqualTo(Bits.of(7));
+    assertThat(Bits.of(90).set(3).simplifyConjunction(Bits.of(91))).isEqualTo(Bits.of(3));
+    assertThat(Bits.of(91).set(40).simplifyConjunction(Bits.of(90))).isEqualTo(Bits.of(40));
+    Bits base = Bits.of(5).set(50).set(101).set(150);
+    assertThat(base.simplifyConjunction(base)).isNull();
+    assertThat(base.set(4).clear(5).set(6).set(90).simplifyConjunction(base).toString())
+        .isEqualTo("{6, 50, 90, 101, 150}");
+    assertThat(base.set(4).set(90).simplifyConjunction(base)).isNull();
+    assertThat(base.set(4).clear(5).set(100).clear(101).simplifyConjunction(base)).isNull();
+  }
 }

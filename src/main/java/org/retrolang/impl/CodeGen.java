@@ -594,10 +594,9 @@ public class CodeGen {
   }
 
   /// Emits the blocks to allocate a stack entry and call [TState#trace] with it.
-  void emitTrace(Instruction.Trace inst, Value stackEntry) {
+  void emitTrace(Value stackEntry) {
     CodeValue entryCv = StackEntryBlock.create(stackEntry, cb);
-    CodeValue[] traceArgs =
-        new CodeValue[] {tstateRegister(), CodeValue.of(inst), entryCv, currentCall.stackRest};
+    CodeValue[] traceArgs = new CodeValue[] {tstateRegister(), entryCv, currentCall.stackRest};
     new SetBlock(currentCall.stackRest, TState.TRACE_OP.result(traceArgs)).addTo(cb);
   }
 

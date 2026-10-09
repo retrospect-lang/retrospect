@@ -82,6 +82,7 @@ public class VirtualMachineTest {
           """
           \\((?<args>[^\\)]*)\\) *\
           (LIMIT\\((?<limit>\\d+)\\) *)?\
+          (TRACE_DEPTH\\((?<tracedepth>\\d+)\\) *)?\
           (CODEGEN\\((?<codegen>\\d+)\\) *)?\
           (?<returns>RETURNS|ERRORS) *\
           (?<debug>RC_DEBUG *)?\
@@ -111,6 +112,8 @@ public class VirtualMachineTest {
             .toList();
     long limit =
         Optional.ofNullable(argsMatcher.group("limit")).map(Long::parseLong).orElse(200_000L);
+    int traceDepth =
+        Optional.ofNullable(argsMatcher.group("tracedepth")).map(Integer::parseInt).orElse(0);
     boolean expectReturn = argsMatcher.group("returns").equals("RETURNS");
     Optional<Integer> codeGen =
         Optional.ofNullable(argsMatcher.group("codegen")).map(Integer::parseInt);
@@ -162,7 +165,7 @@ public class VirtualMachineTest {
       // Save and log any traces now (they can be useful for debugging failed tests), but delay
       // checking them until we've checked the result (since if the result is wrong that's the
       // most important thing to know).
-      traces = getTraces(tracker);
+      traces = getTraces(tracker, traceDepth);
       assertWithMessage("Expected error, executed OK").that(expectReturn).isTrue();
       expect.that(resultOrError).isEqualTo(cleanValue(expected));
     } catch (Vm.RuntimeError e) {
@@ -171,7 +174,7 @@ public class VirtualMachineTest {
       String stack = String.join("\n", e.stack());
       System.out.format("failed:\n%s\n", stack);
       // See comment above about why we grab (and log) any traces now but only check them later.
-      traces = getTraces(tracker);
+      traces = getTraces(tracker, traceDepth);
       assertWithMessage("Unexpected error %s", e).that(expectReturn).isFalse();
       resultOrError = cleanIds(stack);
       expect
@@ -200,7 +203,8 @@ public class VirtualMachineTest {
     String layouts = vm.getDebuggingSummary();
     String actualResources = tracker + (layouts.isEmpty() ? "" : "\n" + layouts);
     System.out.println(actualResources);
-    if (!checkForRanges(actualResources, expectedResources)) {
+    boolean skipResourceCheck = expectedResources.equals("(no memory expectation)");
+    if (!skipResourceCheck && !checkForRanges(actualResources, expectedResources)) {
       expect.that(actualResources).isEqualTo(expectedResources);
     }
     if (testProgram.writer() != null) {
@@ -211,7 +215,7 @@ public class VirtualMachineTest {
       if (codeGen.isPresent()) {
         newTest += codeGenLog + "\n---\n";
       }
-      if (NUMERIC_RANGE.matcher(expectedResources).find()) {
+      if (skipResourceCheck || NUMERIC_RANGE.matcher(expectedResources).find()) {
         newTest += expectedResources + "\n";
       } else {
         newTest += actualResources + "\n";
@@ -225,8 +229,8 @@ public class VirtualMachineTest {
     assertThat(ForkJoinPool.commonPool().awaitQuiescence(2, TimeUnit.SECONDS)).isTrue();
   }
 
-  private static String getTraces(ResourceTracker tracker) {
-    String traces = tracker.takeTraces();
+  private static String getTraces(ResourceTracker tracker, int maxDepth) {
+    String traces = tracker.takeTraces(maxDepth, false);
     if (!traces.isEmpty()) {
       System.out.println("---\n" + traces);
     }

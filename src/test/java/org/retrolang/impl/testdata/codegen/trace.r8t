@@ -36,7 +36,7 @@ recursiveFib_x0(i1):
  17: X2 ← TState.fillStackEntry(X0, X3, X6, ⟨b0⟩, mMemo_x@xxxx, X2);
 -18: test 3 < I1; F:→ 21
  19: X3 ← newStackEntry(⟦trace.r8t+0:10_10 trace n ∥ n=I1, r1=I4, r2=I5⟧);
- 20: X2 ← TState.trace(X0, trace n, X3, X2);
+ 20: X2 ← TState.trace(X0, X3, X2);
 -21: I1 ← Math.addExact(I4, I5); → 23, ArithmeticException:→ 27
 -22: I1 ← 1;
 -23: TState.setResultTemplates(X0, [i0]);
@@ -63,36 +63,36 @@ recursiveFib_x0(i1):
         (2) ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=7⟧
         (1) ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=6⟧
             ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=5⟧
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
             ... (1) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
             ... (2) ...
             ⟦trace.r8t+0:8_7 r2 = recursiveFib(_t0) ∥ n=6, r1=8⟧
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
             ... (2) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=6, r1=8, r2=5⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=6, r1=8, r2=5⟧
             ... (3) ...
         (5) ⟦trace.r8t+0:8_7 r2 = recursiveFib(_t0) ∥ n=7, r1=13⟧
             ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=5⟧
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
             ... (5) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
             ... (3) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=7, r1=13, r2=8⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=7, r1=13, r2=8⟧
             ... (4) ...
         (7) ⟦trace.r8t+0:8_7 r2 = recursiveFib(_t0) ∥ n=8, r1=21⟧
         (6) ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=6⟧
             ⟦trace.r8t+0:7_5 r1 = recursiveFib(_t0) ∥ n=5⟧
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
             ... (6) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=5, r1=5, r2=3⟧
             ... (7) ...
             ⟦trace.r8t+0:8_7 r2 = recursiveFib(_t0) ∥ n=6, r1=8⟧
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=4, r1=3, r2=2⟧
             ... (7) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=6, r1=8, r2=5⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=6, r1=8, r2=5⟧
             ... (4) ...
-0.0s) ⟦trace.r8t+0:10_10 trace n ∥ n=8, r1=21, r2=13⟧
+⟦trace.r8t+0:10_10 trace n ∥ n=8, r1=21, r2=13⟧
 ---
 allocated=1976/51, peak=1904
 */

@@ -14,7 +14,7 @@ function fn(i) {
 ---
             ⟦StackBase⟧
             ⟦future.r8t+2:1_1 _t0 = fn(i)⟧
-0.0s) ⟦future.r8t+2:6_2 trace ∥ i=2⟧
+⟦future.r8t+2:6_2 trace ∥ i=2⟧
 ---
 ?0----1+++2bs[⊝0-]?----3+++4bs[⊝0-]-
   0: x (top level)
@@ -46,7 +46,7 @@ function fn(i) {
 ---
             ⟦StackBase⟧
             ⟦future.r8t+32:2_3 _t0 = fn(_t0)⟧
-0.0s) ⟦future.r8t+32:8_2 trace ∥ i=2⟧
+⟦future.r8t+32:8_2 trace ∥ i=2⟧
 ---
 allocated=12000‥25000/500‥1000, peak=200‥3200
 $0 = *[]x0:Future
@@ -104,7 +104,7 @@ return waitFor(^x) | save
 ⟦future.r8t+88:4_8 _t0 = pipe(_t0, _t1)⟧
 ⟦StackBase⟧
 ---
-allocated=8000‥24000/280‥800, peak=1200‥2400
+allocated=8000‥24000/280‥800, peak=1200‥4800
 $0 = *[]x0:Future
 $1 = *[]b0
 */

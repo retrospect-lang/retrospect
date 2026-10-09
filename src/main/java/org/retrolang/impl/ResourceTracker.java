@@ -61,9 +61,9 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
   /// The total memory (in bytes) that this ResourceTracker is allowed to use.
   final long limit;
 
-  /// The maximum number of execution stacks to save for each trace instruction. Must be even; if a
-  /// trace instruction is executed more than `maxTraces` times we save the first `maxTraces/2` and
-  /// last `maxTraces/2` stacks.
+  /// The maximum number of execution stacks to save for each trace key. Must be even; if a trace
+  /// key is recorded more than `maxTraces` times we save the first `maxTraces/2` and last
+  /// `maxTraces/2` stacks.
   ///
   /// More control over this policy is probably desirable, but that will be easier to make decisions
   /// about after we've got some experience with it.
@@ -96,8 +96,8 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
   @GuardedBy("this")
   private long peakBytes;
 
-  /// Maps each trace instruction that has been executed to a corresponding [SavedTraces].
-  private final ConcurrentHashMap<Instruction.Trace, SavedTraces> savedTraces =
+  /// Maps each StackEntryType that has started a trace to a corresponding [SavedTraces].
+  private final ConcurrentHashMap<BaseType.StackEntryType, SavedTraces> savedTraces =
       new ConcurrentHashMap<>();
 
   @SuppressWarnings("GoodTime") // revisit?
@@ -326,9 +326,9 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
     return false;
   }
 
-  /// Returns the SavedTraces object that should be used for the given trace instruction.
-  SavedTraces tracesFor(Instruction.Trace inst, TState tsate) {
-    return savedTraces.computeIfAbsent(inst, i -> new SavedTraces(maxTraces));
+  /// Returns the SavedTraces object that should be used for the given StackEntryType.
+  SavedTraces tracesFor(BaseType.StackEntryType key) {
+    return savedTraces.computeIfAbsent(key, i -> new SavedTraces(maxTraces));
   }
 
   /// Copies the contents of the given SavedTraces into the given list and clears the SavedTraces.
@@ -349,6 +349,10 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
 
   @Override
   public String takeTraces() {
+    return takeTraces(0, true);
+  }
+
+  public String takeTraces(int maxDepth, boolean includeTime) {
     // The goal here is to format a set of traces as a (sort of) human-readable string.
     // The basic ideas are:
     // - order them chronologically
@@ -390,7 +394,8 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
       // than once.
       IdentityHashMap<TStack, Boolean> multiple = new IdentityHashMap<>();
       for (TStack.ForTrace trace : traces) {
-        for (TStack t = trace.rest(); t != null; t = t.rest()) {
+        int d = maxDepth;
+        for (TStack t = trace.rest(); t != null && d != 1; t = t.rest(), --d) {
           Boolean multi = multiple.get(t);
           if (!Boolean.TRUE.equals(multi)) {
             // null goes to FALSE, FALSE goes to TRUE
@@ -426,7 +431,8 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
           formatter.format("(dropped %s)\n", trace.index - expected);
         }
         // Copy the remaining entries into lines, which we'll then reverse
-        for (TStack t = trace.rest(); t != null; t = t.rest()) {
+        int d = maxDepth;
+        for (TStack t = trace.rest(); t != null && d != 1; t = t.rest(), --d) {
           String prefix = indent;
           if (Boolean.TRUE.equals(multiple.get(t))) {
             String label = labels.get(t);
@@ -453,7 +459,11 @@ public class ResourceTracker implements Allocator, Vm.ResourceTracker {
         Collections.reverse(lines);
         lines.forEach(result::append);
         lines.clear();
-        formatter.format("%.1fs) %s\n", trace.nanoTime * 1e-9, first);
+        if (includeTime) {
+          formatter.format("%.1fs) %s\n", trace.nanoTime * 1e-9, first);
+        } else {
+          result.append(first).append("\n");
+        }
       }
       return result.toString();
     } finally {

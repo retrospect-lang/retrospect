@@ -69,7 +69,7 @@ public abstract class VmType implements Vm.Type {
   /// - If this type corresponds to a union declared with subtypes ("type X contains ..."), returns
   ///   true if type was declared to have some type T as a supertype, and this was declared to have
   ///   T as a subtype.
-  abstract boolean contains(BaseType type);
+  public abstract boolean contains(BaseType type);
 
   @Override
   public MethodPredicate argType(int argIndex, boolean positive) {
@@ -221,7 +221,7 @@ public abstract class VmType implements Vm.Type {
     }
 
     @Override
-    boolean contains(BaseType baseType) {
+    public boolean contains(BaseType baseType) {
       VmType start = baseType.vmType();
       ImmutableSet<Union> baseTypeSuperTypes = start.superTypes.asSet;
       if (baseTypeSuperTypes.contains(this) || subTypes.contains(start)) {

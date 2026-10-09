@@ -167,7 +167,7 @@ public class Core {
   public static final VmType STRUCT =
       new VmType(CORE, "Struct", COLLECTION) {
         @Override
-        boolean contains(BaseType type) {
+        public boolean contains(BaseType type) {
           return type instanceof StructType;
         }
       };
@@ -203,7 +203,7 @@ public class Core {
   public static final VmType INTEGER =
       new VmType(CORE, "Integer") {
         @Override
-        boolean contains(BaseType type) {
+        public boolean contains(BaseType type) {
           // If you're asking whether INTEGER.contains(NUMBER) you're probably try to check
           // numValue.isa(INTEGER), and that's not going to work.
           assert type != NUMBER;
@@ -215,7 +215,7 @@ public class Core {
   public static final VmType ARRAY =
       new VmType(CORE, "Array", MATRIX) {
         @Override
-        boolean contains(BaseType type) {
+        public boolean contains(BaseType type) {
           return type.sortOrder == BaseType.SORT_ORDER_ARRAY;
         }
       };
@@ -308,7 +308,7 @@ public class Core {
   static final VmType PARTIAL_APPLICATION_LAMBDA =
       new VmType(CORE, "PartialApplication", LAMBDA) {
         @Override
-        boolean contains(BaseType type) {
+        public boolean contains(BaseType type) {
           return type instanceof Lambdas.PartialApplication;
         }
       };

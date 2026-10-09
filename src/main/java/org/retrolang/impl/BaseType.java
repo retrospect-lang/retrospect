@@ -220,7 +220,7 @@ public abstract class BaseType {
     }
 
     @Override
-    boolean contains(BaseType type) {
+    public boolean contains(BaseType type) {
       return type == baseType;
     }
   }
@@ -305,7 +305,7 @@ public abstract class BaseType {
     private final String msg;
     private final String[] localNames;
 
-    SimpleStackEntryType(String msg, String... localNames) {
+    public SimpleStackEntryType(String msg, String... localNames) {
       super(localNames.length);
       this.msg = msg;
       this.localNames = localNames;

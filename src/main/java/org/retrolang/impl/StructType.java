@@ -30,7 +30,7 @@ public class StructType extends BaseType {
   static final VmType STRUCT_KEYS =
       new VmType(Core.CORE, "StructKeys", Core.COLLECTION) {
         @Override
-        boolean contains(BaseType type) {
+        public boolean contains(BaseType type) {
           return type instanceof StructKeys;
         }
       };

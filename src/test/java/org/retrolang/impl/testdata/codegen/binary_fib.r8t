@@ -59,7 +59,7 @@ fib_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
   3: test I2 0 (< 2); F:→ 10
   4: test I1 0 (< 2); F:→ 10
   5: X1 ← newStackEntry(⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=I3⸨0:False; 1:True⸩⟧);
-  6: X4 ← TState.trace(X0, trace n1, X1, null);
+  6: X4 ← TState.trace(X0, X1, null);
   7: I1 ← 0;
   8: I2 ← 0;
   9: I8 ← 1; → 50
@@ -127,20 +127,20 @@ fib_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
         (2) ⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, True, False]⟧
         (1) ⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, False, True]⟧
             ⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, False, False]⟧
-0.0s) ⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
+⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
             ... (1) ...
             ⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, False, True]⟧
-0.0s) ⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=False⟧
+⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=False⟧
             ... (2) ...
             ⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, True, False]⟧
-0.0s) ⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
+⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
             ... (3) ...
         (4) ⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, True, True]⟧
             ⟦binary_fib.r8t+5:14_8 _t0 = fib(m1) ∥ m2=[False, False, False]⟧
-0.0s) ⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
+⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=True⟧
             ... (4) ...
             ⟦binary_fib.r8t+5:14_9 _t1 = fib(m2) ∥ _t0=[False, False, True]⟧
-0.0s) ⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=False⟧
+⟦binary_fib.r8t+5:7_3 trace n1 ∥ n1=False⟧
 ---
 allocated=1184/33, peak=1112
 */

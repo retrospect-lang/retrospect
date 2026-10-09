@@ -93,7 +93,13 @@ public class CodeGenTest {
   /// CODEGEN ").
   private static final Pattern FIRST_LINE_PATTERN =
       Pattern.compile(
-          " *(?<fn>\\w+) +(ESCAPE_COUNT *= *(?<escapes>\\d+) *)?(?<returns>RETURNS|ERRORS)\n");
+          """
+          (?<fn>\\w+) +\
+          (ESCAPE_COUNT *= *(?<escapes>\\d+) *)?\
+          (TRACE_DEPTH *= *(?<tracedepth>\\d+) *)?\
+          (?<returns>RETURNS|ERRORS)\
+          \n\
+          """);
 
   private static final int MEMORY_LIMIT = 10_000_000;
 
@@ -129,6 +135,8 @@ public class CodeGenTest {
     String fnName = argsMatcher.group("fn");
     int escapeCount =
         Optional.ofNullable(argsMatcher.group("escapes")).map(Integer::parseInt).orElse(0);
+    int traceDepth =
+        Optional.ofNullable(argsMatcher.group("tracedepth")).map(Integer::parseInt).orElse(0);
     boolean expectReturn = argsMatcher.group("returns").equals("RETURNS");
     String[] parts = testProgram.comment().substring(argsMatcher.end()).split("\n---\n");
     String expectedTraces = "";
@@ -180,7 +188,7 @@ public class CodeGenTest {
     }
     // Log any traces that were executed during prep and discard them
     // (we only check the traces from generated code).
-    var unused = getTraces(tracker);
+    var unused = getTraces(tracker, 0);
     // Make sure that memory was released properly.
     assertWithMessage("Reference counting error: %s", tracker).that(tracker.allReleased()).isTrue();
     System.out.format("prep resources: %s\n\n", tracker);
@@ -204,7 +212,7 @@ public class CodeGenTest {
       // Save and log any traces now (they can be useful for debugging failed tests), but delay
       // checking them until we've checked the result (since if the result is wrong that's the
       // most important thing to know).
-      traces = getTraces(tracker);
+      traces = getTraces(tracker, traceDepth);
       assertWithMessage("Expected error, executed OK").that(expectReturn).isTrue();
       assertOrExpect.that(resultOrError).isEqualTo(cleanValue(expectedResult));
     } catch (Vm.RuntimeError e) {
@@ -212,7 +220,7 @@ public class CodeGenTest {
       String stack = String.join("\n", e.stack());
       System.out.format("failed:\n%s\n", stack);
       // See comment above about why we grab (and log) any traces now but only check them later.
-      traces = getTraces(tracker);
+      traces = getTraces(tracker, traceDepth);
       assertWithMessage("Unexpected error %s", e).that(expectReturn).isFalse();
       resultOrError = cleanIds(stack);
       assertOrExpect
@@ -287,8 +295,8 @@ public class CodeGenTest {
   }
 
   /// Logs the result of [ResourceTracker#takeTraces()] and returns it.
-  private static String getTraces(ResourceTracker tracker) {
-    String traces = tracker.takeTraces();
+  private static String getTraces(ResourceTracker tracker, int maxDepth) {
+    String traces = tracker.takeTraces(maxDepth, false);
     if (!traces.isEmpty()) {
       System.out.println("---\n" + traces);
     }

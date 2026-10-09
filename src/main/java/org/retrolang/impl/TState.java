@@ -738,23 +738,22 @@ public final class TState extends MemoryHelper {
   }
 
   static final Op TRACE_OP =
-      RcOp.forRcMethod(TState.class, "trace", Instruction.Trace.class, Value.class, TStack.class)
-          .hasSideEffect()
-          .build();
+      RcOp.forRcMethod(TState.class, "trace", Value.class, TStack.class).hasSideEffect().build();
 
   /// Saves the stack for a trace instruction.
-  void trace(Instruction.Trace inst, @RC.In Value head) {
-    stackRest = trace(inst, head, stackRest);
+  public void trace(@RC.In Value head) {
+    stackRest = trace(head, stackRest);
   }
 
   /// Saves the stack for a trace instruction.
   @RC.Out
-  TStack trace(Instruction.Trace inst, @RC.In Value head, @RC.In TStack rest) {
+  TStack trace(@RC.In Value head, @RC.In TStack rest) {
+    StackEntryType key = (StackEntryType) head.baseType();
     // Create a new stack ...
     TStack.ForTrace trace = new TStack.ForTrace(this, head);
     rest = setTStackRest(trace, rest);
     // ... and save it as one of the traces for the given instruction.
-    SavedTraces traces = tracker().tracesFor(inst, this);
+    SavedTraces traces = tracker().tracesFor(key);
     TStack.ForTrace dropped = traces.add(this, trace, tracker().startNanoTime);
     // If that displaced a previously-saved stack, drop the old one.
     if (dropped != null) {

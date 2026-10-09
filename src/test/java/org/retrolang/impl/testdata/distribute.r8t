@@ -132,28 +132,28 @@ function find(x, array) {
             ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[ToBeSet, ToBeSet, ToBeSet, ToBeSet]⟧
             ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[1]⟧
             ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
+⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
             ... (1) ...
             ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(1, 4)⟧
             ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
             ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, ToBeSet, ToBeSet, ToBeSet]⟧
             ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[2]⟧
             ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=6, array=[4, 6, 5, 4]⟧
+⟦distribute.r8t+108:6_0 trace ∥ x=6, array=[4, 6, 5, 4]⟧
             ... (1) ...
             ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(2, 4)⟧
             ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
             ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, 2, ToBeSet, ToBeSet]⟧
             ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[3]⟧
             ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=5, array=[4, 6, 5, 4]⟧
+⟦distribute.r8t+108:6_0 trace ∥ x=5, array=[4, 6, 5, 4]⟧
             ... (1) ...
             ⟦LoopCore.Iterate.nextState ∥ loop=TransformedLoop(ArrayAccessor([4, 6, 5, 4], EnumerateAllKeys), TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements))), it=SimpleRangeIterator(3, 4)⟧
             ⟦LoopCore.NextStateTransformedLoop.afterAt⟧
             ⟦LoopCore.NextStateTransformedLoop.at ∥ transformed=TransformedLoop(KeyValueLambda(iLambda@2:7⸨a=[4, 6, 5, 4]⸩, False), SaverLoop(SaveElements)), state=[1, 2, 3, ToBeSet]⟧
             ⟦LoopCore.AtKeyValueLambda.at ∥ dropAbsent=False, key=[4]⟧
             ⟦distribute.r8t+108:2_1 _a0 = find(_a1, a)⟧
-0.0s) ⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
+⟦distribute.r8t+108:6_0 trace ∥ x=4, array=[4, 6, 5, 4]⟧
 ---
 allocated=11560/424, peak=2688
 */

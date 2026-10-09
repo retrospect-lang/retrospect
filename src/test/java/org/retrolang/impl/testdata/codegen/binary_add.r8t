@@ -37,7 +37,7 @@ add2_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
   4: test I6 0 (< 2); T:→ 6, F:→ 12
 - 5: test I6 0 (< 2); T:→ 12
 - 6: X6 ← newStackEntry(⟦binary_add.r8t+0:10_2 trace ∥ x=I3⸨0:False; 1:True⸩, z=False⟧);
-  7: X6 ← TState.trace(X0, trace, X6, null);
+  7: X6 ← TState.trace(X0, X6, null);
   8: I8 ← 0;
   9: test X6 == null; T:→ 14
  10: X7 ← newStackEntry(⟦binary_add.r8t+0:23_2 _t0 = add3(x1, y1, False) ∥ x4=I1⸨0:False; 1:True⸩, x2=I2⸨0:False; 1:True⸩, y4=I4⸨0:False; 1:True⸩, y2=I5⸨0:False; 1:True⸩⟧);
@@ -48,7 +48,7 @@ add2_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
  15: test I5 0 (< 2); T:→ 17, F:→ 22
 -16: test I5 0 (< 2); T:→ 22
 -17: X5 ← newStackEntry(⟦binary_add.r8t+0:10_2 trace ∥ x=I2⸨0:False; 1:True⸩, z=I3⸨0:False; 1:True⸩⟧);
- 18: X6 ← TState.trace(X0, trace, X5, null);
+ 18: X6 ← TState.trace(X0, X5, null);
  19: test X6 == null; T:→ 25
  20: X5 ← newStackEntry(⟦binary_add.r8t+0:24_4 _t0 = add3(x2, y2, c2) ∥ x4=I1⸨0:False; 1:True⸩, y4=I4⸨0:False; 1:True⸩, z1=I8⸨0:False; 1:True⸩⟧);
  21: X7 ← TState.fillStackEntry(X0, X6, X5, ⟨[True, ⸨False; True⸩, ⸨False; True⸩]⟩, mMemo_x@xxxx, X7); → 25
@@ -59,7 +59,7 @@ add2_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
  26: test I4 0 (< 2); T:→ 28, F:→ 35
 -27: test I4 0 (< 2); T:→ 35
 -28: X4 ← newStackEntry(⟦binary_add.r8t+0:10_2 trace ∥ x=I1⸨0:False; 1:True⸩, z=I2⸨0:False; 1:True⸩⟧);
- 29: X6 ← TState.trace(X0, trace, X4, null);
+ 29: X6 ← TState.trace(X0, X4, null);
  30: test I1 == 0; F:→ 42
  31: test I2 == 1; F:→ 42
  32: test X6 == null; T:→ 36
@@ -87,21 +87,21 @@ add2_x0([i1⸨0:False; 1:True⸩, i2⸨0:False; 1:True⸩, i3⸨0:False; 1:True�
         (2) ⟦StackBase⟧
         (1) ⟦binary_add.r8t+0:1_0 sum1 = add2([False, True, True], [False, True, False])⟧
             ⟦binary_add.r8t+0:24_4 _t0 = add3(x2, y2, c2) ∥ x4=False, y4=False, z1=True⟧
-0.0s) ⟦binary_add.r8t+0:10_2 trace ∥ x=True, z=False⟧
+⟦binary_add.r8t+0:10_2 trace ∥ x=True, z=False⟧
             ... (1) ...
             ⟦binary_add.r8t+0:25_6 _t0 = add3(x4, y4, c4) ∥ z1=True, z2=False⟧
-0.0s) ⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=True⟧
+⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=True⟧
             ... (2) ...
         (3) ⟦binary_add.r8t+0:2_1 sum2 = add2([True, False, True], [False, False, True]) ∥ sum1=[True, False, True]⟧
             ⟦binary_add.r8t+0:23_2 _t0 = add3(x1, y1, False) ∥ x4=True, x2=False, y4=False, y2=False⟧
-0.0s) ⟦binary_add.r8t+0:10_2 trace ∥ x=True, z=False⟧
+⟦binary_add.r8t+0:10_2 trace ∥ x=True, z=False⟧
             ... (3) ...
             ⟦binary_add.r8t+0:24_4 _t0 = add3(x2, y2, c2) ∥ x4=True, y4=False, z1=False⟧
-0.0s) ⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=True⟧
+⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=True⟧
             ... (2) ...
             ⟦binary_add.r8t+0:3_2 sum3 = add2([False, False, False], [True, True, False]) ∥ sum1=[True, False, True], sum2=[True, True, False]⟧
             ⟦binary_add.r8t+0:23_2 _t0 = add3(x1, y1, False) ∥ x4=False, x2=False, y4=True, y2=True⟧
-0.0s) ⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=False⟧
+⟦binary_add.r8t+0:10_2 trace ∥ x=False, z=False⟧
 ---
 allocated=1480/44, peak=1320
 */

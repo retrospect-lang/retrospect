@@ -148,39 +148,39 @@ procedure f(a, b, c, d) {
         (2) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=None, c=None⟧
         (1) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=False, c=None⟧
             ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=False, c=False⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=False, c=False, d=False⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=False, c=False, d=False⟧
             ... (1) ...
             ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=False, d=False⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=False, d=False⟧
             ... (2) ...
             ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
             ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=False, c=False⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=False, d=False⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=False, d=False⟧
             ... (3) ...
         (5) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
         (4) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=None, c=None⟧
             ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=False, b=True, c=None⟧
-0.0s) ⟦run.r8t+121:16_5 trace ∥ a=False, b=False, c=True⟧
+⟦run.r8t+121:16_5 trace ∥ a=False, b=False, c=True⟧
             ... (4) ...
             ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+121:16_5 trace ∥ a=True, b=False, c=True⟧
+⟦run.r8t+121:16_5 trace ∥ a=True, b=False, c=True⟧
             ... (5) ...
         (7) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
         (6) ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=True, c=None⟧
-0.0s) ⟦run.r8t+121:16_5 trace ∥ a=False, b=True, c=True⟧
+⟦run.r8t+121:16_5 trace ∥ a=False, b=True, c=True⟧
 (dropped 10)
             ... (6) ...
             ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=True, d=True⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=False, c=True, d=True⟧
             ... (7) ...
         (8) ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+121:16_5 trace ∥ a=True, b=True, c=True⟧
+⟦run.r8t+121:16_5 trace ∥ a=True, b=True, c=True⟧
             ... (8) ...
             ⟦run.r8t+121:18_7 f(False, a, b, c) ∥ a=True, b=True, c=True⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=True, d=True⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=False, b=True, c=True, d=True⟧
             ... (8) ...
             ⟦run.r8t+121:19_8 f(True, a, b, c)⟧
-0.0s) ⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=True, c=True, d=True⟧
+⟦run.r8t+121:10_1 trace "Complete" a, b, c, d ∥ a=True, b=True, c=True, d=True⟧
 ---
 allocated=5008/155, peak=2200
 */

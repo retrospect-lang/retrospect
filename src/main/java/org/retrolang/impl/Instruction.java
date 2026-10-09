@@ -908,7 +908,7 @@ abstract class Instruction {
     @Override
     int execute(TState tstate, @RC.Counted Object[] locals, MethodMemo memo) {
       StackEntryType entryType = stackEntryType();
-      tstate.trace(this, entryType.newStackEntry(tstate, locals));
+      tstate.trace(entryType.newStackEntry(tstate, locals));
       clearLocals(tstate, toClear, locals);
       return location() + 1;
     }
@@ -921,7 +921,7 @@ abstract class Instruction {
     @Override
     void emit(CodeGen codeGen, EmitState emitState) {
       StackEntryType entryType = stackEntryType();
-      codeGen.emitTrace(this, entryType.newStackEntry(codeGen.tstate(), emitState.locals));
+      codeGen.emitTrace(entryType.newStackEntry(codeGen.tstate(), emitState.locals));
       emitState.clearLocals(toClear);
       codeGen.invalidateEscape();
     }

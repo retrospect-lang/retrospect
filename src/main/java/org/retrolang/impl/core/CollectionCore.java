@@ -36,12 +36,6 @@ import org.retrolang.impl.VmFunctionBuilder;
 /// Core methods providing support for collections.
 public final class CollectionCore {
 
-  /// `private compound Filter is Lambda`
-  ///
-  /// Filter wraps a Boolean-valued Lambda to create a Lambda that returns either its argument (if
-  /// the wrapped Lambda returns True) or Absent (if it returns False).
-  @Core.Private static final BaseType.Named FILTER = Core.newBaseType("Filter", 1, Core.LAMBDA);
-
   /// `function filter(lambda)`
   @Core.Public
   static final VmFunctionBuilder filterFn = VmFunctionBuilder.create("filter", 1).isOpen();
@@ -59,16 +53,6 @@ public final class CollectionCore {
   static final VmFunctionBuilder withKeys = VmFunctionBuilder.create("withKeys", 1).isOpen();
 
   @Core.Public static final VmFunctionBuilder join = VmFunctionBuilder.create("join", 2).isOpen();
-
-  /// `private compound TransformedLambda is Lambda`
-  ///
-  /// Elements are `first`, `second` (both Lambdas).
-  ///
-  /// Applying a TransformedLambda applies its elements in sequence (aka lambda composition). If the
-  /// result of `first` is Absent, `second` is skipped and the overall result is Absent.
-  @Core.Private
-  static final BaseType.Named TRANSFORMED_LAMBDA =
-      Core.newBaseType("TransformedLambda", 2, Core.LAMBDA);
 
   /// `private compound TransformedCollection is Collection`
   ///
@@ -139,7 +123,7 @@ public final class CollectionCore {
   /// `method filter(lambda) = Filter_(lambda) // v -> (lambda @ v) ? v : Absent`
   @Core.Method("filter(Lambda)")
   static Value filter(TState tstate, @RC.In Value lambda) {
-    return tstate.compound(FILTER, lambda);
+    return tstate.compound(Core.FILTER, lambda);
   }
 
   /// `method at(Filter filter, x) = filter_ @ x ? x : Absent`
@@ -248,7 +232,7 @@ public final class CollectionCore {
                       tstate.startCall(
                           iterator, inner, LoopCore.ENUMERATE_WITH_KEYS, loop, initialState),
                   () -> {
-                    Value loop2 = tstate.compound(LoopCore.TRANSFORMED_LOOP, DUPLICATE_KEY, loop);
+                    Value loop2 = tstate.compound(Core.TRANSFORMED_LOOP, DUPLICATE_KEY, loop);
                     tstate.startCall(iterator, inner, eKind, loop2, initialState);
                   });
         });
@@ -297,7 +281,7 @@ public final class CollectionCore {
                 left.isa(Core.LAMBDA)
                     .and(right.isa(Core.LAMBDA))
                     .choose(
-                        () -> tstate.compound(TRANSFORMED_LAMBDA, left, right),
+                        () -> tstate.compound(Core.TRANSFORMED_LAMBDA, left, right),
                         () -> tstate.compound(LoopCore.COMPOUND_STEP, left, right)));
   }
 
@@ -313,7 +297,7 @@ public final class CollectionCore {
                         () -> {
                           Value newLeft = left.element(0);
                           Value newRight =
-                              tstate.compound(TRANSFORMED_LAMBDA, left.element(1), right);
+                              tstate.compound(Core.TRANSFORMED_LAMBDA, left.element(1), right);
                           tstate.dropValue(left);
                           return pipeCollectionLambda(tstate, newLeft, newRight);
                         },
@@ -523,7 +507,7 @@ public final class CollectionCore {
         tstate,
         jc -> {
           Value lambda = tstate.compound(MATCH_FINDER, jc.element(1), eKind);
-          Value transformedLoop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+          Value transformedLoop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
           tstate.startCall(
               iterator, jc.element(0), LoopCore.ENUMERATE_ALL_KEYS, transformedLoop, initialState);
         });

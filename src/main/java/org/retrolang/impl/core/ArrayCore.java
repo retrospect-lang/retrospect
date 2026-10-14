@@ -120,7 +120,7 @@ public final class ArrayCore {
       @RC.In Value loop,
       @RC.In Value initialState) {
     Value lambda = tstate.compound(ARRAY_ACCESSOR, array, eKind);
-    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    loop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
     Value size = sizeArray(tstate, array);
     Value iterator = tstate.compound(RangeCore.SIMPLE_RANGE_ITERATOR, NumValue.NEGATIVE_ONE, size);
     tstate.setResults(iterator, loop, initialState);

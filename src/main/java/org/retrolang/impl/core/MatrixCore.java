@@ -164,7 +164,7 @@ public final class MatrixCore {
   /// `binaryUpdate(element=, lambda, rhs)`.
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_SCALAR =
-      Core.newBaseType("BinaryUpdateWithScalar", 2, LoopCore.LOOP);
+      Core.newBaseType("BinaryUpdateWithScalar", 2, Core.LOOP);
 
   /// `private compound BinaryUpdateWithCollection is Loop`
   ///
@@ -173,7 +173,7 @@ public final class MatrixCore {
   /// `binaryUpdate(element=, lambda, rhsElement)`.
   @Core.Private
   public static final BaseType.Named BINARY_UPDATE_WITH_COLLECTION =
-      Core.newBaseType("BinaryUpdateWithCollection", 1, LoopCore.LOOP);
+      Core.newBaseType("BinaryUpdateWithCollection", 1, Core.LOOP);
 
   /// ```
   /// method size(Matrix m) default {
@@ -801,7 +801,7 @@ public final class MatrixCore {
       Value outSizes = m.element(0);
       Value elements = m.element(1);
       Value lambda = tstate.compound(KEY_CONVERTER, inSizes, outSizes);
-      loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+      loop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
       tstate.startCall(iterator, elements, eKind, loop, initialState);
     }
   }
@@ -901,7 +901,7 @@ public final class MatrixCore {
       @RC.In Value initialState) {
     Value lambda = tstate.compound(BinaryOp.ELEMENT.partialLeft, m);
     lambda = LoopCore.applyToValues(tstate, lambda, eKind);
-    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    loop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
     Value sizes = m.element(3);
     Object layoutOrBaseType = results.result(BASE_ITERATOR_PREV_LAYOUT_OR_BASE_TYPE);
     tstate.setResults(
@@ -1293,7 +1293,7 @@ public final class MatrixCore {
                   () -> LoopCore.SIMPLE_LOOP,
                   () ->
                       tstate.compound(
-                          LoopCore.TRANSFORMED_LOOP,
+                          Core.TRANSFORMED_LOOP,
                           tstate.compound(OFFSET_KEY, size1),
                           LoopCore.SIMPLE_LOOP));
       tstate
@@ -1323,7 +1323,7 @@ public final class MatrixCore {
     return value
         .is(LoopCore.SIMPLE_LOOP)
         .or(() ->
-            value.isa(LoopCore.TRANSFORMED_LOOP).and(() -> isOnlyTransforms(value.peekElement(1))));
+            value.isa(Core.TRANSFORMED_LOOP).and(() -> isOnlyTransforms(value.peekElement(1))));
   }
 
   /// ```

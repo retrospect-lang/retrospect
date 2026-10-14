@@ -36,21 +36,13 @@ import org.retrolang.impl.TState;
 import org.retrolang.impl.Value;
 import org.retrolang.impl.ValueUtil;
 import org.retrolang.impl.VmFunctionBuilder;
-import org.retrolang.impl.VmType;
 
 /// Core Reducer implementations.
 public final class ReducerCore {
-  /// `open type Reducer is Collector, Loop`
-  @Core.Public
-  public static final VmType.Union REDUCER =
-      Core.newOpenUnion("Reducer", LoopCore.COLLECTOR, LoopCore.LOOP);
-
-  /// `private singleton Count is Reducer`
-  @Core.Private public static final Singleton COUNT = Core.newSingleton("Count", REDUCER);
 
   /// `function count() = Count`
   @Core.Public
-  static final VmFunctionBuilder count = VmFunctionBuilder.fromConstant("count", COUNT);
+  static final VmFunctionBuilder count = VmFunctionBuilder.fromConstant("count", Core.COUNT);
 
   /// `method emptyState(Count) = 0`
   @Core.Method("emptyState(Count)")
@@ -83,7 +75,7 @@ public final class ReducerCore {
   /// `private compound Sum is Reducer`
   ///
   /// Element is the zero value.
-  @Core.Private static final BaseType.Named SUM = Core.newBaseType("Sum", 1, REDUCER);
+  @Core.Private static final BaseType.Named SUM = Core.newBaseType("Sum", 1, Core.REDUCER);
 
   /// `function sum() = Sum_(0)`
   @Core.Public
@@ -143,7 +135,7 @@ public final class ReducerCore {
   ///
   /// Elements are `initial` and `exitOn`.
   @Core.Private
-  static final BaseType.Named BOOLEAN_REDUCER = Core.newBaseType("BooleanReducer", 2, REDUCER);
+  static final BaseType.Named BOOLEAN_REDUCER = Core.newBaseType("BooleanReducer", 2, Core.REDUCER);
 
   /// `function allTrue() = BooleanReducer_({initial: True, exitOn: False})`
   @Core.Public
@@ -201,7 +193,7 @@ public final class ReducerCore {
   /// `private compound Top is Reducer`
   ///
   /// Elements are `preferFirst` (a Lambda) and `swap` (a Boolean).
-  @Core.Private static final BaseType.Named TOP = Core.newBaseType("Top", 2, REDUCER);
+  @Core.Private static final BaseType.Named TOP = Core.newBaseType("Top", 2, Core.REDUCER);
 
   private static final Value MIN_REDUCER =
       TOP.uncountedOf(Core.lessThan.asLambdaExpr(), Core.FALSE);
@@ -357,7 +349,7 @@ public final class ReducerCore {
 
   /// `private singleton SaveUnordered is Reducer`
   @Core.Private
-  public static final Singleton SAVE_UNORDERED = Core.newSingleton("SaveUnordered", REDUCER);
+  public static final Singleton SAVE_UNORDERED = Core.newSingleton("SaveUnordered", Core.REDUCER);
 
   /// `function saveUnordered() = SaveUnordered`
   @Core.Public

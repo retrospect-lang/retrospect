@@ -322,7 +322,7 @@ public class Core {
 
   @Public static final VmFunctionBuilder not = VmFunctionBuilder.create("not", 1);
 
-  @Public static final VmFunctionBuilder at = VmFunctionBuilder.create("at", 2).isOpen();
+  @Public public static final VmFunctionBuilder at = VmFunctionBuilder.create("at", 2).isOpen();
 
   @Public static final VmFunctionBuilder reversedAt = VmFunctionBuilder.create("reversedAt", 2);
 
@@ -359,7 +359,8 @@ public class Core {
 
   @Public static final VmFunctionBuilder pipe = VmFunctionBuilder.create("pipe", 2).isOpen();
 
-  @Public static final VmFunctionBuilder equal = VmFunctionBuilder.create("equal", 2).isOpen();
+  @Public
+  public static final VmFunctionBuilder equal = VmFunctionBuilder.create("equal", 2).isOpen();
 
   @Public
   public static final VmFunctionBuilder lessThan = VmFunctionBuilder.create("lessThan", 2).isOpen();
@@ -491,6 +492,53 @@ public class Core {
           assert entry.baseType() == this;
         }
       };
+
+  /// `open type Collector`
+  @Public public static final VmType.Union COLLECTOR = newOpenUnion("Collector");
+
+  /// `open type Loop`
+  ///
+  /// Values of type Loop are expected to provide a method for `nextState(loop, state, element)`.
+  @Public public static final VmType.Union LOOP = newOpenUnion("Loop");
+
+  /// `open type Reducer is Collector, Loop`
+  @Public public static final VmType.Union REDUCER = newOpenUnion("Reducer", COLLECTOR, LOOP);
+
+  /// `private singleton Count is Reducer`
+  @Private public static final Singleton COUNT = newSingleton("Count", REDUCER);
+
+  /// `private compound TransformedLoop is Loop`
+  ///
+  /// Elements are `lambda`, `loop`.
+  @Private
+  public static final BaseType.Named TRANSFORMED_LOOP = newBaseType("TransformedLoop", 2, LOOP);
+
+  /// `private compound LimitedLoop is Loop`
+  ///
+  /// Element is `inner`.
+  @Private public static final BaseType.Named LIMITED_LOOP = newBaseType("LimitedLoop", 1, LOOP);
+
+  /// Given the current state and the next element of the collection, returns the new state.
+  ///
+  /// `open function nextState(loop, state, element)`
+  @Public
+  static final VmFunctionBuilder nextState = VmFunctionBuilder.create("nextState", 3).isOpen();
+
+  /// `private compound TransformedLambda is Lambda`
+  ///
+  /// Elements are `first`, `second` (both Lambdas).
+  ///
+  /// Applying a TransformedLambda applies its elements in sequence (aka lambda composition). If the
+  /// result of `first` is Absent, `second` is skipped and the overall result is Absent.
+  @Private
+  public static final BaseType.Named TRANSFORMED_LAMBDA =
+      newBaseType("TransformedLambda", 2, LAMBDA);
+
+  /// `private compound Filter is Lambda`
+  ///
+  /// Filter wraps a Boolean-valued Lambda to create a Lambda that returns either its argument (if
+  /// the wrapped Lambda returns True) or Absent (if it returns False).
+  @Private public static final BaseType.Named FILTER = newBaseType("Filter", 1, LAMBDA);
 
   /// See https://en.wikipedia.org/wiki/Initialization-on-demand\_holder\_idiom for why this is in a
   /// nested class.

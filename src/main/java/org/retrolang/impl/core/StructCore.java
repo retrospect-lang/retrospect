@@ -82,7 +82,7 @@ public class StructCore {
       @RC.In Value loop,
       @RC.In Value initialState) {
     Value lambda = tstate.compound(STRUCT_ACCESSOR, structArg, eKind);
-    Value transformedLoop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    Value transformedLoop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
     structArg.withKnownBaseType(
         tstate,
         struct -> {

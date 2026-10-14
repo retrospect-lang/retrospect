@@ -42,11 +42,11 @@ public final class SaveCore {
   /// Element is default value.
   @Core.Private
   static final BaseType.Named SAVE_WITH_DEFAULT =
-      Core.newBaseType("SaveWithDefault", 1, LoopCore.COLLECTOR);
+      Core.newBaseType("SaveWithDefault", 1, Core.COLLECTOR);
 
   /// `private singleton SaveElements is Loop`
   @Core.Private
-  public static final Singleton SAVE_ELEMENTS = Core.newSingleton("SaveElements", LoopCore.LOOP);
+  public static final Singleton SAVE_ELEMENTS = Core.newSingleton("SaveElements", Core.LOOP);
 
   /// `private compound SaveWithOffset is Loop`
   ///
@@ -54,13 +54,13 @@ public final class SaveCore {
   /// is an array; each input value is saved in state[index+offset]
   @Core.Private
   public static final BaseType.Named SAVE_WITH_OFFSET =
-      Core.newBaseType("SaveWithOffset", 1, LoopCore.LOOP);
+      Core.newBaseType("SaveWithOffset", 1, Core.LOOP);
 
   /// `private compound SaverLoop is Loop`
   ///
   /// Element is sequential loop.
   @Core.Private
-  static final BaseType.Named SAVER_LOOP = Core.newBaseType("SaverLoop", 1, LoopCore.LOOP);
+  static final BaseType.Named SAVER_LOOP = Core.newBaseType("SaverLoop", 1, Core.LOOP);
 
   /// `private compound SaverUpdates`
   ///

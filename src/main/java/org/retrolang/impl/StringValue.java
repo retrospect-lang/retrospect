@@ -208,6 +208,11 @@ public class StringValue extends RefCounted implements Value {
     return Condition.equal(x, y).asValue();
   }
 
+  @Core.Method("lessThan(String, String)")
+  static Value lessThanStrings(TState tstate, Value x, Value y) {
+    return lessThan.call(tstate, x, y);
+  }
+
   @Core.Method("concat(String, String)")
   static Value concatStrings(TState tstate, Value x, Value y) {
     return concat.call(tstate, x, y);
@@ -305,6 +310,13 @@ public class StringValue extends RefCounted implements Value {
 
   public double parseDouble(int start, int end) {
     return Double.parseDouble(value.substring(start, end));
+  }
+
+  public static final BuiltinMethod.SimpleRuntimeHelper lessThan =
+      new BuiltinMethod.SimpleRuntimeHelper().canSimplifyConstants();
+
+  public static boolean lessThan(StringValue x, StringValue y) {
+    return x.value.compareTo(y.value) < 0;
   }
 
   public static final BuiltinMethod.SimpleRuntimeHelper concat =

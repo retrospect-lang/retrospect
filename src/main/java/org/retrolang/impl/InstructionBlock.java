@@ -103,9 +103,16 @@ class InstructionBlock implements MethodImpl {
     return locals != null;
   }
 
-  /// Returns the specified Local.
-  Local getLocal(int i) {
-    return locals.get(i);
+  /// Returns the locals used by this InstructionBlock.
+  ImmutableList<Local> locals() {
+    assert isInitialized();
+    return locals;
+  }
+
+  /// Returns the instructions in this InstructionBlock.
+  ImmutableList<Instruction> instructions() {
+    assert isInitialized();
+    return instructions;
   }
 
   /// Returns the names of the specified locals, separated by commas.

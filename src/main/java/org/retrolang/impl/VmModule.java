@@ -76,10 +76,10 @@ class VmModule implements Vm.Module {
     return builder;
   }
 
-  /// If `v` is a simple compound defined by this module, returns the corresponding VmCompound;
-  /// otherwise returns null.
-  private VmCompound myCompound(Value v) {
-    if (v.baseType() instanceof ModuleBuilder.Compound compound
+  /// If the given BaseType is a simple compound defined by this module, returns the corresponding
+  /// VmCompound; otherwise returns null.
+  private VmCompound isMyCompound(BaseType baseType) {
+    if (baseType instanceof ModuleBuilder.Compound compound
         && compound.asType.module == this
         && compound.isSimple()) {
       return compound.vmCompound;
@@ -87,24 +87,47 @@ class VmModule implements Vm.Module {
     return null;
   }
 
-  /// The method that implements the "\_" suffix operator for this module.
+  /// The method that mplements the "`_`" suffix operator for this module.
   ///
-  /// (From language\_reference.md#indexing: "\`\_\` is a postfix operator that unwraps a compound
+  /// (From language\_reference.md#indexing: "\`_\` is a postfix operator that unwraps a compound
   /// value... It can only be applied to values whose type is a compound defined in the current
   /// package.")
-  void unCompoundMethod(TState tstate, Object[] args) throws BuiltinException {
-    Value input = (Value) args[0];
-    // TODO: handle the (unlikely) case where input is a union RValue
-    Err.CANT_UNCOMPOUND.when(myCompound(input) == null);
-    tstate.setResult(input.element(0));
+  ///
+  /// This is a named class so that it can be recognized by [LoopAnalyzer].
+  static class UnCompound implements VmFunction.Simple.SimpleMethodImpl {
+    final VmModule module;
+
+    UnCompound(VmModule module) {
+      this.module = module;
+    }
+
+    /// Returns true if this method is applicable to values with the given baseType.
+    boolean accepts(BaseType baseType) {
+      return module.isMyCompound(baseType) != null;
+    }
+
+    @Override
+    public void executeSimpleMethod(TState tstate, Object[] args) throws BuiltinException {
+      ((Value) args[0])
+          .withKnownBaseTypeExcept(
+              tstate,
+              input -> {
+                Err.CANT_UNCOMPOUND.unless(accepts(input.baseType()));
+                tstate.setResult(input.element(0));
+              });
+    }
   }
 
-  /// The method that implements the "\_" suffix operator when used on the left-hand side of an "=".
+  /// The method that implements the "`_`" suffix operator when used on the left-hand side of an
+  /// `=`.
   void updateCompoundMethod(TState tstate, Object[] args) throws BuiltinException {
-    Value input = (Value) args[0];
-    // TODO: handle the (unlikely) case where input is a union RValue
-    VmCompound vmCompound = myCompound(input);
-    Err.CANT_UNCOMPOUND.when(vmCompound == null);
-    tstate.setResults(input.element(0), vmCompound.asLambdaExpr);
+    ((Value) args[0])
+        .withKnownBaseTypeExcept(
+            tstate,
+            input -> {
+              VmCompound vmCompound = isMyCompound(input.baseType());
+              Err.CANT_UNCOMPOUND.when(vmCompound == null);
+              tstate.setResults(input.element(0), vmCompound.asLambdaExpr);
+            });
   }
 }

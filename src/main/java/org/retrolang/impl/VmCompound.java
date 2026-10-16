@@ -34,7 +34,7 @@ class VmCompound implements Vm.Compound {
     assert baseType.isCompositional();
     this.baseType = baseType;
     this.extract =
-        new VmFunction.Simple("un" + baseType, baseType.size(), this::extractMethod, "x");
+        new VmFunction.Simple("un" + baseType, baseType.size(), new Extractor(baseType), "x");
     this.asLambdaExpr = new AsLambdaExpr(baseType).asValue();
   }
 
@@ -48,19 +48,6 @@ class VmCompound implements Vm.Compound {
   @Override
   public VmFunction extract() {
     return extract;
-  }
-
-  /// Implements our [#extract] function.
-  private void extractMethod(TState tstate, Object[] args) throws BuiltinException {
-    Value arg = (Value) args[0];
-    if (baseType.isArray()) {
-      Err.INVALID_ARGUMENT.unless(arg.isArrayOfLength(baseType.size()));
-    } else if (baseType instanceof StructType compound) {
-      Err.INVALID_ARGUMENT.unless(compound.matches(arg));
-    } else {
-      Err.INVALID_ARGUMENT.unless(arg.isa(baseType));
-    }
-    tstate.setResultsFromElements(baseType.size(), arg);
   }
 
   @Override
@@ -82,6 +69,30 @@ class VmCompound implements Vm.Compound {
   @Override
   public Vm.Expr asLambdaExpr() {
     return asLambdaExpr;
+  }
+
+  /// Implements our [#extract] function.
+  ///
+  /// This is a named class so that it can be recognized by [LoopAnalyzer].
+  static class Extractor implements VmFunction.Simple.SimpleMethodImpl {
+    final BaseType baseType;
+
+    private Extractor(BaseType baseType) {
+      this.baseType = baseType;
+    }
+
+    @Override
+    public void executeSimpleMethod(TState tstate, Object[] args) throws BuiltinException {
+      Value arg = (Value) args[0];
+      if (baseType.isArray()) {
+        Err.INVALID_ARGUMENT.unless(arg.isArrayOfLength(baseType.size()));
+      } else if (baseType instanceof StructType compound) {
+        Err.INVALID_ARGUMENT.unless(compound.matches(arg));
+      } else {
+        Err.INVALID_ARGUMENT.unless(arg.isa(baseType));
+      }
+      tstate.setResultsFromElements(baseType.size(), arg);
+    }
   }
 
   /// A singleton BaseType that can be passed as the first argument to `at()` to create values of

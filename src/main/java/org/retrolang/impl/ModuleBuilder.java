@@ -67,7 +67,7 @@ class ModuleBuilder implements Vm.ModuleBuilder {
     this.allTypes = new ArrayList<>();
     this.functions = new HashMap<>();
     this.allFunctions = new ArrayList<>();
-    this.unCompound = new VmFunction.Simple("_", 1, module::unCompoundMethod, "compound");
+    this.unCompound = new VmFunction.Simple("_", 1, new VmModule.UnCompound(module), "compound");
     this.updateCompound =
         new VmFunction.Simple("_update", 2, module::updateCompoundMethod, "compound");
   }

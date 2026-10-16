@@ -532,7 +532,7 @@ abstract class Instruction {
         if (this == NONE) {
           return "";
         }
-        IntFunction<String> prefix = i -> ib.getLocal(indices[i]).name + ":";
+        IntFunction<String> prefix = i -> ib.locals().get(indices[i]).name + ":";
         ValueMemo vMemo = memo.valueMemo(valueMemoIndex);
         if (vMemo != null) {
           return vMemo.toString(prefix);
@@ -563,6 +563,12 @@ abstract class Instruction {
     Set(Local output, VmExpr input) {
       this.output = output;
       this.input = input;
+    }
+
+    /// Returns the local that will be set by this instruction; may be null, indicating that the
+    /// right hand side's value will be discarded.
+    Local output() {
+      return output;
     }
 
     @Override
@@ -642,6 +648,22 @@ abstract class Instruction {
       this.fn = fn;
       this.inputs = inputs;
       this.callSite = callSite;
+    }
+
+    /// Returns the specified function argument.
+    VmExpr input(int i) {
+      return inputs[i];
+    }
+
+    /// Returns the local that will be set to the specified function result; may be null, indicating
+    /// that the result is discarded.
+    Local output(int i) {
+      return outputs[i];
+    }
+
+    /// Returns the StackEntryType used if the call unwinds.
+    StackEntryType duringCallStackEntryType() {
+      return duringCallStackEntryType;
     }
 
     @Override
@@ -782,6 +804,16 @@ abstract class Instruction {
 
     Return(VmExpr[] results) {
       this.results = results;
+    }
+
+    /// Returns the number of results returned by this method.
+    int numResults() {
+      return results.length;
+    }
+
+    /// Returns the specified method result.
+    VmExpr result(int i) {
+      return results[i];
     }
 
     @Override
@@ -979,7 +1011,7 @@ abstract class Instruction {
   /// Conditionally branch based on the value of a Boolean local. Also subclassed to implement
   /// TypeCheckBranch.
   static class ConditionalBranch extends Instruction {
-    private final BranchTarget target;
+    final BranchTarget target;
     final Local input;
     final boolean branchIfTrue;
 
@@ -1143,7 +1175,7 @@ abstract class Instruction {
 
     @Override
     String localName(int i) {
-      return instruction.ib.getLocal(live[i]).name;
+      return instruction.ib.locals().get(live[i]).name;
     }
 
     /// The index of the specified saved local.

@@ -608,7 +608,9 @@ class CopyPlan {
         // If both unions are untagged and dst has cases to match all of src's, we can just copy the
         // refvar.
         if (uSrc.tag == null && uDst.tag == null && hasAllOrders(uSrc, uDst, numSrcChoices)) {
-          steps.add(new Basic(StepType.COPY_REF, uSrc.untagged, uDst.untagged));
+          // Pick the RefVar with the type that matches uSrc.untagged.
+          Template dstVar = uDst.choice(uDst.indexOf(uSrc.untagged.sortOrder()));
+          steps.add(new Basic(StepType.COPY_REF, uSrc.untagged, dstVar));
           return true;
         }
         // We're gonna need a Switch

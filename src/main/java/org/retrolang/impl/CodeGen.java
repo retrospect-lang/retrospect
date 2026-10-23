@@ -659,7 +659,24 @@ public class CodeGen {
         cb.mergeNext(afterPush);
       }
       // Continue on to the original Destination, adding in @Saved values from the stackEntry if
-      // needed
+      // needed.
+      // If we are passing @Saved values it is possible that they won't fit the destination's
+      // template, so make sure that we've got an appropriate escape handler in place.
+      if (caller != null && !(stackEntry instanceof Singleton) && needNewEscape()) {
+        BaseType.StackEntryType continuation =
+            ((BuiltinMethod.DuringCall) stackEntry.baseType())
+                .caller.continuation().builtinEntry.stackEntryType;
+        assert continuation.size() == child.size() + stackEntry.baseType().size();
+        Object[] continuationArgs = Arrays.copyOf(child.values(), continuation.size());
+        stackEntry.getElements(stackEntry.baseType().size(), continuationArgs, child.size());
+        setNewEscape(
+            () -> {
+              cb.setNextSrc("startUnwind");
+              Value escapeEntry = tstate.asCompoundValue(continuation, continuationArgs);
+              parent.emitFillStackEntry(CodeValue.NULL, escapeEntry, parentMemo);
+              cb.branchTo(parent.handleUnwind);
+            });
+      }
       child.branchToParent(CodeGen.this, (caller != null ? stackEntry : Core.NONE));
     }
     if (isDetached) {
@@ -685,17 +702,24 @@ public class CodeGen {
 
   /// Called from [VmFunction#emitCall] to emit the body of the specified method.
   void emitMethodCall(MethodImpl impl, MethodMemo mMemo, Object[] args) {
-    // There may be ConditionalValues in args; this is the time to resolve them.
+    // args may contain ConditionalValues and/or simplifiable RValues; resolve them before we go
+    // further.
     int numArgs = mMemo.method().function.numArgs;
     Object[] originalArgs = args;
     for (int i = 0; i < numArgs; i++) {
-      if (args[i] instanceof ConditionalValue cv) {
+      Object originalArg = originalArgs[i];
+      Value arg;
+      if (originalArg instanceof ConditionalValue cv) {
+        int finalI = i;
+        arg = cv.materialize(this, alloc -> mMemo.argsMemo.result(finalI, TProperty.build(alloc)));
+      } else {
+        arg = simplify((Value) originalArg);
+      }
+      if (arg != originalArg) {
         if (args == originalArgs) {
           args = Arrays.copyOf(args, numArgs);
         }
-        int finalI = i;
-        args[i] =
-            cv.materialize(this, alloc -> mMemo.argsMemo.result(finalI, TProperty.build(alloc)));
+        args[i] = arg;
       }
     }
     if (mMemo.isExlined()) {
@@ -924,7 +948,8 @@ public class CodeGen {
       if (v instanceof ConditionalValue cv) {
         cv.emitStore(this, dst, registerStart, registerEnd);
       } else {
-        emitStore(RValue.toTemplate(v), dst, registerStart, registerEnd);
+        Template src = RValue.toTemplate(simplify(v));
+        emitStore(src, dst, registerStart, registerEnd);
       }
     }
   }
@@ -979,28 +1004,35 @@ public class CodeGen {
   /// Emits a test comparing `index` with each value in `toTest`; if `index` matches, it executes
   /// the blocks emitted by `emitter` for that value. Falls through if none of the values match.
   public void emitSwitch(CodeValue index, Bits toTest, IntConsumer emitter) {
-    if (index instanceof CodeValue.Const) {
-      int i = index.iValue();
-      if (toTest.test(i) && cb.nextIsReachable()) {
-        emitter.accept(i);
+    if (index instanceof Register r) {
+      ValueInfo info = cb.nextInfoResolved(r.index);
+      if (info instanceof CodeValue.Const c) {
+        index = c;
+      } else {
+        toTest.forEach(
+            i -> {
+              if (cb.nextIsReachable()) {
+                FutureBlock next = new FutureBlock();
+                EscapeState savedEscape = escapeState();
+                new TestBlock.IsEq(OpCodeType.INT, r, CodeValue.of(i))
+                    .setBranch(false, next)
+                    .addTo(cb);
+                if (cb.nextIsReachable()) {
+                  emitter.accept(i);
+                  assert !cb.nextIsReachable();
+                }
+                cb.setNext(next);
+                restore(savedEscape);
+              }
+            });
+        return;
       }
-      return;
     }
-    assert index instanceof Register;
-    toTest.forEach(
-        i -> {
-          if (cb.nextIsReachable()) {
-            FutureBlock next = new FutureBlock();
-            new TestBlock.IsEq(OpCodeType.INT, index, CodeValue.of(i))
-                .setBranch(false, next)
-                .addTo(cb);
-            if (cb.nextIsReachable()) {
-              emitter.accept(i);
-              assert !cb.nextIsReachable();
-            }
-            cb.setNext(next);
-          }
-        });
+    // index is a Const
+    int i = index.iValue();
+    if (toTest.test(i) && cb.nextIsReachable()) {
+      emitter.accept(i);
+    }
   }
 
   /// Emits a test comparing `iReg` with each value in `min..max-1`; if `iReg` matches, it executes
@@ -1010,6 +1042,85 @@ public class CodeGen {
     emitSwitch(index, Bits.forRange(min, max - 1), emitter);
     if (cb.nextIsReachable()) {
       emitter.accept(max);
+    }
+  }
+
+  /// Calls `emitter` with each of the union's choices.
+  public void emitSwitchBaseType(Template.Union union, Value.Handler emitter) {
+    // Tagged unions are easy: emitSwitch does just what we need.
+    if (union.tag != null) {
+      emitSwitch(
+          register(union.tag), 0, union.numChoices() - 1, i -> emitCase(union.choice(i), emitter));
+      return;
+    }
+    Register untagged = register(union.untagged);
+    int numLeft = union.numChoices();
+    Template lastFrameChoice = null;
+    // First pass: handle singletons and noncompositionals; leave Frames for the second pass.
+    for (int i = 0; i < union.numChoices(); i++) {
+      Template choice = union.choice(i);
+      if (choice instanceof RefVar.ForFrame) {
+        lastFrameChoice = choice;
+        continue;
+      }
+      if (numLeft == 1) {
+        emitCase(choice, emitter);
+        return;
+      }
+      TestBlock test;
+      if (choice instanceof RefVar rv) {
+        test = new PtrInfo.TestClass(untagged, (BaseType.NonCompositional) rv.baseType);
+      } else {
+        Singleton singleton = (Singleton) ((Template.Constant) choice).value;
+        test = new TestBlock.IsEq(OpCodeType.OBJ, untagged, CodeValue.of(singleton));
+      }
+      emitCase(test, choice, emitter);
+      --numLeft;
+      if (!cb.nextIsReachable()) {
+        return;
+      }
+    }
+    // If there's exactly one frame choice, that must be what we have left.
+    // Otherwise we need to check the layout.
+    if (numLeft > 1) {
+      Register layoutRegister = cb.newRegister(FrameLayout.class);
+      emitSet(layoutRegister, Frame.GET_LAYOUT_OR_REPLACEMENT.result(untagged));
+      for (int i = 0; numLeft > 1; i++) {
+        Template choice = union.choice(i);
+        if (choice instanceof RefVar.ForFrame rv) {
+          emitCase(
+              new PtrInfo.TestLayout(untagged, layoutRegister, rv.frameLayout()), choice, emitter);
+          --numLeft;
+          if (!cb.nextIsReachable()) {
+            return;
+          }
+        }
+      }
+    }
+    emitCase(lastFrameChoice, emitter);
+  }
+
+  /// Adds `test`, and on its `true` branch calls `emitter` with `choice`; the `false` branch falls
+  /// through.
+  private void emitCase(TestBlock test, Template choice, Value.Handler emitter) {
+    FutureBlock next = new FutureBlock();
+    EscapeState savedEscape = escapeState();
+    test.setBranch(false, next).addTo(cb);
+    if (cb.nextIsReachable()) {
+      emitCase(choice, emitter);
+    }
+    cb.setNext(next);
+    restore(savedEscape);
+  }
+
+  /// Calls `emitter` with `choice`. The emitted blocks should not fall through. Escapes if
+  /// `emitter` throws a BuiltinException.
+  private void emitCase(Template choice, Value.Handler emitter) {
+    try {
+      emitter.accept(RValue.fromTemplate(choice));
+      assert !cb.nextIsReachable();
+    } catch (BuiltinException e) {
+      escape();
     }
   }
 

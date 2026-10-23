@@ -216,8 +216,8 @@ public final class CollectionCore {
 
   /// `method keys(wk) (wk is WithKeys or wk is WithKeysMatrix) = keys(wk_)`
   @Core.Method("keys(WithKeys|WithKeysMatrix)")
-  static void keysWithKeys(TState tstate, Value wk, @Fn("keys:1") Caller keys) {
-    tstate.startCall(keys, wk.element(0));
+  static void keysWithKeys(TState tstate, Value wkArg, @Fn("keys:1") Caller keys) {
+    wkArg.withKnownBaseType(tstate, wk -> tstate.startCall(keys, wk.element(0)));
   }
 
   /// ```
@@ -232,21 +232,26 @@ public final class CollectionCore {
   @Core.Method("iterator(WithKeys|WithKeysMatrix, EnumerationKind, Loop, _)")
   static void iteratorWithKeys(
       TState tstate,
-      Value wk,
+      Value wkArg,
       @RC.Singleton Value eKind,
       @RC.In Value loop,
       @RC.In Value initialState,
       @Fn("iterator:4") Caller iterator) {
-    Value inner = wk.element(0);
-    eKind
-        .is(LoopCore.ENUMERATE_VALUES)
-        .test(
-            () ->
-                tstate.startCall(iterator, inner, LoopCore.ENUMERATE_WITH_KEYS, loop, initialState),
-            () -> {
-              Value loop2 = tstate.compound(LoopCore.TRANSFORMED_LOOP, DUPLICATE_KEY, loop);
-              tstate.startCall(iterator, inner, eKind, loop2, initialState);
-            });
+    wkArg.withKnownBaseType(
+        tstate,
+        wk -> {
+          Value inner = wk.element(0);
+          eKind
+              .is(LoopCore.ENUMERATE_VALUES)
+              .test(
+                  () ->
+                      tstate.startCall(
+                          iterator, inner, LoopCore.ENUMERATE_WITH_KEYS, loop, initialState),
+                  () -> {
+                    Value loop2 = tstate.compound(LoopCore.TRANSFORMED_LOOP, DUPLICATE_KEY, loop);
+                    tstate.startCall(iterator, inner, eKind, loop2, initialState);
+                  });
+        });
   }
 
   /// `method at(DuplicateKey, [k, v]) = [k, [k, v]]`
@@ -344,8 +349,10 @@ public final class CollectionCore {
     static final Caller at = new Caller("at:2", "afterAt");
 
     @Core.Method("at(TransformedLambda|TransformedCollection, _)")
-    static void begin(TState tstate, Value tLambda, @RC.In Value x) {
-      tstate.startCall(at, tLambda.element(0), x).saving(tLambda.element(1));
+    static void begin(TState tstate, Value tLambdaArg, @RC.In Value x) {
+      tLambdaArg.withKnownBaseType(
+          tstate,
+          tLambda -> tstate.startCall(at, tLambda.element(0), x).saving(tLambda.element(1)));
     }
 
     @Continuation
@@ -382,16 +389,16 @@ public final class CollectionCore {
   /// `method keys(tc) (tc is TransformedCollection or tc is TransformedMatrix) = keys(tc_.base)`
   /// ```
   @Core.Method("keys(TransformedCollection|TransformedMatrix)")
-  static void keysTransformed(TState tstate, Value tc, @Fn("keys:1") Caller keys) {
-    tstate.startCall(keys, tc.element(0));
+  static void keysTransformed(TState tstate, Value tcArg, @Fn("keys:1") Caller keys) {
+    tcArg.withKnownBaseType(tstate, tc -> tstate.startCall(keys, tc.element(0)));
   }
 
   /// ```
   /// method size(tc) (tc is TransformedCollection or tc is TransformedMatrix) = size(tc_.base)
   /// ```
   @Core.Method("size(TransformedCollection|TransformedMatrix)")
-  static void sizeTransformed(TState tstate, Value tc, @Fn("size:1") Caller size) {
-    tstate.startCall(size, tc.element(0));
+  static void sizeTransformed(TState tstate, Value tcArg, @Fn("size:1") Caller size) {
+    tcArg.withKnownBaseType(tstate, tc -> tstate.startCall(size, tc.element(0)));
   }
 
   /// ```
@@ -409,13 +416,17 @@ public final class CollectionCore {
             + " _)")
     static void begin(
         TState tstate,
-        Value tc,
+        Value tcArg,
         @RC.Singleton Value eKind,
         @RC.In Value loop,
         @RC.In Value initialState) {
-      Value base = tc.element(0);
-      Value step = tc.element(1);
-      tstate.startCall(addLoopStep, step, eKind, loop, initialState).saving(base, eKind);
+      tcArg.withKnownBaseType(
+          tstate,
+          tc -> {
+            Value base = tc.element(0);
+            Value step = tc.element(1);
+            tstate.startCall(addLoopStep, step, eKind, loop, initialState).saving(base, eKind);
+          });
     }
 
     @Continuation
@@ -503,14 +514,19 @@ public final class CollectionCore {
   @Core.Method("iterator(JoinedCollection|JoinedMatrix, EnumerationKind, Loop, _)")
   static void iteratorJoined(
       TState tstate,
-      Value jc,
+      Value jcArg,
       @RC.Singleton Value eKind,
       @RC.In Value loop,
       @RC.In Value initialState,
       @Fn("iterator:4") Caller iterator) {
-    Value lambda = tstate.compound(MATCH_FINDER, jc.element(1), eKind);
-    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
-    tstate.startCall(iterator, jc.element(0), LoopCore.ENUMERATE_ALL_KEYS, loop, initialState);
+    jcArg.withKnownBaseType(
+        tstate,
+        jc -> {
+          Value lambda = tstate.compound(MATCH_FINDER, jc.element(1), eKind);
+          Value transformedLoop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+          tstate.startCall(
+              iterator, jc.element(0), LoopCore.ENUMERATE_ALL_KEYS, transformedLoop, initialState);
+        });
   }
 
   /// ```

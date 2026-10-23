@@ -23,7 +23,6 @@ import java.lang.invoke.VarHandle;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import org.jspecify.annotations.Nullable;
 import org.retrolang.Vm;
 import org.retrolang.code.FutureBlock;
 import org.retrolang.impl.BaseType.SimpleStackEntryType;
@@ -286,7 +285,7 @@ public abstract class VmFunction implements Vm.Function {
     }
 
     @Override
-    @Nullable VmMethod findMethod(Object... args) throws MultipleMethodsException {
+    VmMethod findMethod(Object... args) throws MultipleMethodsException {
       // First look for a preferred method...
       VmMethod m = findMethod(args, false);
       // ... and if that fails, look for a default method.
@@ -350,25 +349,23 @@ public abstract class VmFunction implements Vm.Function {
     @Override
     void emitCall(CodeGen codeGen, MethodMemo callerMemo, CallSite callSite, Object[] args) {
       MethodCollector matches = new MethodCollector();
-      // First get the methods that we have memos for, i.e. that have been chosen at least once by
-      // this CallMemo
+      // First get all methods that could potentially match these args; we will only generate code
+      // for the ones that have a corresponding entry in the CallMemo, but we have to verify that
+      // there aren't others that match (and escape if they do).
+      matches.addMatching(methods, args);
+      if (argKeys != null) {
+        matches.addFromArgKeys(argKeys, args);
+      }
+      // Then use the CallMemo to fill in the MethodMemo and count for the methods that have
+      // actually been called.
       synchronized (codeGen.tstate().scope().memoMerger) {
         CallMemo callMemo = callerMemo.memoForCall(callSite);
         if (callMemo != null) {
           callMemo.forEachChild(matches::addFromCallMemo);
         }
       }
-      // Then find any other methods that could potentially match these args; we won't generate
-      // code for them, but we have to verify that they don't match (and escape if they do).
-      // Note that these will always be inserted after the methods with memos (while keeping all the
-      // preferred methods before all the default methods).
-      matches.addMatching(methods, args);
-      if (argKeys != null) {
-        matches.addFromArgKeys(argKeys, args);
-      }
-      // Any methods added from the CallMemo should also have been found in the second step, and had
-      // their Condition filled in.
-      assert matches.stream().allMatch(mm -> mm.condition != null);
+      // Then sort by call count, while keeping non-default methods before default methods.
+      matches.sort(MatchingMethod::compare);
       // Now emit instructions to identify and invoke the correct method for these args
       CodeGen.EscapeState savedEscape = codeGen.escapeState();
       for (int i = 0; i < matches.size(); i++) {
@@ -479,19 +476,27 @@ public abstract class VmFunction implements Vm.Function {
   /// Information about a method that might match at a CallSite for which we are generating code.
   static class MatchingMethod {
     final VmMethod method;
-    final MethodMemo memo;
+    MethodMemo memo;
 
     /// The number of calls we've seen to this method at this site, as recorded in the CallMemo.
-    final int count;
+    int count;
 
     /// This method is only applicable if `condition` is true.
-    Condition condition;
+    final Condition condition;
 
-    MatchingMethod(VmMethod method, MethodMemo memo, int count) {
-      // condition will be set later
+    MatchingMethod(VmMethod method, Condition condition) {
       this.method = method;
-      this.memo = memo;
-      this.count = count;
+      this.condition = condition;
+    }
+
+    static int compare(MatchingMethod x, MatchingMethod y) {
+      if (x.method.isDefault != y.method.isDefault) {
+        // default methods come after non-default methods
+        return x.method.isDefault ? 1 : -1;
+      } else {
+        // methods are in descending order of `count`
+        return Integer.compare(y.count, x.count);
+      }
     }
   }
 
@@ -502,25 +507,16 @@ public abstract class VmFunction implements Vm.Function {
     /// default methods. Within each group methods are sorted by count (decreasing).
     int numPreferred;
 
-    /// Creates and inserts a new MatchingMethod. We'll fill in the Condition later.
+    /// If this method is in our list, set its memo and count.
     void addFromCallMemo(MethodMemo memo, int count) {
-      VmMethod method = memo.method();
-      MatchingMethod mm = new MatchingMethod(method, memo, count);
-      // Entries in [start, pos) have the same isDefault status as this method
-      int pos;
-      int start;
-      if (method.isDefault) {
-        start = numPreferred;
-        pos = size();
-      } else {
-        start = 0;
-        pos = numPreferred++;
+      MatchingMethod mm = find(memo.method());
+      // It's possible for the CallMemo to include methods that don't apply with the current args
+      // (e.g. when unrolling a loop); we can just ignore those.
+      if (mm != null) {
+        assert mm.memo == null;
+        mm.memo = memo;
+        mm.count = count;
       }
-      // Scan from the back of the list until we find the right place to insert it.
-      while (pos > start && get(pos - 1).count < count) {
-        --pos;
-      }
-      add(pos, mm);
     }
 
     /// Ensure that we have a complete MatchingMethod (i.e. including [MatchingMethod#condition])
@@ -530,18 +526,13 @@ public abstract class VmFunction implements Vm.Function {
         for (VmMethod method : methods) {
           Condition condition = method.predicate.test(args);
           if (condition != Condition.FALSE) {
-            MatchingMethod mm = findOrInsert(method);
-            // It's possible that we'll set the condition more than once (due to ArgKeys), but
-            // we should construct the same Condition each time.
-            mm.condition = condition;
+            findOrInsert(method, condition);
           }
         }
       }
     }
 
-    /// If there is already a MatchingMethod for the given method, return it; otherwise create a new
-    /// one (with null MethodMemo and zero count).
-    private MatchingMethod findOrInsert(VmMethod method) {
+    private MatchingMethod find(VmMethod method) {
       // We could just search the subrange before or after numPreferred based on method.isDefault,
       // but my guess is that wouldn't actually be faster.
       for (MatchingMethod mm : this) {
@@ -549,14 +540,22 @@ public abstract class VmFunction implements Vm.Function {
           return mm;
         }
       }
-      MatchingMethod mm = new MatchingMethod(method, null, 0);
-      // Since count is zero it's easy to insert this in the right place.
-      if (method.isDefault) {
-        add(mm);
-      } else {
-        add(numPreferred++, mm);
+      return null;
+    }
+
+    /// If there is already a MatchingMethod for the given method, return it; otherwise create a new
+    /// one (with null MethodMemo and zero count).
+    private void findOrInsert(VmMethod method, Condition condition) {
+      MatchingMethod mm = find(method);
+      // If mm already exists it should have the same Condition, but that isn't easy to check.
+      if (mm == null) {
+        mm = new MatchingMethod(method, condition);
+        if (method.isDefault) {
+          add(mm);
+        } else {
+          add(numPreferred++, mm);
+        }
       }
-      return mm;
     }
 
     /// Ensure that we have complete MatchingMethods for all the methods reachable from these

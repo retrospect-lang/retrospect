@@ -131,6 +131,14 @@ class Destination implements ResultsInfo {
     return new Destination(newState);
   }
 
+  /// Returns the values that will be passed to this Destination.
+  ///
+  /// If this Destination was returned from [#createChild], the result may include additional values
+  /// from the parent; only the first [#size] elements should be used.
+  Value[] values() {
+    return state.values();
+  }
+
   /// The implementation of ResultInfo just delegates to the State.
   @Override
   public <T> T result(int resultNum, TProperty<T> property) {
@@ -189,7 +197,7 @@ class Destination implements ResultsInfo {
     }
     codeGen.cb.setNext(links);
     codeGen.restore(escape);
-    Value[] result = state.values();
+    Value[] result = (state instanceof ForChild) ? null : state.values();
     links = null;
     return result;
   }
@@ -347,8 +355,8 @@ class Destination implements ResultsInfo {
     }
 
     @Override
-    final Value[] values() {
-      return (this instanceof ForChild) ? null : savedValues;
+    Value[] values() {
+      return savedValues;
     }
   }
 
@@ -474,7 +482,7 @@ class Destination implements ResultsInfo {
       if (extraSize != 0) {
         // Append to any already-saved values
         if (savedValues != null) {
-          // Just append them to the savedValues
+          // Just append them to the savedValues, which we're about to copy into the parent
           savedValues = Arrays.copyOf(savedValues, parentSize);
           extras.getElements(extraSize, savedValues, prefixSize);
         } else {
@@ -503,6 +511,11 @@ class Destination implements ResultsInfo {
     @Override
     int size() {
       return prefixSize;
+    }
+
+    @Override
+    Value[] values() {
+      return (savedValues != null) ? savedValues : parent.root().values();
     }
 
     @Override

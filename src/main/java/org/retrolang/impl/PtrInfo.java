@@ -339,10 +339,6 @@ public interface PtrInfo extends ValueInfo {
     }
   }
 
-  private static boolean isFrame(Template t) {
-    return (t instanceof Template.RefVar rv) && rv.baseType.usesFrames();
-  }
-
   /// A condition that is true if a register holding an untagged union is one of a specified subset
   /// of the union's choices.
   static class TypeTest extends Condition {
@@ -363,7 +359,9 @@ public interface PtrInfo extends ValueInfo {
     public void addTest(CodeGen codeGen, FutureBlock elseBranch) {
       FutureBlock pass = new FutureBlock();
       // Split the choices we're checking for into frames and non-frames
-      Bits frames = Bits.fromPredicate(union.numChoices() - 1, i -> isFrame(union.choice(i)));
+      Bits frames =
+          Bits.fromPredicate(
+              union.numChoices() - 1, i -> union.choice(i) instanceof Template.RefVar.ForFrame);
       Bits frameCheck = Bits.Op.INTERSECTION.apply(bits, frames);
       Bits nonFrameCheck = Bits.Op.DIFFERENCE.apply(bits, frames);
       if (nonFrameCheck.count() + frames.count() < union.numChoices()) {

@@ -319,7 +319,11 @@ class StackEntryBlock extends Block.NonTerminal {
       NumVar tag;
       RefVar untagged;
       if (union.tag == null) {
-        untagged = (RefVar) allocate(union.untagged, vars, alloc);
+        Template untaggedTemplate = allocate(union.untagged, vars, alloc);
+        if (untaggedTemplate instanceof Template.Constant c) {
+          return c;
+        }
+        untagged = (RefVar) untaggedTemplate;
         tag = null;
       } else {
         Template tagTemplate = allocate(union.tag, vars, alloc);
@@ -347,6 +351,9 @@ class StackEntryBlock extends Block.NonTerminal {
     // Now see if we've already allocated a place to store that register
     Template result = vars.get(index);
     if (result != null) {
+      if (t instanceof RefVar rv) {
+        return rv.withIndex(((RefVar) result).index);
+      }
       return result;
     }
     // Allocate a place to store the register in this frame

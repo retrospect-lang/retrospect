@@ -248,7 +248,7 @@ public class RangeCore {
     Value min = range.peekElement(0);
     Value max = range.peekElement(1);
     Err.RANGE_IS_UNBOUNDED.when(min.is(Core.NONE).or(max.is(Core.NONE)));
-    if (NumValue.equals(min, 1)) {
+    if ((min instanceof NumValue) && NumValue.equals(min, 1)) {
       return max.makeStorable(tstate);
     }
     if (!(min instanceof RValue || max instanceof RValue)) {

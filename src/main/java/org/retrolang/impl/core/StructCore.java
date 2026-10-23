@@ -49,18 +49,22 @@ public class StructCore {
 
   /// `method at(Struct struct, String key) = ...`
   @Core.Method("at(Struct|StructKeys, String)")
-  static Value atStruct(TState tstate, Value struct, Value key) throws BuiltinException {
-    BaseType baseType = struct.baseType();
-    StructType structType = StructType.from(baseType);
-    Value index = StructType.keyToIndex.call(tstate, structType, key);
-    Condition indexValid = Condition.numericLessOrEq(NumValue.ZERO, index);
-    if (structType == baseType) {
-      Err.INVALID_ARGUMENT.unless(indexValid);
-      return ValueUtil.element(tstate, struct, index, 0);
-    } else {
-      // Must be a StructKeys
-      return indexValid.choose(() -> addRef(key), () -> Core.ABSENT);
-    }
+  static void atStruct(TState tstate, Value structArg, Value key) throws BuiltinException {
+    structArg.withKnownBaseTypeExcept(
+        tstate,
+        struct -> {
+          BaseType baseType = struct.baseType();
+          StructType structType = StructType.from(baseType);
+          Value index = StructType.keyToIndex.call(tstate, structType, key);
+          Condition indexValid = Condition.numericLessOrEq(NumValue.ZERO, index);
+          if (structType == baseType) {
+            Err.INVALID_ARGUMENT.unless(indexValid);
+            tstate.setResult(ValueUtil.element(tstate, struct, index, 0));
+          } else {
+            // Must be a StructKeys
+            tstate.setResult(indexValid.choose(() -> addRef(key), () -> Core.ABSENT));
+          }
+        });
   }
 
   /// ```
@@ -73,16 +77,21 @@ public class StructCore {
   @Core.Method("iterator(Struct|StructKeys, EnumerationKind, Loop, _)")
   static void iteratorStruct(
       TState tstate,
-      @RC.In Value struct,
+      @RC.In Value structArg,
       @RC.Singleton Value eKind,
       @RC.In Value loop,
       @RC.In Value initialState) {
-    Value lambda = tstate.compound(STRUCT_ACCESSOR, struct, eKind);
-    loop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
-    StructType structType = StructType.from(struct.baseType());
-    Value size = NumValue.of(structType.size(), tstate);
-    Value iterator = tstate.compound(RangeCore.SIMPLE_RANGE_ITERATOR, NumValue.NEGATIVE_ONE, size);
-    tstate.setResults(iterator, loop, initialState);
+    Value lambda = tstate.compound(STRUCT_ACCESSOR, structArg, eKind);
+    Value transformedLoop = tstate.compound(LoopCore.TRANSFORMED_LOOP, lambda, loop);
+    structArg.withKnownBaseType(
+        tstate,
+        struct -> {
+          StructType structType = StructType.from(struct.baseType());
+          Value size = NumValue.of(structType.size(), tstate);
+          Value iterator =
+              tstate.compound(RangeCore.SIMPLE_RANGE_ITERATOR, NumValue.NEGATIVE_ONE, size);
+          tstate.setResults(iterator, transformedLoop, initialState);
+        });
   }
 
   /// ```
@@ -96,50 +105,64 @@ public class StructCore {
   ///   }
   /// ```
   @Core.Method("at(StructAccessor, _)")
-  static Value atStructAccessor(TState tstate, Value accessor, Value index)
-      throws BuiltinException {
-    Value struct = accessor.peekElement(0);
+  static void atStructAccessor(TState tstate, Value accessor, Value index) throws BuiltinException {
+    Value structElement = accessor.peekElement(0);
     Value eKind = accessor.peekElement(1);
-    BaseType baseType = struct.baseType();
-    StructType structType = StructType.from(baseType);
-    if (structType == baseType) {
-      Value v = ValueUtil.element(tstate, struct, index, 0);
-      return eKind
-          .is(LoopCore.ENUMERATE_VALUES)
-          .or(v.is(Core.ABSENT).and(eKind.is(LoopCore.ENUMERATE_WITH_KEYS)))
-          .choose(
-              () -> v,
-              () -> {
-                Value key = StructType.indexToKey.call(tstate, structType, index);
-                return tstate.arrayValue(key, v);
-              });
-    } else {
-      Value v = StructType.indexToKey.call(tstate, structType, index);
-      return eKind.is(LoopCore.ENUMERATE_VALUES).choose(() -> v, () -> tstate.arrayValue(v, v));
-    }
+    Value i = index.verifyInt(Err.INVALID_ARGUMENT);
+    structElement.withKnownBaseType(
+        tstate,
+        struct -> {
+          BaseType baseType = struct.baseType();
+          StructType structType = StructType.from(baseType);
+          if (structType == baseType) {
+            Value v = ValueUtil.element(tstate, struct, i, 0);
+            eKind
+                .is(LoopCore.ENUMERATE_VALUES)
+                .or(v.is(Core.ABSENT).and(eKind.is(LoopCore.ENUMERATE_WITH_KEYS)))
+                .test(
+                    () -> tstate.setResult(v),
+                    () -> {
+                      Value key = StructType.indexToKey.call(tstate, structType, i);
+                      tstate.setResult(tstate.arrayValue(key, v));
+                    });
+          } else {
+            Value v = StructType.indexToKey.call(tstate, structType, i);
+            eKind
+                .is(LoopCore.ENUMERATE_VALUES)
+                .test(() -> tstate.setResult(v), () -> tstate.setResult(tstate.arrayValue(v, v)));
+          }
+        });
   }
 
   /// `method replaceElement(Struct struct, String key, v) = ...`
   @Core.Method("replaceElement(Struct, String, _)")
-  static Value replaceElementStruct(TState tstate, @RC.In Value struct, Value key, @RC.In Value v)
+  static void replaceElementStruct(TState tstate, @RC.In Value structArg, Value key, @RC.In Value v)
       throws BuiltinException {
-    StructType structType = (StructType) struct.baseType();
-    Value index = StructType.keyToIndex.call(tstate, structType, key);
-    Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, index));
-    return ValueUtil.replaceElement(tstate, struct, index, 0, v);
+    structArg.withKnownBaseTypeExcept(
+        tstate,
+        struct -> {
+          StructType structType = (StructType) struct.baseType();
+          Value index = StructType.keyToIndex.call(tstate, structType, key);
+          Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, index));
+          tstate.setResult(ValueUtil.replaceElement(tstate, struct, index, 0, v));
+        });
   }
 
   /// `method startUpdate(Struct struct, String key) = ...`
   @Core.Method("startUpdate(Struct, String)")
-  static void startUpdateStruct(TState tstate, @RC.In Value struct, Value key)
+  static void startUpdateStruct(TState tstate, @RC.In Value structArg, Value key)
       throws BuiltinException {
-    StructType structType = (StructType) struct.baseType();
-    Value index = StructType.keyToIndex.call(tstate, structType, key);
-    Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, index));
-    // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
-    Value element = ValueUtil.element(tstate, struct, index, 0);
-    struct = ValueUtil.replaceElement(tstate, struct, index, 0, Core.TO_BE_SET);
-    tstate.setResults(element, tstate.compound(STRUCT_UPDATER, struct, index));
+    structArg.withKnownBaseTypeExcept(
+        tstate,
+        struct -> {
+          StructType structType = (StructType) struct.baseType();
+          Value index = StructType.keyToIndex.call(tstate, structType, key);
+          Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, index));
+          // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
+          Value element = ValueUtil.element(tstate, struct, index, 0);
+          struct = ValueUtil.replaceElement(tstate, struct, index, 0, Core.TO_BE_SET);
+          tstate.setResults(element, tstate.compound(STRUCT_UPDATER, struct, index));
+        });
   }
 
   /// `method at(StructUpdater updater, newElement) = ...`
@@ -153,22 +176,28 @@ public class StructCore {
 
   /// `method keys(Struct updater) = ...`
   @Core.Method("keys(Struct|StructKeys)")
-  static Value keysStruct(Value struct) {
-    return StructType.from(struct.baseType()).keySet;
+  static void keysStruct(TState tstate, Value structArg) {
+    structArg.withKnownBaseType(
+        tstate, struct -> tstate.setResult(StructType.from(struct.baseType()).keySet));
   }
 
   /// `method new(StructKeys keys, initialValue) = ...`
   @Core.Method("new(StructKeys, _)")
-  static Value newStruct(TState tstate, Value keys, Value initial) {
-    StructType structType = StructType.from(keys.baseType());
-    int size = structType.size();
-    if (size == 0) {
-      return structType.asValue();
-    }
-    Object[] elements = tstate.allocObjectArray(size);
-    Arrays.fill(elements, 0, size, initial);
-    RefCounted.addRef(initial, size);
-    return tstate.asCompoundValue(structType, elements);
+  static void newStruct(TState tstate, Value keysArg, Value initial) {
+    keysArg.withKnownBaseType(
+        tstate,
+        keys -> {
+          StructType structType = StructType.from(keys.baseType());
+          int size = structType.size();
+          if (size == 0) {
+            tstate.setResult(structType.asValue());
+          } else {
+            Object[] elements = tstate.allocObjectArray(size);
+            Arrays.fill(elements, 0, size, initial);
+            RefCounted.addRef(initial, size);
+            tstate.setResult(tstate.asCompoundValue(structType, elements));
+          }
+        });
   }
 
   private StructCore() {}

@@ -1101,7 +1101,7 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
 - 17: I6 ← 0;
   18: I7 ← 1;
   19: I8 ← Frame1i2x.i0(X4);
-= 20: test I8 < I7; T:→ 42
+= 20: test I8 < I7; T:→ 43
   21: I9 ← Math.addExact(I7, 1); ArithmeticException:→ 117
   22: test Frame1i2x.i0(X3) < I7; T:→ 28
   23: test I7 < 1; T:→ 117
@@ -1109,7 +1109,7 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
   25: L10 ← lAdd(Integer.toUnsignedLong(int[](Frame1i2x.x0(X3), iShl(iSub(I7, 1), 2))), Integer.toUnsignedLong(I6));
   26: test toInt(lShr(L10, 32)) == 0; F:→ 117
   27: I10 ← toInt(L10); → 30
-- 28: test Integer.toUnsignedLong(I6) == 0; T:→ 52
+- 28: test Integer.toUnsignedLong(I6) == 0; T:→ 42
   29: I10 ← I6;
 - 30: test Frame1i2x.i0(X4) < I7; T:→ 117
   31: test Frame1i2x.i0(X4) < I7; T:→ 117
@@ -1123,17 +1123,17 @@ add_x4(BigInt({mag: x1:*[]@xxxx, signum: i2}), BigInt({mag: x3:*[]@xxxx, signum:
   39: test toInt(lShr(L6, 32)) == 0; F:→ 113
   40: I6 ← toInt(L6);
   41: I7 ← I9; → 20
-- 42: test Integer.toUnsignedLong(I6) == 0; T:→ 53
-  43: test I6 == 1; F:→ 117
-  44: I9 ← Frame1i2x.i0(X4);
-  45: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X4, iAdd(I9, 1)) == 0; T:→ 117
-  46: dropRef{X3};
-  47: X3 ← removeRange*[]U32(i0)@xxxx(X0, X4, I9, 0, 1);
-  48: test I9 < Frame1i2x.i0(X3); F:→ 109
-  49: dropRef{X1};
-  50: setInt[](Frame1i2x.x0(X3), iShl(I9, 2), 1);
-  51: X1 ← X3; → 94
-- 52: test I6 == 0; F:→ 117
+- 42: test I6 == 0; T:→ 53, F:→ 117
+- 43: test Integer.toUnsignedLong(I6) == 0; T:→ 53
+  44: test I6 == 1; F:→ 117
+  45: I9 ← Frame1i2x.i0(X4);
+  46: test TState.reserveForChange(X0, *[]U32(i0)@xxxx, X4, iAdd(I9, 1)) == 0; T:→ 117
+  47: dropRef{X3};
+  48: X3 ← removeRange*[]U32(i0)@xxxx(X0, X4, I9, 0, 1);
+  49: test I9 < Frame1i2x.i0(X3); F:→ 109
+  50: dropRef{X1};
+  51: setInt[](Frame1i2x.x0(X3), iShl(I9, 2), 1);
+  52: X1 ← X3; → 94
 - 53: dropRef{X1, X3};
   54: X1 ← X4; → 94
 - 55: test I2 == 1; F:→ 122

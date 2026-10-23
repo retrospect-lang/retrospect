@@ -17,6 +17,7 @@
 package org.retrolang.impl;
 
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
+import java.util.function.Consumer;
 import java.util.stream.IntStream;
 import org.retrolang.code.Op;
 import org.retrolang.util.ArrayUtil;
@@ -195,6 +196,22 @@ public interface Value {
   /// Returns this Value as a transient Integer or throws the specified Err.
   default Value verifyInt(Err err) throws Err.BuiltinException {
     return NumValue.verifyInt(this, err);
+  }
+
+  /// If this is an RValue with a union template, [#baseType] will error; to avoid that, call this
+  /// method and only call [#baseType] on the Value passed to `consumer`.
+  default void withKnownBaseType(TState tstate, Consumer<Value> consumer) {
+    consumer.accept(this);
+  }
+
+  /// A variant of [#withKnownBaseType] that can throw a BuiltinException.
+  default void withKnownBaseTypeExcept(TState tstate, Handler handler) throws Err.BuiltinException {
+    handler.accept(this);
+  }
+
+  /// Like `Consumer<Value>`, except that it can throw a BuiltinException.
+  interface Handler {
+    void accept(Value v) throws Err.BuiltinException;
   }
 
   /// Values aren't generally required to be hashable, but Templates are, and constant Templates

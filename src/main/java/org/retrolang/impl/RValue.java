@@ -17,6 +17,7 @@
 package org.retrolang.impl;
 
 import java.util.Arrays;
+import java.util.function.Consumer;
 import java.util.function.IntFunction;
 import java.util.function.Predicate;
 import org.retrolang.code.CodeValue;
@@ -303,6 +304,24 @@ public class RValue implements Value {
         rv.frameLayout()
             .emitReplaceElement(codeGen, codeGen.register(rv), CodeValue.of(index), newElement);
     return RValue.fromTemplate(rv.withIndex(result.index));
+  }
+
+  @Override
+  public void withKnownBaseType(TState tstate, Consumer<Value> consumer) {
+    if (template instanceof Union union) {
+      tstate.codeGen().emitSwitchBaseType(union, consumer::accept);
+    } else {
+      consumer.accept(this);
+    }
+  }
+
+  @Override
+  public void withKnownBaseTypeExcept(TState tstate, Handler handler) throws Err.BuiltinException {
+    if (template instanceof Union union) {
+      tstate.codeGen().emitSwitchBaseType(union, handler);
+    } else {
+      handler.accept(this);
+    }
   }
 
   /// Instances of SafeExplorer are created by calls ot [#exploreSafely].

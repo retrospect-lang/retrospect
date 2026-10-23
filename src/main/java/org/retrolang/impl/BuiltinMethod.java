@@ -354,7 +354,7 @@ public abstract class BuiltinMethod {
   }
 
   /// Used to create a stack entry if we unwind during the execution of a Caller's call.
-  private static class DuringCall extends SimpleStackEntryType {
+  static class DuringCall extends SimpleStackEntryType {
     final Caller caller;
 
     DuringCall(String where, Caller caller) {

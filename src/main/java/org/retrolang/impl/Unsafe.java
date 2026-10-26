@@ -33,12 +33,6 @@ class Unsafe {
   private static final sun.misc.Unsafe UNSAFE;
   private static final CodeValue UNSAFE_AS_CODE_VALUE;
 
-  /**
-   * The size of an array header (or equivalently, the offset of the first element from the array
-   * pointer).
-   */
-  static final long ARRAY_BASE;
-
   static {
     // They don't make it easy to get to the actual Unsafe instance.
     try {
@@ -48,12 +42,7 @@ class Unsafe {
     } catch (Exception e) {
       throw new AssertionError(e);
     }
-    ARRAY_BASE = sun.misc.Unsafe.ARRAY_LONG_BASE_OFFSET;
     // Sanity check some assumptions made by the rest of the code.
-    assert ARRAY_BASE == sun.misc.Unsafe.ARRAY_BYTE_BASE_OFFSET;
-    assert ARRAY_BASE == sun.misc.Unsafe.ARRAY_INT_BASE_OFFSET;
-    assert ARRAY_BASE == sun.misc.Unsafe.ARRAY_DOUBLE_BASE_OFFSET;
-    assert ARRAY_BASE == sun.misc.Unsafe.ARRAY_OBJECT_BASE_OFFSET;
     assert sun.misc.Unsafe.ARRAY_BYTE_INDEX_SCALE == SizeOf.BYTE;
     assert sun.misc.Unsafe.ARRAY_INT_INDEX_SCALE == SizeOf.INT;
     assert sun.misc.Unsafe.ARRAY_LONG_INDEX_SCALE == SizeOf.LONG;

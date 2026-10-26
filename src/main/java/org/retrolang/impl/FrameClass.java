@@ -199,10 +199,6 @@ class FrameClass {
     } catch (NoSuchFieldException e) {
       throw new AssertionError(e);
     }
-    // The first int field is expected to *not* be 8-byte-aligned.
-    // See RecordLayout.VarAllocator.newForRecordLayout().
-    Preconditions.checkState((intBase & 7) == 4);
-
     // intFields.get(i) will have offset intBase + 4 * i
     // ptrFields.get(i) will have offset ptrBase + 4 * i
     List<Field> intFields = new ArrayList<>();
@@ -235,6 +231,8 @@ class FrameClass {
     }
     // There should be an odd number of int fields and an even (but non-zero) number of pointer
     // fields.
+    // TODO: Putting an odd number of int fields in every Frame made sense with 12-byte object
+    // headers, but with 8-byte headers we're wasting 4 bytes in every object.
     Preconditions.checkArgument((nInts & 1) == 1 && nPtrs != 0 && (nPtrs & 1) == 0);
     // The int fields should all be contiguous, as should the pointer fields.
     Preconditions.checkArgument(intFields.size() == nInts);
@@ -248,7 +246,9 @@ class FrameClass {
         Math.toIntExact(
             SizeOf.object(Frame.BASE_SIZE + nPtrs * (long) SizeOf.PTR + nInts * (long) SizeOf.INT));
     Preconditions.checkArgument(
-        byteSize == Math.max(intBase + nInts * SizeOf.INT, ptrBase + nPtrs * SizeOf.PTR));
+        byteSize
+            == SizeOf.roundedAllocSize(
+                Math.max(intBase + nInts * SizeOf.INT, ptrBase + nPtrs * SizeOf.PTR)));
     this.byteSize = byteSize;
 
     ImmutableList.Builder<Op> getIntField = ImmutableList.builder();

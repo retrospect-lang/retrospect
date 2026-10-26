@@ -772,9 +772,14 @@ public class RecordLayout extends FrameLayout {
     /**
      * Returns a new VarAllocator appropriate for use with RecordLayout frames.
      *
-     * <p>With the current layout of Frame objects (12-byte Java object header and two 4-byte
-     * fields, refCnt and layout) the first byte we allocate is going to be 4-byte aligned but not
-     * 8-byte aligned, so the offset will give us properly-aligned doubles.
+     * <p>With the current layout of Frame objects (two 4-byte fields, refCnt and layout) on older
+     * JVMs (12-byte Java object header) the first byte we allocate is going to be 4-byte aligned
+     * but not 8-byte aligned, so the offset will give us properly-aligned doubles.
+     *
+     * <p>But newer JVMs (with JEP 519) reduce the header size to 8 bytes, which throws off this
+     * assumption. We'll probably get better performance for loading/storing doubles and save an
+     * average of 2 bytes per object if we adapt to that, but doing so would make test output
+     * platform-dependent so we haven't done it yet.
      */
     static VarAllocator newForRecordLayout() {
       return newWithOffsetDoubles();

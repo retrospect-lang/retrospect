@@ -49,10 +49,18 @@ public class SizeOf {
   /** The number of bytes required for a double. */
   public static final int DOUBLE = 8;
 
-  /** The number of additional bytes stored with a non-array object. */
+  /**
+   * The number of additional bytes stored with a non-array object.
+   *
+   * <p>In some versions of Java this is now only 8.
+   */
   public static final int OBJECT_HEADER = 12;
 
-  /** The number of additional bytes stored with an array object. */
+  /**
+   * The number of additional bytes stored with an array object.
+   *
+   * <p>In some versions of Java, for some types of arrays, this is now only 12.
+   */
   public static final int ARRAY_HEADER = 16;
 
   /** Rounds up to the nearest multiple of 8, the minimum unit of Java memory allocation. */

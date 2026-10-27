@@ -179,6 +179,7 @@ class CopyPlan {
           yield true;
         }
         case VERIFY_NUM -> {
+          assert !varSource.numVarsMayBeUninitialized();
           NumVar srcVar = (NumVar) src;
           if (srcVar.encoding == NumEncoding.FLOAT64) {
             yield NumValue.equals(dst, varSource.getD(srcVar.index));
@@ -513,6 +514,9 @@ class CopyPlan {
       NumVar tag = union.tag;
       if (tag != null) {
         choiceIndex = tag.toInt(src);
+        if ((choiceIndex < 0 || choiceIndex >= choices.length) && src.numVarsMayBeUninitialized()) {
+          return true;
+        }
       } else {
         Value v = union.untagged.peekValue(src);
         choiceIndex = union.indexOf(v.baseType().sortOrder);

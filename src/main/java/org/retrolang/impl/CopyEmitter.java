@@ -58,6 +58,15 @@ class CopyEmitter {
     return true;
   }
 
+  /// Determines the desired behavior if a Union tag is out-of-range or an untagged Union is null.
+  /// If false the copy should fail; if true the corresponding destination variables can be left
+  /// uninitialized.
+  ///
+  /// The default implementation returns false.
+  boolean srcVarsMayBeUninitialized() {
+    return false;
+  }
+
   /// Emits blocks that will perform the copy, or branch to `onFail` if the copy fails.
   final void emit(CodeGen codeGen, CopyPlan plan, FutureBlock onFail) {
     if (plan.isFail()) {
@@ -123,6 +132,7 @@ class CopyEmitter {
               setDstVar(codeGen, (Template) basic.dst, CodeValue.of(src));
             }
             case VERIFY_NUM, VERIFY_REF -> {
+              assert !srcVarsMayBeUninitialized();
               CodeValue src = getSrcVar(codeGen, (Template) basic.src);
               Value v = (Value) basic.dst;
               if (basic.type == StepType.VERIFY_NUM) {
@@ -212,7 +222,7 @@ class CopyEmitter {
               ++numEmpty;
             } else {
               FutureBlock tryNext = new FutureBlock();
-              if (i == n - 1 && numFail == 0 && numEmpty == 0) {
+              if (i == n - 1 && numFail == 0 && numEmpty == 0 && !srcVarsMayBeUninitialized()) {
                 // If this is the last choice, and we haven't skipped any empty or fail choices,
                 // we can skip the test.
               } else {
@@ -236,7 +246,9 @@ class CopyEmitter {
               }
             }
           }
-          if (numEmpty == 0) {
+          if (srcVarsMayBeUninitialized()) {
+            // Treat fail as empty
+          } else if (numEmpty == 0) {
             // Any remaining cases are fail
             codeGen.cb.branchTo(onFail);
           } else if (codeGen.cb.nextIsReachable() && (numFail != 0 || !hasTag)) {

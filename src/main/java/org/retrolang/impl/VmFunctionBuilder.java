@@ -225,7 +225,8 @@ public abstract class VmFunctionBuilder {
     public void emit(CodeGen codeGen, ResultsInfo results, MethodMemo mMemo, Object[] args) {
       CodeValue[] codeValues = new CodeValue[op.argTypes.size()];
       Arrays.setAll(codeValues, i -> codeGen.asCodeValue((Value) args[i]));
-      codeGen.setResultWithNaNCheck(op.result(codeValues));
+      // If the op call can be simplified to one of its arguments, we can skip the NaN check.
+      codeGen.setResults(codeGen.checkForNaN(op.result(codeValues), true));
     }
 
     @Override

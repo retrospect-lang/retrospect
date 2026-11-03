@@ -22,6 +22,7 @@ import org.retrolang.code.CodeBuilder;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.FutureBlock;
+import org.retrolang.code.Op;
 import org.retrolang.code.Register;
 import org.retrolang.code.TestBlock;
 import org.retrolang.code.TestBlock.IsEq;
@@ -230,10 +231,22 @@ public abstract class Condition {
   /// Returns a Condition that is implemented by emitting the given TestBlock (since [#addTest] may
   /// be called more than once, we need a TestBlock supplier).
   public static Condition fromTest(Supplier<TestBlock> test) {
+    return fromTest(test, false);
+  }
+
+  /// Returns a Condition that is implemented by emitting the given TestBlock (since [#addTest] may
+  /// be called more than once, we need a TestBlock supplier).
+  public static Condition fromTestInverted(Supplier<TestBlock> test) {
+    return fromTest(test, true);
+  }
+
+  /// Returns a Condition that is implemented by emitting the given TestBlock (since [#addTest] may
+  /// be called more than once, we need a TestBlock supplier).
+  private static Condition fromTest(Supplier<TestBlock> test, boolean invert) {
     return new Condition() {
       @Override
       public void addTest(CodeGen codeGen, FutureBlock elseBranch) {
-        test.get().setBranch(false, elseBranch).addTo(codeGen.cb);
+        test.get().setBranch(invert, elseBranch).addTo(codeGen.cb);
       }
     };
   }
@@ -324,6 +337,24 @@ public abstract class Condition {
       return Condition.of(v1.dValue() == v2.dValue());
     }
     return fromTest(() -> new IsEq(OpCodeType.DOUBLE, v1, v2));
+  }
+
+  static final Op DOUBLE_IS_NAN_OP = Op.forMethod(Double.class, "isNaN", double.class).build();
+  static final Op FLOAT_IS_NAN_OP = Op.forMethod(Float.class, "isNaN", float.class).build();
+
+  /// Returns a Condition that is true if `v` is NaN.
+  public static Condition isNaN(CodeValue v) {
+    Class<?> type = v.type();
+    Op op;
+    if (type == double.class) {
+      op = DOUBLE_IS_NAN_OP;
+    } else if (type == float.class) {
+      op = FLOAT_IS_NAN_OP;
+    } else {
+      assert type == int.class || type == long.class;
+      return FALSE;
+    }
+    return fromTestInverted(() -> TestBlock.isFalse(op.result(v)));
   }
 
   /// Returns a Condition that is true if `v` is null.
@@ -574,7 +605,7 @@ public abstract class Condition {
   public static Condition isNotShared(Value v) {
     if (v instanceof RValue) {
       Register r = TState.get().codeGen().register(v);
-      return fromTest(() -> isSharedTest(r)).not();
+      return fromTestInverted(() -> isSharedTest(r));
     }
     return Condition.of(RefCounted.isNotShared(v));
   }

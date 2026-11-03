@@ -27,7 +27,6 @@ import java.util.function.LongBinaryOperator;
 import java.util.function.UnaryOperator;
 import org.retrolang.code.CodeBuilder.OpCodeType;
 import org.retrolang.code.CodeValue;
-import org.retrolang.code.FutureBlock;
 import org.retrolang.code.Op;
 import org.retrolang.code.Register;
 import org.retrolang.code.TestBlock;
@@ -201,24 +200,15 @@ public final class NumberCore {
     return doMath(tstate, x, y, Math::multiplyExact, (a, b) -> a * b);
   }
 
-  private static void checkForNaNResult(CodeGen codeGen, CodeValue result) {
-    result = codeGen.materialize(result, double.class);
-    FutureBlock isNotNaN = new FutureBlock();
-    codeGen.testIsNaN(result, true, isNotNaN);
-    codeGen.setResults(Core.NONE);
-    codeGen.cb.setNext(isNotNaN);
-    codeGen.setResults(codeGen.toValue(result));
-  }
-
   @Core.Method("divide(Number, Number)")
-  static void divideNumbers(TState tstate, ResultsInfo results, Value x, Value y) {
+  static Value divideNumbers(TState tstate, ResultsInfo results, Value x, Value y) {
     if (x instanceof RValue || y instanceof RValue) {
       CodeGen codeGen = tstate.codeGen();
       CodeValue cx = codeGen.asCodeValue(x);
       CodeValue cy = codeGen.asCodeValue(y);
-      codeGen.setResultWithNaNCheck(Op.DIV_DOUBLES.result(cx, cy));
+      return codeGen.checkForNaN(Op.DIV_DOUBLES.result(cx, cy), true);
     } else {
-      tstate.setResult(NumValue.orNan(NumValue.asDouble(x) / NumValue.asDouble(y), tstate));
+      return NumValue.orNan(NumValue.asDouble(x) / NumValue.asDouble(y), tstate);
     }
   }
 
@@ -318,16 +308,16 @@ public final class NumberCore {
     if (cx.type() == double.class
         || cy.type() == double.class
         || results.result(TProperty.COERCES_TO_FLOAT)) {
-      codeGen.setResultWithNaNCheck(FLOOR_OP.result(Op.DIV_DOUBLES.result(cx, cy)));
+      return codeGen.checkForNaN(FLOOR_OP.result(Op.DIV_DOUBLES.result(cx, cy)), true);
     } else {
-      Condition.intEq(cy, CodeValue.ZERO)
-          .test(
+      return Condition.intEq(cy, CodeValue.ZERO)
+          .choose(
               () -> {
                 // If x is non-zero we should be returning positive or negative infinity, but we
                 // can't do that unless our result is represented as a double (in which case we
                 // would have taken the other "if" branch above).
                 codeGen.escapeUnless(Condition.intEq(cx, CodeValue.ZERO));
-                codeGen.setResults(Core.NONE);
+                return Core.NONE;
               },
               () -> {
                 CodeValue result = Op.LONG_TO_INT_EXACT.result(FLOOR_DIV_OP.result(cx, cy));
@@ -337,12 +327,11 @@ public final class NumberCore {
                   // Always fails?  Not reachable, I think.
                   assert false;
                   codeGen.escape();
-                  return;
+                  return null;
                 }
-                codeGen.setResults(codeGen.toValue(result));
+                return codeGen.toValue(result);
               });
     }
-    return null;
   }
 
   private static final Op FLOOR_MOD_OP =
@@ -352,31 +341,26 @@ public final class NumberCore {
       Op.forMethod(NumberCore.class, "modulo", double.class, double.class).build();
 
   @Core.Method("modulo(Number, Number)")
-  static void moduloNumbers(TState tstate, Value x, Value y) {
+  static Value moduloNumbers(TState tstate, Value x, Value y) {
     if (!(x instanceof RValue || y instanceof RValue)) {
       if (x instanceof NumValue.I nix && y instanceof NumValue.I niy) {
         int ix = nix.value;
         int iy = niy.value;
-        tstate.setResult(iy == 0 ? Core.NONE : NumValue.of(Math.floorMod(ix, iy), tstate));
+        return (iy == 0) ? Core.NONE : NumValue.of(Math.floorMod(ix, iy), tstate);
       } else {
         double dx = NumValue.asDouble(x);
         double dy = NumValue.asDouble(y);
-        tstate.setResult(NumValue.orNan(modulo(dx, dy), tstate));
+        return NumValue.orNan(modulo(dx, dy), tstate);
       }
-      return;
     }
     CodeGen codeGen = tstate.codeGen();
     CodeValue cx = codeGen.asCodeValue(x);
     CodeValue cy = codeGen.asCodeValue(y);
     if (cx.type() == double.class || cy.type() == double.class) {
-      checkForNaNResult(codeGen, MODULO_OP.result(cx, cy));
+      return codeGen.checkForNaN(MODULO_OP.result(cx, cy), true);
     } else {
-      Condition.intEq(cy, CodeValue.ZERO)
-          .test(
-              () -> codeGen.setResults(Core.NONE),
-              () -> {
-                codeGen.setResults(codeGen.intToValue(FLOOR_MOD_OP.result(cx, cy)));
-              });
+      return Condition.intEq(cy, CodeValue.ZERO)
+          .choose(() -> Core.NONE, () -> codeGen.intToValue(FLOOR_MOD_OP.result(cx, cy)));
     }
   }
 
@@ -426,8 +410,7 @@ public final class NumberCore {
     CodeGen codeGen = tstate.codeGen();
     CodeValue cx = codeGen.asCodeValue(x);
     CodeValue cy = codeGen.asCodeValue(y);
-    codeGen.setResultWithNaNCheck(POW_OP.result(cx, cy));
-    return null;
+    return codeGen.checkForNaN(POW_OP.result(cx, cy), true);
   }
 
   /// If `x` and `y` are both integers, try applying `intOp` to them. If that succeeds, return its

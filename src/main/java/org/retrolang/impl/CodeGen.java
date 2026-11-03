@@ -182,6 +182,26 @@ public class CodeGen {
     return toValue(materialize(cv, int.class));
   }
 
+  /// Given a numeric CodeValue, returns the corresponding Value or None if the CodeValue is NaN. If
+  /// `skipIfRegister` is true and `cv` is a Register, it will be assumed to not be a NaN (this is
+  /// only appropriate when `cv` has not already been materialized, and so can only be a register if
+  /// an Op call was simplified to one of its arguments).
+  ///
+  /// The result may be a [ConditionalValue]; see that class for the restrictions on where it can be
+  /// used.
+  public Value checkForNaN(CodeValue cv, boolean skipIfRegister) {
+    if (skipIfRegister && cv instanceof Register r) {
+      return toValue(r);
+    }
+    cv = materialize(cv, cv.type());
+    if (cv instanceof CodeValue.Const) {
+      return cv.isDouble()
+          ? NumValue.orNan(cv.dValue(), Allocator.UNCOUNTED)
+          : NumValue.of(cv.iValue(), Allocator.UNCOUNTED);
+    }
+    return Condition.isNaN(cv).choose(Core.NONE, toValue(cv));
+  }
+
   /// Returns a CodeValue representing the given Value. After simplification `v` must be
   /// representable by a simple CodeValue, i.e. it may not be a compound or union RValue.
   public CodeValue asCodeValue(Value v) {
@@ -877,35 +897,6 @@ public class CodeGen {
     }
   }
 
-  /// Emits a return from the current function call.
-  ///
-  /// `result` must be numeric-valued. If it is a constant or register, returns it as-is. Otherwise
-  /// (i.e. it is an Op.Result) emits a block to check whether it is NaN, and if so returns None
-  /// instead.
-  public void setResultWithNaNCheck(CodeValue rhs) {
-    Value v;
-    if (rhs instanceof CodeValue.Const) {
-      if (rhs.isDouble()) {
-        v = NumValue.orNan(rhs.dValue(), Allocator.UNCOUNTED);
-      } else {
-        v = NumValue.of(rhs.iValue(), Allocator.UNCOUNTED);
-      }
-    } else if (rhs instanceof Register r) {
-      // This assumes that the register has previously been checked for NaN.
-      v = toValue(r);
-    } else {
-      CodeValue result = materialize(rhs, rhs.type());
-      if (result.isDouble()) {
-        FutureBlock isNotNaN = new FutureBlock();
-        testIsNaN(result, true, isNotNaN);
-        setResults(Core.NONE);
-        cb.setNext(isNotNaN);
-      }
-      v = toValue(result);
-    }
-    setResults(v);
-  }
-
   /// Emits a block to set `lhs`.
   public void emitSet(Register lhs, CodeValue rhs) {
     // An assignment of a register to itself would be optimized away later,
@@ -1196,12 +1187,6 @@ public class CodeGen {
         .addTo(cb);
   }
 
-  /// Emits a block that tests if `v` (a double) is NaN. Continues if it is (`nextIfTrue=true`) or
-  /// is not (`nextIfTrue=false`), and branches to `elseBranch` otherwise.
-  public void testIsNaN(CodeValue v, boolean nextIfTrue, FutureBlock elseBranch) {
-    TestBlock.isFalse(IS_NAN_OP.result(v)).setBranch(nextIfTrue, elseBranch).addTo(cb);
-  }
-
   /// Emits a block that will compare `v1` and `v2` (both pointers) for equality. Continues if they
   /// are equal (`nextIfTrue=true`) or not equal (`nextIfTrue=false`), and branches to `elseBranch`
   /// otherwise.
@@ -1304,8 +1289,6 @@ public class CodeGen {
           }
         }
       };
-
-  static final Op IS_NAN_OP = Op.forMethod(Double.class, "isNaN", double.class).build();
 
   static final Op INT_FROM_BYTES_OP =
       Op.forMethodHandle("int[]", ArrayUtil.BYTES_AS_INTS.toMethodHandle(AccessMode.GET)).build();

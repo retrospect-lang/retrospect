@@ -84,14 +84,13 @@ public class BitsTest {
     // Add the chosen elements to builder.
     IntStream.range(0, ELEMENTS.length)
         .filter(included)
-        .forEach(
-            j -> {
-              int element = ELEMENTS[j];
-              // The first call to set() should succeed, the second should fail since it's
-              // already present.
-              assertTrue(builder.set(element));
-              assertFalse(builder.set(element));
-            });
+        .forEach(j -> {
+          int element = ELEMENTS[j];
+          // The first call to set() should succeed, the second should fail since it's
+          // already present.
+          assertTrue(builder.set(element));
+          assertFalse(builder.set(element));
+        });
     // builder should only be empty if this is the empty iteration.
     assertEquals(iteration == 0, builder.isEmpty());
 
@@ -320,9 +319,8 @@ public class BitsTest {
   /// Returns all possible (Op, Range, Range) argument tuples for [#rangeOps].
   private static Object[] allRangeOpTests() {
     return Arrays.stream(Op.values())
-        .flatMap(
-            op ->
-                RANGES.stream().flatMap(r1 -> RANGES.stream().map(r2 -> new Object[] {op, r1, r2})))
+        .flatMap(op ->
+            RANGES.stream().flatMap(r1 -> RANGES.stream().map(r2 -> new Object[] {op, r1, r2})))
         .toArray();
   }
 

@@ -234,7 +234,7 @@ public abstract class ValueMemo implements ResultsInfo {
     NO_CHANGE_REQUIRED,
     CHANGED,
     CHANGE_REQUIRES_EXTRA_LOCK
-  };
+  }
 
   /// Coerces the given values and/or updates this ValueMemo to be consistent. Reads and writes the
   /// elements of `values` from `start` to [#size]-1.

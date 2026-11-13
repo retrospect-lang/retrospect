@@ -449,11 +449,10 @@ public abstract class TemplateBuilder {
     /// Returns a CompoundBase with the same BaseType and elements as this, except that `v` has been
     /// added to the specified element.
     CompoundBase addToElement(int index, Value v) {
-      return withElements(
-          i -> {
-            TemplateBuilder e = elementBuilder(i);
-            return (i == index) ? e.add(v) : e;
-          });
+      return withElements(i -> {
+        TemplateBuilder e = elementBuilder(i);
+        return (i == index) ? e.add(v) : e;
+      });
     }
 
     @Override
@@ -505,10 +504,9 @@ public abstract class TemplateBuilder {
           || recursiveTemplate instanceof NumVar;
       return recursiveTemplate.baseType() == baseType
           && IntStream.range(0, baseType.size())
-              .allMatch(
-                  i ->
-                      elementBuilder(i)
-                          .isSubsetOf(recursiveTemplate.elementBuilder(i), recursiveOption));
+              .allMatch(i ->
+                  elementBuilder(i)
+                      .isSubsetOf(recursiveTemplate.elementBuilder(i), recursiveOption));
     }
 
     @Override

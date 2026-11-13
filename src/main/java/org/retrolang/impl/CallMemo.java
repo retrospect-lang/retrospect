@@ -184,7 +184,6 @@ class CallMemo {
       other.addOrMerge(cm, otherParent, merger);
       cm = next;
     }
-    ;
   }
 
   /// Moves or merges `cm2`'s first MethodMemo into this CallMemo. May reuse `cm2` by linking it

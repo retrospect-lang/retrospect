@@ -1322,11 +1322,8 @@ public final class MatrixCore {
   private static Condition isOnlyTransforms(Value value) {
     return value
         .is(LoopCore.SIMPLE_LOOP)
-        .or(
-            () ->
-                value
-                    .isa(LoopCore.TRANSFORMED_LOOP)
-                    .and(() -> isOnlyTransforms(value.peekElement(1))));
+        .or(() ->
+            value.isa(LoopCore.TRANSFORMED_LOOP).and(() -> isOnlyTransforms(value.peekElement(1))));
   }
 
   /// ```

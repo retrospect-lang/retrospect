@@ -71,25 +71,24 @@ public class RegisterInfoBlock extends Block.NonTerminal {
   @Override
   protected PropagationResult updateInfo() {
     BinaryOps binaryOps = cb().binaryOps;
-    registerInfo.updateEntries(
-        (i, v) -> {
-          // When updateInfo is called, our outlink's info has already been set to the intersection
-          // of the infos from our inlinks.
-          ValueInfo fromInlink = next.info.register(i);
-          // If it's a copy of another register, apply our info to the one that was copied
-          if (fromInlink instanceof Register r) {
-            i = r.index;
-            fromInlink = next.info.register(i);
-          }
-          ValueInfo forOutlink = binaryOps.intersection(fromInlink, v);
-          if (forOutlink.equals(fromInlink)) {
-            // If we're no longer adding anything we can drop this part of our registerInfo
-            // (link infos should only get stronger, so if it's true now it will always be true).
-            return null;
-          }
-          next.info.updateInfo(i, forOutlink);
-          return v;
-        });
+    registerInfo.updateEntries((i, v) -> {
+      // When updateInfo is called, our outlink's info has already been set to the intersection
+      // of the infos from our inlinks.
+      ValueInfo fromInlink = next.info.register(i);
+      // If it's a copy of another register, apply our info to the one that was copied
+      if (fromInlink instanceof Register r) {
+        i = r.index;
+        fromInlink = next.info.register(i);
+      }
+      ValueInfo forOutlink = binaryOps.intersection(fromInlink, v);
+      if (forOutlink.equals(fromInlink)) {
+        // If we're no longer adding anything we can drop this part of our registerInfo
+        // (link infos should only get stronger, so if it's true now it will always be true).
+        return null;
+      }
+      next.info.updateInfo(i, forOutlink);
+      return v;
+    });
     return registerInfo.isEmpty() ? PropagationResult.REMOVE : PropagationResult.DONE;
   }
 
@@ -109,11 +108,10 @@ public class RegisterInfoBlock extends Block.NonTerminal {
   @Override
   public String toString(PrintOptions options) {
     StringBuilder sb = new StringBuilder("regInfo");
-    registerInfo.forEachEntry(
-        (i, v) -> {
-          String r = cb().register(i).toString(options);
-          sb.append(String.format(" %s:%s", r, v));
-        });
+    registerInfo.forEachEntry((i, v) -> {
+      String r = cb().register(i).toString(options);
+      sb.append(String.format(" %s:%s", r, v));
+    });
     return sb.toString();
   }
 }

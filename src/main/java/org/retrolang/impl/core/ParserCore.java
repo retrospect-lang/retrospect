@@ -367,9 +367,8 @@ public final class ParserCore {
       nextChar
           .is(Core.NONE)
           .not()
-          .and(
-              () ->
-                  StringValue.containsCodePoint.asCondition(tstate, oneOf.peekElement(0), nextChar))
+          .and(() ->
+              StringValue.containsCodePoint.asCondition(tstate, oneOf.peekElement(0), nextChar))
           .testExcept(
               () -> {
                 tstate.setResults(Core.EMPTY_ARRAY, pos);

@@ -122,25 +122,23 @@ public final class SimpleCodeGenTest {
 
   /// Sets codeGen's escape to start unwinding with the given stack entry.
   private void setEscapeToUnwind(StackEntryType entryType, Value... args) {
-    codeGen.setNewEscape(
-        () -> {
-          CodeValue entryCv = StackEntryBlock.create(tstate.compound(entryType, args), codeGen.cb);
-          PUSH_UNWIND.block(codeGen.tstateRegister(), entryCv).addTo(codeGen.cb);
-          emitReturnBlock(-1);
-        });
+    codeGen.setNewEscape(() -> {
+      CodeValue entryCv = StackEntryBlock.create(tstate.compound(entryType, args), codeGen.cb);
+      PUSH_UNWIND.block(codeGen.tstateRegister(), entryCv).addTo(codeGen.cb);
+      emitReturnBlock(-1);
+    });
   }
 
   /// Calls codeGen.emit() with the given runnable, and asserts that it doesn't actually throw an
   /// exception.
   private void emit(Condition.RunnableExcept runnable) {
-    codeGen.emit(
-        () -> {
-          try {
-            runnable.run();
-          } catch (Err.BuiltinException e) {
-            throw new AssertionError(e);
-          }
-        });
+    codeGen.emit(() -> {
+      try {
+        runnable.run();
+      } catch (Err.BuiltinException e) {
+        throw new AssertionError(e);
+      }
+    });
   }
 
   private Destination newDestination(Template... templates) {
@@ -165,43 +163,40 @@ public final class SimpleCodeGenTest {
             // A single Retrospect result, a pair containing a Boolean and a double
             arrayOf(BOOLEAN, NumVar.FLOAT64));
     startCodeGen(argTemplates, resultTemplates);
-    emit(
-        () -> {
-          setEscapeToReturn(1);
-          Destination addAndReturn = newDestination(NumVar.FLOAT64, NumVar.FLOAT64);
-          // Save the current escape so that we can compare it later.
-          CodeGen.EscapeState initEscape = codeGen.escapeState();
-          Value arg1 = args.get(0);
-          Value arg2 = args.get(1);
-          Condition.fromBoolean(arg1)
-              .and(arg1.isa(Core.ARRAY).not())
-              .testExcept(
-                  () -> {
-                    // This check should always pass.
-                    codeGen.escapeUnless(arg1.isa(Core.ARRAY).or(arg1.isa(Core.BOOLEAN)));
-                    setEscapeToReturn(2);
-                    Err.INVALID_ARGUMENT.when(arg2.is(Core.FALSE).or(arg2.is(Core.NONE)));
-                    branchToDestination(
-                        addAndReturn, NumValue.of(-1, tstate), NumValue.of(-2, tstate));
-                  },
-                  () -> {
-                    // The ifTrue branch changed the escape, but that shouldn't affect us.
-                    assertThat(codeGen.escapeState()).isEqualTo(initEscape);
-                    Err.NOT_PAIR.unless(arg2.isa(Core.ARRAY).or(arg2.isa(Core.STRING)));
-                    Value arg3 =
-                        arg2.replaceElement(
-                            codeGen.tstate(), 0, NumValue.of(0.1, Allocator.UNCOUNTED));
-                    branchToDestination(addAndReturn, arg3.peekElement(0), arg3.peekElement(1));
-                  });
-          Value[] elements = addAndReturn.emit(codeGen);
-          // If either of the branches changed the escape it should now be invalidated.
-          assertThat(codeGen.needNewEscape()).isTrue();
-          CodeValue element0 = codeGen.asCodeValue(elements[0]);
-          CodeValue element1 = codeGen.asCodeValue(elements[1]);
-          Register sum = codeGen.cb.newRegister(double.class);
-          new SetBlock(sum, Op.ADD_DOUBLES.result(element0, element1)).addTo(codeGen.cb);
-          emitReturn(tstate.arrayValue(arg1, codeGen.toValue(sum)));
-        });
+    emit(() -> {
+      setEscapeToReturn(1);
+      Destination addAndReturn = newDestination(NumVar.FLOAT64, NumVar.FLOAT64);
+      // Save the current escape so that we can compare it later.
+      CodeGen.EscapeState initEscape = codeGen.escapeState();
+      Value arg1 = args.get(0);
+      Value arg2 = args.get(1);
+      Condition.fromBoolean(arg1)
+          .and(arg1.isa(Core.ARRAY).not())
+          .testExcept(
+              () -> {
+                // This check should always pass.
+                codeGen.escapeUnless(arg1.isa(Core.ARRAY).or(arg1.isa(Core.BOOLEAN)));
+                setEscapeToReturn(2);
+                Err.INVALID_ARGUMENT.when(arg2.is(Core.FALSE).or(arg2.is(Core.NONE)));
+                branchToDestination(addAndReturn, NumValue.of(-1, tstate), NumValue.of(-2, tstate));
+              },
+              () -> {
+                // The ifTrue branch changed the escape, but that shouldn't affect us.
+                assertThat(codeGen.escapeState()).isEqualTo(initEscape);
+                Err.NOT_PAIR.unless(arg2.isa(Core.ARRAY).or(arg2.isa(Core.STRING)));
+                Value arg3 =
+                    arg2.replaceElement(codeGen.tstate(), 0, NumValue.of(0.1, Allocator.UNCOUNTED));
+                branchToDestination(addAndReturn, arg3.peekElement(0), arg3.peekElement(1));
+              });
+      Value[] elements = addAndReturn.emit(codeGen);
+      // If either of the branches changed the escape it should now be invalidated.
+      assertThat(codeGen.needNewEscape()).isTrue();
+      CodeValue element0 = codeGen.asCodeValue(elements[0]);
+      CodeValue element1 = codeGen.asCodeValue(elements[1]);
+      Register sum = codeGen.cb.newRegister(double.class);
+      new SetBlock(sum, Op.ADD_DOUBLES.result(element0, element1)).addTo(codeGen.cb);
+      emitReturn(tstate.arrayValue(arg1, codeGen.toValue(sum)));
+    });
     MethodHandle unused = codeGen.cb.load("one", "test", int.class, lookup);
     assertThat(codeGen.cb.debugInfo.postOptimization)
         .isEqualTo(
@@ -245,20 +240,19 @@ public final class SimpleCodeGenTest {
             arrayOf(NumVar.UINT8, NumVar.FLOAT64));
     startCodeGen(argTemplates, resultTemplates);
     VArrayLayout varrayOfString = VArrayLayout.newFromBuilder(vm.scope, Core.STRING.asRefVar);
-    emit(
-        () -> {
-          Value arg1 = args.get(0);
-          setEscapeToReturn(-1);
-          // temp1 is [i2, 42, x3]
-          Value temp1 = copyTo(arrayOf(NumVar.INT32, constant(42), varrayOfString.asRefVar), arg1);
-          assertThat(codeGen.cb.nextInfoResolved(3))
-              .isEqualTo(CodeValue.Const.of(varrayOfString.empty));
-          Destination returnBlock = Destination.fromTemplates(resultTemplates);
-          branchToDestination(returnBlock, tstate.arrayValue(arg1.element(1), temp1.element(0)));
-          assertThat(codeGen.cb.nextIsReachable()).isFalse();
-          Value[] returnValues = returnBlock.emit(codeGen);
-          emitReturn(returnValues);
-        });
+    emit(() -> {
+      Value arg1 = args.get(0);
+      setEscapeToReturn(-1);
+      // temp1 is [i2, 42, x3]
+      Value temp1 = copyTo(arrayOf(NumVar.INT32, constant(42), varrayOfString.asRefVar), arg1);
+      assertThat(codeGen.cb.nextInfoResolved(3))
+          .isEqualTo(CodeValue.Const.of(varrayOfString.empty));
+      Destination returnBlock = Destination.fromTemplates(resultTemplates);
+      branchToDestination(returnBlock, tstate.arrayValue(arg1.element(1), temp1.element(0)));
+      assertThat(codeGen.cb.nextIsReachable()).isFalse();
+      Value[] returnValues = returnBlock.emit(codeGen);
+      emitReturn(returnValues);
+    });
     MethodHandle unused = codeGen.cb.load("two", "test", int.class, lookup);
     assertThat(codeGen.cb.debugInfo.postOptimization)
         .isEqualTo(
@@ -289,29 +283,25 @@ public final class SimpleCodeGenTest {
             // Retrospect result is a pair containing a boolean and a double
             arrayOf(BOOLEAN, NumVar.FLOAT64));
     startCodeGen(argTemplates, resultTemplates);
-    emit(
-        () -> {
-          Value arg1 = args.get(0);
-          setEscapeToReturn(-1);
-          // temp1 is i3⸨0:i4; 1:[7]; 2:False, 3:True⸩
-          Value temp1 =
-              copyTo(
-                  union(
-                      NumVar.INT32,
-                      arrayOf(constant(7)),
-                      Core.FALSE.asTemplate,
-                      Core.TRUE.asTemplate),
-                  arg1);
-          setEscapeToReturn(-2);
-          Destination returnBlock = Destination.fromTemplates(resultTemplates);
-          temp1
-              .isa(Core.BOOLEAN)
-              .test(
-                  () -> branchToDestination(returnBlock, tstate.arrayValue(arg1, NumValue.ZERO)),
-                  () -> branchToDestination(returnBlock, tstate.arrayValue(Core.TRUE, temp1)));
-          Value[] returnValues = returnBlock.emit(codeGen);
-          emitReturn(returnValues);
-        });
+    emit(() -> {
+      Value arg1 = args.get(0);
+      setEscapeToReturn(-1);
+      // temp1 is i3⸨0:i4; 1:[7]; 2:False, 3:True⸩
+      Value temp1 =
+          copyTo(
+              union(
+                  NumVar.INT32, arrayOf(constant(7)), Core.FALSE.asTemplate, Core.TRUE.asTemplate),
+              arg1);
+      setEscapeToReturn(-2);
+      Destination returnBlock = Destination.fromTemplates(resultTemplates);
+      temp1
+          .isa(Core.BOOLEAN)
+          .test(
+              () -> branchToDestination(returnBlock, tstate.arrayValue(arg1, NumValue.ZERO)),
+              () -> branchToDestination(returnBlock, tstate.arrayValue(Core.TRUE, temp1)));
+      Value[] returnValues = returnBlock.emit(codeGen);
+      emitReturn(returnValues);
+    });
     MethodHandle unused = codeGen.cb.load("three", "test", int.class, lookup);
     assertThat(codeGen.cb.debugInfo.postOptimization)
         .isEqualTo(
@@ -357,26 +347,25 @@ public final class SimpleCodeGenTest {
     // Retrospect results are two ints
     ImmutableList<Template> resultTemplates = ImmutableList.of(NumVar.INT32, NumVar.INT32);
     startCodeGen(argTemplates, resultTemplates);
-    emit(
-        () -> {
-          Value arg1 = args.get(0);
-          Value arg2 = args.get(1);
-          StackEntryType entry1 = new BaseType.SimpleStackEntryType("entry1", "arg1", "arg2");
-          setEscapeToUnwind(entry1, arg1, arg2);
-          // Error unless arg2 >= 0
-          Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, arg2));
-          StackEntryType entry2 = new BaseType.SimpleStackEntryType("entry2", "arg1", "arg2");
-          // Copy arg1 into arg2
-          codeGen.emitStore(arg1, RValue.toTemplate(arg2), 2, 3);
-          setEscapeToUnwind(entry2, arg1, arg2);
-          // Error unless arg1 >= 0
-          Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, arg1));
-          StackEntryType entry3 = new BaseType.SimpleStackEntryType("entry3", "arg1", "arg2");
-          setEscapeToUnwind(entry3, arg1, arg2);
-          // Error when arg2 < 1
-          Err.INVALID_ARGUMENT.when(Condition.numericLessThan(arg2, NumValue.ONE));
-          emitReturn(arg1, arg2);
-        });
+    emit(() -> {
+      Value arg1 = args.get(0);
+      Value arg2 = args.get(1);
+      StackEntryType entry1 = new BaseType.SimpleStackEntryType("entry1", "arg1", "arg2");
+      setEscapeToUnwind(entry1, arg1, arg2);
+      // Error unless arg2 >= 0
+      Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, arg2));
+      StackEntryType entry2 = new BaseType.SimpleStackEntryType("entry2", "arg1", "arg2");
+      // Copy arg1 into arg2
+      codeGen.emitStore(arg1, RValue.toTemplate(arg2), 2, 3);
+      setEscapeToUnwind(entry2, arg1, arg2);
+      // Error unless arg1 >= 0
+      Err.INVALID_ARGUMENT.unless(Condition.numericLessOrEq(NumValue.ZERO, arg1));
+      StackEntryType entry3 = new BaseType.SimpleStackEntryType("entry3", "arg1", "arg2");
+      setEscapeToUnwind(entry3, arg1, arg2);
+      // Error when arg2 < 1
+      Err.INVALID_ARGUMENT.when(Condition.numericLessThan(arg2, NumValue.ONE));
+      emitReturn(arg1, arg2);
+    });
     MethodHandle mh = codeGen.cb.load("four", "test", int.class, lookup);
     assertThat(codeGen.cb.debugInfo.postOptimization)
         .isEqualTo(

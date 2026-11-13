@@ -1005,11 +1005,10 @@ public class CodeBuilder {
     } finally {
       logger.at(chatterLevel).log(
           "Generated code:\n%s",
-          lazy(
-              () ->
-                  DebugInfo.printConstants(debugInfo.constants, lookup)
-                      + "\n"
-                      + DebugInfo.printClassBytes(debugInfo.classBytes)));
+          lazy(() ->
+              DebugInfo.printConstants(debugInfo.constants, lookup)
+                  + "\n"
+                  + DebugInfo.printClassBytes(debugInfo.classBytes)));
     }
   }
 

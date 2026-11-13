@@ -1170,9 +1170,8 @@ public sealed interface Template {
       } else {
         // Each choice must be a singleton or a RefVar with the same index as untagged
         assert Arrays.stream(choices)
-            .allMatch(
-                choice ->
-                    choice.toBuilder().isSingleton() || ((RefVar) choice).index == untagged.index);
+            .allMatch(choice ->
+                choice.toBuilder().isSingleton() || ((RefVar) choice).index == untagged.index);
         // At least one choice must be a RefVar
         assert Arrays.stream(choices).anyMatch(choice -> choice instanceof RefVar);
       }

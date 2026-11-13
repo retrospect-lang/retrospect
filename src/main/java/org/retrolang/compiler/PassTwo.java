@@ -381,12 +381,11 @@ class PassTwo extends VisitorBase<Void> {
     }
     if (!assignedAsList.isEmpty()) {
       for (LowerIdContext id : assignedAsList) {
-        liveChecks.add(
-            live -> {
-              if (!live.clear(id.entry.index)) {
-                throw Compiler.error(id.start, "'%s' is not used after assignment", id.entry.name);
-              }
-            });
+        liveChecks.add(live -> {
+          if (!live.clear(id.entry.index)) {
+            throw Compiler.error(id.start, "'%s' is not used after assignment", id.entry.name);
+          }
+        });
       }
       assignedAsList.clear();
       Op.UNION.into(maybeDefined, varsAssigned);
@@ -587,19 +586,18 @@ class PassTwo extends VisitorBase<Void> {
           int startBlock = liveChecks.size();
           forward(block);
           LiveCheck blockCheck = saveChecks(startBlock);
-          liveChecks.add(
-              live -> {
-                Bits saved1 = live.build();
-                blockCheck.check(live);
-                if (elseCheck == EMPTY_CHECK) {
-                  Op.UNION.into(live, saved1);
-                } else {
-                  Bits saved2 = live.build();
-                  live.setAll(saved1);
-                  elseCheck.check(live);
-                  Op.UNION.into(live, saved2);
-                }
-              });
+          liveChecks.add(live -> {
+            Bits saved1 = live.build();
+            blockCheck.check(live);
+            if (elseCheck == EMPTY_CHECK) {
+              Op.UNION.into(live, saved1);
+            } else {
+              Bits saved2 = live.build();
+              live.setAll(saved1);
+              elseCheck.check(live);
+              Op.UNION.into(live, saved2);
+            }
+          });
           return saveChecks(startChecks);
         });
   }
@@ -658,11 +656,10 @@ class PassTwo extends VisitorBase<Void> {
     }
     // This assumes that we'll have done PassTwo.forward() on the break body before the
     // loop body's LiveChecks are run.
-    liveChecks.add(
-        live -> {
-          live.clearAll();
-          brk.scope.forEachInherited(childEntry -> addInherited(childEntry, live));
-        });
+    liveChecks.add(live -> {
+      live.clearAll();
+      brk.scope.forEachInherited(childEntry -> addInherited(childEntry, live));
+    });
     reachable = false;
     return null;
   }
@@ -739,35 +736,34 @@ class PassTwo extends VisitorBase<Void> {
         loop.breaks.stream().map(brk -> checkBreak(brk, definedOnBreak)).toArray(LiveCheck[]::new);
 
     // Add a final LiveCheck that unions the results of the breaks
-    liveChecks.add(
-        live -> {
-          loop.liveAfter = live.build();
-          if (checkBreaks.length != 0) {
-            if (!loop.hasSource) {
-              live.clearAll();
-            }
-            Bits.Builder scratch = new Bits.Builder();
-            for (LiveCheck checkBreak : checkBreaks) {
-              scratch.setAll(loop.liveAfter);
-              checkBreak.check(scratch);
-              Op.UNION.into(live, scratch);
-            }
-          }
-          // Now we can LiveCheck the body
-          Bits liveAtStartOfLoop = passTwoForBody.backward();
-          // ... and make sure that any key/value variables were used.
-          checkArgsUsed(loop.scope, liveAtStartOfLoop, loop.kvStart, loop.numDefinedAtStart);
+    liveChecks.add(live -> {
+      loop.liveAfter = live.build();
+      if (checkBreaks.length != 0) {
+        if (!loop.hasSource) {
+          live.clearAll();
+        }
+        Bits.Builder scratch = new Bits.Builder();
+        for (LiveCheck checkBreak : checkBreaks) {
+          scratch.setAll(loop.liveAfter);
+          checkBreak.check(scratch);
+          Op.UNION.into(live, scratch);
+        }
+      }
+      // Now we can LiveCheck the body
+      Bits liveAtStartOfLoop = passTwoForBody.backward();
+      // ... and make sure that any key/value variables were used.
+      checkArgsUsed(loop.scope, liveAtStartOfLoop, loop.kvStart, loop.numDefinedAtStart);
 
-          for (Loop.StateVar sv : loop.stateVars) {
-            if (liveAtStartOfLoop.test(sv.inner.index)) {
-              live.set(sv.outer.index);
-            }
-          }
-          // Don't call this until after (a) loop.liveAfter has been set, and (b) each of the
-          // LiveChecks
-          // returned by checkBreak() has been called (we need to finishClosure on each break).
-          loop.donePassTwo(forLoop);
-        });
+      for (Loop.StateVar sv : loop.stateVars) {
+        if (liveAtStartOfLoop.test(sv.inner.index)) {
+          live.set(sv.outer.index);
+        }
+      }
+      // Don't call this until after (a) loop.liveAfter has been set, and (b) each of the
+      // LiveChecks
+      // returned by checkBreak() has been called (we need to finishClosure on each break).
+      loop.donePassTwo(forLoop);
+    });
     return null;
   }
 
@@ -866,13 +862,12 @@ class PassTwo extends VisitorBase<Void> {
     lambdaCompiler.scope.constructType(name, symbols.vmLambda);
     // We can run pass three on the lambda body (and do the addMethod when done) asynchronously
     // from the rest of the compilation.
-    symbols.addSubTask(
-        () -> {
-          lambdaCompiler.scope.emitInitFromSelf(self);
-          ib.emitReturn(lambdaCompiler.compile(lambdaExpr));
-          ib.done();
-          ib.addMethod(symbols.vmAt, lambdaCompiler.scope.getType().argType(0, true), false);
-        });
+    symbols.addSubTask(() -> {
+      lambdaCompiler.scope.emitInitFromSelf(self);
+      ib.emitReturn(lambdaCompiler.compile(lambdaExpr));
+      ib.done();
+      ib.addMethod(symbols.vmAt, lambdaCompiler.scope.getType().argType(0, true), false);
+    });
     return null;
   }
 

@@ -242,13 +242,12 @@ public abstract class SmallIntMapBase<E> implements IntFunction<E> {
       return "{}";
     }
     StringBuilder sb = new StringBuilder();
-    forEachEntry(
-        (k, v) ->
-            sb.append(' ')
-                .append(keyToString.apply(k))
-                .append(':')
-                .append(valueToString.apply(v))
-                .append(','));
+    forEachEntry((k, v) ->
+        sb.append(' ')
+            .append(keyToString.apply(k))
+            .append(':')
+            .append(valueToString.apply(v))
+            .append(','));
     sb.setCharAt(0, '{');
     sb.setCharAt(sb.length() - 1, '}');
     return sb.toString();

@@ -108,12 +108,11 @@ public class Link {
   void moveWithAllSiblings(LinkTarget target) {
     assert target != null && target != this.target;
     LinkTarget prev = this.target;
-    prev.forEachInLink(
-        x -> {
-          CodeBuilder.updateLoopTransitions(x, false);
-          x.target = target;
-          CodeBuilder.updateLoopTransitions(x, true);
-        });
+    prev.forEachInLink(x -> {
+      CodeBuilder.updateLoopTransitions(x, false);
+      x.target = target;
+      CodeBuilder.updateLoopTransitions(x, true);
+    });
     prev.inLink = null;
     addToInlinks(target);
   }

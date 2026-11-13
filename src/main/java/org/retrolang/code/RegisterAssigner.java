@@ -151,42 +151,41 @@ public class RegisterAssigner {
     Bits.Builder conflictsBuilder = new Bits.Builder();
     for (int i = 0; i < cb.numBlocks(); i++) {
       Block block = cb.block(i);
-      block.forEachModifiedRegister(
-          lhs -> {
-            // We're changing the value of lhs, so it can't alias any of the other currently live
-            // registers.
-            // This assumes that no Terminal blocks modify registers, which I think is a safe
-            // assumption (since the local variable array is discarded after a method terminates,
-            // what would be the point of modifying it?)
-            if (block.mayReadAfterWrite()) {
-              conflictsBuilder.setAll(block.live());
-            } else {
-              conflictsBuilder.setAll(((NonTerminal) block).next.targetBlock().live());
-              if (block instanceof Split split) {
-                Bits.Op.UNION.into(conflictsBuilder, split.alternate.targetBlock().live());
-              }
-            }
-            // Remove any "conflict" between a register and itself.
-            conflictsBuilder.clear(lhs.index);
-            // If we're setting one register to the value of another, the lhs *could* alias the rhs,
-            // and in fact we'd like it to (so that we could remove this assignment completely).
-            if (block instanceof SetBlock) {
-              CodeValue rhs = block.input(0);
-              // We can't alias an int and a double, since different byte codes must be used to load
-              // and
-              // store a local depending on its type.
-              if (rhs instanceof Register register && typesCouldAlias(lhs.type(), rhs.type())) {
-                // We should have removed any no-op assignments before we got here
-                assert rhs != lhs;
-                int rhsIndex = register.index;
-                getBuilder(preferAlias, lhs.index).set(rhsIndex);
-                getBuilder(preferAlias, rhsIndex).set(lhs.index);
-                // This doesn't constitute a conflict, since they have the same value.
-                conflictsBuilder.clear(rhsIndex);
-              }
-            }
-            addConflicts(lhs, conflictsBuilder);
-          });
+      block.forEachModifiedRegister(lhs -> {
+        // We're changing the value of lhs, so it can't alias any of the other currently live
+        // registers.
+        // This assumes that no Terminal blocks modify registers, which I think is a safe
+        // assumption (since the local variable array is discarded after a method terminates,
+        // what would be the point of modifying it?)
+        if (block.mayReadAfterWrite()) {
+          conflictsBuilder.setAll(block.live());
+        } else {
+          conflictsBuilder.setAll(((NonTerminal) block).next.targetBlock().live());
+          if (block instanceof Split split) {
+            Bits.Op.UNION.into(conflictsBuilder, split.alternate.targetBlock().live());
+          }
+        }
+        // Remove any "conflict" between a register and itself.
+        conflictsBuilder.clear(lhs.index);
+        // If we're setting one register to the value of another, the lhs *could* alias the rhs,
+        // and in fact we'd like it to (so that we could remove this assignment completely).
+        if (block instanceof SetBlock) {
+          CodeValue rhs = block.input(0);
+          // We can't alias an int and a double, since different byte codes must be used to load
+          // and
+          // store a local depending on its type.
+          if (rhs instanceof Register register && typesCouldAlias(lhs.type(), rhs.type())) {
+            // We should have removed any no-op assignments before we got here
+            assert rhs != lhs;
+            int rhsIndex = register.index;
+            getBuilder(preferAlias, lhs.index).set(rhsIndex);
+            getBuilder(preferAlias, rhsIndex).set(lhs.index);
+            // This doesn't constitute a conflict, since they have the same value.
+            conflictsBuilder.clear(rhsIndex);
+          }
+        }
+        addConflicts(lhs, conflictsBuilder);
+      });
     }
 
     // Scratch space for searching the set of possible aliases and then finding an available local.

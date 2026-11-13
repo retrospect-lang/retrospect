@@ -129,10 +129,8 @@ public class RangeCore {
         // Any value of max is valid.
         return Condition.FALSE;
       } else {
-        return Condition.fromTest(
-            () ->
-                new TestBlock.IsLessThan(
-                    CodeBuilder.OpCodeType.INT, cvMax, CodeValue.of(iMin - 1)));
+        return Condition.fromTest(() ->
+            new TestBlock.IsLessThan(CodeBuilder.OpCodeType.INT, cvMax, CodeValue.of(iMin - 1)));
       }
     } else if (cvMax instanceof CodeValue.Const) {
       int iMax = cvMax.iValue();
@@ -140,10 +138,8 @@ public class RangeCore {
         // Any value of min is valid.
         return Condition.FALSE;
       } else {
-        return Condition.fromTest(
-            () ->
-                new TestBlock.IsLessThan(
-                    CodeBuilder.OpCodeType.INT, CodeValue.of(iMax + 1), cvMin));
+        return Condition.fromTest(() ->
+            new TestBlock.IsLessThan(CodeBuilder.OpCodeType.INT, CodeValue.of(iMax + 1), cvMin));
       }
     }
     // Neither is constant, so we need to do the more careful test
@@ -506,11 +502,10 @@ public class RangeCore {
     Value next = it.peekElement(0);
     last.is(Core.NONE)
         .not()
-        .and(
-            () ->
-                reversed
-                    ? Condition.numericLessThan(next, last)
-                    : Condition.numericLessThan(last, next))
+        .and(() ->
+            reversed
+                ? Condition.numericLessThan(next, last)
+                : Condition.numericLessThan(last, next))
         .testExcept(
             () -> tstate.setResults(Core.ABSENT, it),
             () -> {

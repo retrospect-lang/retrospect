@@ -167,11 +167,8 @@ public class Op {
     @CanIgnoreReturnValue
     public Builder withConstSimplifier(UnaryOperator<Object> constSimplifier) {
       assert argTypes.size() == 1;
-      simplifiers.add(
-          (args, infos) ->
-              allConst(args)
-                  ? CodeValue.of(constSimplifier.apply(args.get(0).constValue()))
-                  : null);
+      simplifiers.add((args, infos) ->
+          allConst(args) ? CodeValue.of(constSimplifier.apply(args.get(0).constValue())) : null);
       return this;
     }
 
@@ -180,12 +177,11 @@ public class Op {
     @CanIgnoreReturnValue
     public Builder withConstSimplifier(BinaryOperator<Object> constSimplifier) {
       assert argTypes.size() == 2;
-      simplifiers.add(
-          (args, infos) ->
-              allConst(args)
-                  ? CodeValue.of(
-                      constSimplifier.apply(args.get(0).constValue(), args.get(1).constValue()))
-                  : null);
+      simplifiers.add((args, infos) ->
+          allConst(args)
+              ? CodeValue.of(
+                  constSimplifier.apply(args.get(0).constValue(), args.get(1).constValue()))
+              : null);
       return this;
     }
 
@@ -663,15 +659,14 @@ public class Op {
   /// An Op implemented by the IADD instruction.
   public static final Op ADD_INTS =
       simple("iAdd", Opcodes.IADD, int.class, int.class, int.class)
-          .withSimplifier(
-              (x, y) -> {
-                if (x instanceof Const) {
-                  return simplifyAdd(y, x.iValue());
-                } else if (y instanceof Const) {
-                  return simplifyAdd(x, y.iValue());
-                }
-                return null;
-              })
+          .withSimplifier((x, y) -> {
+            if (x instanceof Const) {
+              return simplifyAdd(y, x.iValue());
+            } else if (y instanceof Const) {
+              return simplifyAdd(x, y.iValue());
+            }
+            return null;
+          })
           .withInfo(Op::iAddInfo)
           .build();
 
@@ -682,15 +677,14 @@ public class Op {
   /// An Op implemented by the ISUB instruction.
   public static final Op SUBTRACT_INTS =
       simple("iSub", Opcodes.ISUB, int.class, int.class, int.class)
-          .withSimplifier(
-              (x, y) -> {
-                if (y instanceof Const) {
-                  return simplifyAdd(x, -y.iValue());
-                } else if (CodeValue.ZERO.equals(x)) {
-                  return NEGATE_INT.result(y);
-                }
-                return null;
-              })
+          .withSimplifier((x, y) -> {
+            if (y instanceof Const) {
+              return simplifyAdd(x, -y.iValue());
+            } else if (CodeValue.ZERO.equals(x)) {
+              return NEGATE_INT.result(y);
+            }
+            return null;
+          })
           .build();
 
   /// Returns a ValueInfo for `ADD_INTS.result(args.get(0), args.get(1))`.

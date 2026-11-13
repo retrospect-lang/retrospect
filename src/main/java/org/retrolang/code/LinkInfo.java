@@ -309,29 +309,28 @@ public class LinkInfo {
     // There's only one thread but an AtomicBoolean is the easiest way to get information
     // out of a forEachEntry().
     AtomicBoolean isValid = new AtomicBoolean(true);
-    prev.registers.forEachEntry(
-        (r, prevInfo) -> {
-          if (liveCheck.test(r)) {
-            ValueInfo info = register(r);
-            if (info != null) {
-              if (info.equals(prevInfo)) {
-                return;
-              }
-              if (prevInfo instanceof Register prevReg && liveCheck.test(prevReg.index)) {
-                ValueInfo otherInfo = register(prevReg.index);
-                if ((info instanceof Const || info instanceof Register) && info.equals(otherInfo)) {
-                  // Not explicitly a copy, but provably equal to the copied register
-                  return;
-                } else if (otherInfo instanceof Register otherReg && otherReg.index == r) {
-                  return;
-                }
-              } else if (binaryOps.containsAll(prev.resolve(prevInfo), resolve(info))) {
-                return;
-              }
-            }
-            isValid.setPlain(false);
+    prev.registers.forEachEntry((r, prevInfo) -> {
+      if (liveCheck.test(r)) {
+        ValueInfo info = register(r);
+        if (info != null) {
+          if (info.equals(prevInfo)) {
+            return;
           }
-        });
+          if (prevInfo instanceof Register prevReg && liveCheck.test(prevReg.index)) {
+            ValueInfo otherInfo = register(prevReg.index);
+            if ((info instanceof Const || info instanceof Register) && info.equals(otherInfo)) {
+              // Not explicitly a copy, but provably equal to the copied register
+              return;
+            } else if (otherInfo instanceof Register otherReg && otherReg.index == r) {
+              return;
+            }
+          } else if (binaryOps.containsAll(prev.resolve(prevInfo), resolve(info))) {
+            return;
+          }
+        }
+        isValid.setPlain(false);
+      }
+    });
     return isValid.getPlain();
   }
 
@@ -576,16 +575,15 @@ public class LinkInfo {
       // chance that we've ended up with a copy-of-a-copy; we have to make sure those are cleaned
       // up before we return.
       if (addedCopy) {
-        result.registers.updateValues(
-            info -> {
-              if (info instanceof Register r) {
-                ValueInfo rInfo = result.registers.get(r.index);
-                if (rInfo instanceof Register) {
-                  return rInfo;
-                }
-              }
-              return info;
-            });
+        result.registers.updateValues(info -> {
+          if (info instanceof Register r) {
+            ValueInfo rInfo = result.registers.get(r.index);
+            if (rInfo instanceof Register) {
+              return rInfo;
+            }
+          }
+          return info;
+        });
       }
       // By this point all copies should be valid.
       assert result.registers.streamValues().noneMatch(info -> result.isInvalidCopy(-1, info));

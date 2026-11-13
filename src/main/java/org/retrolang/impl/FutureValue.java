@@ -193,8 +193,7 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   }
 
   @Core.Method("setTestFuture(Future, _)")
-  static void setTestFuture(TState tstate, Value future, Value result)
-      throws BuiltinException {
+  static void setTestFuture(TState tstate, Value future, Value result) throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(setTest.asCondition(tstate, future, result));
     tstate.setResults();
   }

@@ -143,11 +143,10 @@ public abstract class Block extends Zone.Ordered {
     if (prevLoop != newZone.containingLoop) {
       // Check each inlink to see whether it used to cross a loop boundary, and whether it will
       // cross a loop boundary after this change.
-      forEachInLink(
-          link -> {
-            CodeBuilder.updateLoopTransitions(link, link.origin.zone(), zone(), false);
-            CodeBuilder.updateLoopTransitions(link, link.origin.zone(), newZone, true);
-          });
+      forEachInLink(link -> {
+        CodeBuilder.updateLoopTransitions(link, link.origin.zone(), zone(), false);
+        CodeBuilder.updateLoopTransitions(link, link.origin.zone(), newZone, true);
+      });
       // Check each outlink to see whether it used to cross a loop boundary, and whether it will
       // cross a loop boundary after this change.
       if (this instanceof NonTerminal nonTerminal) {
@@ -377,14 +376,13 @@ public abstract class Block extends Zone.Ordered {
   /// one of those blocks is a BackRef (i.e. we're at the start of a loop) queue the Loop processor
   /// instead of the BackRef.
   private void checkLiveInlinks() {
-    forEachInLink(
-        link -> {
-          Zone.Ordered toQueue = link.origin;
-          if (toQueue instanceof BackRef) {
-            toQueue = ((BackRef) toQueue).loop().processor;
-          }
-          cb().setReversePropNeeded(toQueue);
-        });
+    forEachInLink(link -> {
+      Zone.Ordered toQueue = link.origin;
+      if (toQueue instanceof BackRef) {
+        toQueue = ((BackRef) toQueue).loop().processor;
+      }
+      cb().setReversePropNeeded(toQueue);
+    });
   }
 
   /// A subclass for Blocks with no outlinks (i.e. [ReturnBlock] or [ThrowBlock]).

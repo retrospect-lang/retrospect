@@ -72,11 +72,10 @@ public class MemoMergerTest {
             poolSize,
             runnable ->
                 Executors.defaultThreadFactory()
-                    .newThread(
-                        () -> {
-                          TState.resetAndGet().bindTo(tracker);
-                          runnable.run();
-                        }));
+                    .newThread(() -> {
+                      TState.resetAndGet().bindTo(tracker);
+                      runnable.run();
+                    }));
   }
 
   /// If we're running multi-threaded, wait for all queued tasks to complete and then shut down the
@@ -250,13 +249,10 @@ public class MemoMergerTest {
         assertThat(merger.allPerMethods()).hasSize(maxDepth);
         // Now we've got all we need to assemble the summary.
         return IntStream.range(0, maxDepth)
-            .mapToObj(
-                i ->
-                    String.format(
-                        "%s/%s%s",
-                        perMethods[i].heavy.size(),
-                        perMethods[i].exlined.size(),
-                        weights[i].build()))
+            .mapToObj(i ->
+                String.format(
+                    "%s/%s%s",
+                    perMethods[i].heavy.size(), perMethods[i].exlined.size(), weights[i].build()))
             .collect(Collectors.joining(", "));
       }
     }

@@ -434,13 +434,12 @@ public class Emitter {
       mv.visitJumpInsn(Opcodes.GOTO, jumpTo(fallThroughTo));
     }
     // Any exception handler stubs that didn't get emitted above will be emitted here
-    exceptionHandlers.forEachEntry(
-        (index, handler) -> {
-          if (!handler.emitted) {
-            handler.emit(this, frameEmitter);
-            mv.visitJumpInsn(Opcodes.GOTO, labels[index]);
-          }
-        });
+    exceptionHandlers.forEachEntry((index, handler) -> {
+      if (!handler.emitted) {
+        handler.emit(this, frameEmitter);
+        mv.visitJumpInsn(Opcodes.GOTO, labels[index]);
+      }
+    });
     mv.visitMaxs(maxStackDepth, numLocals);
     return loader.load(cb.debugInfo);
   }

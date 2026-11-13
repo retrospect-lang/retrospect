@@ -45,11 +45,10 @@ public abstract class RefCounted {
 
   static final Op IS_NOT_SHARED_OP =
       RcOp.forRcMethod(RefCounted.class, "isNotShared")
-          .withConstSimplifier(
-              x -> {
-                assert !RefCounted.isNotShared(x);
-                return CodeValue.ZERO;
-              })
+          .withConstSimplifier(x -> {
+            assert !RefCounted.isNotShared(x);
+            return CodeValue.ZERO;
+          })
           // TODO: uncommment when PtrInfo is available
           //          .withOpSimplifier(
           //              (args, infos) -> {

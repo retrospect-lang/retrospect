@@ -530,8 +530,8 @@ public final class TState extends MemoryHelper {
   /// If non-null, [#stackRest] is non-null and `stackHead.stream()` includes `stackRest`.
   @RC.Counted private TStack stackHead;
 
-  /// If non-null, will be used as the `rest` of any stack entries created by the currently-
-  /// executing method.
+  /// If non-null, will be used as the `rest` of any stack entries created by the
+  /// currently-executing method.
   ///
   /// If `stackRest` is non-null on return from a function call, `stackRest.isSet()` will be false
   /// and the caller of the currently-executing function is responsible for populating it with the

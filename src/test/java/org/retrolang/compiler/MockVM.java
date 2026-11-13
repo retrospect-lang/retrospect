@@ -637,13 +637,12 @@ class MockVM implements Vm.VirtualMachine {
       } else {
         result =
             IntStream.range(0, elements.length)
-                .mapToObj(
-                    i -> {
-                      String element = elements[i].toString();
-                      return element.equals(elementNames[i])
-                          ? element
-                          : elementNames[i] + ": " + element;
-                    })
+                .mapToObj(i -> {
+                  String element = elements[i].toString();
+                  return element.equals(elementNames[i])
+                      ? element
+                      : elementNames[i] + ": " + element;
+                })
                 .collect(Collectors.joining(", ", name + "(", ")"));
       }
       return Expr.forCompound(result, elements);

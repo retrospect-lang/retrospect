@@ -61,24 +61,23 @@ public final class TProperty<T> {
   /// If a FrameLayout has been chosen for values with the given sort order, returns it. Otherwise
   /// if a compound is being used, returns its base type. Otherwise returns null.
   public static TProperty<Object> layoutOrBaseType(long sortOrder) {
-    return new TProperty<>(
-        t -> {
-          if (t instanceof TemplateBuilder.UnionBase union) {
-            int i = union.indexOf(sortOrder);
-            if (i < 0) {
-              return null;
-            }
-            t = union.choiceBuilder(i);
-          } else if (t == Template.EMPTY) {
-            return null;
-          }
-          FrameLayout layout = t.layout(sortOrder);
-          if (layout != null) {
-            return layout;
-          }
-          BaseType baseType = t.baseType();
-          return (baseType.sortOrder == sortOrder) ? baseType : null;
-        });
+    return new TProperty<>(t -> {
+      if (t instanceof TemplateBuilder.UnionBase union) {
+        int i = union.indexOf(sortOrder);
+        if (i < 0) {
+          return null;
+        }
+        t = union.choiceBuilder(i);
+      } else if (t == Template.EMPTY) {
+        return null;
+      }
+      FrameLayout layout = t.layout(sortOrder);
+      if (layout != null) {
+        return layout;
+      }
+      BaseType baseType = t.baseType();
+      return (baseType.sortOrder == sortOrder) ? baseType : null;
+    });
   }
 
   /// A TProperty that returns true if all of the known possible values are contained in the given

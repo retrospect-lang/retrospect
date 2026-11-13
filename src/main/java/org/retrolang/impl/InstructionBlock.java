@@ -370,17 +370,16 @@ class InstructionBlock implements MethodImpl {
   /// debugging.
   String printInstructions(MethodMemo memo) {
     return IntStream.range(0, instructions.size())
-        .mapToObj(
-            i -> {
-              Instruction inst = instructions.get(i);
-              String s = inst.toString(memo);
-              if (inst instanceof BranchTarget) {
-                s = s + ":";
-              } else {
-                s = "   " + s;
-              }
-              return String.format("%3d: %s\n", i, s);
-            })
+        .mapToObj(i -> {
+          Instruction inst = instructions.get(i);
+          String s = inst.toString(memo);
+          if (inst instanceof BranchTarget) {
+            s = s + ":";
+          } else {
+            s = "   " + s;
+          }
+          return String.format("%3d: %s\n", i, s);
+        })
         .collect(Collectors.joining());
   }
 }

@@ -229,14 +229,13 @@ public class CodeGen {
     FutureBlock add(Runnable addBlocks, boolean isEscape) {
       // Tagging escapes makes it easier to stop in the debugger when a branch to them is created
       FutureBlock link = new FutureBlock(isEscape ? true : null);
-      delayed.add(
-          () -> {
-            if (link.hasInLink()) {
-              cb.setNext(link);
-              addBlocks.run();
-              assert !cb.nextIsReachable();
-            }
-          });
+      delayed.add(() -> {
+        if (link.hasInLink()) {
+          cb.setNext(link);
+          addBlocks.run();
+          assert !cb.nextIsReachable();
+        }
+      });
       return link;
     }
 
@@ -290,39 +289,37 @@ public class CodeGen {
     Destination done = Destination.fromTemplates(target.results);
     // The base of the call stack; this will be temporarily replaced when we emit method calls
     currentCall = new CurrentCall(null, done, initialMethod.resultsMemo);
-    currentCall.handleUnwind(
-        stackRest -> {
-          TState.SET_STACK_REST_OP.block(tstateRegister(), stackRest).addTo(cb);
-          TState.SET_UNWOUND_FROM_OP.block(tstateRegister(), CodeValue.of(target)).addTo(cb);
-          new ReturnBlock(null).addTo(cb);
-        });
+    currentCall.handleUnwind(stackRest -> {
+      TState.SET_STACK_REST_OP.block(tstateRegister(), stackRest).addTo(cb);
+      TState.SET_UNWOUND_FROM_OP.block(tstateRegister(), CodeValue.of(target)).addTo(cb);
+      new ReturnBlock(null).addTo(cb);
+    });
     currentCall.methodMemo = initialMethod;
-    emit(
-        () -> {
-          // Call the MethodImpl's emit() method, which does the actual work
-          Value[] argValues = target.args.stream().map(RValue::fromTemplate).toArray(Value[]::new);
-          switch (target.link.kind) {
-            case EXLINED -> impl.emit(this, done, initialMethod, argValues);
-            case LOOP -> {
-              // Since we're starting in the middle of method execution, tstate.stackRest() might
-              // already be non-null.  Use beforeCall() to load it into our stackRest register
-              // (it does what we want, although the name is a little misleading in this use).
-              new SetBlock(currentCall.stackRest, TState.BEFORE_CALL_OP.result(tstateRegister()))
-                  .addTo(cb);
-              ((BuiltinSupport.BuiltinImpl) impl)
-                  .emitFromLoopContinuation(this, done, initialMethod, argValues);
-            }
-          }
-          // When that completes we should be back to the original CurrentCall
-          assert currentCall.done == done;
-          // Now emit the code to write the method's results into the TState
-          Value[] results = done.emit(this);
-          if (results != null) {
-            emitSaveResults(results);
-            TState.SET_STACK_REST_OP.block(tstateRegister(), currentCall.stackRest).addTo(cb);
-            new ReturnBlock(null).addTo(cb);
-          }
-        });
+    emit(() -> {
+      // Call the MethodImpl's emit() method, which does the actual work
+      Value[] argValues = target.args.stream().map(RValue::fromTemplate).toArray(Value[]::new);
+      switch (target.link.kind) {
+        case EXLINED -> impl.emit(this, done, initialMethod, argValues);
+        case LOOP -> {
+          // Since we're starting in the middle of method execution, tstate.stackRest() might
+          // already be non-null.  Use beforeCall() to load it into our stackRest register
+          // (it does what we want, although the name is a little misleading in this use).
+          new SetBlock(currentCall.stackRest, TState.BEFORE_CALL_OP.result(tstateRegister()))
+              .addTo(cb);
+          ((BuiltinSupport.BuiltinImpl) impl)
+              .emitFromLoopContinuation(this, done, initialMethod, argValues);
+        }
+      }
+      // When that completes we should be back to the original CurrentCall
+      assert currentCall.done == done;
+      // Now emit the code to write the method's results into the TState
+      Value[] results = done.emit(this);
+      if (results != null) {
+        emitSaveResults(results);
+        TState.SET_STACK_REST_OP.block(tstateRegister(), currentCall.stackRest).addTo(cb);
+        new ReturnBlock(null).addTo(cb);
+      }
+    });
     currentCall = null;
   }
 
@@ -470,13 +467,12 @@ public class CodeGen {
           };
 
       Template t = RValue.toTemplate(stackEntry);
-      return type.toString(
-          i -> {
-            // This will be run once for each local.
-            allLive.setPlain(true);
-            String s = t.element(i).toBuilder().toString(printer);
-            return allLive.getPlain() ? s : "_";
-          });
+      return type.toString(i -> {
+        // This will be run once for each local.
+        allLive.setPlain(true);
+        String s = t.element(i).toBuilder().toString(printer);
+        return allLive.getPlain() ? s : "_";
+      });
     };
   }
 
@@ -644,12 +640,11 @@ public class CodeGen {
     if (isDetached) {
       nested.catchUnwind();
     } else {
-      nested.handleUnwind(
-          stackRest -> {
-            cb.setNextSrc("unwinding");
-            parent.emitFillStackEntry(stackRest, stackEntry, parentMemo);
-            cb.branchTo(parent.handleUnwind);
-          });
+      nested.handleUnwind(stackRest -> {
+        cb.setNextSrc("unwinding");
+        parent.emitFillStackEntry(stackRest, stackEntry, parentMemo);
+        cb.branchTo(parent.handleUnwind);
+      });
     }
     currentCall = nested;
     if (caller == null) {
@@ -688,13 +683,12 @@ public class CodeGen {
         assert continuation.size() == child.size() + stackEntry.baseType().size();
         Object[] continuationArgs = Arrays.copyOf(child.values(), continuation.size());
         stackEntry.getElements(stackEntry.baseType().size(), continuationArgs, child.size());
-        setNewEscape(
-            () -> {
-              cb.setNextSrc("startUnwind");
-              Value escapeEntry = tstate.asCompoundValue(continuation, continuationArgs);
-              parent.emitFillStackEntry(CodeValue.NULL, escapeEntry, parentMemo);
-              cb.branchTo(parent.handleUnwind);
-            });
+        setNewEscape(() -> {
+          cb.setNextSrc("startUnwind");
+          Value escapeEntry = tstate.asCompoundValue(continuation, continuationArgs);
+          parent.emitFillStackEntry(CodeValue.NULL, escapeEntry, parentMemo);
+          cb.branchTo(parent.handleUnwind);
+        });
       }
       child.branchToParent(CodeGen.this, (caller != null ? stackEntry : Core.NONE));
     }
@@ -819,12 +813,11 @@ public class CodeGen {
     // is run.
     CurrentCall cc = this.currentCall;
     MethodMemo mMemo = cc.methodMemo;
-    setNewEscape(
-        () -> {
-          cb.setNextSrc("startUnwind");
-          cc.emitFillStackEntry(CodeValue.NULL, stackEntry, mMemo);
-          cb.branchTo(cc.handleUnwind);
-        });
+    setNewEscape(() -> {
+      cb.setNextSrc("startUnwind");
+      cc.emitFillStackEntry(CodeValue.NULL, stackEntry, mMemo);
+      cb.branchTo(cc.handleUnwind);
+    });
   }
 
   /// Invalidates the current escape handler.
@@ -999,22 +992,19 @@ public class CodeGen {
       if (info instanceof CodeValue.Const c) {
         index = c;
       } else {
-        toTest.forEach(
-            i -> {
-              if (cb.nextIsReachable()) {
-                FutureBlock next = new FutureBlock();
-                EscapeState savedEscape = escapeState();
-                new TestBlock.IsEq(OpCodeType.INT, r, CodeValue.of(i))
-                    .setBranch(false, next)
-                    .addTo(cb);
-                if (cb.nextIsReachable()) {
-                  emitter.accept(i);
-                  assert !cb.nextIsReachable();
-                }
-                cb.setNext(next);
-                restore(savedEscape);
-              }
-            });
+        toTest.forEach(i -> {
+          if (cb.nextIsReachable()) {
+            FutureBlock next = new FutureBlock();
+            EscapeState savedEscape = escapeState();
+            new TestBlock.IsEq(OpCodeType.INT, r, CodeValue.of(i)).setBranch(false, next).addTo(cb);
+            if (cb.nextIsReachable()) {
+              emitter.accept(i);
+              assert !cb.nextIsReachable();
+            }
+            cb.setNext(next);
+            restore(savedEscape);
+          }
+        });
         return;
       }
     }

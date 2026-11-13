@@ -192,13 +192,12 @@ class StackEntryBlock extends Block.NonTerminal {
       // once.
       replacements
           .streamValues()
-          .forEach(
-              cv -> {
-                // If this NumVar or RefVar has a known constant value, we can leave it off our list
-                if (cv instanceof Register r) {
-                  builder.add(r);
-                }
-              });
+          .forEach(cv -> {
+            // If this NumVar or RefVar has a known constant value, we can leave it off our list
+            if (cv instanceof Register r) {
+              builder.add(r);
+            }
+          });
       registerList = builder.build();
     }
     return registerList.size();
@@ -221,23 +220,22 @@ class StackEntryBlock extends Block.NonTerminal {
     //   2. set registerList to null if any of the replacements changed
     //   3. set allConst to false if at least one isn't a constant
     //   4. set needSimplify to true if one of the registers in unionTags is constant
-    replacements.updateEntries(
-        (i, v) -> {
-          if (v instanceof Register r) {
-            ValueInfo info = next.info.register(r.index);
-            if (info instanceof Const || info instanceof Register) {
-              v = (CodeValue) info;
-              registerList = null;
-              if (info instanceof Const && unionTags.test(i)) {
-                needSimplify = true;
-              }
-            }
+    replacements.updateEntries((i, v) -> {
+      if (v instanceof Register r) {
+        ValueInfo info = next.info.register(r.index);
+        if (info instanceof Const || info instanceof Register) {
+          v = (CodeValue) info;
+          registerList = null;
+          if (info instanceof Const && unionTags.test(i)) {
+            needSimplify = true;
           }
-          if (!(v instanceof Const)) {
-            allConst = false;
-          }
-          return v;
-        });
+        }
+      }
+      if (!(v instanceof Const)) {
+        allConst = false;
+      }
+      return v;
+    });
     if (allConst) {
       // If all the registers we were going to save are constant, we don't need a frame at all;
       // replace this with simple set of a constant stack entry.
@@ -288,10 +286,9 @@ class StackEntryBlock extends Block.NonTerminal {
     layout.emitAlloc(emitter.cb).push(emitter, lhs.type());
     emitter.store(lhs);
     // Emit instructions to set each field of the frame to the corresponding register
-    vars.forEachEntry(
-        (ri, field) -> {
-          layout.setCodeValue(field, lhs, cb().register(ri)).emit(emitter);
-        });
+    vars.forEachEntry((ri, field) -> {
+      layout.setCodeValue(field, lhs, cb().register(ri)).emit(emitter);
+    });
     return next.targetBlock();
   }
 

@@ -184,14 +184,13 @@ class SimpleDuplicator {
     // This check is only applicable if b is followed by zero or more other simple blocks and then
     // a test.
     if (couldDuplicateToTestBlock(b)) {
-      b.forEachInLink(
-          inLink -> {
-            // Skip if this is the only inlink -- we must have removed all the others, so we can
-            // just leave this one to be handled normally.
-            if (inLink.hasSibling()) {
-              checkForDuplicateAndSkip(inLink);
-            }
-          });
+      b.forEachInLink(inLink -> {
+        // Skip if this is the only inlink -- we must have removed all the others, so we can
+        // just leave this one to be handled normally.
+        if (inLink.hasSibling()) {
+          checkForDuplicateAndSkip(inLink);
+        }
+      });
     }
   }
 
@@ -241,19 +240,18 @@ class SimpleDuplicator {
   /// additional simple blocks and then a TestBlock. Checks each of the inlinks to see if
   /// duplicating `b` and the following simple blocks would enable it to skip the test.
   private static void recursiveCheckInlinks(Block b, int numSimple) {
-    b.forEachInLink(
-        inLink -> {
-          // The inLink.hasSibling() check will let us bail if we get to the last inlink and we have
-          // removed all the others -- in that case there's no point in considering duplication.
-          if (inLink.hasSibling() && checkForDuplicateAndSkip(inLink)) {
-            // we redirected that link
-            assert inLink.target() != b;
-            b.cb().setForwardPropNeeded(b);
-          } else {
-            // We couldn't redirect it, but maybe one of *its* inlinks?
-            checkInlinksForDuplicateAndSkip(inLink.origin, numSimple);
-          }
-        });
+    b.forEachInLink(inLink -> {
+      // The inLink.hasSibling() check will let us bail if we get to the last inlink and we have
+      // removed all the others -- in that case there's no point in considering duplication.
+      if (inLink.hasSibling() && checkForDuplicateAndSkip(inLink)) {
+        // we redirected that link
+        assert inLink.target() != b;
+        b.cb().setForwardPropNeeded(b);
+      } else {
+        // We couldn't redirect it, but maybe one of *its* inlinks?
+        checkInlinksForDuplicateAndSkip(inLink.origin, numSimple);
+      }
+    });
   }
 
   /// Called with one of the inlinks to a block that is simple, has multiple inlinks, and is

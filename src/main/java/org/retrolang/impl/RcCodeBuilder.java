@@ -870,13 +870,12 @@ public class RcCodeBuilder extends CodeBuilder {
       // Start by assuming that all live registers are counted.
       scratchBits.setAll(liveCrs);
       // Remove any that are dependent, but add the registers that they're dependent on.
-      dependencies.forEachEntry(
-          (tri, deps) -> {
-            // Sanity check: none of the registers in a dependency can itself be dependent
-            assert deps.filter(dependencies::containsKey).isEmpty();
-            assertTrue(scratchBits.clear(tri));
-            Bits.Op.UNION.into(scratchBits, deps);
-          });
+      dependencies.forEachEntry((tri, deps) -> {
+        // Sanity check: none of the registers in a dependency can itself be dependent
+        assert deps.filter(dependencies::containsKey).isEmpty();
+        assertTrue(scratchBits.clear(tri));
+        Bits.Op.UNION.into(scratchBits, deps);
+      });
       return scratchBits.build();
     }
 
@@ -1291,19 +1290,18 @@ public class RcCodeBuilder extends CodeBuilder {
       // in which case we'd only remove one from each, but that seems unlikely enough that I don't
       // think it's worth doing something more complicated.
       dropRef.forEach(i -> scratch.set(canonicalize(i)));
-      addRef.forEach(
-          i -> {
-            int canonical = canonicalize(i);
-            if (scratch.clear(canonical)) {
-              addRef = addRef.clear(i);
-              // Searching dropRef again to find the matching register isn't free, but this isn't
-              // expected to be common (and the benefit of simplifying the refCount updates is much
-              // greater than this cost).
-              int fromDropRef =
-                  dropRef.stream().filter(j -> canonicalize(j) == canonical).findFirst().getAsInt();
-              dropRef = dropRef.clear(fromDropRef);
-            }
-          });
+      addRef.forEach(i -> {
+        int canonical = canonicalize(i);
+        if (scratch.clear(canonical)) {
+          addRef = addRef.clear(i);
+          // Searching dropRef again to find the matching register isn't free, but this isn't
+          // expected to be common (and the benefit of simplifying the refCount updates is much
+          // greater than this cost).
+          int fromDropRef =
+              dropRef.stream().filter(j -> canonicalize(j) == canonical).findFirst().getAsInt();
+          dropRef = dropRef.clear(fromDropRef);
+        }
+      });
     }
 
     /// If the given register is known to be equal to some other register, return the canonical
@@ -1319,12 +1317,11 @@ public class RcCodeBuilder extends CodeBuilder {
     scratch.setAll(left);
     Bits.Op.DIFFERENCE.into(scratch, right);
     // Maybe add a Bits.Builder.filter() method?
-    scratch.forEach(
-        i -> {
-          if (skip.test(i)) {
-            scratch.clear(i);
-          }
-        });
+    scratch.forEach(i -> {
+      if (skip.test(i)) {
+        scratch.clear(i);
+      }
+    });
     return scratch.build();
   }
 

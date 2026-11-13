@@ -215,14 +215,13 @@ class Symbols {
     // To figure out the arity of the function, we need to count collector args twice.
     int numCollector = (int) params.stream().filter(p -> isCollector(p.paramAnnotation())).count();
     Vm.Function function = getFunction(method.name, params.size() + numCollector);
-    addSubTask(
-        () ->
-            compileMethodDecl(
-                function,
-                params,
-                method.methodPredicate(),
-                method.isDefault != null,
-                method.methodDef()));
+    addSubTask(() ->
+        compileMethodDecl(
+            function,
+            params,
+            method.methodPredicate(),
+            method.isDefault != null,
+            method.methodDef()));
   }
 
   /// A map from binary operator (e.g. "+") to the corresponding Retrospect Core function name (e.g.
@@ -484,14 +483,12 @@ class Symbols {
         local = blockCompiler.ib.addArg(blockCompiler.newAnonymousArgName());
         if (needsExtract) {
           int ri = resultIndex;
-          extracts.add(
-              () -> {
-                Expr result =
-                    blockCompiler.scope.extractCompoundParameter(extractLhs, local, isInOut);
-                if (isInOut) {
-                  results[ri] = result;
-                }
-              });
+          extracts.add(() -> {
+            Expr result = blockCompiler.scope.extractCompoundParameter(extractLhs, local, isInOut);
+            if (isInOut) {
+              results[ri] = result;
+            }
+          });
         }
       } else {
         local = blockCompiler.ib.addArg(null);
@@ -692,10 +689,8 @@ class Symbols {
     /// method.
     void compileMethod(Symbols symbols) {
       if (method != null) {
-        symbols.addSubTask(
-            () ->
-                symbols.compileMethodDecl(
-                    function, params(parsed.paramList()), null, false, method));
+        symbols.addSubTask(() ->
+            symbols.compileMethodDecl(function, params(parsed.paramList()), null, false, method));
       }
     }
   }

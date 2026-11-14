@@ -64,11 +64,6 @@ public final class LoopCore {
   /// Values of type Iterator are expected to provide a method for `next(it=)`.
   @Core.Public public static final VmType.Union ITERATOR = Core.newOpenUnion("Iterator");
 
-  /// `open type Loop`
-  ///
-  /// Values of type Loop are expected to provide a method for `nextState(loop, state, element)`.
-  @Core.Public public static final VmType.Union LOOP = Core.newOpenUnion("Loop");
-
   /// Returns an Iterator that can be used to call `nextState()` on `loop` with each element of
   /// `collection`, optionally paired its key.
   ///
@@ -82,12 +77,6 @@ public final class LoopCore {
   /// `open function next(it=)`
   @Core.Public
   static final VmFunctionBuilder next = VmFunctionBuilder.create("next", 1).hasInoutArg(0).isOpen();
-
-  /// Given the current state and the next element of the collection, returns the new state.
-  ///
-  /// `open function nextState(loop, state, element)`
-  @Core.Public
-  static final VmFunctionBuilder nextState = VmFunctionBuilder.create("nextState", 3).isOpen();
 
   /// Called once on a Loop if all of the input elements have been processed without reaching a
   /// LoopExit state. The default method just returns `state` unchanged.
@@ -159,28 +148,18 @@ public final class LoopCore {
   static final BaseType.Named LIMIT_STEP = Core.newBaseType("LimitStep", 1, Core.PIPELINE_STEP);
 
   /// `singleton SimpleLoop is Loop`
-  @Core.Private public static final Singleton SIMPLE_LOOP = Core.newSingleton("SimpleLoop", LOOP);
+  @Core.Private
+  public static final Singleton SIMPLE_LOOP = Core.newSingleton("SimpleLoop", Core.LOOP);
 
   /// Returns a PipelineStep that terminates the loop after the specified number of elements have
   /// been processed.
   @Core.Public static final VmFunctionBuilder limit = VmFunctionBuilder.create("limit", 1);
 
-  /// `private compound TransformedLoop is Loop`
-  ///
-  /// Elements are `lambda`, `loop`.
-  @Core.Private
-  static final BaseType.Named TRANSFORMED_LOOP = Core.newBaseType("TransformedLoop", 2, LOOP);
-
-  /// `private compound LimitedLoop is Loop`
-  ///
-  /// Element is `inner`.
-  @Core.Private static final BaseType.Named LIMITED_LOOP = Core.newBaseType("LimitedLoop", 1, LOOP);
-
   /// `private compound EmitAllLoop is Loop`
   ///
   /// Element is `inner`.
   @Core.Private
-  static final BaseType.Named EMIT_ALL_LOOP = Core.newBaseType("EmitAllLoop", 1, LOOP);
+  static final BaseType.Named EMIT_ALL_LOOP = Core.newBaseType("EmitAllLoop", 1, Core.LOOP);
 
   /// `private compound KeyValueLambda is Lambda`
   ///
@@ -200,14 +179,12 @@ public final class LoopCore {
   @Core.Private
   static final BaseType.Named TRIVIAL_ITERATOR = Core.newBaseType("TrivialIterator", 1, ITERATOR);
 
-  /// `open type Collector`
-  @Core.Public public static final VmType.Union COLLECTOR = Core.newOpenUnion("Collector");
-
   /// `private compound PipedCollector is Collector`
   ///
   /// Elements are `step`, `collector`.
   @Core.Private
-  static final BaseType.Named PIPED_COLLECTOR = Core.newBaseType("PipedCollector", 2, COLLECTOR);
+  static final BaseType.Named PIPED_COLLECTOR =
+      Core.newBaseType("PipedCollector", 2, Core.COLLECTOR);
 
   /// `singleton PipedCollectionCannotSave is Collection`
   ///
@@ -220,7 +197,7 @@ public final class LoopCore {
   /// `private compound SequentialCollector is Collector`
   @Core.Private
   static final BaseType.Named SEQUENTIAL_COLLECTOR =
-      Core.newBaseType("SequentialCollector", 1, COLLECTOR);
+      Core.newBaseType("SequentialCollector", 1, Core.COLLECTOR);
 
   /// `function loopExit(finalState)`
   @Core.Public static final VmFunctionBuilder loopExit = VmFunctionBuilder.create("loopExit", 1);
@@ -528,7 +505,7 @@ public final class LoopCore {
         Value eKind,
         @RC.In Value innerLoop,
         @RC.In Value initialState) {
-      Value loop = tstate.compound(LoopCore.LIMITED_LOOP, innerLoop);
+      Value loop = tstate.compound(Core.LIMITED_LOOP, innerLoop);
       initialState
           .isa(Core.LOOP_EXIT)
           .test(
@@ -701,7 +678,7 @@ public final class LoopCore {
       @RC.In Value loop,
       @RC.In Value initialState) {
     lambda = applyToValues(tstate, lambda, eKind);
-    loop = tstate.compound(TRANSFORMED_LOOP, lambda, loop);
+    loop = tstate.compound(Core.TRANSFORMED_LOOP, lambda, loop);
     tstate.setResults(loop, initialState);
   }
 

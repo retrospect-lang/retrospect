@@ -1,0 +1,10 @@
+pq = pqCollection("yellow_tripdata_2025-02.parquet")
+return pq | filter(-> #.tip_amount > 10) | count
+
+/* RUN () TRACE_DEPTH(1) RETURNS
+157943
+---
+⟦readPQ ∥ fileNames="yellow_tripdata_2025-02.parquet", select="tip_amount", filter="((tip_amount isNull) or (tip_amount dEQ NaN) or (tip_amount dGT 10.0))", limit=None⟧
+---
+allocated=29404400/392, peak=4227384
+*/

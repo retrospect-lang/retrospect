@@ -51,8 +51,8 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
       VmFunctionBuilder.create("setTestFuture", 2).hasNoResult();
 
   @Core.Public
-  static final BaseType.NonCompositional FUTURE_TYPE =
-      new BaseType.NonCompositional(Core.CORE, "Future", FutureValue.class);
+  public static final BaseType.NonCompositional FUTURE_TYPE =
+      Core.newNonCompositional("Future", FutureValue.class);
 
   /// The BlockingEntryType for threads that have called waitFor().
   static final BaseType.BlockingEntryType WAITFOR_ENTRY =

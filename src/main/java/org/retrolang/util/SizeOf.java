@@ -94,6 +94,31 @@ public class SizeOf {
     return (array == null) ? 0 : SizeOf.array(array.length, BYTE);
   }
 
+  /// Returns the number of bytes required for a given java array.
+  public static long array(boolean[] array) {
+    return (array == null) ? 0 : SizeOf.array(array.length, BOOLEAN);
+  }
+
+  /// Returns the number of bytes required for a given java array.
+  public static long array(int[] array) {
+    return (array == null) ? 0 : SizeOf.array(array.length, INT);
+  }
+
+  /// Returns the number of bytes required for a given java array.
+  public static long array(long[] array) {
+    return (array == null) ? 0 : SizeOf.array(array.length, LONG);
+  }
+
+  /// Returns the number of bytes required for a given java array.
+  public static long array(float[] array) {
+    return (array == null) ? 0 : SizeOf.array(array.length, FLOAT);
+  }
+
+  /// Returns the number of bytes required for a given java array.
+  public static long array(double[] array) {
+    return (array == null) ? 0 : SizeOf.array(array.length, DOUBLE);
+  }
+
   /// Returns the number of bytes required to hold a given String.
   public static long string(String string) {
     return SizeOf.object(SizeOf.PTR + SizeOf.INT) + SizeOf.array(string.length(), 2);

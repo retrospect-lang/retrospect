@@ -561,6 +561,74 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
   /// Returns the subset of this Bits for which the given IntPredicate returns true.
   public abstract Bits filter(IntPredicate predicate);
 
+  /// Maps each (prop, positive) pair (where prop is non-negative) to a distinct bit index. Used to
+  /// interpret a Bits as a conjunction of (possibly negated) propositional variables v_0, v_1, ...,
+  /// where the conjunction includes v_i if the Bits contains `bitForProp(i, true)`, and the
+  /// negation of v_i if the Bits contains `bitForProp(i, false)`.
+  public static int bitForProp(int prop, boolean positive) {
+    return (prop << 1) + (positive ? 0 : 1);
+  }
+
+  /// `bit` should have been the result of a previous call to [#bitForProp]; returns the value that
+  /// was passed as `prop`.
+  public static int propFromBit(int bit) {
+    return bit >>> 1;
+  }
+
+  /// `bit` should have been the result of a previous call to [#bitForProp]; returns the value that
+  /// was passed as `positive`.
+  public static boolean propIsPositive(int bit) {
+    return (bit & 1) == 0;
+  }
+
+  /// Returns true if the Bits conjunction represented by this Bits (see [#bitForProp]) includes
+  /// v_`prop` (if `positive` is true) or the negation of v_`prop` (if `positive` is false).
+  public final boolean testProp(int prop, boolean positive) {
+    return contains(bitForProp(prop, positive));
+  }
+
+  /// Returns TRUE if the Bits conjunction represented by this Bits (see [#bitForProp]) includes
+  /// v_`prop`, FALSE if it includes the negation of v_`prop`, or null if it includes neither. The
+  /// result is unspecified if it contains both.
+  public abstract Boolean getProp(int prop);
+
+  /// Extends the conjunction represented by this Bits (see [#bitForProp]) to include v_`prop` (if
+  /// `positive` is true) or the negation of v_`prop` (if `positive` is false).
+  public final Bits setProp(int prop, boolean positive) {
+    return set(bitForProp(prop, positive));
+  }
+
+  /// Returns true if there is some `i` for which both `testProp(i, true)` and `testProp(i, false)`
+  /// return true, i.e. the conjunction represented by this Bits (see [#bitForProp]) is always
+  /// false.
+  public abstract boolean hasConflict();
+
+  /// Returns true if there is some `i` for which both `this.testProp(i, true)` and
+  /// `other.testProp(i, false)` return true, or both `this.testProp(i, false)` and
+  /// `other.testProp(i, true)` return true, i.e. the conjunctions represented by these Bits cannot
+  /// both be true.
+  ///
+  /// (The implementation may assume that neither `this` nor `other` have any self-conflicts, i.e.
+  /// that [#hasConflict()] is false for both; its behavior is unspecified if that is not true.)
+  public abstract boolean hasConflict(Bits other);
+
+  /// Interprets both Bits as propositional conjunctions, as described for [#bitForProp].
+  ///
+  /// If this Bits contains all but one of the elements of `other`, and contains the negation of the
+  /// remaining element (i.e. `this.testProp(i, positive)` and `other.testProp(i, !positive)` are
+  /// true for some `i` and `positive`), then `simplifyConjunction` returns this Bits with the
+  /// negated element removed (i.e. both `result.testProp(i, true)` and `result.testProp(i, false)`
+  /// are false, all other bits are unchanged); otherwise it returns null.
+  ///
+  /// If `other` has the same number of bits as `this` and the result is non-null, the result will
+  /// true iff `this` is true or `other` is true. If `other` has fewer bits than `this` and the
+  /// result is non-null, the result will only be true if `this` is true or `other` is true, but
+  /// will not include all cases for which `other` is true.
+  ///
+  /// (The implementation may assume that neither `this` nor `other` have any self-conflicts, i.e.
+  /// that [#hasConflict()] is false for both; its behavior is unspecified if that is not true.)
+  public abstract Bits simplifyConjunction(Bits other);
+
   /// Returns true if this Bits contains the given int.
   ///
   /// `i` must be non-negative.
@@ -1292,6 +1360,58 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
     }
 
     @Override
+    public Boolean getProp(int prop) {
+      assert prop >= 0;
+      int shift = prop << 1;
+      int twoBits = (shift < Integer.SIZE) ? (bits >>> shift) & 3 : 0;
+      return (twoBits == 0) ? null : (twoBits == 1);
+    }
+
+    /// A mask that selects only the even-numbered bits of an int.
+    private static final int INT_EVENS = 0x5555_5555;
+
+    /// Swaps each proposition in a conjunction for its negation.
+    private static int negateAll(int i) {
+      return ((i & INT_EVENS) << 1) | ((i >>> 1) & INT_EVENS);
+    }
+
+    static boolean intHasConflict(int bits) {
+      return (bits & (bits >>> 1) & INT_EVENS) != 0;
+    }
+
+    @Override
+    public boolean hasConflict() {
+      return intHasConflict(bits);
+    }
+
+    @Override
+    public boolean hasConflict(Bits other) {
+      int otherBits = (other instanceof Small s) ? s.bits : (int) ((Large) other).bits[0];
+      return intHasConflict(bits | otherBits);
+    }
+
+    @Override
+    public Bits simplifyConjunction(Bits other) {
+      // A Small bits can't contain all the variables in `other` if `other` is Large.
+      if (other instanceof Small o) {
+        // Count the number of bits in `other` and the number we share with it; do we share all but
+        // one of its bits?
+        int otherCount = Integer.bitCount(o.bits);
+        int commonCount = Integer.bitCount(bits & o.bits);
+        if (commonCount == otherCount - 1) {
+          // Negate each of the propositions in `other`, and see if we contain any of those
+          // (assuming no conflicts, we should contain at most one of them).
+          int negated = bits & negateAll(o.bits);
+          if (negated != 0) {
+            assert Integer.bitCount(negated) == 1;
+            return make(bits & ~negated);
+          }
+        }
+      }
+      return null;
+    }
+
+    @Override
     public int hashCode() {
       return bits;
     }
@@ -1402,22 +1522,27 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       }
       long b = bits[word];
       long newB = b & ~(1L << (i % Long.SIZE));
-      if (b == newB) {
-        return this;
-      }
+      return (b == newB) ? this : replaceWord(word, newB);
+    }
+
+    /// Returns a Bits like this except that the specified word has been replaced.
+    private Bits replaceWord(int word, long b) {
+      assert bits[word] != b;
       if (word == bits.length - 1) {
-        // If we removed the top bit we may be able to use a smaller long[] or even a Small.
-        while (newB == 0 && word != 0) {
-          newB = bits[--word];
+        // If we're changing the top word we may end up with a shorter `bits` array or even a Small.
+        int w = word;
+        while (b == 0 && w > 0) {
+          b = bits[--w];
         }
-        if (word == 0 && fitsInSmall(newB)) {
-          return Small.make((int) newB);
-        } else if (word != bits.length - 1) {
-          return new Large(Arrays.copyOf(bits, word + 1));
+        if (w == 0 && fitsInSmall(b)) {
+          return Small.make((int) b);
+        } else if (w < word) {
+          return new Large(Arrays.copyOf(bits, w + 1));
         }
       }
+      // The usual path: clone our bits, replace one element, and make a new Large
       long[] newBits = bits.clone();
-      newBits[word] = newB;
+      newBits[word] = b;
       return new Large(newBits);
     }
 
@@ -1487,6 +1612,86 @@ public abstract class Bits implements IntPredicate, Iterable<Integer> {
       } else {
         return new Large(newBits);
       }
+    }
+
+    @Override
+    public Boolean getProp(int prop) {
+      assert prop >= 0;
+      int word = prop / (Long.SIZE / 2);
+      if (word >= bits.length) {
+        return null;
+      }
+      int shift = (prop << 1) % Long.SIZE;
+      long twoBits = (bits[word] >>> shift) & 3;
+      return (twoBits == 0) ? null : (twoBits == 1);
+    }
+
+    /// A mask that selects only the even-numbered bits.
+    private static final long LONG_EVENS = 0x5555_5555_5555_5555L;
+
+    /// Swaps each proposition in a conjunction for its negation.
+    private static long negateAll(long b) {
+      return ((b & LONG_EVENS) << 1) | ((b >>> 1) & LONG_EVENS);
+    }
+
+    static boolean longHasConflict(long bits) {
+      return (bits & (bits >>> 1) & LONG_EVENS) != 0;
+    }
+
+    @Override
+    public boolean hasConflict() {
+      return Arrays.stream(bits).anyMatch(Large::longHasConflict);
+    }
+
+    @Override
+    public boolean hasConflict(Bits other) {
+      if (other instanceof Small s) {
+        return s.hasConflict(this);
+      }
+      long[] otherBits = ((Large) other).bits;
+      int n = Math.min(bits.length, otherBits.length);
+      return IntStream.range(0, n).anyMatch(i -> longHasConflict(bits[i] | otherBits[i]));
+    }
+
+    @Override
+    public Bits simplifyConjunction(Bits other) {
+      int word;
+      long otherB;
+      if (other instanceof Small o) {
+        word = 0;
+        otherB = o.bitsAsLong();
+      } else {
+        long[] otherBits = ((Large) other).bits;
+        if (otherBits.length > bits.length) {
+          return null;
+        }
+        // In order to simplify there must be exactly one i for which bits[i] does not contain
+        // otherBits[i].
+        word =
+            IntStream.range(0, otherBits.length)
+                .filter(i -> (otherBits[i] & ~bits[i]) != 0)
+                .reduce((i, j) -> -1)
+                .orElse(-1);
+        if (word < 0) {
+          return null;
+        }
+        otherB = otherBits[word];
+      }
+      long b = bits[word];
+      // Count the number of bits in otherB and the number b shares with it; does it share all but
+      // one of them?
+      int otherCount = Long.bitCount(otherB);
+      int commonCount = Long.bitCount(b & otherB);
+      if (commonCount == otherCount - 1) {
+        // Negate each of the propositions in otherB, and see if b contain any of those (assuming
+        // no conflicts, it should contain at most one of them).
+        long negated = b & negateAll(otherB);
+        if (negated != 0) {
+          assert Long.bitCount(negated) == 1;
+          return replaceWord(word, b & ~negated);
+        }
+      }
+      return null;
     }
 
     @Override

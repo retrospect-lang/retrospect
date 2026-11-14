@@ -302,7 +302,7 @@ public abstract class Condition {
       @Override
       public void addTest(CodeGen codeGen, FutureBlock elseBranch) {
         CodeValue v = supplier.apply(codeGen);
-        new TestBlock.IsEq(CodeBuilder.OpCodeType.INT, v, CodeValue.ZERO)
+        new IsEq(CodeBuilder.OpCodeType.INT, v, CodeValue.ZERO)
             .setBranch(true, elseBranch)
             .addTo(codeGen.cb);
       }

@@ -1065,7 +1065,7 @@ public final class ParserCore {
     Value result = StringValue.codePoint.call(tstate, s, p);
     Condition.numericLessThan(result, NumValue.ZERO)
         .test(
-            () -> tstate.setResults(Core.NONE, addRef(p)),
+            () -> tstate.setResults(Core.NONE, p.makeStorable(tstate)),
             () -> {
               Value newPos = ValueUtil.addInts(tstate, p, NumValue.ONE);
               tstate.setResults(result.makeStorable(tstate), newPos);

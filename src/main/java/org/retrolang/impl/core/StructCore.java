@@ -161,7 +161,8 @@ public class StructCore {
           // See docs/ref_counts.md#the-startupdate-idiom-for-compound-values
           Value element = ValueUtil.element(tstate, struct, index, 0);
           struct = ValueUtil.replaceElement(tstate, struct, index, 0, Core.TO_BE_SET);
-          tstate.setResults(element, tstate.compound(STRUCT_UPDATER, struct, index));
+          tstate.setResults(
+              element, tstate.compound(STRUCT_UPDATER, struct, index.makeStorable(tstate)));
         });
   }
 

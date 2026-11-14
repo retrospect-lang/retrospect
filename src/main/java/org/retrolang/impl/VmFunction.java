@@ -515,7 +515,9 @@ public abstract class VmFunction implements Vm.Function {
       if (mm != null) {
         assert mm.memo == null;
         mm.memo = memo;
-        mm.count = count;
+        // CallMemo's `count` is actually one less than the number of calls, so when we find a
+        // CallMemo the count should be at least 1.
+        mm.count = count + 1;
       }
     }
 

@@ -515,7 +515,13 @@ class Destination implements ResultsInfo {
 
     @Override
     Value[] values() {
-      return (savedValues != null) ? savedValues : parent.root().values();
+      if (savedValues != null) {
+        return savedValues;
+      } else if (prefixSize == 0) {
+        return EMPTY_VALUES;
+      } else {
+        return parent.root().values();
+      }
     }
 
     @Override

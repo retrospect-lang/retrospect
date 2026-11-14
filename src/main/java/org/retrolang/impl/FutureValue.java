@@ -193,7 +193,7 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
   }
 
   @Core.Method("setTestFuture(Future, _)")
-  static void setTestFuture(TState tstate, Value future, @RC.In Value result)
+  static void setTestFuture(TState tstate, Value future, Value result)
       throws BuiltinException {
     Err.INVALID_ARGUMENT.unless(setTest.asCondition(tstate, future, result));
     tstate.setResults();
@@ -203,8 +203,13 @@ public class FutureValue extends RefCounted implements Value, RThread.Waiter {
 
   /// If `future` was created by [#testFuture] and has not already had its result set, sets its
   /// result and returns true; otherwise returns false.
-  public static boolean setTest(TState tstate, FutureValue future, @RC.In Value result) {
-    return future.lambdaThread == null && future.setResult(tstate, result);
+  public static boolean setTest(TState tstate, FutureValue future, Value result) {
+    if (future.lambdaThread == null) {
+      addRef(result);
+      return future.setResult(tstate, result);
+    } else {
+      return false;
+    }
   }
 
   private static final long OBJ_SIZE = SizeOf.object(RefCounted.BASE_SIZE + 3 * SizeOf.PTR);

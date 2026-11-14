@@ -17,8 +17,10 @@
 package org.retrolang.impl;
 
 import com.google.common.base.Preconditions;
+import org.retrolang.code.CodeBuilder;
 import org.retrolang.code.CodeValue;
 import org.retrolang.code.Op;
+import org.retrolang.code.TestBlock;
 import org.retrolang.impl.Err.BuiltinException;
 import org.retrolang.impl.core.CollectionCore;
 import org.retrolang.util.SizeOf;
@@ -97,7 +99,10 @@ public class StringValue extends RefCounted implements Value {
     }
     CodeGen codeGen = tstate.codeGen();
     CodeValue length = LENGTH_OP.result(codeGen.asCodeValue(s));
-    return Condition.intEq(codeGen.asCodeValue(n), length);
+    CodeValue nCv = codeGen.asCodeValue(n);
+    CodeBuilder.OpCodeType type =
+        (nCv.type() == int.class) ? CodeBuilder.OpCodeType.INT : CodeBuilder.OpCodeType.DOUBLE;
+    return Condition.fromTest(() -> new TestBlock.IsEq(type, nCv, length));
   }
 
   /// `open function codePoints(string)`

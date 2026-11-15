@@ -568,13 +568,17 @@ public class ParquetCore {
       int dataSize) {
     String error = null;
     try {
-      // I think this call to nextBatch() is where we are most likely to block.
-      if (!readers.nextBatch()) {
-        // We reached the end of the file(s).
-        readers.close();
-        TState.dropReferenceWithTracker(tracker, pqc);
-        return Core.ABSENT;
-      }
+      // Keep trying until we get a non-empty batch.
+      do {
+        // I think this call to nextBatch() is where we are most likely to block.
+        if (!readers.nextBatch()) {
+          // We reached the end of the file(s).
+          readers.close();
+          TState.dropReferenceWithTracker(tracker, pqc);
+          return Core.ABSENT;
+        }
+        // Just skip empty batches (where all rows were filtered out).
+      } while (readers.getRecordCount() == 0);
     } catch (RuntimeException e) {
       // Some file format errors can cause `nextBatch()` to throw an IllegalStateException.
       logger.atWarning().withCause(e).log();

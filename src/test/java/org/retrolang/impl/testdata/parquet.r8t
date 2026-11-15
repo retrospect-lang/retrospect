@@ -8,3 +8,16 @@ return pq | filter(-> #.tip_amount > 10) | count
 ---
 allocated=29404400/392, peak=4227384
 */
+
+// Try a filter that excludes all rows.
+
+pq = pqCollection("yellow_tripdata_2025-02.parquet")
+return pq | filter(-> #.tip_amount == 5.00001) | count
+
+/* RUN () TRACE_DEPTH(1) RETURNS
+0
+---
+⟦readPQ ∥ fileNames="yellow_tripdata_2025-02.parquet", select="tip_amount", filter="((tip_amount isNotNull) and (tip_amount dEQ 5.00001))", limit=None⟧
+---
+allocated=33792/57, peak=32888
+*/

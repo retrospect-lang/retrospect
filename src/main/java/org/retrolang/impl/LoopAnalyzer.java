@@ -279,7 +279,7 @@ public class LoopAnalyzer {
           for (Scenario s : liveScenarios) {
             Symbol otherElement = other.element(i, s);
             if (otherElement == null) {
-              analyzer.resultUnknownOrFail(s);
+              analyzer.resultUnknownBoolean(s);
             } else {
               analyzer.analyzeEqual(elements.get(i), otherElement, s);
             }
@@ -504,7 +504,7 @@ public class LoopAnalyzer {
 
   /// Records that the given scenario may terminate with an error or return an unknown value.
   public void resultUnknownOrFail(Scenario scenario) {
-    addResult(UNKNOWN, scenario);
+    addResult(UNKNOWN, mayFail(scenario));
   }
 
   /// Records that the given scenario returns an unknown boolean.
